@@ -27,3 +27,6 @@ check_radio.py
 deploy_radio.py
 # Generated binary
 dist/zerock-server-linux
+sync.sh
+watch.sh
+sync.log
