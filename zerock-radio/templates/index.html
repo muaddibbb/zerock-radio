@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeRock Radio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0f14;
+      --surface:     #161920;
+      --surface2:    #1e2330;
+      --border:      #2a2f3d;
+      --accent:      #6c63ff;
+      --accent-dim:  #1e1b3a;
+      --success:     #34d399;
+      --success-dim: #0c2e22;
+      --warning:     #fbbf24;
+      --warning-dim: #2d2208;
+      --danger:      #f87171;
+      --danger-dim:  #2d0f0f;
+      --text:        #e2e8f0;
+      --text-muted:  #64748b;
+      --text-subtle: #94a3b8;
+      --radius:      10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .logo span { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--danger); margin-left: auto;
+    }
+    .status-dot.live { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-label { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+    }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .card h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* ── Now Playing header ── */
+    .np-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .np-header::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Now Playing ── */
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 20px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+    .np-icon {
+      width: 52px; height: 52px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      animation: spin 8s linear infinite;
+    }
+    .np-icon.paused { animation-play-state: paused; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .np-title { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+    .np-artist { font-size: 0.85rem; color: var(--text-subtle); margin-top: 3px; }
+    .np-progress-wrap { margin-top: 10px; }
+    .np-timebar {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums;
+    }
+    .np-bar-track {
+      flex: 1; height: 4px; background: var(--surface2);
+      border-radius: 2px; overflow: hidden; cursor: pointer;
+    }
+    .np-bar-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 2px; transition: width 1s linear;
+      width: 0%;
+    }
+    .np-skip {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-subtle);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .np-skip:hover { border-color: var(--accent); color: var(--accent); }
+    .np-controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .btn-stream-stop  { background: var(--danger-dim);  color: var(--danger);  border: 1px solid var(--danger);  padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .btn-stream-start { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .btn-stream-stop:hover  { background: var(--danger);  color: #fff; }
+    .btn-stream-start:hover { background: var(--success); color: #000; }
+
+    /* ── Show schedule form ── */
+    .form-group { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="datetime-local"], input[type="file"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    input[type="file"] { padding: 8px 10px; cursor: pointer; }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── Schedule lists ── */
+    .show-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .show-item:last-child { border-bottom: none; }
+    .show-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--warning);
+    }
+    .show-dot.done { background: var(--success); }
+    .show-info { flex: 1; min-width: 0; }
+    .rerun-badge {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: normal;
+      margin-left: 4px;
+    }
+    .show-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .show-time { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .show-countdown {
+      font-size: 0.72rem;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .show-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-play { background: var(--success-dim); color: var(--success); }
+    .btn-play:hover { background: var(--success); color: #000; }
+    .btn-del  { background: var(--danger-dim); color: var(--danger); }
+    .btn-del:hover  { background: var(--danger); color: #fff; }
+    .btn-reschedule { background: #1e2a1e; color: #6ee7b7; }
+    .btn-reschedule:hover { background: #6ee7b7; color: #000; }
+
+    /* Reschedule modal */
+    #rescheduleOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #rescheduleOverlay.open { display: flex; }
+    #rescheduleModal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 340px;
+      max-width: 95vw;
+    }
+    #rescheduleModal h3 { font-size: 1rem; margin-bottom: 16px; color: var(--text); }
+    #rescheduleModal label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 6px; }
+    #rescheduleModal input[type="datetime-local"] {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 9px 12px; color: var(--text); font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    #rescheduleSave { background: var(--accent); color: #fff; }
+    #rescheduleCancel { background: var(--surface2); color: var(--text-muted); }
+
+    .empty-msg {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    /* ── Stream toggles ── */
+    .toggle-wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-wrap:last-child { border-bottom: none; }
+    .stream-label { font-size: 0.88rem; font-weight: 600; }
+    .stream-url   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .stream-status { font-size: 0.72rem; margin-top: 3px; }
+    .stream-status.on  { color: var(--success); }
+    .stream-status.off { color: var(--text-muted); }
+    .toggle-slider {
+      position: relative; width: 44px; height: 24px; flex-shrink: 0;
+    }
+    .toggle-slider input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider-track {
+      position: absolute; inset: 0;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 24px; cursor: pointer; transition: background .2s;
+    }
+    .toggle-slider-track::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--text-muted);
+      top: 3px; left: 3px; transition: transform .2s, background .2s;
+    }
+    .toggle-slider input:checked + .toggle-slider-track { background: var(--success-dim); border-color: var(--success); }
+    .toggle-slider input:checked + .toggle-slider-track::before { transform: translateX(20px); background: var(--success); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok  { border-color: var(--success); color: var(--success); }
+    #toast.err { border-color: var(--danger);  color: var(--danger);  }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ZeRock Radio <span>/ Rocky</span></div>
+  <div class="status-dot {% if lq_running %}live{% endif %}" id="statusDot"></div>
+  <div class="status-label" id="statusLabel">{% if lq_running %}Live{% else %}Offline{% endif %}</div>
+</header>
+
+<main>
+  <!-- Left column -->
+  <div>
+    <!-- Now Playing -->
+    <div class="np-header">Now Playing</div>
+    <div class="now-playing">
+      <div class="np-icon {% if not lq_running %}paused{% endif %}" id="npIcon">🎵</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="np-title" id="npTitle">Loading…</div>
+          <span id="zikaronBadge" style="display:none;font-size:0.7rem;background:#7f1d1d;color:#fca5a5;border-radius:4px;padding:2px 6px;white-space:nowrap">🕯 זיכרון</span>
+        </div>
+        <div class="np-artist" id="npArtist"></div>
+        <div class="np-progress-wrap" id="npProgressWrap" style="display:none">
+          <div class="np-timebar">
+            <span id="npElapsed">0:00</span>
+            <div class="np-bar-track"><div class="np-bar-fill" id="npBarFill"></div></div>
+            <span id="npRemaining">0:00</span>
+          </div>
+        </div>
+      </div>
+      <div class="np-controls">
+        <button class="np-skip" onclick="skipTrack()">⏭ Skip</button>
+        <button class="btn-stream-stop"  id="btnStop"  onclick="streamStop()"  style="display:none">⏹ Stop broadcast</button>
+        <button class="btn-stream-start" id="btnStart" onclick="streamStart()" style="display:none">▶ Resume broadcast</button>
+      </div>
+    </div>
+
+    <!-- Live queue -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Live Queue (next to play)</h2>
+      <div id="liveQueue"><div class="empty-msg">Loading...</div></div>
+    </div>
+
+    <!-- Upcoming shows -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Upcoming Shows</h2>
+      <div id="upcomingList">
+        {% if upcoming %}
+          {% for s in upcoming %}
+          <div class="show-item" id="show-{{ s.id }}">
+            <div class="show-dot"></div>
+            <div class="show-info">
+              <div class="show-name">{{ s.name }}{% if s.get('is_rerun') %} <span class="rerun-badge">(rerun)</span>{% endif %}</div>
+              <div class="show-time">{{ s.scheduled_time | replace('T', ' ') }}</div>
+            </div>
+            <div class="show-countdown" data-time="{{ s.scheduled_time }}"></div>
+            <div class="show-actions">
+              <button class="btn-sm btn-play" onclick="triggerNow('{{ s.id }}')">▶ Now</button>
+              <button class="btn-sm btn-reschedule" onclick="openReschedule('{{ s.id }}','{{ s.scheduled_time }}')">📅</button>
+              <button class="btn-sm btn-del" onclick="deleteShow('{{ s.id }}')">✕</button>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-msg">No shows scheduled</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Past shows -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Past Shows</h2>
+      <div id="pastShowsList">
+      {% if past %}
+        {% for s in past %}
+        <div class="show-item">
+          <div class="show-dot done"></div>
+          <div class="show-info">
+            <div class="show-name">{{ s.name }}</div>
+            <div class="show-time">
+              Played {{ s.get('triggered_at', '')[:16] | replace('T', ' ') }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-msg">No shows played yet</div>
+      {% endif %}
+      </div>
+    </div>
+
+    <!-- Play History -->
+    <div class="card">
+      <h2>Play History (last 48h)</h2>
+      <div id="historyList"><div class="empty-msg">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Right column: add show -->
+  <div>
+    <!-- Streams card -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Streams</h2>
+      <div class="toggle-wrap">
+        <div>
+          <div class="stream-label">🎙 Local stream</div>
+          <div class="stream-url">192.168.1.166:8000/stream</div>
+          <div class="stream-status off" id="localStreamStatus">Checking…</div>
+        </div>
+        <label class="toggle-slider">
+          <input type="checkbox" id="localStreamToggle" onchange="toggleLocalStream(this)">
+          <span class="toggle-slider-track"></span>
+        </label>
+      </div>
+      <div class="toggle-wrap">
+        <div>
+          <div class="stream-label">📡 External stream</div>
+          <div class="stream-url">icecast.live:8001/zerock</div>
+          <div class="stream-status off" id="extStreamStatus">Off</div>
+        </div>
+        <label class="toggle-slider">
+          <input type="checkbox" id="extStreamToggle" onchange="toggleExternalStream(this)">
+          <span class="toggle-slider-track"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Holocaust Day card -->
+    <div class="card" style="margin-bottom:16px;border-color:#4a3030">
+      <h2 style="color:#f87171">🕯 יום השואה</h2>
+      <div id="holocaustStatus" style="font-size:0.82rem;margin-bottom:14px;color:var(--text-muted)">Inactive</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">From</label>
+          <input type="datetime-local" id="holocaustFrom" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">Until</label>
+          <input type="datetime-local" id="holocaustUntil" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveZikaron('holocaust')" class="btn" style="background:#7f1d1d;border-color:#991b1b;flex:1">Set Schedule</button>
+        <button onclick="clearZikaron('holocaust')" class="btn" style="background:var(--surface2);border-color:var(--border);color:var(--text-muted)">Clear</button>
+      </div>
+    </div>
+
+    <!-- Memorial Day card -->
+    <div class="card" style="margin-bottom:20px;border-color:#4a3030">
+      <h2 style="color:#f87171">🕯 יום הזיכרון לחללי מערכות ישראל</h2>
+      <div id="memorialStatus" style="font-size:0.82rem;margin-bottom:14px;color:var(--text-muted)">Inactive</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">From</label>
+          <input type="datetime-local" id="memorialFrom" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">Until</label>
+          <input type="datetime-local" id="memorialUntil" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveZikaron('memorial')" class="btn" style="background:#7f1d1d;border-color:#991b1b;flex:1">Set Schedule</button>
+        <button onclick="clearZikaron('memorial')" class="btn" style="background:var(--surface2);border-color:var(--border);color:var(--text-muted)">Clear</button>
+      </div>
+    </div>
+
+    <!-- Al HaRoker self-scheduling panel -->
+    <div class="card" style="margin-bottom:20px;border-color:#3a2a4a">
+      <h2 style="color:#c084fc">🎙️ על הרוקר – הרשמות</h2>
+
+      <!-- Monthly calendar link -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">לינק הרשמה חודשי</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a href="{{ ah_calendar_url }}" target="_blank"
+             style="font-size:0.8rem;color:#c084fc;word-break:break-all;flex:1;
+                    background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;
+                    padding:7px 10px;text-decoration:none;display:block">
+            {{ ah_calendar_url }}
+          </a>
+          <button onclick="copyText('{{ ah_calendar_url }}', this)"
+                  style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;
+                         padding:7px 10px;cursor:pointer;font-size:0.78rem;white-space:nowrap">
+            העתק
+          </button>
+        </div>
+      </div>
+
+      <!-- Registered broadcasters -->
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px">
+        מגישים רשומים
+      </div>
+      {% if ah_upcoming %}
+        <div style="display:flex;flex-direction:column;gap:8px" id="ahBookingsList">
+        {% for b in ah_upcoming %}
+          {% set d = b.date %}
+          {% set upload_url = ah_upload_base + '/al-haroker-upload/' + b.token %}
+          <div style="background:var(--surface2);border:1px solid {% if b.uploaded %}#1a3a1a{% else %}#3a2a4a{% endif %};
+                      border-radius:8px;padding:10px 12px" id="ahb-{{ b.token[:12] }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <div style="min-width:0;flex:1">
+                <span style="font-weight:600;font-size:0.88rem">{{ b.broadcaster }}</span>
+                <span style="color:var(--text-muted);font-size:0.75rem;margin-right:8px">
+                  {{ d[8:10] }}/{{ d[5:7] }}/{{ d[:4] }} 07:00
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+                {% if b.uploaded %}
+                  <span style="font-size:0.72rem;background:#1a3a1a;color:#4ade80;
+                               border-radius:4px;padding:2px 7px">✓ הועלה</span>
+                {% else %}
+                  <span style="font-size:0.72rem;background:#3a2a4a;color:#c084fc;
+                               border-radius:4px;padding:2px 7px">ממתין</span>
+                  <button onclick="ahReschedule('{{ b.token }}', '{{ d }}')"
+                          title="שנה תאריך"
+                          style="background:#2a2a3a;border:1px solid #3a3a5a;color:#a78bfa;
+                                 border-radius:5px;padding:3px 7px;cursor:pointer;font-size:0.75rem">
+                    📅
+                  </button>
+                {% endif %}
+                <button onclick="ahDelete('{{ b.token }}', '{{ b.broadcaster }}')"
+                        title="מחק הרשמה"
+                        style="background:#2a1a1a;border:1px solid #5a2a2a;color:#f87171;
+                               border-radius:5px;padding:3px 7px;cursor:pointer;font-size:0.75rem">
+                  ✕
+                </button>
+              </div>
+            </div>
+            {% if not b.uploaded %}
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+              <div style="font-size:0.72rem;color:var(--text-muted);
+                          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"
+                   title="{{ upload_url }}">{{ upload_url }}</div>
+              <button onclick="copyText('{{ upload_url }}', this)"
+                      style="background:#3a2a4a;border:none;color:#c084fc;border-radius:5px;
+                             padding:4px 8px;cursor:pointer;font-size:0.72rem;flex-shrink:0">
+                העתק
+              </button>
+              <a href="{{ upload_url }}" target="_blank"
+                 style="background:#3a2a4a;color:#c084fc;border-radius:5px;
+                        padding:4px 8px;font-size:0.72rem;text-decoration:none;flex-shrink:0">
+                פתח
+              </a>
+            </div>
+            <!-- Inline reschedule form (hidden) -->
+            <div id="ahrs-{{ b.token[:12] }}" style="display:none;margin-top:8px;
+                 background:#1a1a2a;border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px">
+              <div style="font-size:0.75rem;color:#a78bfa;margin-bottom:6px">תאריך חדש (א׳–ה׳ בלבד)</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="date" id="ahrs-date-{{ b.token[:12] }}"
+                       min="{{ now.strftime('%Y-%m-%d') if now is defined else '' }}"
+                       style="background:var(--surface2);border:1px solid #3a2a4a;color:var(--text);
+                              border-radius:5px;padding:5px 8px;font-size:0.82rem;flex:1">
+                <button onclick="ahDoReschedule('{{ b.token }}')"
+                        style="background:#5b21b6;border:none;color:#fff;border-radius:5px;
+                               padding:5px 10px;cursor:pointer;font-size:0.8rem">שמור</button>
+                <button onclick="document.getElementById('ahrs-{{ b.token[:12] }}').style.display='none'"
+                        style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);
+                               border-radius:5px;padding:5px 8px;cursor:pointer;font-size:0.8rem">ביטול</button>
+              </div>
+              <div id="ahrs-msg-{{ b.token[:12] }}" style="font-size:0.75rem;margin-top:4px"></div>
+            </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-msg" style="font-size:0.82rem" id="ahBookingsList">אין הרשמות עדיין לחודש הנוכחי</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Schedule a Show</h2>
+      <form id="scheduleForm" enctype="multipart/form-data">
+
+        <div class="form-group">
+          <label>Show</label>
+          <select name="show_key" id="showSelect" required onchange="onShowChange()">
+            <option value="">— Select show —</option>
+          </select>
+        </div>
+
+        <!-- Manual date: only shown for על הרוקר -->
+        <div class="form-group" id="manualDateGroup" style="display:none">
+          <label>Broadcast Date</label>
+          <input type="date" name="manual_date" id="manualDate" onchange="onShowChange()">
+        </div>
+
+        <!-- Broadcaster: only shown for על הרוקר -->
+        <div class="form-group" id="alHarokerBroadcasterGroup" style="display:none">
+          <label>עורך / Broadcaster</label>
+          <input type="text" name="al_haroker_broadcaster" id="alHarokerBroadcaster"
+                 placeholder="שם העורך" autocomplete="off">
+        </div>
+
+        <!-- Calculated schedule summary -->
+        <div id="scheduleSummary" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.83rem;line-height:2">
+        </div>
+
+        <!-- Manual schedule override -->
+        <div class="form-group" style="margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+            <input type="checkbox" id="useManualSchedule" name="manual_schedule"
+                   style="width:auto;margin:0" onchange="onManualScheduleChange()">
+            <span>Manual schedule <span style="color:var(--text-muted);font-size:0.78rem">(override automatic time — no rerun)</span></span>
+          </label>
+        </div>
+        <div id="manualScheduleGroup" style="display:none;margin-bottom:16px">
+          <label style="font-size:0.82rem;color:var(--text-muted);display:block;margin-bottom:4px">Broadcast date &amp; time</label>
+          <input type="datetime-local" name="manual_broadcast_time" id="manualBroadcastTime"
+                 style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);width:100%;box-sizing:border-box">
+        </div>
+
+        <div class="form-group" id="modeGroup">
+          <label>Mode</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+              <input type="radio" name="mode" value="queue_to_broadcast" checked style="width:auto;margin:0">
+              <span>Queue to Broadcast <span style="color:var(--text-muted);font-size:0.78rem">(+ upload to Podbean &amp; WordPress)</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+              <input type="radio" name="mode" value="queue_only" style="width:auto;margin:0">
+              <span>Queue only <span style="color:var(--text-muted);font-size:0.78rem">(skip Podbean &amp; WordPress)</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Episode Number <span style="color:var(--text-muted);font-weight:normal">(optional)</span></label>
+          <input type="number" name="episode_num" placeholder="042" min="1" step="1" style="direction:ltr">
+        </div>
+
+        <div class="form-group">
+          <label>Playlist / Show Notes <span style="color:var(--text-muted);font-weight:normal">(optional)</span></label>
+          <textarea name="description" rows="3" placeholder="Song list, show notes..."
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-size:0.85rem;resize:vertical;font-family:inherit"></textarea>
+        </div>
+
+        <!-- Single file input (hidden for album show) -->
+        <div class="form-group" id="singleFileGroup">
+          <label>Audio File</label>
+          <input type="file" name="file" id="singleFileInput" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac" required>
+        </div>
+
+        <!-- Album slots (ערב של אלבומים only) -->
+        <div id="albumUploadGroup" style="display:none">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+            Upload 1–8 albums. Playback order: 🎵 Jingle → Album 1 → 🎵 Jingle → Album 2 → … → 🎵 Jingle
+          </div>
+          <div id="albumSlots"></div>
+        </div>
+
+        <!-- Playlist mode toggle (מצעד הרוק של ישראל only) -->
+        <div class="form-group" id="playlistModeGroup" style="display:none">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+            <input type="checkbox" id="playlistModeCheckbox" style="width:auto;margin:0" onchange="onPlaylistModeChange(this)">
+            <span>Playlist mode <span style="color:var(--text-muted);font-size:0.78rem">(upload up to 20 tracks)</span></span>
+          </label>
+        </div>
+
+        <!-- Playlist slots (מצעד הרוק של ישראל playlist mode) -->
+        <div id="playlistFilesGroup" style="display:none;margin-bottom:14px">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+            סדר ניגון: מקום 20, 19 … 1 ← פל״ש 1, 2, 3, 4, 5 (ג׳ינגל בהתחלה ובסוף) &nbsp;·&nbsp; שדות ריקים מדולגים.
+          </div>
+          <div id="playlistSlots"></div>
+        </div>
+
+        <button type="submit" class="btn" id="scheduleBtn">Schedule Show</button>
+      </form>
+    </div>
+
+    <!-- Manual play / queue -->
+    <div class="card" style="margin-top:20px">
+      <h2>Manual Play</h2>
+      <div style="margin-bottom:14px">
+        <label>Play file immediately (upload)</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input type="file" id="playNowFile" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:0.85rem">
+          <button class="btn" style="width:auto;padding:8px 16px;margin-top:0" onclick="playNow()">▶ Play now</button>
+        </div>
+      </div>
+      <div>
+        <label>Queue NAS file path</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input type="text" id="nasPath" placeholder="/mnt/nas/Music/Music Reorganized/..."
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-size:0.85rem">
+          <button class="btn" style="width:auto;padding:9px 16px;margin-top:0" onclick="queuePath()">+ Queue</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Broadcaster Links -->
+    <div class="card" style="margin-top:20px">
+      <h2>Broadcaster Links</h2>
+      <div id="broadcasterLinks" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:0.82rem;"></div>
+    </div>
+
+    <!-- Stream info -->
+    <div class="card" style="margin-top:20px">
+      <h2>Stream Info</h2>
+      <div style="font-size:0.82rem; color:var(--text-subtle); line-height:1.8;">
+        <div>🎙 Stream: <code style="color:var(--accent)">http://192.168.1.166:8000/stream</code></div>
+        <div>📡 Icecast admin: <a href="http://admin:zerock2026@192.168.1.166:8000/admin/" target="_blank" style="color:var(--accent)">port 8000/admin</a> <span style="color:var(--text-muted);font-size:0.75rem">(user: admin)</span></div>
+        <div>🔑 Source / admin pass: <code style="color:var(--text-muted)">zerock2026</code></div>
+        <div style="margin-top:10px; color:var(--text-muted)">
+          Rocky pattern: E→E→H→E→Jingle ↺<br>
+          Shows interrupt at track boundary.
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── Now playing + progress bar ────────────────────────────────────────────────
+let npDuration  = 0;
+let npRemaining = 0;
+let npLastPoll  = Date.now();
+
+function fmtTime(secs) {
+  if (!isFinite(secs) || secs < 0) return '–:––';
+  const s = Math.floor(secs);
+  const m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
+function updateProgressBar() {
+  if (npDuration <= 0) return;
+  const secsSincePoll = (Date.now() - npLastPoll) / 1000;
+  const remaining = Math.max(0, npRemaining - secsSincePoll);
+  const elapsed   = npDuration - remaining;
+  const pct       = Math.min(100, (elapsed / npDuration) * 100);
+
+  document.getElementById('npElapsed').textContent   = fmtTime(elapsed);
+  document.getElementById('npRemaining').textContent  = '-' + fmtTime(remaining);
+  document.getElementById('npBarFill').style.width    = pct + '%';
+}
+
+let _currentNpPath = '';
+
+async function pollNowPlaying() {
+  try {
+    const d = await fetch('/api/nowplaying').then(r => r.json());
+    _currentNpPath = d.full_path || d.filename || '';
+    // Title/Artist are synced from on_air in refreshQueue() — same source as live queue
+    const hasTime = d.duration > 0;
+    document.getElementById('npProgressWrap').style.display = hasTime ? 'block' : 'none';
+
+    if (hasTime) {
+      npDuration  = d.duration;
+      npRemaining = d.remaining;
+      npLastPoll  = Date.now();
+      updateProgressBar();
+    }
+  } catch {}
+}
+
+// Poll every 1s (server responds instantly from cache); interpolate every second
+setInterval(pollNowPlaying, 1000);
+setInterval(updateProgressBar, 1000);
+pollNowPlaying();
+
+// ── Status poller ─────────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const d = await fetch('/api/status').then(r => r.json());
+    const dot   = document.getElementById('statusDot');
+    const label = document.getElementById('statusLabel');
+    const icon  = document.getElementById('npIcon');
+    const btnStop  = document.getElementById('btnStop');
+    const btnStart = document.getElementById('btnStart');
+
+    if (d.liquidsoap) {
+      if (d.stream_active) {
+        dot.classList.add('live');
+        label.textContent = 'Live';
+        icon.classList.remove('paused');
+        btnStop.style.display  = 'inline-block';
+        btnStart.style.display = 'none';
+      } else {
+        dot.classList.remove('live');
+        label.textContent = 'Broadcast paused';
+        icon.classList.add('paused');
+        btnStop.style.display  = 'none';
+        btnStart.style.display = 'inline-block';
+      }
+    } else {
+      dot.classList.remove('live');
+      label.textContent = 'Offline';
+      icon.classList.add('paused');
+      btnStop.style.display  = 'none';
+      btnStart.style.display = 'none';
+    }
+
+    // Sync stream toggles
+    const localToggle = document.getElementById('localStreamToggle');
+    const localStatus = document.getElementById('localStreamStatus');
+    if (localToggle && !localToggle._busy) {
+      localToggle.checked = !!d.stream_active;
+      localStatus.textContent = d.stream_active ? 'On air' : 'Off';
+      localStatus.className = 'stream-status ' + (d.stream_active ? 'on' : 'off');
+    }
+    const extToggle = document.getElementById('extStreamToggle');
+    const extStatus = document.getElementById('extStreamStatus');
+    if (extToggle && !extToggle._busy) {
+      extToggle.checked = !!d.external_stream_active;
+      extStatus.textContent = d.external_stream_active ? 'On air' : 'Off';
+      extStatus.className = 'stream-status ' + (d.external_stream_active ? 'on' : 'off');
+    }
+
+    // Sync zikaron status (two separate cards: holocaust + memorial)
+    const sched    = d.zikaron_schedule || {};
+    const zType    = d.zikaron_type || null;
+    ['holocaust', 'memorial'].forEach(type => {
+      const statusEl = document.getElementById(type + 'Status');
+      if (!statusEl) return;
+      const w        = (sched[type] || {});
+      const isActive = !!d.zikaron_active && zType === type;
+      if (isActive) {
+        const until = w.until ? fmtDt(w.until) : '';
+        statusEl.textContent = `🔴 Active — broadcasting until ${until}`;
+        statusEl.style.color = 'var(--danger)';
+      } else if (w.from) {
+        const f = new Date(w.from), u = new Date(w.until);
+        statusEl.textContent = `Scheduled: ${fmtDt(f.toISOString())} → ${fmtDt(u.toISOString())}`;
+        statusEl.style.color = 'var(--text-muted)';
+        const fEl = document.getElementById(type + 'From');
+        const uEl = document.getElementById(type + 'Until');
+        if (fEl && !fEl._dirty) fEl.value = w.from.slice(0,16);
+        if (uEl && !uEl._dirty) uEl.value = w.until.slice(0,16);
+      } else {
+        statusEl.textContent = 'Inactive — set a schedule below to activate automatically';
+        statusEl.style.color = 'var(--text-muted)';
+      }
+    });
+
+    // Show/hide zikaron badge
+    const badge = document.getElementById('zikaronBadge');
+    if (badge) {
+      badge.style.display = d.zikaron_active ? '' : 'none';
+      if (d.zikaron_active) {
+        badge.textContent = d.zikaron_type === 'holocaust' ? '🕯 יום השואה' : '🕯 יום הזיכרון';
+      }
+    }
+  } catch {}
+}
+setInterval(pollStatus, 8000);
+pollStatus();
+
+// ── Stream toggle functions ───────────────────────────────────────────────────
+async function toggleLocalStream(cb) {
+  cb._busy = true;
+  const status = document.getElementById('localStreamStatus');
+  status.textContent = 'Updating…'; status.className = 'stream-status off';
+  try {
+    await fetch(cb.checked ? '/api/stream/start' : '/api/stream/stop', { method: 'POST' });
+    toast(cb.checked ? 'Local stream started' : 'Local stream stopped', 'ok');
+  } catch {
+    toast('Failed to toggle local stream', 'err');
+    cb.checked = !cb.checked;
+  }
+  cb._busy = false;
+  pollStatus();
+}
+
+async function toggleExternalStream(cb) {
+  if (cb.checked && !confirm('Activate external stream to icecast.live?')) {
+    cb.checked = false; return;
+  }
+  cb._busy = true;
+  const status = document.getElementById('extStreamStatus');
+  status.textContent = 'Updating…'; status.className = 'stream-status off';
+  try {
+    await fetch(cb.checked ? '/api/stream/external/start' : '/api/stream/external/stop', { method: 'POST' });
+    toast(cb.checked ? 'External stream started' : 'External stream stopped', 'ok');
+  } catch {
+    toast('Failed to toggle external stream', 'err');
+    cb.checked = !cb.checked;
+  }
+  cb._busy = false;
+  pollStatus();
+}
+
+// ── Zikaron mode ─────────────────────────────────────────────────────────────
+// Mark fields dirty when user edits them so pollStatus won't overwrite
+document.addEventListener('DOMContentLoaded', () => {
+  ['holocaustFrom','holocaustUntil','memorialFrom','memorialUntil'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { el._dirty = true; });
+  });
+});
+
+async function saveZikaron(type) {
+  const fromId  = type === 'holocaust' ? 'holocaustFrom'  : 'memorialFrom';
+  const untilId = type === 'holocaust' ? 'holocaustUntil' : 'memorialUntil';
+  const from    = document.getElementById(fromId).value;
+  const until   = document.getElementById(untilId).value;
+  if (!from || !until) { toast('Please set both From and Until dates', 'err'); return; }
+  try {
+    const r = await fetch('/api/zikaron', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type, from, until})
+    }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); return; }
+    document.getElementById(fromId)._dirty  = false;
+    document.getElementById(untilId)._dirty = false;
+    const label = type === 'holocaust' ? 'יום השואה' : 'יום הזיכרון';
+    toast(r.active ? `🕯 ${label} mode is now ACTIVE` : `🕯 ${label} scheduled`, 'ok');
+    pollStatus();
+  } catch { toast('Failed to save zikaron schedule', 'err'); }
+}
+
+async function clearZikaron(type) {
+  try {
+    await fetch('/api/zikaron', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type, clear: true})
+    });
+    const fromId  = type === 'holocaust' ? 'holocaustFrom'  : 'memorialFrom';
+    const untilId = type === 'holocaust' ? 'holocaustUntil' : 'memorialUntil';
+    const fEl = document.getElementById(fromId);
+    const uEl = document.getElementById(untilId);
+    fEl.value = ''; fEl._dirty = false;
+    uEl.value = ''; uEl._dirty = false;
+    const label = type === 'holocaust' ? 'יום השואה' : 'יום הזיכרון';
+    toast(`${label} schedule cleared`, 'ok');
+    pollStatus();
+  } catch { toast('Failed to clear zikaron', 'err'); }
+}
+
+// ── Countdown timers ──────────────────────────────────────────────────────────
+function updateCountdowns() {
+  document.querySelectorAll('[data-time]').forEach(el => {
+    const t = new Date(el.dataset.time);
+    const diff = Math.floor((t - Date.now()) / 1000);
+    if (diff < 0) {
+      el.textContent = 'overdue';
+      el.style.color = 'var(--danger)';
+    } else {
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      el.textContent = h > 0
+        ? `in ${h}h ${m}m`
+        : m > 0 ? `in ${m}m ${s}s` : `in ${s}s`;
+    }
+  });
+}
+setInterval(updateCountdowns, 1000);
+updateCountdowns();
+
+// ── Show selector ─────────────────────────────────────────────────────────────
+let _shows = [];
+
+async function loadShowList() {
+  try {
+    _shows = await fetch('/api/shows').then(r => r.json());
+    const sel = document.getElementById('showSelect');
+    _shows.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.key;
+      opt.textContent = s.label;
+      sel.appendChild(opt);
+    });
+    renderBroadcasterLinks();
+  } catch(e) { console.error('Failed to load shows', e); }
+}
+loadShowList();
+
+function renderBroadcasterLinks() {
+  const container = document.getElementById('broadcasterLinks');
+  if (!container) return;
+  const base = window.location.origin;
+  container.innerHTML = _shows.map(s => {
+    const url = `${base}/${s.slug_en}`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">
+      <span style="flex:1;color:var(--text-subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${s.label}">${s.label}</span>
+      <a href="${url}" target="_blank" style="color:var(--accent);font-size:0.78rem;white-space:nowrap;text-decoration:none;flex-shrink:0">${url.replace(window.location.origin,'')}</a>
+      <button onclick="copyLink('${url}',this)" style="background:var(--surface);border:1px solid var(--border);color:var(--text-muted);border-radius:5px;padding:2px 8px;font-size:0.72rem;cursor:pointer;flex-shrink:0">Copy</button>
+    </div>`;
+  }).join('');
+}
+
+function copyLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+  });
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ הועתק';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1800);
+  });
+}
+
+// ── Al HaRoker booking management ──────────────────────────────────────────
+function ahDelete(token, name) {
+  if (!confirm(`מחוק את ההרשמה של ${name}?`)) return;
+  fetch(`/api/al-haroker-booking/${token}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        const el = document.getElementById('ahb-' + token.slice(0, 12));
+        if (el) el.remove();
+        showToast('ההרשמה נמחקה');
+      } else {
+        showToast('שגיאה: ' + (d.error || 'unknown'));
+      }
+    })
+    .catch(() => showToast('שגיאת תקשורת'));
+}
+
+function ahReschedule(token, currentDate) {
+  const panel = document.getElementById('ahrs-' + token.slice(0, 12));
+  const inp   = document.getElementById('ahrs-date-' + token.slice(0, 12));
+  if (!panel) return;
+  inp.value = currentDate;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function ahDoReschedule(token) {
+  const inp  = document.getElementById('ahrs-date-' + token.slice(0, 12));
+  const msg  = document.getElementById('ahrs-msg-' + token.slice(0, 12));
+  const date = inp ? inp.value : '';
+  if (!date) { if (msg) msg.textContent = 'נא לבחור תאריך'; return; }
+
+  // Client-side weekday check (Sun=0, Mon=1, Tue=2, Wed=3, Thu=4 are ok)
+  const [y, m, d] = date.split('-').map(Number);
+  const jsDay = new Date(y, m - 1, d).getDay();  // 0=Sun..6=Sat
+  if (jsDay === 5 || jsDay === 6) {
+    if (msg) msg.innerHTML = '<span style="color:#f87171">ניתן לבחור רק ימי א׳–ה׳</span>';
+    return;
+  }
+
+  try {
+    const r = await fetch(`/api/al-haroker-booking/${token}/reschedule`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ date })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      showToast('תאריך עודכן ל-' + date.split('-').reverse().join('/'));
+      setTimeout(() => location.reload(), 800);
+    } else if (data.error === 'date_taken') {
+      if (msg) msg.innerHTML = '<span style="color:#f87171">התאריך הזה כבר תפוס</span>';
+    } else if (data.error === 'already_uploaded') {
+      if (msg) msg.innerHTML = '<span style="color:#f87171">הקובץ כבר הועלה — לא ניתן לשנות תאריך</span>';
+    } else {
+      if (msg) msg.innerHTML = '<span style="color:#f87171">' + (data.error || 'שגיאה') + '</span>';
+    }
+  } catch(e) {
+    if (msg) msg.innerHTML = '<span style="color:#f87171">שגיאת תקשורת</span>';
+  }
+}
+
+function fmtDt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const dd   = String(d.getDate()).padStart(2, '0');
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const hh   = String(d.getHours()).padStart(2, '0');
+  const min  = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+}
+
+function onManualScheduleChange() {
+  const checked = document.getElementById('useManualSchedule').checked;
+  document.getElementById('manualScheduleGroup').style.display = checked ? '' : 'none';
+  if (checked) {
+    document.getElementById('scheduleSummary').style.display = 'none';
+  } else {
+    onShowChange(); // restore auto summary
+  }
+}
+
+function initAlbumSlots() {
+  const container = document.getElementById('albumSlots');
+  if (!container || container.dataset.built === '1') return;
+  container.dataset.built = '1';
+  let html = '';
+  for (let i = 0; i < 8; i++) {
+    const req = i === 0
+      ? '<span style="color:var(--danger);font-size:0.75rem"> *</span>'
+      : ' <span style="color:var(--text-muted);font-weight:normal;font-size:0.78rem">(optional)</span>';
+    html += `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:0.82rem;font-weight:600;margin-bottom:8px">Album ${i + 1}${req}</div>
+        <input type="file" name="album_${i}" multiple accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+               style="display:block;width:100%;font-size:0.8rem;margin-bottom:6px"
+               onchange="updateAlbumSlot(${i})">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:5px">— or select a folder —</div>
+        <input type="file" name="album_${i}" webkitdirectory multiple
+               style="display:block;width:100%;font-size:0.8rem"
+               onchange="updateAlbumSlot(${i})">
+        <div id="albumSlot${i}Count" style="font-size:0.78rem;color:var(--success);margin-top:6px;min-height:1em"></div>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function updateAlbumSlot(i) {
+  const inputs = document.querySelectorAll(`input[name="album_${i}"]`);
+  let total = 0;
+  inputs.forEach(inp => { total += inp.files ? inp.files.length : 0; });
+  const el = document.getElementById(`albumSlot${i}Count`);
+  if (el) el.textContent = total > 0 ? `✓ ${total} track${total !== 1 ? 's' : ''} selected` : '';
+}
+
+function buildPlaylistSlots() {
+  const container = document.getElementById('playlistSlots');
+  if (!container || container.dataset.built === '1') return;
+  container.dataset.built = '1';
+  let html = '';
+  const badges = [
+    { name: 'aliya',     label: 'העליה הגבוהה' },
+    { name: 'yerida',    label: 'הירידה הגבוהה' },
+    { name: 'knisa',     label: 'הכניסה הגבוהה' },
+    { name: 'knisa_new', label: 'כניסה חדשה' },
+  ];
+  for (let i = 0; i < 20; i++) {
+    const badgeHtml = badges.map(b =>
+      `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.75rem;color:var(--text-muted);white-space:nowrap;font-weight:normal">
+        <input type="checkbox" name="pl_${i}_${b.name}" style="width:auto;margin:0;cursor:pointer">
+        ${b.label}
+      </label>`
+    ).join('');
+    html += `
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span style="font-size:0.82rem;color:var(--text-muted);width:60px;text-align:right;flex-shrink:0;direction:rtl">מקום ${i + 1}</span>
+          <input type="file" name="playlist_${i}" class="playlist-file-input"
+            accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem">
+        </div>
+        <div style="margin-right:0;padding-right:70px;display:flex;flex-wrap:wrap;gap:4px 14px;direction:rtl">
+          ${badgeHtml}
+        </div>
+      </div>`;
+  }
+  html += `<div style="border-top:1px solid var(--border);margin:12px 0 10px"></div>`;
+  for (let i = 0; i < 5; i++) {
+    html += `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:0.82rem;color:var(--accent);width:60px;text-align:right;flex-shrink:0;direction:rtl">פל״ש ${i + 1}</span>
+        <input type="file" name="palash_${i}" class="playlist-file-input"
+          accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+          style="flex:1;background:var(--surface2);border:1px solid var(--accent);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem">
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function onPlaylistModeChange(cb) {
+  const filesGroup  = document.getElementById('playlistFilesGroup');
+  const singleGroup = document.getElementById('singleFileGroup');
+  const fileInput   = document.getElementById('singleFileInput');
+  if (cb.checked) {
+    filesGroup.style.display  = '';
+    singleGroup.style.display = 'none';
+    fileInput.required = false;
+    buildPlaylistSlots();
+  } else {
+    filesGroup.style.display  = 'none';
+    singleGroup.style.display = '';
+    fileInput.required = true;
+  }
+}
+
+function onShowChange() {
+  if (document.getElementById('useManualSchedule').checked) return;
+  const key  = document.getElementById('showSelect').value;
+  const show = _shows.find(s => s.key === key);
+  const manualGroup = document.getElementById('manualDateGroup');
+  const summary     = document.getElementById('scheduleSummary');
+
+  const isAlbum   = show && show.key === 'erev_albumim';
+  const isMatzad  = show && show.key === 'matzad_harok';
+  const noPodbean = show && show.no_podbean;
+  const plChecked = document.getElementById('playlistModeCheckbox').checked;
+
+  document.getElementById('singleFileGroup').style.display  = (isAlbum || (isMatzad && plChecked)) ? 'none' : '';
+  document.getElementById('albumUploadGroup').style.display = isAlbum ? '' : 'none';
+  document.getElementById('modeGroup').style.display        = (isAlbum || noPodbean) ? 'none' : '';
+  document.getElementById('playlistModeGroup').style.display = isMatzad ? '' : 'none';
+  if (!isMatzad) {
+    document.getElementById('playlistModeCheckbox').checked = false;
+    document.getElementById('playlistFilesGroup').style.display = 'none';
+  }
+  if (isAlbum || noPodbean) {
+    document.querySelector('input[name="mode"][value="queue_only"]').checked = true;
+  }
+  if (isAlbum) {
+    initAlbumSlots();
+  }
+  document.getElementById('singleFileInput').required = !(isAlbum || (isMatzad && plChecked));
+
+  if (!show) { manualGroup.style.display='none'; summary.style.display='none'; return; }
+
+  const broadcasterGroup = document.getElementById('alHarokerBroadcasterGroup');
+  if (show.manual_date) {
+    manualGroup.style.display = '';
+    broadcasterGroup.style.display = '';
+    // Recalculate when date changes
+    const dateInput = document.getElementById('manualDate');
+    if (dateInput.value) {
+      refreshManualSummary(show, dateInput.value);
+    } else {
+      summary.style.display = 'none';
+    }
+  } else {
+    manualGroup.style.display = 'none';
+    broadcasterGroup.style.display = 'none';
+    summary.style.display = '';
+    summary.innerHTML =
+      `<div>📡 <strong>Broadcast:</strong> ${fmtDt(show.next_broadcast)}</div>` +
+      (!show.no_podbean ? `<div>⬆️ <strong>Upload (Podbean/WP):</strong> ${fmtDt(show.next_upload)}</div>` : '') +
+      (show.has_rerun ? `<div>🔄 <strong>Rerun:</strong> ${fmtDt(show.next_rerun)}</div>` : '');
+  }
+}
+
+function refreshManualSummary(show, dateStr) {
+  const summary = document.getElementById('scheduleSummary');
+  if (!dateStr) { summary.style.display='none'; return; }
+  // For manual shows, build basic summary (server calculates exact time)
+  summary.style.display = '';
+  const d = new Date(dateStr + 'T' + show.time);
+  summary.innerHTML = `<div>📡 <strong>Broadcast:</strong> ${fmtDt(d.toISOString())}</div>` +
+    (!show.no_podbean ? `<div>⬆️ <strong>Upload (Podbean/WP):</strong> same day at ${show.upload_time}</div>` : '');
+}
+
+document.getElementById('manualDate').addEventListener('change', function() {
+  const key  = document.getElementById('showSelect').value;
+  const show = _shows.find(s => s.key === key);
+  if (show && show.manual_date) refreshManualSummary(show, this.value);
+});
+
+// ── Schedule form ─────────────────────────────────────────────────────────────
+document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const key = document.getElementById('showSelect').value;
+  if (!key) { toast('Please select a show', 'err'); return; }
+  if (document.getElementById('useManualSchedule').checked &&
+      !document.getElementById('manualBroadcastTime').value) {
+    toast('Please enter a broadcast date and time', 'err'); return;
+  }
+  // Validate album show has at least one file in album 1
+  if (key === 'erev_albumim') {
+    const album0Inputs = document.querySelectorAll('input[name="album_0"]');
+    let total = 0;
+    album0Inputs.forEach(inp => { total += inp.files ? inp.files.length : 0; });
+    if (total === 0) {
+      toast('Please add files for Album 1 at minimum', 'err'); return;
+    }
+  }
+  // Validate playlist mode has at least one file
+  if (key === 'matzad_harok' && document.getElementById('playlistModeCheckbox').checked) {
+    const plInputs = document.querySelectorAll('.playlist-file-input');
+    let hasFile = false;
+    plInputs.forEach(inp => { if (inp.files && inp.files.length > 0) hasFile = true; });
+    if (!hasFile) { toast('הוסף לפחות טראק אחד', 'err'); return; }
+  }
+  const btn = document.getElementById('scheduleBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  try {
+    const data = new FormData(e.target);
+    const r = await fetch('/api/schedule', { method: 'POST', body: data });
+    const j = await r.json();
+    if (j.success) {
+      const s = j.show;
+      const bcast = new Date(s.scheduled_time);
+      toast(`Scheduled: ${bcast.toLocaleString('en-IL',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})}`, 'ok');
+      e.target.reset();
+      document.getElementById('scheduleSummary').style.display = 'none';
+      document.getElementById('useManualSchedule').checked = false;
+      document.getElementById('manualScheduleGroup').style.display = 'none';
+      document.getElementById('albumUploadGroup').style.display = 'none';
+      document.getElementById('singleFileGroup').style.display = '';
+      document.getElementById('modeGroup').style.display = '';
+      document.getElementById('singleFileInput').required = true;
+      // Reset album slots (force rebuild next time)
+      const slotsContainer = document.getElementById('albumSlots');
+      if (slotsContainer) { slotsContainer.innerHTML = ''; slotsContainer.dataset.built = ''; }
+      // Reset playlist mode
+      document.getElementById('playlistModeGroup').style.display = 'none';
+      document.getElementById('playlistModeCheckbox').checked = false;
+      document.getElementById('playlistFilesGroup').style.display = 'none';
+      const plSlots = document.getElementById('playlistSlots');
+      if (plSlots) { plSlots.innerHTML = ''; plSlots.dataset.built = ''; }
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      toast(j.error || 'Failed', 'err');
+    }
+  } catch(err) {
+    toast('Upload error: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Schedule Show';
+  }
+});
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+async function deleteShow(id) {
+  if (!confirm('Remove this show?')) return;
+  try {
+    await fetch('/api/schedule/' + id, { method: 'DELETE' });
+    const el = document.getElementById('show-' + id);
+    if (el) el.remove();
+    toast('Show removed', 'ok');
+  } catch { toast('Error', 'err'); }
+}
+
+async function triggerNow(id) {
+  if (!confirm('Play this show now? (Jingle → Show → Jingle)')) return;
+  try {
+    const r = await fetch('/api/trigger/' + id, { method: 'POST' });
+    const j = await r.json();
+    if (j.success) {
+      toast('Show queued!', 'ok');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      toast('Failed to trigger', 'err');
+    }
+  } catch { toast('Error', 'err'); }
+}
+
+async function skipTrack() {
+  try {
+    const r = await fetch('/api/skip', { method: 'POST' });
+    const j = await r.json();
+    if (j.response && j.response.includes('ERROR')) {
+      toast('Skip failed', 'err');
+    } else {
+      toast('Skipped', 'ok');
+      setTimeout(pollNowPlaying, 1000);
+    }
+  } catch { toast('Error', 'err'); }
+}
+
+async function playNow() {
+  const file = document.getElementById('playNowFile').files[0];
+  if (!file) { toast('Select a file first', 'err'); return; }
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/play-now', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (j.success) { toast('Playing now!', 'ok'); document.getElementById('playNowFile').value = ''; }
+    else { toast('Error: ' + j.error, 'err'); }
+  } catch { toast('Upload error', 'err'); }
+}
+
+async function queuePath() {
+  const path = document.getElementById('nasPath').value.trim();
+  if (!path) { toast('Enter a file path', 'err'); return; }
+  try {
+    const r = await fetch('/api/queue-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path })
+    });
+    const j = await r.json();
+    if (j.success) { toast('Queued!', 'ok'); document.getElementById('nasPath').value = ''; }
+    else { toast('Error: ' + (j.error || j.response), 'err'); }
+  } catch { toast('Error', 'err'); }
+}
+
+// ── Shows queue display ────────────────────────────────────────────────────────
+async function refreshQueue() {
+  try {
+    const r = await fetch('/api/queue-status').then(r => r.json());
+    const el = document.getElementById('liveQueue');
+    if (!el) return;
+    const queue      = r.queue       || [];
+    const nextTracks = r.next_tracks || [];
+    const onAir      = r.on_air;
+    let html = '';
+
+    // ── Sync Now Playing display from on_air (same source as live queue) ──
+    if (onAir) {
+      const npTitle  = document.getElementById('npTitle');
+      const npArtist = document.getElementById('npArtist');
+      if (npTitle)  npTitle.textContent  = onAir.label  || onAir.title  || '—';
+      if (npArtist) npArtist.textContent = onAir.artist || '';
+    }
+
+    // ── Currently on air ──────────────────────────────────────────
+    if (onAir) {
+      const typeLabel = onAir.show   ? 'On Air · Show'
+                      : onAir.jingle ? 'On Air · Jingle'
+                      :                'On Air · Rocky';
+      const dotColor  = onAir.show   ? 'var(--accent)'
+                      : onAir.jingle ? '#e69a2a'
+                      :                'var(--success)';
+      html += `<div class="show-item">
+                 <div class="show-dot" style="background:${dotColor};animation:pulse 1.2s ease-in-out infinite"></div>
+                 <div class="show-info">
+                   <div class="show-name">${onAir.label}</div>
+                   <div class="show-time">${typeLabel}</div>
+                 </div>
+               </div>`;
+    }
+
+    // ── Queued shows ──────────────────────────────────────────────
+    if (queue.length) {
+      html += queue.map((item, i) =>
+        `<div class="show-item">
+           <div class="show-dot" style="background:var(--accent)"></div>
+           <div class="show-info"><div class="show-name">${item}</div></div>
+           <div style="font-size:0.72rem;color:var(--text-muted)">Next show #${i+1}</div>
+         </div>`).join('');
+    }
+
+    // ── Next buffered Rocky / Jingle track ────────────────────────
+    nextTracks.forEach(t => {
+      const typeLabel = t.jingle ? 'Up Next · Jingle' : 'Up Next · Rocky';
+      html += `<div class="show-item" style="opacity:0.5">
+                 <div class="show-dot" style="background:var(--text-muted)"></div>
+                 <div class="show-info">
+                   <div class="show-name">${t.label}</div>
+                   <div class="show-time">${typeLabel}</div>
+                 </div>
+               </div>`;
+    });
+
+    if (!html) html = '<div class="empty-msg">Rocky is playing</div>';
+    el.innerHTML = html;
+  } catch {}
+}
+setInterval(refreshQueue, 3000);
+refreshQueue();
+
+async function streamStop() {
+  if (!confirm('Stop broadcasting to Icecast? Other sources can then connect.')) return;
+  try {
+    await fetch('/api/stream/stop', { method: 'POST' });
+    toast('Broadcast stopped', 'ok');
+    pollStatus();
+  } catch { toast('Error', 'err'); }
+}
+
+async function streamStart() {
+  try {
+    await fetch('/api/stream/start', { method: 'POST' });
+    toast('Broadcast resumed', 'ok');
+    pollStatus();
+  } catch { toast('Error', 'err'); }
+}
+
+// ── Schedule (live-refreshing) ────────────────────────────────────────────────
+function fmtScheduleTime(iso) {
+  return iso ? iso.replace('T', ' ') : '';
+}
+
+async function refreshSchedule() {
+  try {
+    const all = await fetch('/api/schedule').then(r => r.json());
+    const now = new Date();
+
+    const upcoming = all
+      .filter(s => !s.triggered && new Date(s.scheduled_time) > now)
+      .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
+
+    const past = all
+      .filter(s => s.triggered)
+      .sort((a, b) => (b.triggered_at || '').localeCompare(a.triggered_at || ''))
+      .slice(0, 15);
+
+    const upEl = document.getElementById('upcomingList');
+    if (upEl) {
+      if (!upcoming.length) {
+        upEl.innerHTML = '<div class="empty-msg">No shows scheduled</div>';
+      } else {
+        upEl.innerHTML = upcoming.map(s => `
+          <div class="show-item" id="show-${s.id}">
+            <div class="show-dot"></div>
+            <div class="show-info">
+              <div class="show-name">${s.name}${s.is_rerun ? ' <span class="rerun-badge">(rerun)</span>' : ''}</div>
+              <div class="show-time">${fmtScheduleTime(s.scheduled_time)}</div>
+            </div>
+            <div class="show-countdown" data-time="${s.scheduled_time}"></div>
+            <div class="show-actions">
+              <button class="btn-sm btn-play" onclick="triggerNow('${s.id}')">▶ Now</button>
+              <button class="btn-sm btn-reschedule" onclick="openReschedule('${s.id}','${s.scheduled_time}')">📅</button>
+              <button class="btn-sm btn-del" onclick="deleteShow('${s.id}')">✕</button>
+            </div>
+          </div>`).join('');
+        updateCountdowns();
+      }
+    }
+
+    const pastEl = document.querySelector('#upcomingList')?.closest('.card')?.nextElementSibling?.nextElementSibling?.querySelector('div:last-child') || null;
+    const pastCard = document.getElementById('pastShowsList');
+    if (pastCard) {
+      if (!past.length) {
+        pastCard.innerHTML = '<div class="empty-msg">No shows played yet</div>';
+      } else {
+        pastCard.innerHTML = past.map(s => `
+          <div class="show-item">
+            <div class="show-dot done"></div>
+            <div class="show-info">
+              <div class="show-name">${s.name}</div>
+              <div class="show-time">Played ${fmtScheduleTime((s.triggered_at || '').slice(0,16))}</div>
+            </div>
+          </div>`).join('');
+      }
+    }
+  } catch {}
+}
+setInterval(refreshSchedule, 15000);
+refreshSchedule();
+
+// ── Play History ──────────────────────────────────────────────────────────────
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) +
+         ' · ' + d.toLocaleDateString([], {month:'short', day:'numeric'});
+}
+
+function trackTypeBadge(type) {
+  if (type === 'show')   return '<span style="background:var(--primary);color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">(Show)</span>';
+  if (type === 'jingle') return '<span style="background:#e69a2a;color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">(Jingle)</span>';
+  return '<span style="background:var(--success,#2a9d2a);color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">(Rocky)</span>';
+}
+
+// Tracks the user has excluded this session (also persisted in localStorage)
+const _excludedPaths = new Set(JSON.parse(localStorage.getItem('zerock_excluded') || '[]'));
+function _saveExcluded() {
+  try { localStorage.setItem('zerock_excluded', JSON.stringify([..._excludedPaths])); } catch {}
+}
+
+async function excludeTrack(path) {
+  if (!path) return;
+  try {
+    const r = await fetch('/api/exclude-track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      _excludedPaths.add(path);
+      _saveExcluded();
+      // If this track is currently playing, skip it immediately
+      const isPlaying = _currentNpPath && (
+        _currentNpPath === path || _currentNpPath.endsWith('/' + path.split('/').pop())
+      );
+      if (isPlaying) {
+        await fetch('/api/skip', { method: 'POST' });
+        toast('Track excluded and skipped', 'ok');
+      } else {
+        toast('Track excluded — won\'t play again', 'ok');
+      }
+      loadHistory();
+    } else {
+      toast(j.error || 'Failed to exclude track', 'err');
+    }
+  } catch {
+    toast('Error contacting server', 'err');
+  }
+}
+
+async function loadHistory() {
+  try {
+    const items = await fetch('/api/history').then(r => r.json());
+    const el = document.getElementById('historyList');
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<div class="empty-msg">Nothing played yet</div>';
+      return;
+    }
+    el.innerHTML = items.map(e => {
+      const type = e.type || 'rocky';
+      const excludePath = e.full_path || e.filename || '';
+      const alreadyExcluded = _excludedPaths.has(excludePath);
+      const safeExcludePath = excludePath.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      const excludeBtn = (type === 'rocky' && excludePath)
+        ? alreadyExcluded
+          ? `<button disabled title="Already excluded"
+               style="margin-left:8px;padding:2px 7px;font-size:0.7rem;background:#c0392b;border:1px solid #c0392b;border-radius:4px;color:#fff;cursor:default;white-space:nowrap;vertical-align:middle;opacity:0.85">🚫 Don't play again</button>`
+          : `<button data-exclude-path="${safeExcludePath}" onclick="excludeTrack(this.dataset.excludePath)" title="Don't play again"
+               style="margin-left:8px;padding:2px 7px;font-size:0.7rem;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);cursor:pointer;white-space:nowrap;vertical-align:middle"
+               onmouseover="this.style.background='var(--danger,#c0392b)';this.style.color='#fff';this.style.borderColor='var(--danger,#c0392b)'"
+               onmouseout="this.style.background='transparent';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">🚫 Don't play again</button>`
+        : '';
+      return `
+      <div class="show-item">
+        <div class="show-dot done"></div>
+        <div class="show-info">
+          <div class="show-name" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${e.title || e.filename || '—'}${trackTypeBadge(type)}${e.auto_rerun ? ' <span style="background:#7b4f9e;color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle">🤖 Automated Rerun</span>' : ''}${excludeBtn}</div>
+          <div class="show-time">${e.artist ? e.artist + ' · ' : ''}${fmtDateTime(e.played_at)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+setInterval(loadHistory, 30000);
+loadHistory();
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+// ── Reschedule modal ──────────────────────────────────────────────────────────
+let _rescheduleId = null;
+
+function openReschedule(id, currentIso) {
+  _rescheduleId = id;
+  // Pre-fill with current time (strip seconds for datetime-local)
+  const dt = new Date(currentIso);
+  const pad = n => String(n).padStart(2,'0');
+  const local = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  document.getElementById('rescheduleInput').value = local;
+  document.getElementById('rescheduleOverlay').classList.add('open');
+}
+
+function closeReschedule() {
+  document.getElementById('rescheduleOverlay').classList.remove('open');
+  _rescheduleId = null;
+}
+
+async function saveReschedule() {
+  const newTime = document.getElementById('rescheduleInput').value;
+  if (!newTime || !_rescheduleId) return;
+  const btn = document.getElementById('rescheduleSave');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const r = await fetch(`/api/schedule/${_rescheduleId}/reschedule`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ new_time: newTime })
+    });
+    const j = await r.json();
+    if (j.success) {
+      toast('Rescheduled ✓', 'ok');
+      closeReschedule();
+      setTimeout(loadSchedule, 300);
+    } else {
+      toast(j.error || 'Failed', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Save'; }
+}
+
+// Close on overlay click
+document.getElementById('rescheduleOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('rescheduleOverlay')) closeReschedule();
+});
+</script>
+
+<!-- Reschedule modal -->
+<div id="rescheduleOverlay">
+  <div id="rescheduleModal">
+    <h3>📅 Reschedule Show</h3>
+    <label>New broadcast date &amp; time</label>
+    <input type="datetime-local" id="rescheduleInput">
+    <div class="modal-actions">
+      <button id="rescheduleSave" onclick="saveReschedule()">Save</button>
+      <button id="rescheduleCancel" onclick="closeReschedule()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

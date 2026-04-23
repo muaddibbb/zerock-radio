@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeRock Uploader</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <img src="logo.png" alt="ZeRock Radio" style="width:64px;height:64px;object-fit:contain;border-radius:8px;">
+      </div>
+      <div class="header-text">
+        <h1>ZeRock Uploader</h1>
+        <p>Publish your podcast episode in seconds</p>
+      </div>
+      <div id="statusBadge" class="status-badge checking">Checking...</div>
+    </header>
+
+    <div id="credentialsWarning" class="alert alert-warning" style="display:none;">
+      <strong>Setup required:</strong> Create a <code>.env</code> file with your <code>PODBEAN_CLIENT_ID</code> and <code>PODBEAN_CLIENT_SECRET</code>.
+      See <code>.env.example</code> for reference.
+    </div>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="showName">Show Name <span class="required">*</span></label>
+          <select id="showName" name="showName" required>
+            <option value="" disabled selected>Select a show...</option>
+            <option value="Beat-oN מקומי" data-wp-id="317">Beat-oN מקומי</option>
+            <option value="Black Parade" data-wp-id="49">Black Parade</option>
+            <option value="ON AIR" data-wp-id="305">ON AIR</option>
+            <option value="On the Mend" data-wp-id="316">On the Mend</option>
+            <option value="Oy Vavoy" data-wp-id="71">Oy Vavoy</option>
+            <option value="Rocktrip" data-wp-id="318">Rocktrip</option>
+            <option value="Shabi On The Rocks" data-wp-id="53">Shabi On The Rocks</option>
+            <option value="Stage Dive" data-wp-id="313">Stage Dive</option>
+            <option value="The Breakdown" data-wp-id="253">The Breakdown</option>
+            <option value="Time Warp" data-wp-id="308">Time Warp</option>
+            <option value="אני לא בפסקול" data-wp-id="43">אני לא בפסקול</option>
+            <option value="האחות" data-wp-id="314">האחות</option>
+            <option value="המטריה" data-wp-id="311">המטריה</option>
+            <option value="השאלטר" data-wp-id="306">השאלטר</option>
+            <option value="זה פרוג" data-wp-id="149">זה פרוג</option>
+            <option value="זה רוק פורטה" data-wp-id="45">זה רוק פורטה</option>
+            <option value="מורידים את הרף" data-wp-id="28">מורידים את הרף</option>
+            <option value="נגד כיוון הזיפים" data-wp-id="42">נגד כיוון הזיפים</option>
+            <option value="סינגלס" data-wp-id="48">סינגלס</option>
+            <option value="סן פטרוק" data-wp-id="44">סן פטרוק</option>
+            <option value="ספיישלים" data-wp-id="144">ספיישלים</option>
+            <option value="עוד יום" data-wp-id="41">עוד יום</option>
+            <option value="על הרוקר" data-wp-id="38">על הרוקר</option>
+            <option value="פטרוק לילה" data-wp-id="50">פטרוק לילה</option>
+            <option value="רדיו זה פופ" data-wp-id="195">רדיו זה פופ</option>
+            <option value="רכבת לילה" data-wp-id="161">רכבת לילה</option>
+            <option value="שמונים ארומטיים" data-wp-id="64">שמונים ארומטיים</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="episodeNumber">Episode Number</label>
+          <input type="number" id="episodeNumber" name="episodeNumber" placeholder="דוגמא: 42" min="1" step="1" style="direction:ltr">
+        </div>
+
+        <div class="form-group" id="episodeTextGroup" style="display:none;">
+          <label for="episodeText">Episode Text</label>
+          <input type="text" id="episodeText" name="episodeText" placeholder="e.g. Summer Special">
+        </div>
+
+        <div class="form-group">
+          <label for="broadcaster">Broadcaster Name <span class="required">*</span></label>
+          <input type="text" id="broadcaster" name="broadcaster" list="broadcasterList" placeholder="Select or type a name..." autocomplete="off" required>
+          <datalist id="broadcasterList">
+            <option value="אחיעד לוק">
+            <option value="אלעד אביגן">
+            <option value="אלירן קטנוב">
+            <option value="אסף פלג">
+            <option value="אפרת קוטגרו">
+            <option value="איל אורטל">
+            <option value="איתמר עדן">
+            <option value="דוד שאבי">
+            <option value="דורית אורן">
+            <option value="טל אופיר">
+            <option value="יובל ביטון">
+            <option value="יובל יוספסון">
+            <option value="יותם &quot;דפיילר&quot; אבני">
+            <option value="מאיר הוברמן">
+            <option value="מתן בכור">
+            <option value="נופר נירן">
+            <option value="עדן גולן">
+            <option value="ערן הר-פז">
+            <option value="רועי כנפו">
+            <option value="רועי קופרמן">
+            <option value="רוני אורן">
+            <option value="שיר אסולין">
+          </datalist>
+        </div>
+
+        <div class="form-group" id="dateGroup" style="display:none">
+          <label for="date">Episode Date <span class="required">*</span></label>
+          <input type="date" id="date" name="date">
+        </div>
+
+        <div class="form-group" id="timeGroup" style="display:none">
+          <label for="scheduleTime">Publish Time <span class="required">*</span></label>
+          <input type="time" id="scheduleTime" name="scheduleTime">
+        </div>
+
+      </div>
+
+      <div id="scheduleSummary" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.85rem;line-height:1.8;"></div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+          <input type="checkbox" id="useManualSchedule" name="manual_schedule"
+                 style="width:auto;margin:0" onchange="onManualScheduleChange()">
+          <span>Manual schedule <span style="color:#888;font-size:0.78rem">(override automatic time — no rerun)</span></span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label for="playlist">Playlist / Show Notes</label>
+        <textarea id="playlist" name="playlist" rows="8"
+          placeholder="Enter the episode playlist, tracklist, or show notes here...&#10;&#10;e.g.&#10;1. Track One - Artist&#10;2. Track Two - Artist&#10;3. Track Three - Artist"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="audioFile">Audio File <span class="required">*</span></label>
+        <div class="file-drop-zone" id="dropZone">
+          <input type="file" id="audioFile" name="audioFile" accept=".mp3,.mp4,.wav,.ogg,.flac,.m4a,audio/*" required>
+          <div class="drop-content" id="dropContent">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <p><strong>Click to select</strong> or drag and drop your audio file</p>
+            <span>MP3, MP4, WAV, OGG, FLAC, M4A — up to 500 MB</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-primary">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12 19.79 19.79 0 0 1 1.98 3.38 2 2 0 0 1 3.95 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91A16 16 0 0 0 12 14.99l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        <span id="submitLabel">Publish Episode</span>
+      </button>
+    </form>
+
+    <!-- Progress Panel -->
+    <div id="progressPanel" class="progress-panel" style="display:none;">
+      <h3>Uploading to Podbean...</h3>
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-log" id="progressLog"></div>
+    </div>
+
+    <!-- Success Panel -->
+    <div id="successPanel" class="success-panel" style="display:none;">
+      <div class="success-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h3 id="successTitle">Episode Published!</h3>
+      <p id="episodeUrl"></p>
+      <a id="episodeLink" href="#" target="_blank" class="btn-secondary">View on Podbean</a>
+      <button id="resetBtn" class="btn-outline">Upload Another Episode</button>
+    </div>
+
+    <!-- Upload History Panel -->
+    <div id="uploadHistoryPanel" class="sam-queue-panel" style="display:none;">
+      <div class="sam-queue-header">
+        <h3>Upload History</h3>
+      </div>
+      <div id="uploadHistoryList"></div>
+    </div>
+
+    <!-- Error Panel -->
+    <div id="errorPanel" class="error-panel" style="display:none;">
+      <div class="error-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="15" y1="9" x2="9" y2="15"/>
+          <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h3>Upload Failed</h3>
+      <p id="errorMessage"></p>
+      <button id="retryBtn" class="btn-outline">Try Again</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

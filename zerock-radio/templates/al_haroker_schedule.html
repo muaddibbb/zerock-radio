@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>על הרוקר – הרשמה לשידורים</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414;
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+    }
+
+    .container { max-width: 740px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 {
+      font-size: 2em;
+      color: #e63946;
+      letter-spacing: 1px;
+    }
+    .header .sub {
+      color: #aaa;
+      font-size: 0.9em;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* ── Month navigation ── */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 18px;
+    }
+    .month-nav a {
+      color: #e63946;
+      text-decoration: none;
+      font-size: 1.6em;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      transition: background 0.18s;
+    }
+    .month-nav a:hover { background: rgba(230,57,70,0.18); }
+    .month-nav .disabled { color: #444; cursor: default; pointer-events: none; font-size: 1.6em; width: 38px; }
+    .month-title { font-size: 1.25em; font-weight: bold; min-width: 150px; text-align: center; }
+
+    /* ── Calendar table ── */
+    .cal-wrap { overflow-x: auto; }
+    .calendar {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .calendar th {
+      padding: 8px 4px;
+      text-align: center;
+      font-size: 0.82em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: #888;
+      border-bottom: 2px solid #2a2a2a;
+    }
+    .calendar th.avail-hdr { color: #ccc; }
+
+    .calendar td {
+      height: 80px;
+      vertical-align: top;
+      padding: 7px 6px;
+      border: 1px solid #1e1e1e;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .day-num {
+      font-size: 0.82em;
+      font-weight: 600;
+      color: #666;
+    }
+
+    /* States */
+    .day-other { background: #0e0e0e; }
+    .day-other .day-num { color: #2a2a2a; }
+
+    .day-unavail { background: #111; }
+    .day-unavail .day-num { color: #333; }
+    .unavail-label { font-size: 0.68em; color: #333; margin-top: 4px; }
+
+    .day-past { background: #111; opacity: 0.5; }
+    .day-past .day-num { color: #444; }
+
+    .day-available { background: #161616; cursor: pointer; }
+    .day-available:hover { background: #1e2a1e; }
+    .day-available .day-num { color: #ddd; }
+    .book-btn {
+      margin-top: 6px;
+      display: block;
+      background: #e63946;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 0;
+      width: 100%;
+      font-size: 0.75em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .book-btn:hover { background: #c1121f; }
+
+    .day-booked { background: #0d1f0d; }
+    .day-booked .day-num { color: #aaa; }
+    .booked-tag {
+      margin-top: 4px;
+      font-size: 0.68em;
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .booked-who {
+      font-size: 0.66em;
+      color: #5a8a5a;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      font-size: 0.78em;
+      color: #777;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0;
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.78);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #1f1f1f;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 30px 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.6);
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal h2 { font-size: 1.15em; margin-bottom: 4px; }
+    .modal .modal-date {
+      color: #e63946;
+      font-size: 0.9em;
+      margin-bottom: 22px;
+      font-weight: 600;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 0.82em;
+      color: #aaa;
+      margin-bottom: 6px;
+    }
+    .form-group input {
+      width: 100%;
+      background: #141414;
+      border: 1px solid #3a3a3a;
+      border-radius: 7px;
+      color: #f0f0f0;
+      padding: 11px 13px;
+      font-size: 0.95em;
+      transition: border-color 0.15s;
+    }
+    .form-group input:focus { outline: none; border-color: #e63946; }
+
+    .btn-primary {
+      width: 100%;
+      background: #e63946;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 13px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 4px;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-primary:hover:not(:disabled) { background: #c1121f; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-cancel {
+      width: 100%;
+      background: transparent;
+      color: #888;
+      border: 1px solid #333;
+      border-radius: 7px;
+      padding: 11px;
+      font-size: 0.88em;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-cancel:hover { border-color: #555; color: #bbb; }
+
+    .msg-ok  { color: #4caf50; text-align: center; margin-top: 14px; font-size: 0.9em; line-height: 1.5; }
+    .msg-err { color: #e63946; text-align: center; margin-top: 10px; font-size: 0.85em; }
+
+    /* ── Note ── */
+    .note {
+      margin-top: 24px;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 0.82em;
+      color: #888;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>🎙️ על הרוקר</h1>
+    <p class="sub">
+      בחר יום זמין ורשום את עצמך לשידור.<br>
+      ימי ראשון עד חמישי בלבד &bull; שעת שידור: 07:00
+    </p>
+  </div>
+
+  <!-- Month navigation -->
+  <div class="month-nav">
+    {% if show_prev %}
+      <a href="/al-haroker-schedule/{{ prev_year }}/{{ prev_month }}" title="חודש קודם">&#8250;</a>
+    {% else %}
+      <span class="disabled">&#8250;</span>
+    {% endif %}
+    <span class="month-title">{{ month_name }} {{ year }}</span>
+    <a href="/al-haroker-schedule/{{ next_year }}/{{ next_month }}" title="חודש הבא">&#8249;</a>
+  </div>
+
+  <!-- Calendar -->
+  <div class="cal-wrap">
+  <table class="calendar">
+    <thead>
+      <tr>
+        <!-- DOM order = visual right-to-left in RTL: first cell appears rightmost -->
+        <!-- firstweekday=6 → week[0]=Sun, week[1]=Mon, ..., week[6]=Sat          -->
+        <th class="avail-hdr">א</th><!-- ראשון / Sunday -->
+        <th class="avail-hdr">ב</th><!-- שני / Monday -->
+        <th class="avail-hdr">ג</th><!-- שלישי / Tuesday -->
+        <th class="avail-hdr">ד</th><!-- רביעי / Wednesday -->
+        <th class="avail-hdr">ה</th><!-- חמישי / Thursday -->
+        <th>ו</th>                   <!-- שישי / Friday (unavailable) -->
+        <th>ש</th>                   <!-- שבת / Saturday (unavailable) -->
+      </tr>
+    </thead>
+    <tbody>
+    {% for week in weeks %}
+    <tr>
+      {% for day in week %}
+        {% set ds        = day.strftime('%Y-%m-%d') %}
+        {% set in_month  = (day.month == month) %}
+        {% set wd        = day.weekday() %}   {# 0=Mon 1=Tue 2=Wed 3=Thu 4=Fri 5=Sat 6=Sun #}
+        {% set is_fs     = (wd == 4 or wd == 5) %}
+        {% set is_past   = (day < today) %}
+        {% set pre_start = (day < start_date_limit) %}
+        {% set is_booked = (ds in booked) %}
+
+        {% if not in_month %}
+          <td class="day-other"><span class="day-num">{{ day.day }}</span></td>
+
+        {% elif is_fs %}
+          <td class="day-unavail">
+            <span class="day-num">{{ day.day }}</span>
+            <div class="unavail-label">לא זמין</div>
+          </td>
+
+        {% elif is_past or pre_start %}
+          <td class="day-past day-unavail">
+            <span class="day-num">{{ day.day }}</span>
+          </td>
+
+        {% elif is_booked %}
+          <td class="day-booked">
+            <span class="day-num">{{ day.day }}</span>
+            <div class="booked-tag">✓ תפוס</div>
+            <div class="booked-who">{{ booked[ds] }}</div>
+          </td>
+
+        {% else %}
+          <td class="day-available" onclick="openModal('{{ ds }}', {{ day.day }})">
+            <span class="day-num">{{ day.day }}</span>
+            <button class="book-btn" tabindex="-1">הרשם</button>
+          </td>
+        {% endif %}
+
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#1e2a1e;border:1px solid #e63946"></div>זמין להרשמה
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#0d1f0d;border:1px solid #4caf50"></div>תפוס
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#111;border:1px solid #222"></div>לא זמין (ו׳–ש׳ / עבר)
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>איך זה עובד?</strong><br>
+    בחר יום זמין &larr; מלא שם ואימייל &larr; תקבל קישור אישי להעלאת הקובץ &larr;
+    הפרק ישודר אוטומטית בשעה 07:00 ויועלה ל-zerockradio.com.
+  </div>
+
+</div>
+
+<!-- Registration modal -->
+<div class="modal-overlay" id="modal" onclick="onOverlayClick(event)">
+  <div class="modal">
+    <h2>הרשמה לשידור</h2>
+    <div class="modal-date" id="modal-date"></div>
+
+    <div id="modal-form">
+      <div class="form-group">
+        <label>שם המגיש / ת</label>
+        <input type="text" id="inp-name" placeholder="שמך המלא" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>כתובת דוא"ל</label>
+        <input type="email" id="inp-email" placeholder="your@email.com" dir="ltr" autocomplete="email">
+      </div>
+      <button class="btn-primary" id="btn-reg" onclick="submitReg()">שלח לי קישור העלאה 📧</button>
+      <button class="btn-cancel" onclick="closeModal()">ביטול</button>
+      <div id="modal-msg"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedDate = '';
+
+const dayNamesHe = {0:'ראשון',1:'שני',2:'שלישי',3:'רביעי',4:'חמישי',5:'שישי',6:'שבת'};
+const monthNamesHe = {1:'ינואר',2:'פברואר',3:'מרץ',4:'אפריל',5:'מאי',6:'יוני',
+                      7:'יולי',8:'אוגוסט',9:'ספטמבר',10:'אוקטובר',11:'נובמבר',12:'דצמבר'};
+
+function openModal(dateStr, dayNum) {
+  selectedDate = dateStr;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  // JS Date: 0=Sun
+  const jsDay = new Date(y, m-1, d).getDay();
+  const dayHe = {0:'ראשון',1:'שני',2:'שלישי',3:'רביעי',4:'חמישי'}[jsDay] || '';
+  document.getElementById('modal-date').textContent =
+    'יום ' + dayHe + ' ' + dayNum + ' ' + monthNamesHe[m] + ' ' + y + ' – 07:00';
+
+  document.getElementById('inp-name').value  = '';
+  document.getElementById('inp-email').value = '';
+  document.getElementById('modal-msg').innerHTML = '';
+  document.getElementById('btn-reg').disabled = false;
+  document.getElementById('btn-reg').textContent = 'שלח לי קישור העלאה 📧';
+  document.getElementById('modal-form').style.display = '';
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('inp-name').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+function onOverlayClick(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+async function submitReg() {
+  const name  = document.getElementById('inp-name').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+  const msg   = document.getElementById('modal-msg');
+
+  if (!name)  { msg.innerHTML = '<div class="msg-err">נא להזין שם</div>'; return; }
+  if (!email || !email.includes('@'))
+              { msg.innerHTML = '<div class="msg-err">נא להזין כתובת דוא"ל תקינה</div>'; return; }
+
+  const btn = document.getElementById('btn-reg');
+  btn.disabled = true;
+  btn.textContent = 'שולח…';
+  msg.innerHTML = '';
+
+  try {
+    const res  = await fetch('/api/al-haroker-register', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({date: selectedDate, broadcaster: name, email})
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      msg.innerHTML = '<div class="msg-ok">✓ נשלח!<br>קישור ההעלאה נשלח לדוא"ל שלך.<br>רענון הדף עוד שניה…</div>';
+      btn.style.display = 'none';
+      setTimeout(() => location.reload(), 2800);
+    } else if (data.error === 'date_taken') {
+      msg.innerHTML = '<div class="msg-err">היום הזה כבר נתפס. בחר יום אחר.</div>';
+      btn.disabled = false; btn.textContent = 'שלח לי קישור העלאה 📧';
+    } else if (data.error === 'one_per_month') {
+      msg.innerHTML = '<div class="msg-err">כבר נרשמת החודש. המערכת מאפשרת רישום אחד בחודש.</div>';
+      btn.disabled = false; btn.textContent = 'שלח לי קישור העלאה 📧';
+    } else {
+      msg.innerHTML = '<div class="msg-err">' + (data.error || 'שגיאה. נסה שוב.') + '</div>';
+      btn.disabled = false; btn.textContent = 'שלח לי קישור העלאה 📧';
+    }
+  } catch(err) {
+    msg.innerHTML = '<div class="msg-err">שגיאת תקשורת. נסה שוב.</div>';
+    btn.disabled = false; btn.textContent = 'שלח לי קישור העלאה 📧';
+  }
+}
+</script>
+</body>
+</html>

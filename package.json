@@ -1,0 +1,36 @@
+{
+  "name": "zerock-podbean-uploader",
+  "version": "1.0.0",
+  "description": "Automated Podbean podcast episode uploader",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "team": "node team-server.js",
+    "dev": "nodemon --ignore scheduled.json --ignore sam-queue.json server.js",
+    "build-win": "pkg server.js --targets node18-win-x64 --output dist/zerock-server.exe"
+  },
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "node_modules/axios/dist/node/**/*",
+      "node_modules/axios/package.json"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ]
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "form-data": "^4.0.0",
+    "googleapis": "^171.4.0",
+    "multer": "^1.4.5-lts.1",
+    "node-schedule": "^2.1.1",
+    "nodemailer": "^8.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "pkg": "^5.8.1"
+  }
+}

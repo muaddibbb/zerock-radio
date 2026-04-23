@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kudos Graph — APAC Care Team</title>
+  <link rel="stylesheet" href="style.css">
+  <script>const _t=localStorage.getItem('theme');if(_t)document.documentElement.setAttribute('data-theme',_t);</script>
+  <style>
+    body { font-size: 1.05rem; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .page-header h1 { font-size: 1.6rem; margin: 0; }
+    .page-header .sub { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+
+    .back-link {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0.4rem 0.75rem;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .back-link:hover { color: var(--accent); border-color: var(--accent); }
+
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 40px;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .bar-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.15s;
+    }
+    .bar-label:hover { color: #a78bfa; text-decoration: underline; }
+
+    .bar-track {
+      background: var(--surface-2);
+      border-radius: 999px;
+      height: 22px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #68d391, #48bb78);
+      border-radius: 999px;
+      min-width: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .bar-count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .kudos-list {
+      display: none;
+      background: var(--surface);
+      border: 1px solid #2d6a4f;
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-top: 0.5rem;
+      margin-left: 142px;
+    }
+
+    .kudos-list.open { display: block; }
+
+    .kudos-list-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #68d391;
+      margin-bottom: 0.6rem;
+    }
+
+    .kudos-entry {
+      font-size: 0.9rem;
+      color: #68d391;
+      padding: 0.35rem 0;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.5;
+    }
+    .kudos-entry:last-child { border-bottom: none; }
+    .kudos-entry .kudos-week {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+    }
+
+    #statusMsg {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+
+    .total-badge {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+    .total-badge span {
+      color: #68d391;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="page-header">
+      <div>
+        <h1>Kudos Graph</h1>
+        <div class="sub">All-time kudos given per team</div>
+      </div>
+      <div class="header-actions">
+        <a href="/team-display" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+          Team Display
+        </a>
+        <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Toggle theme"></button>
+      </div>
+    </div>
+
+    <div id="statusMsg">Loading...</div>
+    <div id="totalBadge" class="total-badge" style="display:none;"></div>
+    <div id="chart" class="chart-container" style="display:none;"></div>
+  </div>
+
+  <script>
+    function weekKeyToLabel(key) {
+      const [year, weekNum] = key.split('-W').map(Number);
+      const jan1 = new Date(year, 0, 1);
+      const d = new Date(jan1.getTime() + (weekNum - 1) * 7 * 86400000);
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      return 'Week of ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    async function load() {
+      try {
+        const res = await fetch('/api/team-updates-history');
+        const data = await res.json();
+
+        // Aggregate kudos per team: { team: [{text, week}] }
+        const kudosMap = {};
+
+        Object.entries(data).forEach(([weekKey, teams]) => {
+          Object.entries(teams).forEach(([team, entry]) => {
+            if (entry.kudos && entry.kudos.trim()) {
+              if (!kudosMap[team]) kudosMap[team] = [];
+              kudosMap[team].push({ text: entry.kudos.trim(), week: weekKey });
+            }
+          });
+        });
+
+        // Sort by count desc
+        const sorted = Object.entries(kudosMap)
+          .map(([team, items]) => ({ team, count: items.length, items }))
+          .sort((a, b) => b.count - a.count);
+
+        const max = sorted[0]?.count || 1;
+        const total = sorted.reduce((s, t) => s + t.count, 0);
+
+        document.getElementById('statusMsg').style.display = 'none';
+
+        const badge = document.getElementById('totalBadge');
+        badge.innerHTML = `<span>${total}</span> total kudos across <span>${sorted.length}</span> teams`;
+        badge.style.display = 'block';
+
+        const chart = document.getElementById('chart');
+        chart.innerHTML = sorted.map(({ team, count, items }) => {
+          const pct = Math.round((count / max) * 100);
+          const listHtml = items.map(i =>
+            `<div class="kudos-entry">${escapeHtml(i.text)} <span class="kudos-week">${weekKeyToLabel(i.week)}</span></div>`
+          ).join('');
+          const id = `kudos-${team.replace(/\s+/g, '-')}`;
+          return `
+            <div>
+              <div class="bar-row">
+                <div class="bar-label" onclick="toggle('${id}')">${escapeHtml(team)}</div>
+                <div class="bar-track" onclick="toggle('${id}')">
+                  <div class="bar-fill" style="width:${pct}%"></div>
+                </div>
+                <div class="bar-count">${count}</div>
+              </div>
+              <div class="kudos-list" id="${id}">
+                <div class="kudos-list-title">Kudos from ${escapeHtml(team)}</div>
+                ${listHtml}
+              </div>
+            </div>`;
+        }).join('');
+
+        chart.style.display = 'flex';
+
+        // Animate bars
+        requestAnimationFrame(() => {
+          document.querySelectorAll('.bar-fill').forEach(b => b.style.width = b.style.width);
+        });
+
+      } catch (err) {
+        document.getElementById('statusMsg').textContent = 'Failed to load data.';
+      }
+    }
+
+    function toggle(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('open');
+    }
+
+    const MOON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+    function updateThemeBtn() {
+      const btn = document.getElementById('themeBtn');
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      btn.innerHTML = isLight ? MOON_SVG : SUN_SVG;
+      btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+    }
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateThemeBtn();
+    }
+    updateThemeBtn();
+    load();
+  </script>
+</body>
+</html>

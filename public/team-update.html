@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly APAC Care Team Updates</title>
+  <link rel="stylesheet" href="style.css">
+  <script>const _t=localStorage.getItem('theme');if(_t)document.documentElement.setAttribute('data-theme',_t);</script>
+  <style>
+    #updateForm {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.95rem;
+      padding: 0.65rem 0.875rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      font-family: inherit;
+      width: 100%;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892a4' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.875rem center;
+      padding-right: 2.25rem;
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    select option { background: var(--surface-2); color: var(--text); }
+    textarea { min-height: 100px; }
+    #updateForm textarea[name="updates"] { min-height: 130px; }
+    .label-row { display: flex; align-items: center; justify-content: space-between; }
+    .mic-btn {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--text-muted); cursor: pointer; padding: 3px 7px; font-size: 0.85rem;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      display: none; /* shown via JS if Speech API available */
+    }
+    .mic-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .mic-btn.listening { background: #e53e3e22; border-color: #e53e3e; color: #e53e3e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>Weekly APAC Care Team Updates</h1>
+        <p id="weekLabel">Loading...</p>
+      </div>
+      <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Toggle theme"></button>
+    </header>
+
+    <form id="updateForm">
+      <div class="form-group">
+        <label for="name">Team <span class="required">*</span></label>
+        <select id="name" name="name" required>
+          <option value="" disabled selected>Select your team...</option>
+          <option value="Anjan">Anjan</option>
+          <option value="Sydney">Sydney</option>
+          <option value="Tel Aviv">Tel Aviv</option>
+          <option value="London">London</option>
+          <option value="Ram">Ram</option>
+          <option value="Rajkumar">Rajkumar</option>
+          <option value="Nandini">Nandini</option>
+          <option value="Archana">Archana</option>
+          <option value="Arun">Arun</option>
+          <option value="Karthik">Karthik</option>
+          <option value="Kishan">Kishan</option>
+          <option value="Prashanth">Prashanth</option>
+          <option value="Shashanka">Shashanka</option>
+          <option value="Sudesh">Sudesh</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label for="updates">Weekly Updates <span class="required">*</span></label>
+          <button type="button" class="mic-btn" data-target="updates" title="Voice input">🎤 Dictate</button>
+        </div>
+        <textarea id="updates" name="updates" placeholder="What did you work on this week? Any accomplishments or progress to share?" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label for="kudos">Kudos</label>
+          <button type="button" class="mic-btn" data-target="kudos" title="Voice input">🎤 Dictate</button>
+        </div>
+        <textarea id="kudos" name="kudos" placeholder="Give a shoutout to a teammate who helped you or did great work!"></textarea>
+      </div>
+
+      <div class="form-group">
+        <div class="label-row">
+          <label for="blockers">Blockers / Needs Help</label>
+          <button type="button" class="mic-btn" data-target="blockers" title="Voice input">🎤 Dictate</button>
+        </div>
+        <textarea id="blockers" name="blockers" placeholder="Anything blocking you? Need help from the team?"></textarea>
+      </div>
+
+      <button type="submit" class="btn-primary" id="submitBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        Submit Update
+      </button>
+    </form>
+
+    <div id="successPanel" class="success-panel" style="display:none;">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h3>Update Submitted!</h3>
+      <p>Thanks! Your update has been saved for this week's meeting.</p>
+      <button id="correctBtn" class="btn-outline" style="margin-top:1rem;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        Correct my update
+      </button>
+    </div>
+
+    <div id="errorPanel" class="error-panel" style="display:none;">
+      <div class="error-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <h3>Submission Failed</h3>
+      <p id="errorMessage">Something went wrong. Please try again.</p>
+      <button id="retryBtn" class="btn-outline">Try Again</button>
+    </div>
+  </div>
+
+  <script>
+    let weeklyData = {};
+
+    // Fetch this week's existing submissions
+    fetch('/api/team-updates').then(r => r.json()).then(d => {
+      weeklyData = d.updates || {};
+      // Pre-fill if name param already set
+      const sel = document.getElementById('name');
+      if (sel.value) prefillIfExists(sel.value);
+    }).catch(() => {});
+
+    function prefillIfExists(team) {
+      const entry = weeklyData[team];
+      if (!entry) return;
+      document.getElementById('updates').value = entry.updates || '';
+      document.getElementById('kudos').value = entry.kudos || '';
+      document.getElementById('blockers').value = entry.blockers || '';
+      document.getElementById('submitBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Update Submission';
+    }
+
+    document.getElementById('name').addEventListener('change', (e) => {
+      // Clear fields first, then prefill if existing data
+      document.getElementById('updates').value = '';
+      document.getElementById('kudos').value = '';
+      document.getElementById('blockers').value = '';
+      document.getElementById('submitBtn').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Submit Update';
+      prefillIfExists(e.target.value);
+    });
+
+    // Pre-fill name from ?name= query param
+    const params = new URLSearchParams(location.search);
+    const nameParam = params.get('name');
+    if (nameParam) {
+      const sel = document.getElementById('name');
+      for (const opt of sel.options) {
+        if (opt.value === nameParam) { opt.selected = true; break; }
+      }
+    }
+
+    // Show current week label
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    document.getElementById('weekLabel').textContent =
+      'Week of ' + monday.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+    let lastSubmission = null;
+
+    document.getElementById('updateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4" stroke-dashoffset="10" style="animation:spin 1s linear infinite;transform-origin:center"/></svg> Submitting...';
+
+      const formData = new FormData(e.target);
+      lastSubmission = {
+        name: formData.get('name'),
+        updates: formData.get('updates'),
+        kudos: formData.get('kudos'),
+        blockers: formData.get('blockers'),
+      };
+
+      const body = new URLSearchParams(formData);
+      try {
+        const res = await fetch('/api/team-update', { method: 'POST', body });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById('updateForm').style.display = 'none';
+          document.getElementById('successPanel').style.display = 'flex';
+        } else {
+          throw new Error(data.error || 'Submission failed');
+        }
+      } catch (err) {
+        document.getElementById('errorMessage').textContent = err.message;
+        document.getElementById('errorPanel').style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Submit Update';
+      }
+    });
+
+    document.getElementById('retryBtn').addEventListener('click', () => {
+      document.getElementById('errorPanel').style.display = 'none';
+    });
+
+    document.getElementById('correctBtn').addEventListener('click', () => {
+      if (!lastSubmission) return;
+      // Restore form values
+      const sel = document.getElementById('name');
+      for (const opt of sel.options) {
+        if (opt.value === lastSubmission.name) { opt.selected = true; break; }
+      }
+      document.getElementById('updates').value = lastSubmission.updates || '';
+      document.getElementById('kudos').value = lastSubmission.kudos || '';
+      document.getElementById('blockers').value = lastSubmission.blockers || '';
+      // Reset submit button
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Submit Update';
+      // Switch panels
+      document.getElementById('successPanel').style.display = 'none';
+      document.getElementById('updateForm').style.display = 'flex';
+    });
+
+    // ── Voice Input ──────────────────────────────────────────────────────────
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      document.querySelectorAll('.mic-btn').forEach(btn => { btn.style.display = 'inline-block'; });
+
+      let activeRecognition = null;
+      let activeBtn = null;
+
+      document.querySelectorAll('.mic-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Stop any running recognition first
+          if (activeRecognition) {
+            activeRecognition.stop();
+            if (activeBtn && activeBtn !== btn) {
+              activeBtn.classList.remove('listening');
+              activeBtn.textContent = '🎤 Dictate';
+            }
+          }
+
+          if (activeBtn === btn && btn.classList.contains('listening')) {
+            // Toggle off
+            activeRecognition = null;
+            activeBtn = null;
+            btn.classList.remove('listening');
+            btn.textContent = '🎤 Dictate';
+            return;
+          }
+
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = false;
+          recognition.lang = 'en-US';
+
+          const textarea = document.getElementById(btn.dataset.target);
+
+          recognition.onresult = (e) => {
+            const transcript = Array.from(e.results)
+              .slice(e.resultIndex)
+              .map(r => r[0].transcript)
+              .join(' ');
+            textarea.value = (textarea.value ? textarea.value + ' ' : '') + transcript.trim();
+          };
+
+          recognition.onerror = () => {
+            btn.classList.remove('listening');
+            btn.textContent = '🎤 Dictate';
+            activeRecognition = null;
+            activeBtn = null;
+          };
+
+          recognition.onend = () => {
+            if (activeBtn === btn) {
+              btn.classList.remove('listening');
+              btn.textContent = '🎤 Dictate';
+              activeRecognition = null;
+              activeBtn = null;
+            }
+          };
+
+          recognition.start();
+          activeRecognition = recognition;
+          activeBtn = btn;
+          btn.classList.add('listening');
+          btn.textContent = '🔴 Stop';
+        });
+      });
+    }
+  </script>
+  <style>@keyframes spin { to { stroke-dashoffset: -31.4; } }</style>
+  <script>
+    const MOON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+    function updateThemeBtn() {
+      const btn = document.getElementById('themeBtn');
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      btn.innerHTML = isLight ? MOON_SVG : SUN_SVG;
+      btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+    }
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateThemeBtn();
+    }
+    updateThemeBtn();
+  </script>
+</body>
+</html>

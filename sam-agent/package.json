@@ -1,0 +1,19 @@
+{
+  "name": "zerock-sam-agent",
+  "version": "1.0.0",
+  "description": "ZeRock SAM Broadcaster polling agent",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js",
+    "build": "pkg agent.js --targets node18-win-x64 --output sam-agent.exe"
+  },
+  "bin": "agent.js",
+  "pkg": {
+    "targets": ["node18-win-x64"],
+    "assets": [],
+    "outputPath": "dist"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  }
+}

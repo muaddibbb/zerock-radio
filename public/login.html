@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeRock Uploader — Login</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+    }
+    .login-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 12px;
+    }
+    .login-card h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      text-align: center;
+    }
+    .login-card .form-group {
+      width: 100%;
+      margin: 0;
+    }
+    .login-card input[type="password"] {
+      width: 100%;
+      font-size: 1rem;
+    }
+    .login-error {
+      color: #ff6b6b;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <img src="logo.png" alt="ZeRock Radio">
+      <h1>ZeRock Uploader</h1>
+      <form method="POST" action="/login" style="width:100%;display:flex;flex-direction:column;gap:16px;">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter password" autofocus required>
+        </div>
+        <button type="submit" class="btn-primary" style="width:100%;justify-content:center;">Enter</button>
+      </form>
+      <div id="errMsg" class="login-error" style="display:none;">Incorrect password. Try again.</div>
+    </div>
+  </div>
+  <script>
+    if (new URLSearchParams(location.search).get('error')) {
+      document.getElementById('errMsg').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ label }} — ZeRock Radio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0f14;
+      --surface:     #161920;
+      --surface2:    #1e2330;
+      --border:      #2a2f3d;
+      --accent:      #6c63ff;
+      --accent-dim:  #1e1b3a;
+      --success:     #34d399;
+      --success-dim: #0c2e22;
+      --danger:      #f87171;
+      --text:        #e2e8f0;
+      --text-muted:  #64748b;
+      --text-subtle: #94a3b8;
+      --radius:      10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .logo {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .show-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .show-broadcaster {
+      font-size: 1rem;
+      color: var(--text-subtle);
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .schedule-info {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      line-height: 2;
+      margin-bottom: 24px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 13px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      direction: rtl;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    input[type="file"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    input[type="date"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 13px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+      direction: ltr;
+    }
+    textarea { resize: vertical; font-family: inherit; }
+
+    .btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: .03em;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* Album slots */
+    .album-slot {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .album-slot-title {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-subtle);
+      margin-bottom: 8px;
+    }
+
+    /* Playlist slots */
+    .playlist-slot { margin-bottom: 14px; }
+    .playlist-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    .pl-label {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      width: 60px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .badge-row {
+      padding-right: 70px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 14px;
+    }
+    .badge-row label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: none;
+      letter-spacing: normal;
+      cursor: pointer;
+      font-weight: normal;
+      white-space: nowrap;
+    }
+    .badge-row input[type="checkbox"] { width: auto; margin: 0; cursor: pointer; }
+
+    .palash-slot { margin-bottom: 10px; }
+    .palash-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pa-label {
+      font-size: 0.82rem;
+      color: var(--accent);
+      width: 60px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 16px 0;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 22px;
+      font-size: 0.9rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+      z-index: 100;
+      direction: rtl;
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok  { border-color: var(--success); color: var(--success); }
+    #toast.err { border-color: var(--danger);  color: var(--danger);  }
+
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .success-icon { font-size: 3rem; margin-bottom: 16px; }
+    .success-title { font-size: 1.6rem; font-weight: 700; color: var(--success); margin-bottom: 6px; }
+    .success-sub { font-size: 1rem; color: var(--text); margin-bottom: 20px; }
+    .success-times {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+      line-height: 2;
+      text-align: right;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ZeRock Radio</div>
+  <div class="show-title">{{ show.name }}</div>
+  {% if show.broadcaster %}
+  <div class="show-broadcaster">{{ show.broadcaster }}</div>
+  {% endif %}
+</header>
+
+<div class="card">
+  <!-- Schedule summary -->
+  {% if broadcast %}
+  <div class="schedule-info" id="schedInfo">
+    <div>📡 <strong>שידור:</strong> <span id="broadcastTime"></span></div>
+    {% if not show.no_podbean %}
+    <div>⬆️ <strong>העלאה לספריית התוכניות:</strong> <span id="uploadTime"></span></div>
+    {% endif %}
+    {% if rerun %}
+    <div>🔄 <strong>שידור חוזר:</strong> <span id="rerunTime"></span></div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Manual date (for על הרוקר) -->
+  {% if show.day is none %}
+  <div class="form-group" id="manualDateGroup">
+    <label>תאריך שידור</label>
+    <input type="date" id="manualDate" onchange="updateManualSummary()">
+  </div>
+  {% endif %}
+
+  <!-- Upload form -->
+  <form id="uploadForm" enctype="multipart/form-data">
+    <input type="hidden" name="show_key" value="{{ show.key }}">
+    <input type="hidden" name="mode" value="{{ 'queue_only' if show.no_podbean else 'queue_to_broadcast' }}">
+
+    <div class="form-group">
+      <label>מספר פרק <span style="color:var(--text-muted);font-weight:normal;text-transform:none">(אופציונלי)</span></label>
+      <input type="number" name="episode_num" placeholder="042" min="1" step="1" style="direction:ltr">
+    </div>
+
+    <div class="form-group">
+      <label>רשימת שירים / הערות <span style="color:var(--text-muted);font-weight:normal;text-transform:none">(אופציונלי)</span></label>
+      <textarea name="description" rows="3" placeholder="רשימת שירים, הערות לתוכנית..."></textarea>
+    </div>
+
+    {% if show.key == 'erev_albumim' %}
+    <!-- Album mode -->
+    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+      העלו 1–8 אלבומים. סדר השמעה: 🎵 ג׳ינגל → אלבום 1 → 🎵 ג׳ינגל → אלבום 2 → …
+    </div>
+    {% for i in range(8) %}
+    <div class="album-slot">
+      <div class="album-slot-title">אלבום {{ i + 1 }}{% if i > 0 %} <span style="color:var(--text-muted);font-weight:normal">(אופציונלי)</span>{% endif %}</div>
+      <input type="file" name="album_{{ i }}" multiple accept=".mp3,.wav,.ogg,.flac,.m4a,.aac" style="margin-bottom:6px">
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:5px">— או בחרו תיקייה —</div>
+      <input type="file" name="album_{{ i }}" webkitdirectory multiple accept=".mp3,.wav,.ogg,.flac,.m4a,.aac">
+    </div>
+    {% endfor %}
+
+    {% elif show.key == 'matzad_harok' %}
+    <!-- Playlist mode toggle -->
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;text-transform:none;letter-spacing:normal;font-size:0.88rem">
+        <input type="checkbox" id="playlistModeCheckbox" style="width:auto;margin:0" onchange="onPlaylistModeChange(this)">
+        מצב פלייליסט <span style="color:var(--text-muted);font-size:0.78rem">(עד 20 מקומות)</span>
+      </label>
+    </div>
+    <div id="playlistFilesGroup" style="display:none;margin-bottom:14px">
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+        סדר ניגון: מקום 20, 19, 18 … 2, 1 (ג׳ינגל בהתחלה ובסוף) · שדות ריקים מדולגים.
+      </div>
+      {% set badges = [('aliya','העליה הגבוהה'),('yerida','הירידה הגבוהה'),('knisa','הכניסה הגבוהה'),('knisa_new','כניסה חדשה')] %}
+      {% for i in range(20) %}
+      <div class="playlist-slot">
+        <div class="playlist-row">
+          <span class="pl-label">מקום {{ i + 1 }}</span>
+          <input type="file" name="playlist_{{ i }}" class="playlist-file-input"
+            accept=".mp3,.wav,.ogg,.flac,.m4a,.aac" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem">
+        </div>
+        <div class="badge-row">
+          {% for bkey, blabel in badges %}
+          <label><input type="checkbox" name="pl_{{ i }}_{{ bkey }}"> {{ blabel }}</label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      <hr class="divider">
+      {% for i in range(5) %}
+      <div class="palash-slot">
+        <div class="palash-row">
+          <span class="pa-label">פל״ש {{ i + 1 }}</span>
+          <input type="file" name="palash_{{ i }}" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+            style="flex:1;background:var(--surface2);border:1px solid var(--accent);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem">
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div id="singleFileGroupMatzad" class="form-group">
+      <label>קובץ שמע</label>
+      <input type="file" name="file" id="singleFileInputMatzad" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac" required>
+    </div>
+
+    {% else %}
+    <!-- Regular single file -->
+    <div class="form-group">
+      <label>קובץ שמע</label>
+      <input type="file" name="file" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac" required>
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn" id="submitBtn">📤 שלח תוכנית</button>
+  </form>
+
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🎙️</div>
+    <div class="success-title">תודה{% if show.broadcaster %} {{ show.broadcaster }}{% endif %}!</div>
+    <div class="success-sub">התוכנית התקבלה ותועלה לשידור</div>
+    <div class="success-times" id="successTimes"></div>
+    <button class="btn" style="margin-top:24px;max-width:200px;margin-right:auto;margin-left:auto" onclick="location.reload()">שלח תוכנית נוספת</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SHOW_KEY      = {{ show.key | tojson }};
+const MANUAL_DATE   = {{ (show.day is none) | tojson }};
+const BROADCAST_ISO = {{ (broadcast or '') | tojson }};
+const UPLOAD_ISO    = {{ (upload or '') | tojson }};
+const RERUN_ISO     = {{ (rerun or '') | tojson }};
+
+function fmtDt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('he-IL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit', hour12:false });
+}
+
+// Populate schedule times
+if (BROADCAST_ISO) document.getElementById('broadcastTime').textContent = fmtDt(BROADCAST_ISO);
+if (UPLOAD_ISO)    { const el = document.getElementById('uploadTime');    if (el) el.textContent = fmtDt(UPLOAD_ISO); }
+if (RERUN_ISO)     { const el = document.getElementById('rerunTime');     if (el) el.textContent = fmtDt(RERUN_ISO); }
+
+function updateManualSummary() {
+  const dateVal = document.getElementById('manualDate')?.value;
+  if (!dateVal) return;
+  const broadcastEl = document.getElementById('broadcastTime');
+  if (broadcastEl) broadcastEl.textContent = new Date(dateVal + 'T{{ show.time }}').toLocaleString('he-IL',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
+}
+
+// Playlist mode toggle (matzad only)
+function onPlaylistModeChange(cb) {
+  const filesGroup  = document.getElementById('playlistFilesGroup');
+  const singleGroup = document.getElementById('singleFileGroupMatzad');
+  const fileInput   = document.getElementById('singleFileInputMatzad');
+  if (cb.checked) {
+    filesGroup.style.display  = '';
+    singleGroup.style.display = 'none';
+    if (fileInput) fileInput.required = false;
+  } else {
+    filesGroup.style.display  = 'none';
+    singleGroup.style.display = '';
+    if (fileInput) fileInput.required = true;
+  }
+}
+
+// Toast
+let _toastTimer;
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type || '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.className = ''; }, 3500);
+}
+
+// Submit
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // Validation
+  if (MANUAL_DATE) {
+    const dateVal = document.getElementById('manualDate')?.value;
+    if (!dateVal) { toast('נא להזין תאריך שידור', 'err'); return; }
+    const hiddenDate = document.querySelector('input[name="manual_date"]');
+    if (!hiddenDate) {
+      const inp = document.createElement('input');
+      inp.type = 'hidden'; inp.name = 'manual_date'; inp.value = dateVal;
+      e.target.appendChild(inp);
+    } else {
+      hiddenDate.value = dateVal;
+    }
+  }
+
+  if (SHOW_KEY === 'matzad_harok') {
+    const plMode = document.getElementById('playlistModeCheckbox')?.checked;
+    if (plMode) {
+      const plInputs = document.querySelectorAll('.playlist-file-input');
+      let hasFile = false;
+      plInputs.forEach(inp => { if (inp.files && inp.files.length > 0) hasFile = true; });
+      if (!hasFile) { toast('הוסף לפחות טראק אחד', 'err'); return; }
+    }
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'שולח…';
+  let submitted = false;
+  try {
+    const data = new FormData(e.target);
+    const r    = await fetch('/api/schedule', { method: 'POST', body: data });
+    const j    = await r.json();
+    if (j.success || j.ok) {
+      submitted = true;
+      const s          = j.show || {};
+      const bcastIso   = s.scheduled_time || j.scheduled_time || '';
+      const uploadIso  = s.upload_time    || '';
+      const rerunIso   = s.rerun_time     || '';
+      let timesHtml = '';
+      if (bcastIso) {
+        const d = new Date(bcastIso);
+        if (!isNaN(d)) timesHtml += `<div>📡 <strong>שידור:</strong> ${fmtDt(d.toISOString())}</div>`;
+      }
+      if (uploadIso) {
+        const d = new Date(uploadIso);
+        if (!isNaN(d)) timesHtml += `<div>⬆️ <strong>העלאה לספריית התוכניות:</strong> ${fmtDt(d.toISOString())}</div>`;
+      }
+      if (rerunIso) {
+        const d = new Date(rerunIso);
+        if (!isNaN(d)) timesHtml += `<div>🔄 <strong>שידור חוזר:</strong> ${fmtDt(d.toISOString())}</div>`;
+      }
+      document.getElementById('successTimes').innerHTML = timesHtml;
+      document.getElementById('uploadForm').style.display = 'none';
+      if (document.getElementById('schedInfo')) document.getElementById('schedInfo').style.display = 'none';
+      if (document.getElementById('manualDateGroup')) document.getElementById('manualDateGroup').style.display = 'none';
+      document.getElementById('successScreen').style.display = 'block';
+    } else {
+      toast(j.error || 'שגיאה בשליחה', 'err');
+    }
+  } catch (err) {
+    toast('שגיאת רשת: ' + err.message, 'err');
+  } finally {
+    if (!submitted) {
+      btn.disabled = false;
+      btn.textContent = '📤 שלח תוכנית';
+    }
+  }
+});
+</script>
+</body>
+</html>

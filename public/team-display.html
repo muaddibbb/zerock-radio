@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly APAC Care Team Updates</title>
+  <link rel="stylesheet" href="style.css">
+  <script>const _t=localStorage.getItem('theme');if(_t)document.documentElement.setAttribute('data-theme',_t);</script>
+  <style>
+    body { font-size: 1.05rem; }
+
+    .display-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .display-header h1 { font-size: 1.6rem; margin: 0; }
+    .display-header .week-label { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+
+    .header-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+    .week-select {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 0.45rem 2rem 0.45rem 0.75rem;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238892a4' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.6rem center;
+      font-family: inherit;
+    }
+    .week-select:focus { outline: none; border-color: var(--accent); }
+    .week-select option { background: var(--surface-2); }
+
+    .last-updated { color: var(--text-muted); font-size: 0.8rem; }
+
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .team-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .team-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+
+    .team-card.pending {
+      opacity: 0.45;
+      border-style: dashed;
+    }
+
+    .team-name {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .team-name .submitted-badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      background: #2a2f3e;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: auto;
+    }
+
+    .pending-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .section-content {
+      font-size: 0.92rem;
+      color: var(--text);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .kudos-section .section-content { color: #68d391; }
+    .blockers-section .section-content { color: #fc8181; }
+
+    .kudos-wall {
+      background: var(--surface);
+      border: 1px solid #2d6a4f;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .kudos-wall-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #68d391;
+      margin-bottom: 0.75rem;
+    }
+
+    .kudos-wall-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .kudos-item {
+      font-size: 0.92rem;
+      color: #68d391;
+      line-height: 1.5;
+    }
+
+    .kudos-item .kudos-author {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    #statusMsg {
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="display-header">
+      <div>
+        <h1>Weekly APAC Care Team Updates</h1>
+        <div class="week-label" id="weekLabel">Loading...</div>
+      </div>
+      <div class="header-actions">
+        <a href="/kudos-graph" class="btn-outline" style="font-size:0.85rem;text-decoration:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Kudos Graph
+        </a>
+        <select id="weekSelect" class="week-select"></select>
+        <span class="last-updated" id="lastUpdated"></span>
+        <button id="themeBtn" class="theme-btn" onclick="toggleTheme()" title="Toggle theme"></button>
+        <button class="btn-outline" id="refreshBtn" onclick="refresh()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div id="statusMsg">Loading updates...</div>
+    <div id="kudosWall" style="display:none;">
+      <div class="kudos-wall">
+        <div class="kudos-wall-title">Kudos</div>
+        <div class="kudos-wall-list" id="kudosList"></div>
+      </div>
+    </div>
+    <div class="team-grid" id="teamGrid" style="display:none;"></div>
+
+    <div class="footer" id="footer"></div>
+  </div>
+
+  <script>
+    const TEAM_ORDER = ['Anjan', 'Sydney', 'Tel Aviv', 'London', 'Ram', 'Rajkumar', 'Nandini', 'Archana', 'Arun', 'Karthik', 'Kishan', 'Prashanth', 'Shashanka', 'Sudesh'];
+    let historyData = {};
+    let currentWeekKey = '';
+
+    function getWeekKey(d = new Date()) {
+      const jan1 = new Date(d.getFullYear(), 0, 1);
+      const weekNum = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+      return `${d.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+    }
+
+    function weekKeyToLabel(key) {
+      const [year, weekNum] = key.split('-W').map(Number);
+      const jan1 = new Date(year, 0, 1);
+      const d = new Date(jan1.getTime() + (weekNum - 1) * 7 * 86400000);
+      d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+      return 'Week of ' + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    function timeAgo(isoStr) {
+      const diff = Math.floor((Date.now() - new Date(isoStr)) / 60000);
+      if (diff < 1) return 'just now';
+      if (diff < 60) return `${diff}m ago`;
+      return `${Math.floor(diff / 60)}h ${diff % 60}m ago`;
+    }
+
+    function escapeHtml(str) {
+      return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function buildCard(team, entry, isHistory) {
+      if (!entry) {
+        return `
+          <div class="team-card pending" onclick="window.location='/team-update?name=${encodeURIComponent(team)}'">
+            <div class="team-name">${escapeHtml(team)}</div>
+            <div class="pending-label">${isHistory ? 'No update that week' : 'No update submitted yet...'}</div>
+          </div>`;
+      }
+      const sections = [];
+      sections.push(`<div><div class="section-label">Updates</div><div class="section-content">${escapeHtml(entry.updates)}</div></div>`);
+      if (entry.blockers && entry.blockers.trim()) {
+        sections.push(`<div class="blockers-section"><div class="section-label">Blockers / Needs Help</div><div class="section-content">${escapeHtml(entry.blockers)}</div></div>`);
+      }
+      const badge = (!isHistory && entry.submittedAt) ? `<span class="submitted-badge">${timeAgo(entry.submittedAt)}</span>` : '';
+      return `<div class="team-card" onclick="window.location='/team-update?name=${encodeURIComponent(team)}'"><div class="team-name">${escapeHtml(team)}${badge}</div>${sections.join('')}</div>`;
+    }
+
+    function renderWeek(weekKey) {
+      const updates = historyData[weekKey] || {};
+      const isHistory = weekKey !== currentWeekKey;
+      const grid = document.getElementById('teamGrid');
+      grid.innerHTML = TEAM_ORDER.map(team => buildCard(team, updates[team], isHistory)).join('');
+      document.getElementById('weekLabel').textContent = weekKeyToLabel(weekKey);
+      document.getElementById('statusMsg').style.display = 'none';
+      grid.style.display = 'grid';
+      const submitted = TEAM_ORDER.filter(t => updates[t]).length;
+      document.getElementById('footer').textContent = `${submitted} of ${TEAM_ORDER.length} teams submitted`;
+
+      // Build kudos wall
+      const kudosItems = [];
+      TEAM_ORDER.forEach(team => {
+        const entry = updates[team];
+        if (entry && entry.kudos && entry.kudos.trim()) {
+          kudosItems.push(`<div class="kudos-item">${escapeHtml(entry.kudos.trim())} <span class="kudos-author">(${escapeHtml(team)})</span></div>`);
+        }
+      });
+      const wall = document.getElementById('kudosWall');
+      if (kudosItems.length) {
+        document.getElementById('kudosList').innerHTML = kudosItems.join('');
+        wall.style.display = 'block';
+      } else {
+        wall.style.display = 'none';
+      }
+    }
+
+    function populateDropdown(selectedKey) {
+      const sel = document.getElementById('weekSelect');
+      const keys = Object.keys(historyData).sort().reverse();
+      // Ensure current week is always in the list
+      if (!keys.includes(currentWeekKey)) keys.unshift(currentWeekKey);
+      sel.innerHTML = keys.map(k =>
+        `<option value="${k}"${k === selectedKey ? ' selected' : ''}>${weekKeyToLabel(k)}${k === currentWeekKey ? ' (current)' : ''}</option>`
+      ).join('');
+    }
+
+    async function loadUpdates() {
+      try {
+        const res = await fetch('/api/team-updates-history');
+        historyData = await res.json();
+        const sel = document.getElementById('weekSelect');
+        const selectedKey = sel.value || currentWeekKey;
+        populateDropdown(selectedKey);
+        renderWeek(selectedKey);
+        const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('lastUpdated').textContent = `Last refreshed ${now}`;
+      } catch (err) {
+        document.getElementById('statusMsg').textContent = 'Failed to load updates. Retrying...';
+      }
+    }
+
+    function refresh() {
+      // Re-fetch only if viewing current week
+      const selected = document.getElementById('weekSelect').value || currentWeekKey;
+      if (selected === currentWeekKey) {
+        loadUpdates();
+      } else {
+        renderWeek(selected);
+      }
+    }
+
+    document.getElementById('weekSelect').addEventListener('change', (e) => {
+      renderWeek(e.target.value);
+    });
+
+    const MOON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+    const SUN_SVG  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+    function updateThemeBtn() {
+      const btn = document.getElementById('themeBtn');
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      btn.innerHTML = isLight ? MOON_SVG : SUN_SVG;
+      btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+    }
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      updateThemeBtn();
+    }
+    updateThemeBtn();
+
+    currentWeekKey = getWeekKey();
+    loadUpdates();
+    setInterval(() => {
+      // Only auto-refresh if viewing current week
+      if ((document.getElementById('weekSelect').value || currentWeekKey) === currentWeekKey) {
+        loadUpdates();
+      }
+    }, 60000);
+  </script>
+</body>
+</html>

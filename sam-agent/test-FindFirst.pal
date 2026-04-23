@@ -1,0 +1,11 @@
+var
+  SR: TSearchRec;
+begin
+  if FindFirst('C:\Users\Public\ZeRock\Episodes\*.mp3', faAnyFile, SR) = 0 then
+  begin
+    repeat
+      Queue.AddFile('C:\Users\Public\ZeRock\Episodes\' + SR.Name, 0);
+    until FindNext(SR) <> 0;
+    FindClose(SR);
+  end
+end

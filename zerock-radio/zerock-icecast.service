@@ -1,0 +1,14 @@
+[Unit]
+Description=ZeRock Radio - Icecast2 Streaming Server
+After=network.target
+
+[Service]
+Type=simple
+User=icecast2
+Group=icecast
+ExecStart=/usr/bin/icecast2 -c /etc/icecast2/icecast.xml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

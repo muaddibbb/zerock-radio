@@ -1,0 +1,694 @@
+/* ─── Reset & Base ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface-2: #22263a;
+  --border: #2e3250;
+  --accent: #6c63ff;
+  --accent-hover: #7c74ff;
+  --accent-dim: rgba(108, 99, 255, 0.15);
+  --success: #22c55e;
+  --success-dim: rgba(34, 197, 94, 0.12);
+  --error: #ef4444;
+  --error-dim: rgba(239, 68, 68, 0.12);
+  --warning: #f59e0b;
+  --warning-dim: rgba(245, 158, 11, 0.12);
+  --text: #e2e8f0;
+  --text-muted: #8892a4;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* ─── Light Mode ────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --surface-2: #edf0f7;
+  --border: #d2d8e8;
+  --text: #1a1d27;
+  --text-muted: #5a6478;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+[data-theme="light"] body { background: var(--bg); }
+[data-theme="light"] input[type="date"] { color-scheme: light; }
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #9aa0b0; }
+[data-theme="light"] select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6478' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+
+/* ─── Theme Toggle Button ────────────────────────────────────────────── */
+.theme-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  transition: border-color 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+html { font-size: 16px; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  line-height: 1.6;
+}
+
+/* ─── Layout ────────────────────────────────────────────────────────── */
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  width: 48px;
+  height: 48px;
+  background: var(--accent-dim);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(108,99,255,0.3);
+}
+
+.logo svg {
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+}
+
+.header-text { flex: 1; }
+
+.header-text h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.header-text p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ─── Status Badge ──────────────────────────────────────────────────── */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.status-badge.checking  { background: var(--surface-2); color: var(--text-muted); }
+.status-badge.ready     { background: var(--success-dim); color: var(--success); border: 1px solid rgba(34,197,94,0.3); }
+.status-badge.not-ready { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(245,158,11,0.3); }
+
+/* ─── Alert ─────────────────────────────────────────────────────────── */
+.alert {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.alert-warning {
+  background: var(--warning-dim);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: var(--warning);
+}
+
+.alert code {
+  background: rgba(245,158,11,0.2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.8rem;
+}
+
+/* ─── Form ──────────────────────────────────────────────────────────── */
+#uploadForm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 540px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.required { color: var(--accent); }
+
+input[type="text"],
+input[type="date"],
+textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.95rem;
+  padding: 0.65rem 0.875rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  width: 100%;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 140px;
+  line-height: 1.6;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+input::placeholder, textarea::placeholder {
+  color: #4a5268;
+}
+
+/* ─── File Drop Zone ────────────────────────────────────────────────── */
+.file-drop-zone {
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.file-drop-zone:hover,
+.file-drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.file-drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  gap: 0.5rem;
+  pointer-events: none;
+  text-align: center;
+}
+
+.drop-content svg {
+  width: 40px;
+  height: 40px;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.drop-content p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.drop-content p strong {
+  color: var(--accent);
+}
+
+.drop-content span {
+  font-size: 0.75rem;
+  color: #4a5268;
+}
+
+.file-selected .drop-content {
+  gap: 0.35rem;
+}
+
+.file-selected .drop-content svg {
+  color: var(--success);
+}
+
+.file-selected .drop-content p {
+  color: var(--text);
+}
+
+/* ─── SAM Checkbox ──────────────────────────────────────────────────── */
+.sam-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.875rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sam-checkbox-label:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.sam-checkbox-label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.sam-checkbox-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sam-checkbox-label input:checked ~ .sam-checkbox-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sam-checkbox-label input:checked ~ .sam-checkbox-box::after {
+  content: '';
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.sam-checkbox-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.sam-checkbox-label:has(input:checked) {
+  border-color: rgba(108, 99, 255, 0.5);
+  background: var(--accent-dim);
+}
+
+.sam-checkbox-label:has(input:checked) .sam-checkbox-text {
+  color: var(--text);
+}
+
+/* SAM-only checkbox — orange tint */
+.sam-only-label { margin-top: 4px; }
+.sam-only-label .sam-checkbox-box { border-color: var(--warning); }
+.sam-only-label input:checked ~ .sam-checkbox-box { background: var(--warning); border-color: var(--warning); }
+.sam-only-label:has(input:checked) { border-color: rgba(245,158,11,0.5); background: var(--warning-dim); }
+
+/* ─── Buttons ───────────────────────────────────────────────────────── */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  box-shadow: 0 2px 12px rgba(108, 99, 255, 0.35);
+  font-family: inherit;
+}
+
+.btn-primary svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 20px rgba(108, 99, 255, 0.5);
+}
+
+.btn-primary:active:not(:disabled) { transform: scale(0.98); }
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-secondary:hover { background: var(--accent-hover); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.btn-outline:hover {
+  border-color: var(--text-muted);
+  color: var(--text);
+}
+
+/* ─── Progress Panel ────────────────────────────────────────────────── */
+.progress-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  margin-top: 1.5rem;
+}
+
+.progress-panel h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.progress-bar-container {
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), #a78bfa);
+  border-radius: 3px;
+  transition: width 0.5s ease;
+  animation: pulse-bar 1.5s infinite;
+}
+
+@keyframes pulse-bar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+.progress-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.log-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+.log-line.active { color: var(--text); }
+.log-line.done   { color: var(--success); }
+
+.log-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.log-line.active .log-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.log-line.done   .log-dot { background: var(--success); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Success Panel ─────────────────────────────────────────────────── */
+.success-panel {
+  background: var(--success-dim);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  margin-top: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.success-icon svg {
+  width: 56px;
+  height: 56px;
+  color: var(--success);
+}
+
+.success-panel h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.success-panel p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.success-panel .btn-secondary,
+.success-panel .btn-outline {
+  margin-top: 0.25rem;
+}
+
+/* ─── Error Panel ───────────────────────────────────────────────────── */
+.error-panel {
+  background: var(--error-dim);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem;
+  margin-top: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.error-icon svg {
+  width: 56px;
+  height: 56px;
+  color: var(--error);
+}
+
+.error-panel h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--error);
+}
+
+.error-panel p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  max-width: 480px;
+}
+
+/* ─── SAM Queue Panel ───────────────────────────────────────────────── */
+.sam-queue-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.sam-queue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.sam-queue-header h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-icon:hover { color: var(--text); border-color: var(--accent); }
+
+.sam-queue-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.sam-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+}
+.sam-queue-item:last-child { border-bottom: none; }
+
+.sam-queue-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sam-queue-dot.pending  { background: var(--warning); }
+.sam-queue-dot.done     { background: var(--success); }
+
+.sam-queue-title { flex: 1; color: var(--text); }
+
+.sam-queue-time {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sam-queue-badge {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.sam-queue-badge.pending      { background: var(--warning-dim); color: var(--warning); }
+.sam-queue-badge.done         { background: var(--success-dim); color: var(--success); }
+.sam-queue-badge.podbean      { background: var(--success-dim); color: var(--success); }
+.sam-queue-badge.podbean-sam  { background: #1e3a5f; color: #60a5fa; }
+.sam-queue-badge.sam-only     { background: var(--warning-dim); color: var(--warning); }
+
+.sam-countdown {
+  font-size: 0.75rem;
+  color: var(--accent);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.sam-countdown.overdue { color: var(--error, #f87171); }
+
+.sam-cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+.sam-cancel-btn:hover:not(:disabled) { border-color: var(--error, #f87171); color: var(--error, #f87171); }
+.sam-cancel-btn:disabled { opacity: 0.4; cursor: default; }

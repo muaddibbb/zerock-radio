@@ -1,0 +1,16 @@
+procedure Run;
+var
+  SL: TStringList;
+  I: integer;
+begin
+  if not FileExists('C:\Users\Public\ZeRock\zerock-queue.txt') then exit;
+  SL := TStringList.Create;
+  SL.LoadFromFile('C:\Users\Public\ZeRock\zerock-queue.txt');
+  for I := 0 to SL.Count - 1 do
+    if Trim(SL[I]) <> '' then
+      Queue.AddFile(Trim(SL[I]), 0);
+end;
+
+begin
+  Run;
+end

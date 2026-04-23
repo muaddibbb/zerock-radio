@@ -1,0 +1,11 @@
+services:
+  team-updates:
+    build: .
+    container_name: team-updates
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    volumes:
+      - ./team-updates-data.json:/app/team-updates-data.json
