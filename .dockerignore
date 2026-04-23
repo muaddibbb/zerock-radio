@@ -1,0 +1,8 @@
+node_modules
+uploads
+dist
+sam-agent
+.env
+sam-queue.json
+scheduled.json
+*.log

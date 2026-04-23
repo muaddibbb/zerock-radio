@@ -1,0 +1,30 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "start",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "port": 3000
+    },
+    {
+      "name": "team",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "team"],
+      "port": 3001
+    },
+    {
+      "name": "thankyou-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "7788", "--directory", "/Users/rkuperman/Documents/Claude_Code/ZeRock_Uploader/zerock-radio"],
+      "port": 7788
+    }
+  ]
+}
