@@ -1,35 +1,9 @@
 node_modules/
-dist/
-uploads/
 .env
-.env.*
-*.pkg
-*.tar.gz
-.DS_Store
-__pycache__/
-*.pyc
-*.pyo
-logs/
-zerock-radio/logs/
-# Runtime data files (not source code)
+uploads/
+*.log
 sam-queue.json
 scheduled.json
-team-updates-data.json
-zerock-radio/schedule.json
-zerock-radio/board_cancellations.json
-zerock-radio/zikaron_schedule.json
-zerock-radio/al_haroker_bookings.json
-zerock-radio/now_playing.txt
-zerock-radio/playlists/
-# Temp/debug scripts
-fix*.py
-check_radio.py
-deploy_radio.py
-# Generated binary
-dist/zerock-server-linux
-# Sync management scripts (live in ~/zerock-sync, not source)
-sync.sh
-watch.sh
-sync.log
-# Claude Code local config
-.claude/
+go1.23.4.*
+dist/
+media/

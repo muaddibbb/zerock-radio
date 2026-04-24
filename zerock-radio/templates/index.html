@@ -1527,7 +1527,7 @@ async function refreshSchedule() {
           <div class="show-item" id="show-${s.id}">
             <div class="show-dot"></div>
             <div class="show-info">
-              <div class="show-name">${s.name}${s.is_rerun ? ' <span class="rerun-badge">(rerun)</span>' : ''}</div>
+              <div class="show-name">${s.name}${s.broadcaster && !s.name.includes(s.broadcaster) ? ' — ' + s.broadcaster : ''}${s.is_rerun ? ' <span class="rerun-badge">(rerun)</span>' : ''}</div>
               <div class="show-time">${fmtScheduleTime(s.scheduled_time)}</div>
             </div>
             <div class="show-countdown" data-time="${s.scheduled_time}"></div>
