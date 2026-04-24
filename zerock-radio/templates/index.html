@@ -1551,7 +1551,7 @@ async function refreshSchedule() {
           <div class="show-item">
             <div class="show-dot done"></div>
             <div class="show-info">
-              <div class="show-name">${s.name}</div>
+              <div class="show-name">${s.name}${s.broadcaster && !s.name.includes(s.broadcaster) ? ' — ' + s.broadcaster : ''}</div>
               <div class="show-time">Played ${fmtScheduleTime((s.triggered_at || '').slice(0,16))}</div>
             </div>
           </div>`).join('');
