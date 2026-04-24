@@ -2851,27 +2851,6 @@ def _build_wp_schedule_html():
         col       = day_idx + 1
         day_slots = sorted(all_slots[day_idx], key=lambda s: s['start_h'])
 
-        # Apply zikaron ranges
-        zik_ranges = zikaron_ranges.get(day_idx, [])
-        if zik_ranges:
-            filtered = []
-            for slot in day_slots:
-                if slot.get('queue_override'):
-                    filtered.append(slot)
-                else:
-                    overlaps = any(slot['start_h'] < ze and slot['end_h'] > zs
-                                   for (zs, ze, _) in zik_ranges)
-                    if not overlaps:
-                        filtered.append(slot)
-            for (zs, ze, label) in zik_ranges:
-                filtered.append({
-                    'start_h': zs, 'end_h': ze,
-                    'key': '__zikaron__', 'name': label,
-                    'slug': '', 'broadcaster': '',
-                    'rerun': False, 'queue_override': False,
-                })
-            day_slots = sorted(filtered, key=lambda s: s['start_h'])
-
         # Fill gaps with Rocky
         filled = []
         cursor = 0.0
