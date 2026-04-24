@@ -3711,7 +3711,7 @@ def _start_weekly_board_refresh():
                     last_refresh_week = week_key
                     print("[WeeklyRefresh] Sunday midnight — clearing board cancellations and syncing WP board", flush=True)
                     _clear_board_cancellations()
-                    _sync_wp_board()
+                    _sync_wp_board(force=True)
     threading.Thread(target=_run, daemon=True).start()
 
 _start_weekly_board_refresh()
