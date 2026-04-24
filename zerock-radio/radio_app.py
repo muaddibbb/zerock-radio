@@ -3775,6 +3775,110 @@ def _send_upload_email(booking):
         print(f"[AlHaRoker] Email error: {e}", flush=True)
 
 
+def _send_al_haroker_reminder_email(booking):
+    """Send a 24-hour reminder email to an al-haroker broadcaster who has
+    registered but not yet uploaded their show file."""
+    if not SMTP_USER or not SMTP_PASS:
+        print(f"[AlHaRoker] SMTP not configured — skipping reminder to {booking.get('email','')}", flush=True)
+        return False
+    email = booking.get('email', '')
+    if not email:
+        return False
+    try:
+        date_str   = booking['date']           # YYYY-MM-DD
+        upload_url = f"{ZEROCK_PUBLIC_URL}/al-haroker-upload/{booking['token']}"
+
+        body_text = (
+            f"שלום {booking['broadcaster']},\n\n"
+            f"רצינו להזכיר לך שנרשמת לעל הרוקר למחר,\n"
+            f"הנה הקישור להעלאת התוכנית\n"
+            f"{upload_url}\n\n"
+            f"תודה,\n"
+            f"צוות ״רדיו זה רוק״\n"
+        )
+
+        body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.6">
+<p>שלום <strong>{booking['broadcaster']}</strong>,</p>
+<p>רצינו להזכיר לך שנרשמת לעל הרוקר למחר,<br>
+הנה הקישור להעלאת התוכנית:</p>
+<p style="margin:24px 0">
+  <a href="{upload_url}" style="background:#e63946;color:#fff;padding:14px 28px;
+     text-decoration:none;border-radius:6px;font-weight:bold;font-size:15px">
+    🎙️ העלאת הפרק שלי
+  </a>
+</p>
+<p style="color:#888;font-size:13px">
+  לא עובד הכפתור? העתק לדפדפן:<br>
+  <a href="{upload_url}" style="color:#e63946">{upload_url}</a>
+</p>
+<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
+<p>תודה,<br><strong>צוות ״רדיו זה רוק״</strong></p>
+</div>"""
+
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"תזכורת להעלות על הרוקר לתאריך {date_str}"
+        msg['From']    = SMTP_FROM_ADDR
+        msg['To']      = email
+        msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+            s.ehlo()
+            s.starttls()
+            s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM_ADDR, [email], msg.as_bytes())
+        print(f"[AlHaRoker] Reminder email sent → {email} for {date_str}", flush=True)
+        return True
+    except Exception as e:
+        print(f"[AlHaRoker] Reminder email error: {e}", flush=True)
+        return False
+
+
+def _al_haroker_reminder_loop():
+    """Background thread: every 15 minutes, scan al-haroker bookings and send
+    a 24-hour reminder to broadcasters who:
+      - Are registered (booking exists)
+      - Have NOT uploaded yet (booking['uploaded'] is False)
+      - Broadcast is within the next 24 hours (0 < hours_until <= 24)
+      - Have not already received a reminder (booking['reminder_sent_at'] unset)
+    Only applies to al-haroker bookings; no other shows are touched."""
+    # Give Flask a moment to start, then run immediately so a late-deploy
+    # doesn't miss a booking that's already inside the 24h window.
+    time.sleep(20)
+    while True:
+        try:
+            now = datetime.now()
+            with _bookings_lock:
+                bookings = _load_al_haroker_bookings()
+                changed  = False
+                for b in bookings:
+                    # Guards: only unreminded, un-uploaded bookings
+                    if b.get('uploaded'):
+                        continue
+                    if b.get('reminder_sent_at'):
+                        continue
+                    if not b.get('email'):
+                        continue
+                    try:
+                        broadcast_dt = datetime.strptime(b['date'], '%Y-%m-%d').replace(
+                            hour=AL_HAROKER_BROADCAST_HOUR, minute=0, second=0, microsecond=0)
+                    except Exception:
+                        continue
+                    hours_until = (broadcast_dt - now).total_seconds() / 3600.0
+                    # Within the 24h window (exclude past-broadcast bookings)
+                    if 0 < hours_until <= 24:
+                        if _send_al_haroker_reminder_email(b):
+                            b['reminder_sent_at'] = now.isoformat()
+                            changed = True
+                if changed:
+                    _save_al_haroker_bookings(bookings)
+        except Exception as e:
+            print(f"[AlHaRoker] Reminder loop error: {e}", flush=True)
+        time.sleep(900)   # 15 minutes
+
+threading.Thread(target=_al_haroker_reminder_loop, daemon=True).start()
+
+
 @app.route('/al-haroker-schedule')
 @app.route('/al-haroker-schedule/<int:year>/<int:month>')
 def al_haroker_schedule_page(year=None, month=None):
