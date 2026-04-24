@@ -2758,25 +2758,28 @@ def _build_wp_schedule_slots():
             })
 
     # ── Queue-only shows (על הרוקר, ערב של אלבומים) + day=None shows ──────────
+    # Each show_key can have multiple pending episodes within the 14-day window
+    # (e.g. על הרוקר runs on many different weekdays), so we render each one.
     for show in SHOW_SCHEDULE:
         key = show['key']
         if show['day'] is not None and key not in QUEUE_ONLY_BOARD_SHOWS:
             continue
-        info = queue_only_entries.get(key)
-        if not info:
+        infos = queue_only_entries.get(key) or []
+        if not infos:
             continue
         dur  = _SHOW_DURATIONS_H.get(key, 1)
         slug = _WP_SLUGS.get(key, '')
-        slots[info['wp_day']].append({
-            'start_h':        info['start_h'],
-            'end_h':          info['start_h'] + dur,
-            'key':            key,
-            'name':           show['name'],
-            'slug':           slug,
-            'broadcaster':    info['broadcaster'],
-            'rerun':          False,
-            'queue_override': True,
-        })
+        for info in infos:
+            slots[info['wp_day']].append({
+                'start_h':        info['start_h'],
+                'end_h':          info['start_h'] + dur,
+                'key':            key,
+                'name':           show['name'],
+                'slug':           slug,
+                'broadcaster':    info['broadcaster'],
+                'rerun':          False,
+                'queue_override': True,
+            })
 
     return slots
 
