@@ -2936,10 +2936,6 @@ def _sync_wp_board(force=False):
 
     All three run in the background; the first two are the important ones.
     """
-    if not force:
-        print("[WPSync] Skipped (Saturday-only policy — call with force=True to override)", flush=True)
-        return
-
     def _do_sync():
         with _wp_sync_lock:
             try:
