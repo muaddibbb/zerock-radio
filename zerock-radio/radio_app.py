@@ -3687,7 +3687,7 @@ def api_board_html():
 @app.route('/api/wp-sync', methods=['POST'])
 def api_wp_sync():
     """Manually trigger a WP schedule board sync."""
-    _sync_wp_board()
+    _sync_wp_board(force=True)
     return jsonify({'ok': True, 'message': 'WP board sync triggered (background)'})
 
 # ── Startup tasks ─────────────────────────────────────────────────────────────
