@@ -2961,8 +2961,14 @@ def _build_wp_schedule_html():
 
 _wp_sync_lock = threading.Lock()
 
-def _sync_wp_board():
+def _sync_wp_board(force=False):
     """Push the current schedule HTML to the WordPress schedule board.
+
+    Saturday-only policy: by default (force=False), skip automatic triggers.
+    Only runs when force=True — that is, the scheduled Saturday→Sunday midnight
+    refresh or a manual /api/wp-sync call. This prevents mid-week changes
+    (uploads, deletes, show triggers, zikaron updates, restarts) from
+    publishing next-week data too early.
 
     Priority order (each attempt is independent, all run):
     1. POST zerock/v1/schedule  — custom mu-plugin endpoint (updates option + page content).
