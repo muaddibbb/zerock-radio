@@ -2690,11 +2690,13 @@ def _build_wp_schedule_slots():
                 ep_start_h = t.hour + t.minute / 60.0
                 if key in QUEUE_ONLY_BOARD_SHOWS or (show_cfg_q and show_cfg_q['day'] is None):
                     if key not in queue_only_entries:
+                        _bc_raw = (entry.get('broadcaster', '')
+                                   or (show_cfg_q.get('broadcaster', '') if show_cfg_q else ''))
+                        _bc_prefix = _WP_BROADCASTER_PREFIX.get(key, '')
                         queue_only_entries[key] = {
                             'wp_day':      ep_wp_day,
                             'start_h':     ep_start_h,
-                            'broadcaster': (entry.get('broadcaster', '')
-                                            or (show_cfg_q.get('broadcaster', '') if show_cfg_q else '')),
+                            'broadcaster': (_bc_prefix + _bc_raw) if _bc_raw else '',
                         }
                 else:
                     if key not in queue_overrides:
