@@ -2827,32 +2827,9 @@ def _build_wp_schedule_html():
 
     all_slots = _build_wp_schedule_slots()
 
-    # ── Zikaron time ranges per WP day ────────────────────────────────────────
+    # Zikaron (יום הזיכרון) is intentionally NOT rendered on the WP board —
+    # per policy, the weekly grid shows the regular schedule only.
     zikaron_ranges = {}
-    try:
-        zsched = load_zikaron_schedule()
-        for ztype in ('holocaust', 'memorial'):
-            w = zsched.get(ztype, {})
-            if not (w.get('from') and w.get('until')):
-                continue
-            dt_from  = datetime.fromisoformat(w['from'])
-            dt_until = datetime.fromisoformat(w['until'])
-            label = ('יום הזיכרון לשואה ולגבורה'
-                     if ztype == 'holocaust'
-                     else 'יום הזיכרון לחללי מערכות ישראל')
-            cur = dt_from.date()
-            while cur <= dt_until.date():
-                wp_wd     = (cur.weekday() + 1) % 7
-                day_start = datetime(cur.year, cur.month, cur.day)
-                day_end   = day_start + timedelta(days=1)
-                seg_start = max(dt_from, day_start)
-                seg_end   = min(dt_until, day_end)
-                sh = seg_start.hour + seg_start.minute / 60.0
-                eh = 24.0 if seg_end >= day_end else (seg_end.hour + seg_end.minute / 60.0)
-                zikaron_ranges.setdefault(wp_wd, []).append((sh, eh, label))
-                cur += timedelta(days=1)
-    except Exception:
-        pass
 
     # NOTE: CSS lives in _sync_wp_board path 4 (ihaf_insert_footer), NOT here.
     # Keeping CSS out of the HTML prevents it from leaking into page meta descriptions
