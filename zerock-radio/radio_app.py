@@ -2671,7 +2671,7 @@ def _build_wp_schedule_slots():
 
     # ── Scan queue for overrides + queue-only shows ────────────────────────────
     queue_overrides    = {}   # show_key → (wp_day, start_h)   for regular rescheduled shows
-    queue_only_entries = {}   # show_key → {wp_day, start_h, broadcaster}  for QUEUE_ONLY_BOARD_SHOWS
+    queue_only_entries = {}   # show_key → LIST of {wp_day, start_h, broadcaster}  for QUEUE_ONLY_BOARD_SHOWS
     try:
         queue = load_schedule()
         now   = datetime.now()
@@ -2689,15 +2689,14 @@ def _build_wp_schedule_slots():
                 ep_wp_day  = DAY_MAP[t.weekday()]
                 ep_start_h = t.hour + t.minute / 60.0
                 if key in QUEUE_ONLY_BOARD_SHOWS or (show_cfg_q and show_cfg_q['day'] is None):
-                    if key not in queue_only_entries:
-                        _bc_raw = (entry.get('broadcaster', '')
-                                   or (show_cfg_q.get('broadcaster', '') if show_cfg_q else ''))
-                        _bc_prefix = _WP_BROADCASTER_PREFIX.get(key, '')
-                        queue_only_entries[key] = {
-                            'wp_day':      ep_wp_day,
-                            'start_h':     ep_start_h,
-                            'broadcaster': (_bc_prefix + _bc_raw) if _bc_raw else '',
-                        }
+                    _bc_raw = (entry.get('broadcaster', '')
+                               or (show_cfg_q.get('broadcaster', '') if show_cfg_q else ''))
+                    _bc_prefix = _WP_BROADCASTER_PREFIX.get(key, '')
+                    queue_only_entries.setdefault(key, []).append({
+                        'wp_day':      ep_wp_day,
+                        'start_h':     ep_start_h,
+                        'broadcaster': (_bc_prefix + _bc_raw) if _bc_raw else '',
+                    })
                 else:
                     if key not in queue_overrides:
                         queue_overrides[key] = (ep_wp_day, ep_start_h)
