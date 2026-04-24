@@ -3019,6 +3019,11 @@ def _sync_wp_board(force=False):
                 _GRID_ROWS = 34  # (GRID_END_H=24 − GRID_START_H=7) × 60 / MINS_PER_ROW=30
                 css = (
                     '<style>'
+                    # Hide the injected board on every WP page except /schedule
+                    # (page ID 254). WPCode ihaf_insert_footer injects globally,
+                    # so we scope visibility here — on all other pages the wrapper
+                    # is not rendered at all.
+                    f'body:not(.page-id-{WP_SCHEDULE_PAGE_ID}) #zerock-board{{display:none!important}}'
                     '.schedule-grid:not(#zerock-board){display:none!important}'
                     '#zerock-board{'
                     'display:grid!important;'
