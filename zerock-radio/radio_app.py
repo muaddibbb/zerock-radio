@@ -2021,7 +2021,7 @@ def _nightly_rebuild_loop():
         if datetime.now().weekday() == 6:  # Sunday = 6
             print("[Nightly] Saturday midnight — syncing WP schedule board for new week…", flush=True)
             try:
-                _sync_wp_board()
+                _sync_wp_board(force=True)
                 print("[Nightly] WP board sync complete.", flush=True)
             except Exception as e:
                 print(f"[Nightly] WP board sync failed: {e}", flush=True)
