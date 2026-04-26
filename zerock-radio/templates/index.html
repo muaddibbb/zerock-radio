@@ -740,6 +740,18 @@
         <input type="text" id="pollTitle" placeholder="מצעד הרוק של ישראל — ..."
           style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 10px;color:var(--text);font-size:0.85rem">
       </div>
+      <div class="form-group" style="display:flex;gap:10px">
+        <div style="flex:1">
+          <label style="font-size:0.78rem;color:var(--text-muted)">Voting opens (Thu 15:00)</label>
+          <input type="datetime-local" id="pollOpensAt"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:0.82rem">
+        </div>
+        <div style="flex:1">
+          <label style="font-size:0.78rem;color:var(--text-muted)">Voting closes (Wed 20:00)</label>
+          <input type="datetime-local" id="pollClosesAt"
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:0.82rem">
+        </div>
+      </div>
       <div id="pollSongsEditor" style="display:none;margin-bottom:14px">
         <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:8px">
           Song labels (edit before publishing)
