@@ -4877,7 +4877,9 @@ def poll_vote_page(poll_id):
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return render_template('poll_vote.html', invalid=True, poll=None, already_voted=False)
-    # Cookie-based already-voted check (soft)
+    # Augment with effective open state for template
+    now = datetime.now()
+    poll = {**poll, 'open': _poll_is_open(poll, now)}
     already = request.cookies.get(f'voted_{poll_id}') == '1'
     return render_template('poll_vote.html', invalid=False, poll=poll, already_voted=already)
 
@@ -4889,8 +4891,16 @@ def api_poll_vote(poll_id):
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return jsonify({'error': 'invalid poll'}), 404
-    if not poll.get('open'):
-        return jsonify({'error': 'poll is closed'}), 403
+    now = datetime.now()
+    if not _poll_is_open(poll, now):
+        # Distinguish "not yet" vs "already closed" for clearer error text
+        try:
+            opens = datetime.fromisoformat(poll.get('opens_at') or '')
+            if now < opens:
+                return jsonify({'error': 'ההצבעה עדיין לא נפתחה'}), 403
+        except Exception:
+            pass
+        return jsonify({'error': 'ההצבעה סגורה'}), 403
 
     data = request.get_json(silent=True) or {}
     song_ids = data.get('song_ids') or []
