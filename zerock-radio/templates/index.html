@@ -1085,6 +1085,41 @@ async function clearZikaron(type) {
   } catch { toast('Failed to clear zikaron', 'err'); }
 }
 
+// ── Yom Kippur (stops both streams during the window) ────────────────────────
+async function saveYomKippur() {
+  const from  = document.getElementById('yomKippurFrom').value;
+  const until = document.getElementById('yomKippurUntil').value;
+  if (!from || !until) { toast('Please set both From and Until dates', 'err'); return; }
+  try {
+    const r = await fetch('/api/yom-kippur', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({from, until})
+    }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); return; }
+    document.getElementById('yomKippurFrom')._dirty  = false;
+    document.getElementById('yomKippurUntil')._dirty = false;
+    toast(r.active ? '🕊 Yom Kippur ACTIVE — both streams stopped' : '🕊 Yom Kippur scheduled', 'ok');
+    pollStatus();
+  } catch { toast('Failed to save Yom Kippur schedule', 'err'); }
+}
+
+async function clearYomKippur() {
+  try {
+    await fetch('/api/yom-kippur', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({clear: true})
+    });
+    const fEl = document.getElementById('yomKippurFrom');
+    const uEl = document.getElementById('yomKippurUntil');
+    fEl.value = ''; fEl._dirty = false;
+    uEl.value = ''; uEl._dirty = false;
+    toast('Yom Kippur schedule cleared', 'ok');
+    pollStatus();
+  } catch { toast('Failed to clear Yom Kippur', 'err'); }
+}
+
 // ── Countdown timers ──────────────────────────────────────────────────────────
 function updateCountdowns() {
   document.querySelectorAll('[data-time]').forEach(el => {
