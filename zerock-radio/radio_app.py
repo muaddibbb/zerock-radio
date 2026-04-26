@@ -2539,6 +2539,36 @@ def api_zikaron_post():
     _sync_wp_board()
     return jsonify({'ok': True, 'active': is_zikaron_window(), 'active_type': get_zikaron_type()})
 
+@app.route('/api/yom-kippur', methods=['GET'])
+def api_yom_kippur_get():
+    return jsonify({
+        'schedule': load_yom_kippur_schedule(),
+        'active':   is_yom_kippur_window(),
+    })
+
+@app.route('/api/yom-kippur', methods=['POST'])
+def api_yom_kippur_post():
+    data = request.get_json() or {}
+    if data.get('clear'):
+        save_yom_kippur_schedule({'from': None, 'until': None})
+        _sync_yom_kippur_to_streams()
+        return jsonify({'ok': True})
+
+    from_iso, until_iso = data.get('from'), data.get('until')
+    if not from_iso or not until_iso:
+        return jsonify({'error': 'from and until are required'}), 400
+    try:
+        dt_from  = datetime.fromisoformat(from_iso)
+        dt_until = datetime.fromisoformat(until_iso)
+    except Exception:
+        return jsonify({'error': 'Invalid datetime format'}), 400
+    if dt_until <= dt_from:
+        return jsonify({'error': 'until must be after from'}), 400
+
+    save_yom_kippur_schedule({'from': dt_from.isoformat(), 'until': dt_until.isoformat()})
+    _sync_yom_kippur_to_streams()
+    return jsonify({'ok': True, 'active': is_yom_kippur_window()})
+
 def _get_metadata_field(meta_str, field):
     """Extract a metadata field value from Liquidsoap request.metadata output."""
     for line in meta_str.splitlines():
