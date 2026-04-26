@@ -4446,6 +4446,313 @@ def api_one_time_upload(token):
     return jsonify({'ok': True, 'broadcast_time': broadcast_dt.isoformat()})
 
 
+# ─── Matzad voting polls ──────────────────────────────────────────────────────
+
+_polls_lock = threading.Lock()
+_votes_lock = threading.Lock()
+
+def _load_polls():
+    try:
+        with open(POLLS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_polls(data):
+    with open(POLLS_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def _load_poll_votes():
+    try:
+        with open(POLL_VOTES_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_poll_votes(data):
+    with open(POLL_VOTES_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _label_from_filename(path, prefix_pat):
+    """Derive a clean display label from an uploaded matzad/palash file path.
+    Strips '<show_id>_pl##_' or '<show_id>_pa##_' prefix, then extension,
+    then converts underscores to spaces."""
+    import re
+    base = os.path.splitext(os.path.basename(path or ''))[0]
+    base = re.sub(prefix_pat, '', base)
+    return base.replace('_', ' ').strip() or 'Untitled'
+
+
+@app.route('/api/matzad-episodes')
+def api_matzad_episodes():
+    """Admin: list scheduled matzad episodes that have playlist + palash files."""
+    schedule = load_schedule()
+    out = []
+    for s in schedule:
+        if s.get('show_key') != 'matzad_harok':
+            continue
+        pl = s.get('playlist_files') or []
+        pa = s.get('palash_files') or []
+        if not pl and not pa:
+            continue
+        out.append({
+            'id':             s['id'],
+            'scheduled_time': s.get('scheduled_time'),
+            'episode_num':    s.get('episode_num') or '',
+            'pl_count':       len(pl),
+            'pa_count':       len(pa),
+        })
+    out.sort(key=lambda x: x['scheduled_time'] or '', reverse=True)
+    return jsonify(out)
+
+
+@app.route('/api/matzad-episode/<show_id>/songs')
+def api_matzad_episode_songs(show_id):
+    """Admin: return the song list for a matzad episode (auto-labeled from filenames)."""
+    schedule = load_schedule()
+    show = next((s for s in schedule if s.get('id') == show_id and s.get('show_key') == 'matzad_harok'), None)
+    if not show:
+        return jsonify({'error': 'episode not found'}), 404
+
+    pl_files = show.get('playlist_files') or []
+    pl_slots = show.get('playlist_slots') or []
+    pa_files = show.get('palash_files')   or []
+
+    songs = []
+    # Pair each playlist file with its slot, sort 20→1 for display
+    pairs = sorted(
+        [(pl_slots[i] if i < len(pl_slots) else (i + 1), f) for i, f in enumerate(pl_files)],
+        key=lambda x: x[0], reverse=True
+    )
+    for slot, f in pairs:
+        songs.append({
+            'id':    f'm{slot}',
+            'group': 'matzad',
+            'slot':  slot,
+            'label': _label_from_filename(f, r'^\d+_pl\d+_'),
+        })
+    for i, f in enumerate(pa_files, start=1):
+        songs.append({
+            'id':    f'p{i}',
+            'group': 'palash',
+            'slot':  i,
+            'label': _label_from_filename(f, r'^\d+_pa\d+_'),
+        })
+    return jsonify({'show_id': show_id, 'songs': songs})
+
+
+@app.route('/api/polls', methods=['POST'])
+def api_poll_create():
+    """Admin: create a poll from a matzad episode's songs."""
+    data = request.get_json(silent=True) or {}
+    show_id = (data.get('matzad_show_id') or '').strip()
+    title   = (data.get('title') or '').strip()
+    songs_in = data.get('songs') or []  # list of {id, group, slot, label}
+
+    if not show_id:
+        return jsonify({'error': 'matzad_show_id required'}), 400
+    if not songs_in:
+        return jsonify({'error': 'songs required'}), 400
+
+    # Validate each song has needed fields and dedupe ids
+    seen_ids = set()
+    songs = []
+    for s in songs_in:
+        sid   = (s.get('id') or '').strip()
+        label = (s.get('label') or '').strip()
+        group = s.get('group')
+        if not sid or sid in seen_ids:
+            return jsonify({'error': 'invalid or duplicate song id'}), 400
+        if group not in ('matzad', 'palash'):
+            return jsonify({'error': f'invalid group for {sid}'}), 400
+        if not label:
+            return jsonify({'error': f'empty label for {sid}'}), 400
+        seen_ids.add(sid)
+        songs.append({
+            'id':    sid,
+            'group': group,
+            'slot':  s.get('slot'),
+            'label': label,
+        })
+
+    import secrets as _secrets
+    poll_id = _secrets.token_urlsafe(12)
+
+    if not title:
+        # default title: episode date if possible
+        schedule = load_schedule()
+        ep = next((x for x in schedule if x.get('id') == show_id), None)
+        if ep and ep.get('scheduled_time'):
+            try:
+                dt = datetime.fromisoformat(ep['scheduled_time'])
+                title = f"מצעד הרוק של ישראל — {dt.strftime('%d/%m/%Y')}"
+            except Exception:
+                title = 'מצעד הרוק של ישראל'
+        else:
+            title = 'מצעד הרוק של ישראל'
+
+    poll = {
+        'id':             poll_id,
+        'title':          title,
+        'matzad_show_id': show_id,
+        'songs':          songs,
+        'max_votes':      5,
+        'open':           True,
+        'created_at':     datetime.now().isoformat(),
+        'closed_at':      None,
+    }
+    with _polls_lock:
+        polls = _load_polls()
+        polls.append(poll)
+        _save_polls(polls)
+
+    url = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
+    print(f"[Poll] Created '{title}' → {poll_id} ({len(songs)} songs)", flush=True)
+    return jsonify({'ok': True, 'poll': poll, 'url': url})
+
+
+@app.route('/api/polls', methods=['GET'])
+def api_poll_list():
+    """Admin: list all polls with vote counts."""
+    polls = _load_polls()
+    votes = _load_poll_votes()
+    counts = {}
+    for v in votes:
+        counts[v['poll_id']] = counts.get(v['poll_id'], 0) + 1
+    return jsonify([{
+        **p,
+        'vote_count': counts.get(p['id'], 0),
+        'url':        f"{ZEROCK_PUBLIC_URL}/poll/{p['id']}",
+    } for p in polls])
+
+
+@app.route('/api/polls/<poll_id>/results')
+def api_poll_results(poll_id):
+    """Admin: tally per song."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'not found'}), 404
+    votes = [v for v in _load_poll_votes() if v['poll_id'] == poll_id]
+    tally = {s['id']: 0 for s in poll['songs']}
+    for v in votes:
+        for sid in (v.get('song_ids') or []):
+            if sid in tally:
+                tally[sid] += 1
+    results = sorted([
+        {**s, 'votes': tally[s['id']]} for s in poll['songs']
+    ], key=lambda x: (-x['votes'], -((x.get('slot') or 0) if x['group']=='matzad' else 0)))
+    return jsonify({
+        'poll':         poll,
+        'total_voters': len(votes),
+        'results':      results,
+    })
+
+
+@app.route('/api/polls/<poll_id>/close', methods=['POST'])
+def api_poll_close(poll_id):
+    """Admin: close a poll (lock voting, keep results)."""
+    with _polls_lock:
+        polls = _load_polls()
+        poll  = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return jsonify({'error': 'not found'}), 404
+        poll['open']       = False
+        poll['closed_at']  = datetime.now().isoformat()
+        _save_polls(polls)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/polls/<poll_id>/reopen', methods=['POST'])
+def api_poll_reopen(poll_id):
+    with _polls_lock:
+        polls = _load_polls()
+        poll  = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return jsonify({'error': 'not found'}), 404
+        poll['open']       = True
+        poll['closed_at']  = None
+        _save_polls(polls)
+    return jsonify({'ok': True})
+
+
+@app.route('/api/polls/<poll_id>', methods=['DELETE'])
+def api_poll_delete(poll_id):
+    """Admin: delete a poll and its votes."""
+    with _polls_lock:
+        polls = _load_polls()
+        new_polls = [p for p in polls if p['id'] != poll_id]
+        if len(new_polls) == len(polls):
+            return jsonify({'error': 'not found'}), 404
+        _save_polls(new_polls)
+    with _votes_lock:
+        votes = _load_poll_votes()
+        _save_poll_votes([v for v in votes if v['poll_id'] != poll_id])
+    return jsonify({'ok': True})
+
+
+@app.route('/poll/<poll_id>')
+def poll_vote_page(poll_id):
+    """Public: voting form."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return render_template('poll_vote.html', invalid=True, poll=None, already_voted=False)
+    # Cookie-based already-voted check (soft)
+    already = request.cookies.get(f'voted_{poll_id}') == '1'
+    return render_template('poll_vote.html', invalid=False, poll=poll, already_voted=already)
+
+
+@app.route('/api/poll/<poll_id>/vote', methods=['POST'])
+def api_poll_vote(poll_id):
+    """Public: submit a ballot of exactly 5 song_ids."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'invalid poll'}), 404
+    if not poll.get('open'):
+        return jsonify({'error': 'poll is closed'}), 403
+
+    data = request.get_json(silent=True) or {}
+    song_ids = data.get('song_ids') or []
+    if not isinstance(song_ids, list):
+        return jsonify({'error': 'song_ids must be a list'}), 400
+    # exactly max_votes, all unique, all valid ids
+    n_required = poll.get('max_votes', 5)
+    if len(song_ids) != n_required:
+        return jsonify({'error': f'יש לבחור בדיוק {n_required} שירים'}), 400
+    if len(set(song_ids)) != len(song_ids):
+        return jsonify({'error': 'בחירות כפולות'}), 400
+    valid_ids = {s['id'] for s in poll['songs']}
+    if any(sid not in valid_ids for sid in song_ids):
+        return jsonify({'error': 'מזהה שיר לא תקין'}), 400
+
+    # Soft duplicate guard: cookie + IP
+    if request.cookies.get(f'voted_{poll_id}') == '1':
+        return jsonify({'error': 'כבר הצבעת בסקר זה'}), 409
+    ip = (request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
+          or request.remote_addr or '')
+    with _votes_lock:
+        votes = _load_poll_votes()
+        if any(v['poll_id'] == poll_id and v.get('ip') == ip for v in votes):
+            return jsonify({'error': 'כבר הצבעת בסקר זה מכתובת זו'}), 409
+        votes.append({
+            'poll_id':  poll_id,
+            'song_ids': song_ids,
+            'ip':       ip,
+            'ua':       (request.headers.get('User-Agent') or '')[:200],
+            'voted_at': datetime.now().isoformat(),
+        })
+        _save_poll_votes(votes)
+
+    resp = jsonify({'ok': True})
+    # 90-day cookie
+    resp.set_cookie(f'voted_{poll_id}', '1', max_age=90*86400, samesite='Lax')
+    print(f"[Poll] Vote received for {poll_id} from {ip}", flush=True)
+    return resp
+
+
 # ─── Al HaRoker — monthly invite emails ───────────────────────────────────────
 
 def _send_monthly_invite_email(subscriber, next_year, next_month):
