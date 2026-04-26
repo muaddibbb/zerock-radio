@@ -2262,9 +2262,8 @@ document.getElementById('scheduleForm').addEventListener('submit', async (e) => 
       // Reset album slots (force rebuild next time)
       const slotsContainer = document.getElementById('albumSlots');
       if (slotsContainer) { slotsContainer.innerHTML = ''; slotsContainer.dataset.built = ''; }
-      // Reset playlist mode
+      // Reset playlist mode (will auto-re-enable next time matzad is selected)
       document.getElementById('playlistModeGroup').style.display = 'none';
-      document.getElementById('playlistModeCheckbox').checked = false;
       document.getElementById('playlistFilesGroup').style.display = 'none';
       const plSlots = document.getElementById('playlistSlots');
       if (plSlots) { plSlots.innerHTML = ''; plSlots.dataset.built = ''; }
