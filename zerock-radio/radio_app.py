@@ -4941,6 +4941,272 @@ def api_poll_vote(poll_id):
     return resp
 
 
+# ─── Auto-generate next chart from poll votes ────────────────────────────────
+
+def _compute_next_chart(poll_id):
+    """From poll votes, build the next matzad chart (top-20 ranking + badge highlights).
+
+    Rules (per user spec):
+      • New entry (was in last week's פל״ש, now in 1–20)         → 'knisa_new'
+      • Highest-placed new entry                                  → 'knisa'
+      • Biggest decline (delta < 0) among matzad-origin songs     → 'yerida'
+      • Biggest improvement (delta > 0) among matzad-origin songs → 'aliya'
+        (delta = old_slot − new_slot; positive = moved up toward #1)
+
+    Returns (result_dict, error_str_or_None).
+    """
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return None, 'poll not found'
+
+    schedule = load_schedule()
+    src_id   = poll.get('matzad_show_id')
+    src_show = next((s for s in schedule if s.get('id') == src_id), None)
+    if not src_show:
+        return None, 'source matzad episode no longer exists'
+
+    # Tally votes
+    all_votes = [v for v in _load_poll_votes() if v['poll_id'] == poll_id]
+    tally = {s['id']: 0 for s in poll['songs']}
+    for v in all_votes:
+        for sid in (v.get('song_ids') or []):
+            if sid in tally:
+                tally[sid] += 1
+
+    # Map song id → file path from the source episode (so we can reuse audio)
+    file_map = {}
+    src_pl_files = src_show.get('playlist_files') or []
+    src_pl_slots = src_show.get('playlist_slots') or []
+    for i, f in enumerate(src_pl_files):
+        slot = src_pl_slots[i] if i < len(src_pl_slots) else (i + 1)
+        file_map[f'm{slot}'] = f
+    src_pa_files = src_show.get('palash_files') or []
+    for i, f in enumerate(src_pa_files):
+        file_map[f'p{i+1}'] = f
+
+    # Sort by votes desc, with deterministic tiebreaker:
+    #   1. more votes wins
+    #   2. matzad-origin ranks above palash-origin (established song wins tie)
+    #   3. lower original slot wins (slot #1 above slot #20; palash 1 above palash 5)
+    def sort_key(s):
+        return (
+            -tally[s['id']],
+            0 if s.get('group') == 'matzad' else 1,
+            s.get('slot') or 99,
+        )
+    sorted_songs = sorted(poll['songs'], key=sort_key)
+    top_20 = sorted_songs[:20]
+
+    # Build per-position entries
+    ranking = []
+    for new_pos, s in enumerate(top_20, start=1):
+        entry = {
+            'new_slot':    new_pos,                              # 1 = top
+            'song_id':     s['id'],
+            'label':       s['label'],
+            'votes':       tally[s['id']],
+            'old_group':   s.get('group'),
+            'old_slot':    s.get('slot') if s.get('group') == 'matzad' else None,
+            'palash_idx':  s.get('slot') if s.get('group') == 'palash' else None,
+            'delta':       None,
+            'badges':      [],
+            'source_file': file_map.get(s['id']),
+            'spotify_url': s.get('spotify_url'),
+        }
+        if s.get('group') == 'matzad' and s.get('slot'):
+            entry['delta'] = s['slot'] - new_pos
+        ranking.append(entry)
+
+    # Highlight computations
+    new_entries = [e for e in ranking if e['old_group'] == 'palash']
+    knisa_new_ids = [e['song_id'] for e in new_entries]
+    knisa_id  = min(new_entries, key=lambda e: e['new_slot'])['song_id'] if new_entries else None
+
+    matzad_origin = [e for e in ranking if e['old_group'] == 'matzad' and e['delta'] is not None]
+    aliya_id  = None
+    yerida_id = None
+    if matzad_origin:
+        best_up   = max(matzad_origin, key=lambda e: e['delta'])
+        worst_dn  = min(matzad_origin, key=lambda e: e['delta'])
+        if best_up['delta']  > 0: aliya_id  = best_up['song_id']
+        if worst_dn['delta'] < 0: yerida_id = worst_dn['song_id']
+
+    # Apply badges to ranking (knisa & knisa_new can both apply to same song)
+    for e in ranking:
+        if e['song_id'] in knisa_new_ids: e['badges'].append('knisa_new')
+        if e['song_id'] == knisa_id:      e['badges'].append('knisa')
+        if e['song_id'] == aliya_id:      e['badges'].append('aliya')
+        if e['song_id'] == yerida_id:     e['badges'].append('yerida')
+
+    return {
+        'poll_id':         poll_id,
+        'poll_title':      poll.get('title'),
+        'source_show_id':  src_id,
+        'total_voters':    len(all_votes),
+        'ranking':         ranking,
+        'highlights': {
+            'knisa_new': knisa_new_ids,
+            'knisa':     knisa_id,
+            'aliya':     aliya_id,
+            'yerida':    yerida_id,
+        },
+    }, None
+
+
+@app.route('/api/poll/<poll_id>/next-chart')
+def api_poll_next_chart(poll_id):
+    """Admin: preview the auto-computed next chart from a poll's votes."""
+    result, err = _compute_next_chart(poll_id)
+    if err:
+        return jsonify({'error': err}), 404
+    return jsonify(result)
+
+
+@app.route('/api/matzad-chart/create-from-poll', methods=['POST'])
+def api_matzad_chart_create_from_poll():
+    """Admin: create a new matzad schedule entry from a poll's results.
+
+    Multipart form:
+      poll_id      — required
+      manual_date  — optional YYYY-MM-DD; otherwise next Thursday
+      palash_0..palash_4 — 5 NEW פל״ש song uploads (required)
+    """
+    poll_id     = (request.form.get('poll_id')     or '').strip()
+    manual_date = (request.form.get('manual_date') or '').strip()
+    if not poll_id:
+        return jsonify({'error': 'poll_id required'}), 400
+
+    chart, err = _compute_next_chart(poll_id)
+    if err:
+        return jsonify({'error': err}), 404
+    if len(chart['ranking']) < 20:
+        return jsonify({'error': f"chart has only {len(chart['ranking'])} songs (need 20)"}), 400
+
+    # Verify all top-20 entries have a resolvable source file (sanity check)
+    missing = [e['song_id'] for e in chart['ranking'] if not e['source_file']]
+    if missing:
+        return jsonify({'error': f'source files missing for: {", ".join(missing)}'}), 400
+
+    # Collect 5 new פל״ש uploads
+    palash_raw = []
+    for i in range(5):
+        pf = request.files.get(f'palash_{i}')
+        if not pf or not pf.filename:
+            return jsonify({'error': f'palash_{i} file is required'}), 400
+        palash_raw.append(pf)
+
+    # Resolve broadcast date — matzad_harok config says Thursday 13:00
+    show_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == 'matzad_harok'), None)
+    if not show_cfg:
+        return jsonify({'error': 'matzad show config not found'}), 500
+    if manual_date:
+        try:
+            broadcast_dt = datetime.strptime(manual_date, '%Y-%m-%d')
+            h, m = map(int, show_cfg['time'].split(':'))
+            broadcast_dt = broadcast_dt.replace(hour=h, minute=m)
+        except Exception:
+            return jsonify({'error': 'invalid manual_date (YYYY-MM-DD)'}), 400
+    else:
+        broadcast_dt = _next_broadcast_dt(show_cfg)
+        if not broadcast_dt:
+            return jsonify({'error': 'could not determine next broadcast date'}), 500
+
+    # Duplicate guard (same as api_add_show)
+    bcast_iso = broadcast_dt.isoformat()
+    existing = load_schedule()
+    dup = next((e for e in existing
+                if e.get('show_key') == 'matzad_harok'
+                and e.get('scheduled_time') == bcast_iso
+                and not e.get('is_rerun')), None)
+    if dup:
+        return jsonify({'error': f'a matzad episode is already scheduled for {bcast_iso}'}), 409
+
+    upload_dt = _calc_upload_dt(broadcast_dt, show_cfg)
+    rerun_dt  = _calc_rerun_dt(broadcast_dt, show_cfg)
+    name      = _show_label(show_cfg)
+    show_id   = str(int(time.time() * 1000))
+
+    # Copy each top-20 source file to a new path with the new show_id prefix.
+    # This decouples the new chart from the source episode's lifecycle.
+    import shutil as _shutil
+    playlist_paths  = []
+    playlist_slots  = []   # 1-based slot numbers in the new chart
+    playlist_badges = []   # per-index list of badge keys (index 0 = slot #1)
+    for e in chart['ranking']:
+        slot_idx = e['new_slot'] - 1                      # 0-based: slot #1 → idx 0
+        src_path = e['source_file']
+        safe_name = "".join(c if c.isalnum() or c in ' _-.' else '_'
+                            for c in os.path.basename(src_path))
+        # Strip any old show_id prefix to keep names tidy
+        import re as _re
+        safe_name = _re.sub(r'^\d+_p[la]\d+_', '', safe_name)
+        fname = f"{show_id}_pl{slot_idx:02d}_{safe_name}"
+        new_path = os.path.join(LOCAL_TEMP, fname)
+        try:
+            _shutil.copy2(src_path, new_path)
+        except Exception as ex:
+            return jsonify({'error': f'failed to copy source file for slot #{e["new_slot"]}: {ex}'}), 500
+        playlist_paths.append(new_path)
+        playlist_slots.append(e['new_slot'])
+        playlist_badges.append(list(e['badges']))   # copy
+
+    # playlist_badges is currently in new_slot order (slot #1 first).
+    # Existing format expects index 0 = slot #1, which matches — good.
+
+    # Save the 5 new פל״ש files
+    palash_paths = []
+    for idx, pf in enumerate(palash_raw):
+        safe_name = "".join(c if c.isalnum() or c in ' _-.' else '_'
+                            for c in os.path.basename(pf.filename))
+        fname = f"{show_id}_pa{idx:02d}_{safe_name}"
+        lpath = os.path.join(LOCAL_TEMP, fname)
+        pf.save(lpath)
+        palash_paths.append(lpath)
+
+    all_tracks = playlist_paths + palash_paths
+    show = {
+        'id':              show_id,
+        'name':            name,
+        'show_key':        'matzad_harok',
+        'broadcaster':     show_cfg.get('broadcaster', ''),
+        'mode':            'queue_only',
+        'episode_num':     '',
+        'description':     f'Auto-generated from poll: {chart.get("poll_title") or poll_id}',
+        'scheduled_time':  broadcast_dt.isoformat(),
+        'upload_time':     upload_dt.isoformat() if upload_dt else None,
+        'rerun_time':      rerun_dt.isoformat()  if rerun_dt  else None,
+        'file_path':       all_tracks[0],
+        'nas_path':        all_tracks[0],
+        'nas_ready':       True,
+        'albums':          None,
+        'playlist_files':  playlist_paths,
+        'playlist_slots':  playlist_slots,
+        'playlist_badges': playlist_badges,
+        'palash_files':    palash_paths,
+        'files':           all_tracks,
+        'original_name':   f'20 מקום + 5 פל״ש (auto from poll {poll_id})',
+        'triggered':       False,
+        'rerun_scheduled': False,
+        'upload_done':     False,
+        'is_rerun':        False,
+        'added_at':        datetime.now().isoformat(),
+        'auto_from_poll':  poll_id,
+    }
+    with _schedule_lock:
+        sched = load_schedule()
+        sched.append(show)
+        rerun = _make_rerun_entry(show)
+        if rerun:
+            sched.append(rerun)
+            show['rerun_scheduled'] = True
+        save_schedule(sched)
+
+    threading.Thread(target=_sync_wp_board, daemon=True).start()
+    print(f"[NextChart] Auto-created matzad episode {show_id} from poll {poll_id} for {bcast_iso}", flush=True)
+    return jsonify({'ok': True, 'show': show, 'chart': chart})
+
+
 # ─── Al HaRoker — monthly invite emails ───────────────────────────────────────
 
 def _send_monthly_invite_email(subscriber, next_year, next_month):
