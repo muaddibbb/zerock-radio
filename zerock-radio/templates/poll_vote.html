@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if poll %}{{ poll.title }}{% else %}סקר לא תקין{% endif %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414; color: #f0f0f0; min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .wrap {
+      max-width: 720px; margin: 0 auto;
+      background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 14px;
+      padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 1.5em; color: #e63946; margin-bottom: 6px; text-align: center; }
+    .sub {
+      color: #bbb; font-size: 0.95em; margin-bottom: 18px; text-align: center;
+    }
+    .group-title {
+      color: #e63946; font-size: 1.1em; font-weight: bold;
+      margin: 22px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #3a3a3a;
+    }
+    .group-title:first-of-type { margin-top: 4px; }
+
+    .song-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; margin-bottom: 6px;
+      background: #141414; border: 1px solid #2c2c2c; border-radius: 8px;
+      cursor: pointer; transition: border-color 0.15s, background 0.15s;
+    }
+    .song-item:hover { border-color: #4a4a4a; }
+    .song-item.selected {
+      border-color: #e63946;
+      background: rgba(230,57,70,0.08);
+    }
+    .song-item input[type=checkbox] {
+      flex-shrink: 0; width: 18px; height: 18px; accent-color: #e63946; cursor: pointer;
+    }
+    .song-slot {
+      flex-shrink: 0; width: 32px; text-align: center;
+      color: #888; font-size: 0.78em; font-weight: bold;
+    }
+    .song-label {
+      flex: 1; font-size: 0.92em; word-break: break-word;
+    }
+
+    .footer-bar {
+      position: sticky; bottom: 16px;
+      margin-top: 22px;
+      background: #1a1a1a; border: 1px solid #3a3a3a; border-radius: 10px;
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    .count-badge {
+      flex-shrink: 0; min-width: 64px; text-align: center;
+      font-size: 0.95em; font-weight: bold;
+      padding: 8px 10px; border-radius: 7px;
+      background: #2a2a2a; color: #ccc;
+    }
+    .count-badge.full {
+      background: #1e3d2e; color: #4caf50;
+    }
+    .count-badge.too-many {
+      background: #3d1e1e; color: #e63946;
+    }
+    .btn-submit {
+      flex: 1; background: #e63946; color: #fff; border: none; border-radius: 8px;
+      padding: 12px; font-size: 1em; font-weight: bold; cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-submit:hover:not(:disabled) { background: #c1121f; }
+    .btn-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .msg { margin-top: 12px; font-size: 0.9em; line-height: 1.5; text-align: center; }
+    .msg-err { color: #e63946; }
+
+    .state-icon { font-size: 3em; margin-bottom: 10px; text-align: center; }
+    .state-title { font-size: 1.3em; font-weight: bold; text-align: center; margin-bottom: 8px; }
+    .state-sub { color: #888; font-size: 0.9em; line-height: 1.6; text-align: center; }
+
+    .closed-banner {
+      background: #3a3a2a; color: #e0c878; border: 1px solid #5a5a3a;
+      border-radius: 7px; padding: 10px; margin-bottom: 16px;
+      font-size: 0.88em; text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+{% if invalid %}
+  <div class="state-icon">🔗</div>
+  <div class="state-title">סקר לא תקין</div>
+  <div class="state-sub">הסקר לא נמצא במערכת.</div>
+
+{% elif already_voted %}
+  <div class="state-icon">✅</div>
+  <div class="state-title">כבר הצבעת בסקר זה</div>
+  <div class="state-sub">תודה על השתתפותך! 🤘</div>
+
+{% else %}
+  <h1>{{ poll.title }}</h1>
+  <div class="sub">בחר בדיוק <strong>{{ poll.max_votes }}</strong> שירים</div>
+
+  {% if not poll.open %}
+    <div class="closed-banner">⛔ ההצבעה סגורה</div>
+  {% endif %}
+
+  <form id="vote-form" onsubmit="submitVote(event)">
+
+    {% set matzad_songs = poll.songs | selectattr('group','equalto','matzad') | list %}
+    {% set palash_songs = poll.songs | selectattr('group','equalto','palash') | list %}
+
+    {% if matzad_songs %}
+      <div class="group-title">מצעד הרוק של ישראל</div>
+      {% for s in matzad_songs %}
+        <label class="song-item" data-id="{{ s.id }}">
+          <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" {% if not poll.open %}disabled{% endif %}>
+          <span class="song-slot">{% if s.slot %}#{{ s.slot }}{% endif %}</span>
+          <span class="song-label">{{ s.label }}</span>
+        </label>
+      {% endfor %}
+    {% endif %}
+
+    {% if palash_songs %}
+      <div class="group-title">פל״ש - הפינה לשיפוטכם</div>
+      {% for s in palash_songs %}
+        <label class="song-item" data-id="{{ s.id }}">
+          <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" {% if not poll.open %}disabled{% endif %}>
+          <span class="song-slot">{% if s.slot %}#{{ s.slot }}{% endif %}</span>
+          <span class="song-label">{{ s.label }}</span>
+        </label>
+      {% endfor %}
+    {% endif %}
+
+    {% if poll.open %}
+      <div class="footer-bar">
+        <div class="count-badge" id="count-badge">0 / {{ poll.max_votes }}</div>
+        <button type="submit" class="btn-submit" id="btn-submit" disabled>שלח הצבעה 🚀</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    {% endif %}
+  </form>
+{% endif %}
+
+</div>
+
+{% if poll and poll.open and not already_voted %}
+<script>
+const MAX_VOTES = {{ poll.max_votes }};
+
+function onPick(cb) {
+  const item = cb.closest('.song-item');
+  item.classList.toggle('selected', cb.checked);
+  updateCount();
+}
+
+function updateCount() {
+  const checked = document.querySelectorAll('input[name=song]:checked');
+  const n = checked.length;
+  const badge = document.getElementById('count-badge');
+  const btn   = document.getElementById('btn-submit');
+  badge.textContent = n + ' / ' + MAX_VOTES;
+  badge.classList.toggle('full',     n === MAX_VOTES);
+  badge.classList.toggle('too-many', n >  MAX_VOTES);
+  btn.disabled = (n !== MAX_VOTES);
+  // Disable unchecked checkboxes once max is reached, to enforce the limit visually
+  document.querySelectorAll('input[name=song]').forEach(box => {
+    if (!box.checked) box.disabled = (n >= MAX_VOTES);
+  });
+}
+
+async function submitVote(e) {
+  e.preventDefault();
+  const checked = [...document.querySelectorAll('input[name=song]:checked')];
+  const ids = checked.map(b => b.value);
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('btn-submit');
+
+  if (ids.length !== MAX_VOTES) {
+    msg.innerHTML = '<span class="msg-err">יש לבחור בדיוק ' + MAX_VOTES + ' שירים</span>';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'שולח…'; msg.innerHTML = '';
+
+  try {
+    const res = await fetch(window.location.pathname.replace('/poll/', '/api/poll/') + '/vote', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({song_ids: ids}),
+      credentials: 'same-origin',
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      msg.innerHTML = '<span class="msg-err">' + (data.error || 'שגיאה') + '</span>';
+      btn.disabled = false; btn.textContent = 'שלח הצבעה 🚀';
+      return;
+    }
+    document.getElementById('vote-form').innerHTML = `
+      <div style="padding:24px 0">
+        <div class="state-icon">🎉</div>
+        <div class="state-title" style="color:#4caf50">תודה על ההצבעה!</div>
+        <div class="state-sub" style="margin-top:10px">קולך נספר. 🤘</div>
+      </div>`;
+  } catch(err) {
+    msg.innerHTML = '<span class="msg-err">שגיאת תקשורת. נסה שוב.</span>';
+    btn.disabled = false; btn.textContent = 'שלח הצבעה 🚀';
+  }
+}
+updateCount();
+</script>
+{% endif %}
+</body>
+</html>
