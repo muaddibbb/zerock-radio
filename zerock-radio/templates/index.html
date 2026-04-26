@@ -2158,6 +2158,21 @@ function onPlaylistModeChange(cb) {
   }
 }
 
+// Matzad-only mode toggle: 'playlist' (default — 20 מקום + 5 פל״ש) | 'prerecorded' (single file)
+function onMatzadModeChange() {
+  const radio = document.querySelector('input[name="matzadMode"]:checked');
+  const isPlaylist = !radio || radio.value === 'playlist';
+  const filesGroup  = document.getElementById('playlistFilesGroup');
+  const singleGroup = document.getElementById('singleFileGroup');
+  const fileInput   = document.getElementById('singleFileInput');
+  const cb          = document.getElementById('playlistModeCheckbox');
+  if (cb) cb.checked = isPlaylist;
+  filesGroup.style.display  = isPlaylist ? '' : 'none';
+  singleGroup.style.display = isPlaylist ? 'none' : '';
+  fileInput.required = !isPlaylist;
+  if (isPlaylist) buildPlaylistSlots();
+}
+
 function onShowChange() {
   if (document.getElementById('useManualSchedule').checked) return;
   const key  = document.getElementById('showSelect').value;
