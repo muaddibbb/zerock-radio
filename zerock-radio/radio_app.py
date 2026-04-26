@@ -2042,6 +2042,7 @@ def scheduler_loop():
         _lq_was_running = lq_now
 
         _sync_zikaron_to_lq()
+        _sync_yom_kippur_to_streams()
         time.sleep(15)
 
 threading.Thread(target=scheduler_loop, daemon=True).start()
