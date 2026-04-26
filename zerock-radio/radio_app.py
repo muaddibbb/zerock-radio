@@ -4478,6 +4478,65 @@ def _save_poll_votes(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+# ── Spotify Client Credentials token cache ────────────────────────────────────
+_spotify_token_cache = {'token': None, 'expires_at': 0}
+_spotify_lock        = threading.Lock()
+
+def _spotify_get_token():
+    """Fetch (or return cached) Spotify Client Credentials token."""
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+        return None
+    now = time.time()
+    with _spotify_lock:
+        if _spotify_token_cache['token'] and _spotify_token_cache['expires_at'] > now + 30:
+            return _spotify_token_cache['token']
+        try:
+            import base64, urllib.request, urllib.parse, urllib.error
+            creds = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+            data  = urllib.parse.urlencode({'grant_type': 'client_credentials'}).encode()
+            req   = urllib.request.Request(
+                'https://accounts.spotify.com/api/token',
+                data=data,
+                headers={
+                    'Authorization': f'Basic {creds}',
+                    'Content-Type':  'application/x-www-form-urlencoded',
+                },
+            )
+            with urllib.request.urlopen(req, timeout=10) as r:
+                payload = json.loads(r.read())
+            tok = payload.get('access_token')
+            ttl = int(payload.get('expires_in', 3600))
+            _spotify_token_cache['token']      = tok
+            _spotify_token_cache['expires_at'] = now + ttl
+            return tok
+        except Exception as e:
+            print(f"[Spotify] token error: {e}", flush=True)
+            return None
+
+
+def _spotify_search_track(query):
+    """Search Spotify for a track. Returns the open.spotify.com URL of the top match, or None."""
+    tok = _spotify_get_token()
+    if not tok or not query:
+        return None
+    try:
+        import urllib.request, urllib.parse, urllib.error
+        params = urllib.parse.urlencode({'q': query, 'type': 'track', 'limit': 1, 'market': 'IL'})
+        req = urllib.request.Request(
+            f'https://api.spotify.com/v1/search?{params}',
+            headers={'Authorization': f'Bearer {tok}'},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            payload = json.loads(r.read())
+        items = (payload.get('tracks') or {}).get('items') or []
+        if not items:
+            return None
+        return items[0].get('external_urls', {}).get('spotify')
+    except Exception as e:
+        print(f"[Spotify] search error for '{query}': {e}", flush=True)
+        return None
+
+
 def _label_from_filename(path, prefix_pat):
     """Derive a clean display label from an uploaded matzad/palash file path.
     Strips '<show_id>_pl##_' or '<show_id>_pa##_' prefix, then extension,
