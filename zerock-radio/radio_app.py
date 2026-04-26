@@ -138,6 +138,10 @@ _WP_SHOW_IDS = {
 PODBEAN_CLIENT_ID     = os.environ.get('PODBEAN_CLIENT_ID', '')
 PODBEAN_CLIENT_SECRET = os.environ.get('PODBEAN_CLIENT_SECRET', '')
 
+# Spotify Client Credentials — used to resolve poll songs to direct track URLs
+SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID', '')
+SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '')
+
 # ─── Al HaRoker self-service scheduling ───────────────────────────────────────
 AL_HAROKER_BOOKINGS_FILE    = f"{RADIO_DIR}/al_haroker_bookings.json"
 AL_HAROKER_SUBSCRIBERS_FILE = f"{RADIO_DIR}/al_haroker_subscribers.json"
