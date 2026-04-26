@@ -2617,24 +2617,19 @@ def api_stream_start():
 
 @app.route('/api/stream/external/start', methods=['POST'])
 def api_stream_external_start():
-    # Re-enable audio AND reconnect the icecast output (releases/reclaims the mount)
-    resp = lq_send([
-        "var.set ext_active = true",
-        "external_out.start",
-    ])
+    # Re-enable the source. The icecast output (declared fallible=true in
+    # rocky.liq) auto-reconnects to icecast.live as soon as the source is
+    # available again, reclaiming the /zerock mount.
+    resp = lq_send(["var.set ext_active = true"])
     _update_stream_state('ext_active', True)
     return jsonify({"success": True, "response": resp.strip()[:200]})
 
 @app.route('/api/stream/external/stop', methods=['POST'])
 def api_stream_external_stop():
-    # Disconnect the icecast output entirely so another broadcaster can take the
-    # mount on icecast.live. Just flipping ext_active=false would keep the
-    # connection alive (streaming silence) and Icecast only allows one source
-    # per mount → other broadcasters get "mount busy".
-    resp = lq_send([
-        "var.set ext_active = false",
-        "external_out.stop",
-    ])
+    # Mark the source unavailable. With fallible=true on the output (in
+    # rocky.liq), Liquidsoap disconnects from icecast.live and releases the
+    # /zerock mount so another broadcaster can take over.
+    resp = lq_send(["var.set ext_active = false"])
     _update_stream_state('ext_active', False)
     return jsonify({"success": True, "response": resp.strip()[:200]})
 
