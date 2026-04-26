@@ -2155,15 +2155,17 @@ function onShowChange() {
   const isAlbum   = show && show.key === 'erev_albumim';
   const isMatzad  = show && show.key === 'matzad_harok';
   const noPodbean = show && show.no_podbean;
-  const plChecked = document.getElementById('playlistModeCheckbox').checked;
 
-  document.getElementById('singleFileGroup').style.display  = (isAlbum || (isMatzad && plChecked)) ? 'none' : '';
+  // Matzad is always in playlist mode — auto-enable & show the slots.
+  document.getElementById('playlistModeCheckbox').checked = !!isMatzad;
+
+  document.getElementById('singleFileGroup').style.display  = (isAlbum || isMatzad) ? 'none' : '';
   document.getElementById('albumUploadGroup').style.display = isAlbum ? '' : 'none';
   document.getElementById('modeGroup').style.display        = (isAlbum || noPodbean) ? 'none' : '';
   document.getElementById('playlistModeGroup').style.display = isMatzad ? '' : 'none';
-  if (!isMatzad) {
-    document.getElementById('playlistModeCheckbox').checked = false;
-    document.getElementById('playlistFilesGroup').style.display = 'none';
+  document.getElementById('playlistFilesGroup').style.display = isMatzad ? '' : 'none';
+  if (isMatzad) {
+    buildPlaylistSlots();
   }
   if (isAlbum || noPodbean) {
     document.querySelector('input[name="mode"][value="queue_only"]').checked = true;
@@ -2171,7 +2173,7 @@ function onShowChange() {
   if (isAlbum) {
     initAlbumSlots();
   }
-  document.getElementById('singleFileInput').required = !(isAlbum || (isMatzad && plChecked));
+  document.getElementById('singleFileInput').required = !(isAlbum || isMatzad);
 
   if (!show) { manualGroup.style.display='none'; summary.style.display='none'; return; }
 
