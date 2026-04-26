@@ -4633,11 +4633,31 @@ def api_poll_create():
             return jsonify({'error': f'empty label for {sid}'}), 400
         seen_ids.add(sid)
         songs.append({
-            'id':    sid,
-            'group': group,
-            'slot':  s.get('slot'),
-            'label': label,
+            'id':          sid,
+            'group':       group,
+            'slot':        s.get('slot'),
+            'label':       label,
+            'spotify_url': (s.get('spotify_url') or '').strip() or None,  # admin override (rare)
+            'youtube_url': (s.get('youtube_url') or '').strip() or None,
         })
+
+    # Resolve missing spotify_url via Client Credentials search (best-effort, parallel)
+    if SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET:
+        to_resolve = [(i, s) for i, s in enumerate(songs) if not s.get('spotify_url')]
+        if to_resolve:
+            from concurrent.futures import ThreadPoolExecutor
+            def _resolve_one(pair):
+                idx, s = pair
+                return idx, _spotify_search_track(s['label'])
+            try:
+                with ThreadPoolExecutor(max_workers=8) as ex:
+                    for idx, url in ex.map(_resolve_one, to_resolve, timeout=30):
+                        if url:
+                            songs[idx]['spotify_url'] = url
+                resolved = sum(1 for s in songs if s.get('spotify_url'))
+                print(f"[Poll] Spotify lookup: {resolved}/{len(songs)} resolved", flush=True)
+            except Exception as e:
+                print(f"[Poll] Spotify resolver error: {e}", flush=True)
 
     import secrets as _secrets
     poll_id = _secrets.token_urlsafe(12)
