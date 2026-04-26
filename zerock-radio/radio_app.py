@@ -41,6 +41,7 @@ HEBREW_MUSIC_DIR  = "/mnt/nas/Music/Music Reorganized/Hebrew"
 ZIKARON_DIR      = "/mnt/nas/Music/Zikaron"
 EXCLUDED_FILE    = f"{RADIO_DIR}/excluded_tracks.json"
 ZIKARON_FILE     = f"{RADIO_DIR}/zikaron_schedule.json"
+YOM_KIPPUR_FILE  = f"{RADIO_DIR}/yom_kippur_schedule.json"
 STREAM_STATES_FILE = f"{RADIO_DIR}/stream_states.json"
 MITZAD_DIR       = "/mnt/nas/Music/mitsad"
 
