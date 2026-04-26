@@ -416,9 +416,15 @@
   <div class="status-label" id="statusLabel">{% if lq_running %}Live{% else %}Offline{% endif %}</div>
 </header>
 
+<!-- Page tabs: Home / Management -->
+<nav class="page-tabs">
+  <button type="button" class="page-tab" data-page="home"   onclick="switchPage('home')">Home</button>
+  <button type="button" class="page-tab" data-page="manage" onclick="switchPage('manage')">Management</button>
+</nav>
+
 <main>
-  <!-- Left column -->
-  <div>
+  <!-- Left column (Home page) -->
+  <div id="page-home">
     <!-- Now Playing -->
     <div class="np-header">Now Playing</div>
     <div class="now-playing">
