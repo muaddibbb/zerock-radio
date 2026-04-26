@@ -1647,15 +1647,192 @@ function showPollResultsModal(data) {
   document.body.appendChild(overlay);
 }
 
+// ─── Auto-generate next chart from a poll ─────────────────────────────────────
+const _BADGE_LABELS = {
+  knisa_new: { he: 'כניסה חדשה', color: '#22c55e' },
+  knisa:     { he: 'הכניסה הגבוהה', color: '#16a34a' },
+  aliya:     { he: 'העליה הגבוהה', color: '#3b82f6' },
+  yerida:    { he: 'הירידה הגדולה', color: '#ef4444' },
+};
+
+async function loadNextChartPolls() {
+  const sel = document.getElementById('nextChartPollSelect');
+  if (!sel) return;
+  const cur = sel.value;
+  try {
+    const res   = await fetch('/api/polls');
+    const polls = await res.json();
+    sel.innerHTML = '<option value="">— Select a poll —</option>';
+    // Show all polls; highlight closed ones
+    (polls || []).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      const closedTag = p.open ? '🟢' : '🔴';
+      opt.textContent = `${closedTag} ${p.title} (${p.vote_count || 0} votes)`;
+      sel.appendChild(opt);
+    });
+    if (cur && (polls || []).some(p => p.id === cur)) sel.value = cur;
+  } catch(e) { /* silent */ }
+}
+
+async function loadNextChartPreview() {
+  const sel  = document.getElementById('nextChartPollSelect');
+  const prev = document.getElementById('nextChartPreview');
+  const palG = document.getElementById('nextChartPalashGroup');
+  const dtG  = document.getElementById('nextChartDateGroup');
+  const btn  = document.getElementById('ncCreateBtn');
+  const id   = sel.value;
+  if (!id) {
+    prev.style.display = 'none';
+    palG.style.display = 'none';
+    dtG.style.display  = 'none';
+    btn.disabled = true;
+    return;
+  }
+  try {
+    const res  = await fetch('/api/poll/' + encodeURIComponent(id) + '/next-chart');
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || 'Error loading preview', 'err');
+      prev.style.display = 'none';
+      btn.disabled = true;
+      return;
+    }
+    renderNextChartTable(data);
+    prev.style.display = '';
+    palG.style.display = '';
+    dtG.style.display  = '';
+    btn.disabled = false;
+  } catch(e) {
+    toast('Network error', 'err');
+  }
+}
+
+function renderNextChartTable(data) {
+  const tbl = document.getElementById('nextChartTable');
+  const hl  = document.getElementById('nextChartHighlights');
+  if (!tbl || !data.ranking) return;
+  const rows = data.ranking.map(e => {
+    const badgeHtml = (e.badges || []).map(b => {
+      const meta = _BADGE_LABELS[b];
+      return `<span style="display:inline-block;background:${meta?meta.color:'#666'};color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:8px;margin-right:3px">${meta?meta.he:b}</span>`;
+    }).join('');
+    let origin = '';
+    if (e.old_group === 'matzad') {
+      const d = e.delta;
+      let arr = '—';
+      if (d > 0) arr = `<span style="color:#22c55e">▲${d}</span>`;
+      else if (d < 0) arr = `<span style="color:#ef4444">▼${Math.abs(d)}</span>`;
+      else if (d === 0) arr = '<span style="color:var(--text-muted)">=</span>';
+      origin = `#${e.old_slot} ${arr}`;
+    } else if (e.old_group === 'palash') {
+      origin = `<span style="color:#22c55e">פל״ש ${e.palash_idx}</span>`;
+    }
+    return `
+      <tr>
+        <td style="padding:5px 8px;text-align:center;font-weight:bold;width:36px;font-size:0.82rem">#${e.new_slot}</td>
+        <td style="padding:5px 8px;font-size:0.82rem">${escapeHtml(e.label)}</td>
+        <td style="padding:5px 8px;font-size:0.74rem;color:var(--text-muted);width:90px;text-align:center">${origin}</td>
+        <td style="padding:5px 8px;font-size:0.78rem;text-align:center;width:48px">${e.votes}</td>
+        <td style="padding:5px 8px;width:auto">${badgeHtml}</td>
+      </tr>`;
+  }).join('');
+  tbl.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);font-size:0.7rem;text-align:right">
+          <th style="padding:5px 8px;text-align:center">New</th>
+          <th style="padding:5px 8px">Song</th>
+          <th style="padding:5px 8px;text-align:center">Last week</th>
+          <th style="padding:5px 8px;text-align:center">Votes</th>
+          <th style="padding:5px 8px">Badges</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  const h = data.highlights || {};
+  const findLabel = id => {
+    const e = (data.ranking || []).find(x => x.song_id === id);
+    return e ? e.label : '—';
+  };
+  const lines = [];
+  if (h.knisa)     lines.push(`🟢 <strong>הכניסה הגבוהה:</strong> ${escapeHtml(findLabel(h.knisa))} (#${(data.ranking.find(x => x.song_id === h.knisa) || {}).new_slot || '?'})`);
+  if (h.knisa_new && h.knisa_new.length) lines.push(`🆕 <strong>כניסות חדשות:</strong> ${h.knisa_new.length} שירים`);
+  if (h.aliya)     lines.push(`🔵 <strong>העליה הגדולה:</strong> ${escapeHtml(findLabel(h.aliya))}`);
+  if (h.yerida)    lines.push(`🔻 <strong>הירידה הגדולה:</strong> ${escapeHtml(findLabel(h.yerida))}`);
+  lines.push(`<span style="color:var(--text-muted)">${data.total_voters || 0} מצביעים</span>`);
+  hl.innerHTML = lines.join(' &nbsp;·&nbsp; ');
+}
+
+async function createChartFromPoll() {
+  const sel = document.getElementById('nextChartPollSelect');
+  const id  = sel.value;
+  if (!id) { toast('Select a poll first', 'err'); return; }
+
+  // Validate 5 files
+  const files = [];
+  for (let i = 0; i < 5; i++) {
+    const inp = document.getElementById('ncPalash' + i);
+    if (!inp || !inp.files || !inp.files[0]) {
+      toast(`Upload פל״ש song #${i + 1}`, 'err');
+      return;
+    }
+    files.push(inp.files[0]);
+  }
+
+  if (!confirm('Create the next מצעד episode from this poll? Top 20 audio is reused; 5 new פל״ש are added. Continue?')) return;
+
+  const fd = new FormData();
+  fd.append('poll_id', id);
+  const md = document.getElementById('ncManualDate').value;
+  if (md) fd.append('manual_date', md);
+  files.forEach((f, i) => fd.append('palash_' + i, f));
+
+  const btn = document.getElementById('ncCreateBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating…';
+  try {
+    const res = await fetch('/api/matzad-chart/create-from-poll', {method: 'POST', body: fd});
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || 'Error', 'err');
+      btn.disabled = false;
+      btn.textContent = '🚀 Create Next Chart';
+      return;
+    }
+    toast('הצ׳ארט החדש נוצר ✓', 'ok');
+    btn.textContent = '✓ Created';
+    // Reset palash inputs
+    for (let i = 0; i < 5; i++) {
+      const inp = document.getElementById('ncPalash' + i);
+      if (inp) inp.value = '';
+    }
+    document.getElementById('ncManualDate').value = '';
+    setTimeout(() => {
+      btn.textContent = '🚀 Create Next Chart';
+      btn.disabled = false;
+    }, 2000);
+    // Refresh schedule list (if visible)
+    if (typeof refreshSchedule === 'function') refreshSchedule();
+  } catch(e) {
+    toast('Network error', 'err');
+    btn.disabled = false;
+    btn.textContent = '🚀 Create Next Chart';
+  }
+}
+
 // Initial load + refresh while matzad subsection visible
 loadPollEpisodes();
 refreshPollList();
+loadNextChartPolls();
 setInterval(() => {
   if (document.body.classList.contains('mode-manage')) {
     const sub = document.querySelector('.mgmt-subnav-btn.active');
     if (sub && sub.dataset.mgmt === 'matzad') {
       loadPollEpisodes();
       refreshPollList();
+      loadNextChartPolls();
     }
   }
 }, 30000);
