@@ -3656,6 +3656,78 @@ def api_delete_show(show_id):
 
     return jsonify({'success': True})
 
+@app.route('/api/schedule/<show_id>/download')
+def api_download_show(show_id):
+    """Download show audio. Single-file → stream the file; multi-file (matzad / album)
+    → stream a ZIP. Returns 404 if no resolvable files exist on disk."""
+    schedule = load_schedule()
+    show = next((s for s in schedule if s.get('id') == show_id), None)
+    if not show:
+        return jsonify({'error': 'show not found'}), 404
+
+    # Collect candidate files in playback order
+    files = []
+    # 1) matzad-style: 20 מקום (slot #20 → #1) then 5 פל״ש interleaved? Use upload order for archive.
+    if show.get('playlist_files'):
+        files.extend([f for f in (show.get('playlist_files') or []) if f])
+        files.extend([f for f in (show.get('palash_files')   or []) if f])
+    # 2) album shows: nested list of lists
+    elif show.get('albums'):
+        for album in (show.get('albums') or []):
+            for trk in (album or []):
+                if trk: files.append(trk)
+    # 3) generic flat list (fallback)
+    elif show.get('files'):
+        files.extend([f for f in (show.get('files') or []) if f])
+    # 4) single file
+    elif show.get('file_path'):
+        files.append(show['file_path'])
+
+    # Filter to existing files
+    files = [f for f in files if f and os.path.exists(f)]
+    if not files:
+        return jsonify({'error': 'no audio files found on disk'}), 404
+
+    # Build a sensible base name for the download
+    safe_show = "".join(c if c.isalnum() or c in ' _-' else '_'
+                        for c in (show.get('name') or 'show')).strip().replace(' ', '_') or 'show'
+    bcast = (show.get('scheduled_time') or '')[:10]   # YYYY-MM-DD
+    base  = f"{safe_show}_{bcast}".rstrip('_')
+
+    # Single file → direct stream
+    if len(files) == 1:
+        path = files[0]
+        download_name = f"{base}{os.path.splitext(path)[1] or '.mp3'}"
+        return send_file(path, as_attachment=True, download_name=download_name)
+
+    # Multi-file → ZIP
+    import io as _io, zipfile as _zip, re as _re
+    buf = _io.BytesIO()
+    with _zip.ZipFile(buf, mode='w', compression=_zip.ZIP_STORED) as zf:
+        used = set()
+        for idx, path in enumerate(files, start=1):
+            # Strip the show-id prefix for tidier names
+            arc = os.path.basename(path)
+            arc = _re.sub(r'^\d+_(?:pl|pa|a\d+_t)\d+_', '', arc)
+            arc = f"{idx:02d}_{arc}"
+            # Avoid name collisions
+            if arc in used:
+                root, ext = os.path.splitext(arc)
+                arc = f"{root}_{idx}{ext}"
+            used.add(arc)
+            try:
+                zf.write(path, arcname=arc)
+            except Exception as ex:
+                print(f"[Download] skip {path}: {ex}", flush=True)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f"{base}.zip",
+    )
+
+
 @app.route('/api/trigger/<show_id>', methods=['POST'])
 def api_trigger_now(show_id):
     """Manually trigger a show immediately."""
