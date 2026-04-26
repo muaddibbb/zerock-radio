@@ -134,26 +134,30 @@
     {% set matzad_songs = poll.songs | selectattr('group','equalto','matzad') | list %}
     {% set palash_songs = poll.songs | selectattr('group','equalto','palash') | list %}
 
-    {% if matzad_songs %}
-      <div class="group-title">מצעד הרוק של ישראל</div>
-      {% for s in matzad_songs %}
-        <label class="song-item" data-id="{{ s.id }}">
+    {% macro song_row(s) %}
+      {% set sp_url = s.spotify_url or ('https://open.spotify.com/search/' ~ (s.label | urlencode)) %}
+      {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
+      <div class="song-item" data-id="{{ s.id }}">
+        <label class="song-tap">
           <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" {% if not poll.open %}disabled{% endif %}>
           <span class="song-slot">{% if s.slot %}#{{ s.slot }}{% endif %}</span>
           <span class="song-label">{{ s.label }}</span>
         </label>
-      {% endfor %}
+        <a class="listen-btn listen-spotify" href="{{ sp_url }}" target="_blank" rel="noopener noreferrer"
+           title="Listen on Spotify" aria-label="Listen on Spotify">🎧</a>
+        <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank" rel="noopener noreferrer"
+           title="Watch on YouTube" aria-label="Watch on YouTube">▶</a>
+      </div>
+    {% endmacro %}
+
+    {% if matzad_songs %}
+      <div class="group-title">מצעד הרוק של ישראל</div>
+      {% for s in matzad_songs %}{{ song_row(s) }}{% endfor %}
     {% endif %}
 
     {% if palash_songs %}
       <div class="group-title">פל״ש - הפינה לשיפוטכם</div>
-      {% for s in palash_songs %}
-        <label class="song-item" data-id="{{ s.id }}">
-          <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" {% if not poll.open %}disabled{% endif %}>
-          <span class="song-slot">{% if s.slot %}#{{ s.slot }}{% endif %}</span>
-          <span class="song-label">{{ s.label }}</span>
-        </label>
-      {% endfor %}
+      {% for s in palash_songs %}{{ song_row(s) }}{% endfor %}
     {% endif %}
 
     {% if poll.open %}
