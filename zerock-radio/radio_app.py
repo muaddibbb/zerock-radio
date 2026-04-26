@@ -3679,12 +3679,26 @@ def api_download_show(show_id):
     # 3) generic flat list (fallback)
     elif show.get('files'):
         files.extend([f for f in (show.get('files') or []) if f])
-    # 4) single file
-    elif show.get('file_path'):
-        files.append(show['file_path'])
+    # 4) single file — prefer NAS copy (post-upload location), fall back to local
+    else:
+        for cand in (show.get('nas_path'), show.get('file_path')):
+            if cand and os.path.exists(cand):
+                files.append(cand)
+                break
 
-    # Filter to existing files
-    files = [f for f in files if f and os.path.exists(f)]
+    # Filter to existing files; for multi-file shows, swap missing local paths for
+    # their NAS counterparts when only the basename moved (best-effort fallback).
+    resolved = []
+    for f in files:
+        if not f:
+            continue
+        if os.path.exists(f):
+            resolved.append(f); continue
+        # Try NAS_TEMP with same basename
+        alt = os.path.join(NAS_TEMP, os.path.basename(f))
+        if os.path.exists(alt):
+            resolved.append(alt); continue
+    files = resolved
     if not files:
         return jsonify({'error': 'no audio files found on disk'}), 404
 
