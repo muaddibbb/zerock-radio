@@ -1448,17 +1448,29 @@ async function generatePoll() {
   const empty = _pollSongs.filter(s => !s.label.trim());
   if (empty.length) { toast('All song labels must be filled', 'err'); return; }
 
+  const opensAt  = document.getElementById('pollOpensAt').value;
+  const closesAt = document.getElementById('pollClosesAt').value;
+
   try {
     const res = await fetch('/api/polls', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({matzad_show_id: showId, title, songs: _pollSongs})
+      body: JSON.stringify({
+        matzad_show_id: showId,
+        title,
+        songs: _pollSongs,
+        opens_at:  opensAt,
+        closes_at: closesAt,
+      })
     });
     const data = await res.json();
     if (!res.ok || !data.ok) { toast(data.error || 'Error', 'err'); return; }
     toast('Poll created', 'ok');
     document.getElementById('pollEpisodeSelect').value = '';
     document.getElementById('pollTitle').value = '';
+    document.getElementById('pollOpensAt').value = '';
+    document.getElementById('pollClosesAt').value = '';
+    _prefillVotingWindow();
     _pollSongs = [];
     document.getElementById('pollSongsEditor').style.display = 'none';
     document.getElementById('pollGenerateBtn').disabled = true;
