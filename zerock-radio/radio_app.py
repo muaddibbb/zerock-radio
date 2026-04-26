@@ -10,7 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests as _requests
 from datetime import datetime, timedelta, date as _date
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_file, Response
 
 _lq_lock = threading.Lock()
 
