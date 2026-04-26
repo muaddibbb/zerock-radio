@@ -1330,6 +1330,242 @@ setInterval(() => {
   }
 }, 30000);
 
+// ── Matzad Voting Polls ───────────────────────────────────────────────────────
+let _pollSongs = [];
+let _pollEpisodes = [];
+
+async function loadPollEpisodes() {
+  try {
+    _pollEpisodes = await fetch('/api/matzad-episodes').then(r => r.json());
+    const sel = document.getElementById('pollEpisodeSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select an uploaded matzad episode —</option>';
+    _pollEpisodes.forEach(ep => {
+      const opt = document.createElement('option');
+      opt.value = ep.id;
+      const dt = ep.scheduled_time ? new Date(ep.scheduled_time).toLocaleString() : '';
+      const epn = ep.episode_num ? ' (#' + ep.episode_num + ')' : '';
+      opt.textContent = `${dt}${epn} — ${ep.pl_count} מקום + ${ep.pa_count} פל״ש`;
+      sel.appendChild(opt);
+    });
+    const hint = document.getElementById('pollEpisodeHint');
+    if (hint) {
+      hint.textContent = _pollEpisodes.length
+        ? `${_pollEpisodes.length} matzad episode(s) available.`
+        : 'Episodes appear here once a matzad show is uploaded with its 20 מקום + 5 פל״ש tracks.';
+    }
+  } catch(e) { console.error('Failed to load matzad episodes', e); }
+}
+
+async function loadPollEpisodeSongs() {
+  const sel = document.getElementById('pollEpisodeSelect');
+  const showId = sel.value;
+  const editor = document.getElementById('pollSongsEditor');
+  const btn    = document.getElementById('pollGenerateBtn');
+  const titleInput = document.getElementById('pollTitle');
+
+  if (!showId) {
+    _pollSongs = [];
+    editor.style.display = 'none';
+    btn.disabled = true;
+    return;
+  }
+  try {
+    const res = await fetch('/api/matzad-episode/' + encodeURIComponent(showId) + '/songs');
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error', 'err'); return; }
+    _pollSongs = data.songs || [];
+
+    // Default title from episode date
+    const ep = _pollEpisodes.find(e => e.id === showId);
+    if (ep && !titleInput.value.trim()) {
+      const dt = ep.scheduled_time ? new Date(ep.scheduled_time) : null;
+      titleInput.value = dt ? `מצעד הרוק של ישראל — ${dt.toLocaleDateString('he-IL')}`
+                            : 'מצעד הרוק של ישראל';
+    }
+    renderPollSongsEditor();
+    editor.style.display = _pollSongs.length ? 'block' : 'none';
+    btn.disabled = !_pollSongs.length;
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+function renderPollSongsEditor() {
+  const list = document.getElementById('pollSongsList');
+  if (!list) return;
+  list.innerHTML = _pollSongs.map((s, i) => {
+    const groupLabel = s.group === 'matzad' ? 'מצעד' : 'פל״ש';
+    const slot = s.slot ? '#' + s.slot : '';
+    return `
+      <div style="display:flex;gap:8px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:6px 8px">
+        <span style="flex-shrink:0;font-size:0.72rem;color:var(--text-muted);min-width:60px">${escapeHtml(groupLabel)} ${escapeHtml(slot)}</span>
+        <input type="text" value="${escapeHtml(s.label)}" oninput="_pollSongs[${i}].label = this.value"
+          style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:5px 7px;color:var(--text);font-size:0.82rem">
+      </div>`;
+  }).join('');
+}
+
+async function generatePoll() {
+  const showId = document.getElementById('pollEpisodeSelect').value;
+  const title  = document.getElementById('pollTitle').value.trim();
+  if (!showId || !_pollSongs.length) { toast('Pick an episode first', 'err'); return; }
+
+  // Validate labels are non-empty
+  const empty = _pollSongs.filter(s => !s.label.trim());
+  if (empty.length) { toast('All song labels must be filled', 'err'); return; }
+
+  try {
+    const res = await fetch('/api/polls', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({matzad_show_id: showId, title, songs: _pollSongs})
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { toast(data.error || 'Error', 'err'); return; }
+    toast('Poll created', 'ok');
+    document.getElementById('pollEpisodeSelect').value = '';
+    document.getElementById('pollTitle').value = '';
+    _pollSongs = [];
+    document.getElementById('pollSongsEditor').style.display = 'none';
+    document.getElementById('pollGenerateBtn').disabled = true;
+    refreshPollList();
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+async function refreshPollList() {
+  try {
+    const res   = await fetch('/api/polls');
+    const polls = await res.json();
+    renderPollList(polls || []);
+  } catch(e) { /* silent */ }
+}
+
+function renderPollList(polls) {
+  const c = document.getElementById('pollList');
+  if (!c) return;
+  if (!polls.length) {
+    c.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem">No polls yet.</div>';
+    return;
+  }
+  c.innerHTML = polls.map(p => {
+    const url     = window.location.origin + '/poll/' + p.id;
+    const status  = p.open ? '<span style="color:#4caf50">🟢 Open</span>' : '<span style="color:#888">🔴 Closed</span>';
+    const created = p.created_at ? new Date(p.created_at).toLocaleString() : '';
+    const songsCount = (p.songs || []).length;
+    return `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+          <strong style="font-size:0.88rem">${escapeHtml(p.title)}</strong>
+          <span style="font-size:0.74rem;color:var(--text-muted)">${status} · ${p.vote_count || 0} votes · ${songsCount} songs</span>
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:6px">${escapeHtml(created)}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input type="text" readonly value="${escapeHtml(url)}"
+            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:0.74rem;font-family:monospace"
+            onclick="this.select()">
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem"
+            onclick="copyPollLink('${p.id}', this)">📋</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem"
+            onclick="viewPollResults('${p.id}')">📊 Results</button>
+          ${p.open
+            ? `<button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem;background:#4a4a2a" onclick="closePoll('${p.id}')">⛔ Close</button>`
+            : `<button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem" onclick="reopenPoll('${p.id}')">🔓 Reopen</button>`}
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem;background:#5a2a2a"
+            onclick="deletePoll('${p.id}')">🗑 Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function copyPollLink(id, btn) {
+  const url = window.location.origin + '/poll/' + id;
+  navigator.clipboard.writeText(url).then(() => {
+    const t = btn.textContent;
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = t; }, 1200);
+  }).catch(() => toast('Copy failed', 'err'));
+}
+
+async function closePoll(id) {
+  if (!confirm('Close voting for this poll?')) return;
+  const res = await fetch('/api/polls/' + encodeURIComponent(id) + '/close', {method: 'POST'});
+  if (res.ok) { toast('Closed', 'ok'); refreshPollList(); } else toast('Error', 'err');
+}
+
+async function reopenPoll(id) {
+  const res = await fetch('/api/polls/' + encodeURIComponent(id) + '/reopen', {method: 'POST'});
+  if (res.ok) { toast('Reopened', 'ok'); refreshPollList(); } else toast('Error', 'err');
+}
+
+async function deletePoll(id) {
+  if (!confirm('Delete this poll AND all its votes? Cannot be undone.')) return;
+  const res = await fetch('/api/polls/' + encodeURIComponent(id), {method: 'DELETE'});
+  if (res.ok) { toast('Deleted', 'ok'); refreshPollList(); } else toast('Error', 'err');
+}
+
+async function viewPollResults(id) {
+  try {
+    const res  = await fetch('/api/polls/' + encodeURIComponent(id) + '/results');
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error', 'err'); return; }
+    showPollResultsModal(data);
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+function showPollResultsModal(data) {
+  const total = data.total_voters || 0;
+  const rows = (data.results || []).map((s, i) => {
+    const pct = total ? Math.round(s.votes / total * 100) : 0;
+    const groupLabel = s.group === 'matzad' ? 'מצעד' : 'פל״ש';
+    const slot = s.slot ? '#' + s.slot : '';
+    return `
+      <tr>
+        <td style="padding:6px 8px;color:var(--text-muted);font-size:0.78rem;width:32px;text-align:center">${i + 1}</td>
+        <td style="padding:6px 8px;font-size:0.78rem;color:var(--text-muted);width:80px">${escapeHtml(groupLabel)} ${escapeHtml(slot)}</td>
+        <td style="padding:6px 8px;font-size:0.85rem">${escapeHtml(s.label)}</td>
+        <td style="padding:6px 8px;text-align:left;font-weight:bold;font-size:0.85rem">${s.votes} <span style="color:var(--text-muted);font-weight:normal;font-size:0.75rem">(${pct}%)</span></td>
+      </tr>`;
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;max-width:680px;width:100%;max-height:85vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0;font-size:1.05rem">${escapeHtml(data.poll.title)}</h3>
+        <button class="btn" style="width:auto;padding:6px 12px;margin:0" onclick="this.closest('[style*=\\'position:fixed\\']').remove()">✕</button>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">${total} voter(s)</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);font-size:0.74rem">
+            <th style="padding:6px 8px;text-align:center">#</th>
+            <th style="padding:6px 8px;text-align:right">Group</th>
+            <th style="padding:6px 8px;text-align:right">Song</th>
+            <th style="padding:6px 8px;text-align:left">Votes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// Initial load + refresh while matzad subsection visible
+loadPollEpisodes();
+refreshPollList();
+setInterval(() => {
+  if (document.body.classList.contains('mode-manage')) {
+    const sub = document.querySelector('.mgmt-subnav-btn.active');
+    if (sub && sub.dataset.mgmt === 'matzad') {
+      loadPollEpisodes();
+      refreshPollList();
+    }
+  }
+}, 30000);
+
 // ── Page tabs (Home / Management) ─────────────────────────────────────────────
 function switchPage(page) {
   document.body.classList.toggle('mode-home',   page === 'home');
