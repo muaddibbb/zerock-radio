@@ -131,8 +131,15 @@
   <h1>{{ poll.title }}</h1>
   <div class="sub">בחר בדיוק <strong>{{ poll.max_votes }}</strong> שירים</div>
 
+  {% if poll.opens_at and poll.closes_at %}
+    <div class="schedule-banner" id="schedBanner"
+         data-opens="{{ poll.opens_at }}" data-closes="{{ poll.closes_at }}">
+      <span id="schedText">…</span>
+    </div>
+  {% endif %}
+
   {% if not poll.open %}
-    <div class="closed-banner">⛔ ההצבעה סגורה</div>
+    <div class="closed-banner">⛔ ההצבעה סגורה כרגע</div>
   {% endif %}
 
   <form id="vote-form" onsubmit="submitVote(event)">
