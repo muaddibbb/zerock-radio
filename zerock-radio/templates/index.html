@@ -2169,24 +2169,34 @@ function onShowChange() {
   const isMatzad  = show && show.key === 'matzad_harok';
   const noPodbean = show && show.no_podbean;
 
-  // Matzad is always in playlist mode — auto-enable & show the slots.
-  document.getElementById('playlistModeCheckbox').checked = !!isMatzad;
+  // Matzad: default to Playlist mode each time it's (re)selected.
+  if (isMatzad) {
+    const playlistRadio = document.querySelector('input[name="matzadMode"][value="playlist"]');
+    if (playlistRadio) playlistRadio.checked = true;
+    document.getElementById('playlistModeCheckbox').checked = true;
+  } else {
+    document.getElementById('playlistModeCheckbox').checked = false;
+  }
 
-  document.getElementById('singleFileGroup').style.display  = (isAlbum || isMatzad) ? 'none' : '';
   document.getElementById('albumUploadGroup').style.display = isAlbum ? '' : 'none';
   document.getElementById('modeGroup').style.display        = (isAlbum || noPodbean) ? 'none' : '';
   document.getElementById('playlistModeGroup').style.display = isMatzad ? '' : 'none';
-  document.getElementById('playlistFilesGroup').style.display = isMatzad ? '' : 'none';
+
   if (isMatzad) {
-    buildPlaylistSlots();
+    // Apply playlist visibility based on the (default-playlist) radio
+    onMatzadModeChange();
+  } else {
+    document.getElementById('singleFileGroup').style.display = isAlbum ? 'none' : '';
+    document.getElementById('playlistFilesGroup').style.display = 'none';
   }
+
   if (isAlbum || noPodbean) {
     document.querySelector('input[name="mode"][value="queue_only"]').checked = true;
   }
   if (isAlbum) {
     initAlbumSlots();
   }
-  document.getElementById('singleFileInput').required = !(isAlbum || isMatzad);
+  document.getElementById('singleFileInput').required = !(isAlbum || (isMatzad && document.querySelector('input[name="matzadMode"]:checked')?.value === 'playlist'));
 
   if (!show) { manualGroup.style.display='none'; summary.style.display='none'; return; }
 
