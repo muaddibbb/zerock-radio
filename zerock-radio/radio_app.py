@@ -4537,6 +4537,40 @@ def _spotify_search_track(query):
         return None
 
 
+def _calc_default_voting_window(now=None):
+    """Compute the default voting window covering or following 'now'.
+    Window: Thursday 15:00 → next Wednesday 20:00 (6 days 5 hours).
+    If 'now' is inside an active window, return that window; otherwise the next one."""
+    if now is None:
+        now = datetime.now()
+    # Python weekday: Mon=0 … Thu=3 … Sun=6
+    days_since_thu = (now.weekday() - 3) % 7
+    last_thu_1500 = (now - timedelta(days=days_since_thu)).replace(
+        hour=15, minute=0, second=0, microsecond=0)
+    if last_thu_1500 > now:
+        last_thu_1500 -= timedelta(days=7)
+    closes = last_thu_1500 + timedelta(days=6, hours=5)  # → following Wed 20:00
+    if closes >= now:
+        return last_thu_1500, closes
+    next_thu = last_thu_1500 + timedelta(days=7)
+    return next_thu, next_thu + timedelta(days=6, hours=5)
+
+
+def _poll_is_open(poll, now=None):
+    """Effective open state: schedule-based, with optional manual close fallback."""
+    if now is None:
+        now = datetime.now()
+    o = poll.get('opens_at')
+    c = poll.get('closes_at')
+    if not o or not c:
+        # Legacy polls without a schedule fall back to the manual `open` flag.
+        return bool(poll.get('open', True))
+    try:
+        return datetime.fromisoformat(o) <= now <= datetime.fromisoformat(c)
+    except Exception:
+        return bool(poll.get('open', True))
+
+
 def _label_from_filename(path, prefix_pat):
     """Derive a clean display label from an uploaded matzad/palash file path.
     Strips '<show_id>_pl##_' or '<show_id>_pa##_' prefix, then extension,
