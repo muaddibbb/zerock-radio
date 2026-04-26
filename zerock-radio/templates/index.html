@@ -1346,7 +1346,30 @@ setInterval(() => {
 let _pollSongs = [];
 let _pollEpisodes = [];
 
+function _toLocalDatetimeInput(iso) {
+  // Convert ISO datetime → 'YYYY-MM-DDTHH:MM' for datetime-local input
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+       + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+async function _prefillVotingWindow() {
+  try {
+    const r = await fetch('/api/voting-window-default');
+    if (!r.ok) return;
+    const d = await r.json();
+    const o = document.getElementById('pollOpensAt');
+    const c = document.getElementById('pollClosesAt');
+    if (o && !o.value) o.value = _toLocalDatetimeInput(d.opens_at);
+    if (c && !c.value) c.value = _toLocalDatetimeInput(d.closes_at);
+  } catch(_) {}
+}
+
 async function loadPollEpisodes() {
+  _prefillVotingWindow();
   try {
     _pollEpisodes = await fetch('/api/matzad-episodes').then(r => r.json());
     const sel = document.getElementById('pollEpisodeSelect');
