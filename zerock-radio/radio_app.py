@@ -4310,6 +4310,13 @@ def api_one_time_link_list():
     return jsonify(_load_one_time_links())
 
 
+@app.route('/api/one-time-link/<token>/status')
+def api_one_time_link_status(token):
+    """Public: check whether a one-time token still exists (used by client error fallback)."""
+    links = _load_one_time_links()
+    return jsonify({'exists': any(l['token'] == token for l in links)})
+
+
 @app.route('/api/one-time-link/<token>', methods=['DELETE'])
 def api_one_time_link_delete(token):
     """Admin: revoke a one-time link."""
