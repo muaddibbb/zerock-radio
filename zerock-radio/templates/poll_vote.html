@@ -185,6 +185,45 @@
 
 </div>
 
+{% if poll and poll.opens_at and poll.closes_at %}
+<script>
+// ── Schedule banner (always runs, even when poll is closed/not-yet-open) ──
+(function() {
+  const banner = document.getElementById('schedBanner');
+  if (!banner) return;
+  const opensAt  = new Date(banner.dataset.opens);
+  const closesAt = new Date(banner.dataset.closes);
+  const txt = document.getElementById('schedText');
+  const heDate = d => d.toLocaleString('he-IL', {weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
+
+  function fmtRemaining(ms) {
+    const s = Math.max(0, Math.floor(ms/1000));
+    const d = Math.floor(s/86400);
+    const h = Math.floor((s%86400)/3600);
+    const m = Math.floor((s%3600)/60);
+    const parts = [];
+    if (d) parts.push(d + ' ימים');
+    if (h) parts.push(h + ' שעות');
+    if (m && !d) parts.push(m + ' דקות');
+    return parts.join(' ו') || 'פחות מדקה';
+  }
+
+  function tick() {
+    const now = new Date();
+    if (now < opensAt) {
+      txt.innerHTML = '⏳ ההצבעה תיפתח ב<strong>' + heDate(opensAt) + '</strong> (בעוד ' + fmtRemaining(opensAt - now) + ')';
+    } else if (now <= closesAt) {
+      txt.innerHTML = '🟢 ההצבעה פתוחה — נסגרת ב<strong>' + heDate(closesAt) + '</strong> (בעוד ' + fmtRemaining(closesAt - now) + ')';
+    } else {
+      txt.innerHTML = '🔴 ההצבעה נסגרה ב<strong>' + heDate(closesAt) + '</strong>';
+    }
+  }
+  tick();
+  setInterval(tick, 30000);
+})();
+</script>
+{% endif %}
+
 {% if poll and poll.open and not already_voted %}
 <script>
 const MAX_VOTES = {{ poll.max_votes }};
