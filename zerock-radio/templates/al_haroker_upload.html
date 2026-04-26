@@ -293,6 +293,31 @@ async function uploadFile(e) {
   const desc = document.getElementById('description');
   if (desc && desc.value.trim()) formData.append('description', desc.value.trim());
 
+  const showSuccess = () => {
+    document.getElementById('upload-form').innerHTML = `
+      <div style="padding:20px 0">
+        <div style="font-size:2.5em;margin-bottom:12px">🎉</div>
+        <div class="state-title" style="color:#4caf50">הפרק הועלה בהצלחה!</div>
+        <div class="state-sub" style="margin-top:10px">
+          הפרק שלך ישודר אוטומטית בשעה 07:00<br>
+          וגם יועלה ל-zerockradio.com.<br><br>
+          שידור מוצלח! 🤘
+        </div>
+      </div>`;
+  };
+
+  // If the connection drops after the server processed the request,
+  // the booking will be marked uploaded — verify before showing an error.
+  const verifyServerSide = async () => {
+    const token = window.location.pathname.split('/').pop();
+    try {
+      const r = await fetch('/api/al-haroker-booking/' + encodeURIComponent(token) + '/status', {cache: 'no-store'});
+      if (!r.ok) return false;
+      const d = await r.json();
+      return d && d.uploaded === true;
+    } catch(_) { return false; }
+  };
+
   try {
     // Use XHR for progress tracking
     await new Promise((resolve, reject) => {
@@ -315,26 +340,27 @@ async function uploadFile(e) {
             reject(data.error || 'שגיאה');
           }
         } catch(_) {
-          reject('תשובה לא תקינה מהשרת');
+          reject('__verify__');
         }
       };
-      xhr.onerror = () => reject('שגיאת תקשורת');
+      xhr.onerror   = () => reject('__verify__');
+      xhr.ontimeout = () => reject('__verify__');
       xhr.send(formData);
     });
 
-    // Success
-    document.getElementById('upload-form').innerHTML = `
-      <div style="padding:20px 0">
-        <div style="font-size:2.5em;margin-bottom:12px">🎉</div>
-        <div class="state-title" style="color:#4caf50">הפרק הועלה בהצלחה!</div>
-        <div class="state-sub" style="margin-top:10px">
-          הפרק שלך ישודר אוטומטית בשעה 07:00<br>
-          וגם יועלה ל-zerockradio.com.<br><br>
-          שידור מוצלח! 🤘
-        </div>
-      </div>`;
+    showSuccess();
 
   } catch(err) {
+    if (err === '__verify__') {
+      msg.innerHTML = '<span style="color:#888">בודק את סטטוס ההעלאה…</span>';
+      let ok = false;
+      for (let i = 0; i < 6 && !ok; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        ok = await verifyServerSide();
+      }
+      if (ok) { showSuccess(); return; }
+      err = 'שגיאת תקשורת';
+    }
     pb.style.width = '0%';
     pw.style.display = 'none';
     msg.innerHTML = '<span class="msg-err">' + (err || 'שגיאה. נסה שוב.') + '</span>';
