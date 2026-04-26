@@ -4186,6 +4186,16 @@ def api_al_haroker_upload(token):
     return jsonify({'ok': True})
 
 
+@app.route('/api/al-haroker-booking/<token>/status')
+def api_al_haroker_booking_status(token):
+    """Public: check whether an al-haroker booking has been uploaded (client error fallback)."""
+    bookings = _load_al_haroker_bookings()
+    booking  = next((b for b in bookings if b['token'] == token), None)
+    if not booking:
+        return jsonify({'exists': False, 'uploaded': False})
+    return jsonify({'exists': True, 'uploaded': bool(booking.get('uploaded'))})
+
+
 @app.route('/api/al-haroker-booking/<token>', methods=['DELETE'])
 def api_al_haroker_delete_booking(token):
     """Admin: remove an al-haroker booking. Also removes the show from schedule if already uploaded."""
