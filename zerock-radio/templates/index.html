@@ -881,12 +881,12 @@
           <div id="albumSlots"></div>
         </div>
 
-        <!-- Playlist mode toggle (מצעד הרוק של ישראל only) -->
+        <!-- Playlist mode marker (מצעד הרוק של ישראל is always playlist mode) -->
         <div class="form-group" id="playlistModeGroup" style="display:none">
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
-            <input type="checkbox" id="playlistModeCheckbox" style="width:auto;margin:0" onchange="onPlaylistModeChange(this)">
-            <span>Playlist mode <span style="color:var(--text-muted);font-size:0.78rem">(upload up to 20 tracks)</span></span>
-          </label>
+          <div style="font-size:0.82rem;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+            🎶 <strong>Playlist mode</strong> — מצעד הרוק של ישראל uses 20 מקום + 5 פל״ש (always on).
+          </div>
+          <input type="checkbox" id="playlistModeCheckbox" style="display:none" checked>
         </div>
 
         <!-- Playlist slots (מצעד הרוק של ישראל playlist mode) -->
