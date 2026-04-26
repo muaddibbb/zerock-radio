@@ -1213,7 +1213,7 @@ function populateOneTimeShowSelect() {
 async function generateOneTimeLink() {
   const sel = document.getElementById('oneTimeShowSelect');
   const showKey = sel.value;
-  if (!showKey) { showToast('Pick a show first'); return; }
+  if (!showKey) { toast('Pick a show first'); return; }
   try {
     const res = await fetch('/api/one-time-link', {
       method: 'POST',
@@ -1222,10 +1222,10 @@ async function generateOneTimeLink() {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) { showToast(data.error || 'Error'); return; }
-    showToast('Link generated');
+    toast('Link generated');
     sel.value = '';
     refreshOneTimeLinks();
-  } catch(e) { showToast('Network error'); }
+  } catch(e) { toast('Network error'); }
 }
 
 async function refreshOneTimeLinks() {
@@ -1272,16 +1272,16 @@ function copyOneTimeLink(token, btn) {
     const t = btn.textContent;
     btn.textContent = '✓ Copied';
     setTimeout(() => { btn.textContent = t; }, 1200);
-  }).catch(() => showToast('Copy failed'));
+  }).catch(() => toast('Copy failed'));
 }
 
 async function revokeOneTimeLink(token) {
   if (!confirm('Revoke this one-time link?')) return;
   try {
     const res = await fetch('/api/one-time-link/' + encodeURIComponent(token), {method: 'DELETE'});
-    if (res.ok) { showToast('Revoked'); refreshOneTimeLinks(); }
-    else        { showToast('Error'); }
-  } catch(e) { showToast('Network error'); }
+    if (res.ok) { toast('Revoked'); refreshOneTimeLinks(); }
+    else        { toast('Error'); }
+  } catch(e) { toast('Network error'); }
 }
 
 function escapeHtml(s) {
@@ -1440,12 +1440,12 @@ function ahDelete(token, name) {
       if (d.ok) {
         const el = document.getElementById('ahb-' + token.slice(0, 12));
         if (el) el.remove();
-        showToast('ההרשמה נמחקה');
+        toast('ההרשמה נמחקה');
       } else {
-        showToast('שגיאה: ' + (d.error || 'unknown'));
+        toast('שגיאה: ' + (d.error || 'unknown'));
       }
     })
-    .catch(() => showToast('שגיאת תקשורת'));
+    .catch(() => toast('שגיאת תקשורת'));
 }
 
 function ahReschedule(token, currentDate) {
@@ -1478,7 +1478,7 @@ async function ahDoReschedule(token) {
     });
     const data = await r.json();
     if (r.ok) {
-      showToast('תאריך עודכן ל-' + date.split('-').reverse().join('/'));
+      toast('תאריך עודכן ל-' + date.split('-').reverse().join('/'));
       setTimeout(() => location.reload(), 800);
     } else if (data.error === 'date_taken') {
       if (msg) msg.innerHTML = '<span style="color:#f87171">התאריך הזה כבר תפוס</span>';
