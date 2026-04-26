@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if entry %}{{ entry.show_name }} – העלאת פרק{% else %}קישור לא תקין{% endif %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414; color: #f0f0f0; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+    }
+    .card {
+      background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 14px;
+      padding: 32px 28px; width: 100%; max-width: 480px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5); text-align: center;
+    }
+    .logo { font-size: 2.5em; margin-bottom: 8px; }
+    h1 { font-size: 1.5em; color: #e63946; margin-bottom: 4px; }
+    .greeting { color: #bbb; font-size: 0.95em; margin-bottom: 18px; }
+    .field { text-align: right; margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 0.82em; color: #aaa; margin-bottom: 6px;
+    }
+    .field label .opt { color: #555; font-weight: normal; }
+    .input, .field textarea, .field input {
+      width: 100%; background: #141414; border: 1px solid #3a3a3a; border-radius: 7px;
+      color: #f0f0f0; padding: 10px 12px; font-size: 0.9em;
+      font-family: inherit; direction: rtl;
+    }
+    .field textarea { resize: vertical; min-height: 110px; }
+    .field input:focus, .field textarea:focus { outline: none; border-color: #e63946; }
+    /* datetime input: force LTR but keep RTL alignment of the field */
+    input[type="datetime-local"] {
+      direction: ltr; text-align: right; color-scheme: dark;
+    }
+    .drop-zone {
+      border: 2px dashed #3a3a3a; border-radius: 10px; padding: 28px 20px;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 14px; position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #e63946; background: rgba(230,57,70,0.05);
+    }
+    .drop-zone input[type=file] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 2em; margin-bottom: 8px; }
+    .drop-text { color: #888; font-size: 0.88em; line-height: 1.5; }
+    .drop-text strong { color: #ccc; }
+    .file-chosen {
+      margin-top: 8px; font-size: 0.82em; color: #4caf50; font-weight: 600; word-break: break-all;
+    }
+    .progress-wrap {
+      display: none; background: #2a2a2a; border-radius: 6px; height: 8px;
+      overflow: hidden; margin-bottom: 14px;
+    }
+    .progress-bar {
+      height: 100%; background: #e63946; border-radius: 6px; width: 0%; transition: width 0.3s;
+    }
+    .btn-upload {
+      width: 100%; background: #e63946; color: #fff; border: none; border-radius: 8px;
+      padding: 14px; font-size: 1.05em; font-weight: bold; cursor: pointer;
+      transition: background 0.15s, opacity 0.15s; margin-bottom: 8px;
+    }
+    .btn-upload:hover:not(:disabled) { background: #c1121f; }
+    .btn-upload:disabled { opacity: 0.45; cursor: not-allowed; }
+    .msg { margin-top: 14px; font-size: 0.88em; line-height: 1.5; }
+    .msg-err { color: #e63946; }
+    .msg-ok { color: #4caf50; font-size: 1em; }
+    .state-icon { font-size: 3em; margin-bottom: 12px; }
+    .state-title { font-size: 1.3em; font-weight: bold; margin-bottom: 8px; }
+    .state-sub { color: #888; font-size: 0.9em; line-height: 1.6; }
+    .formats { color: #555; font-size: 0.75em; margin-top: 8px; }
+    .one-time-note {
+      margin-top: 12px; padding: 10px; background: rgba(230,57,70,0.08);
+      border: 1px solid rgba(230,57,70,0.3); border-radius: 7px;
+      font-size: 0.78em; color: #e0a8ad;
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+{% if invalid %}
+  <div class="state-icon">🔗</div>
+  <div class="state-title">קישור לא תקין או שכבר נעשה בו שימוש</div>
+  <div class="state-sub">
+    קישור חד-פעמי זה אינו תקף יותר.<br>
+    ניתן להשיג קישור חדש מ–ZeRock.
+  </div>
+
+{% else %}
+  <div class="logo">🎙️</div>
+  <h1>{{ entry.show_name }}</h1>
+  <div class="greeting">
+    {% if entry.broadcaster %}שלום, <strong>{{ entry.broadcaster }}</strong>!{% else %}העלאת פרק חד-פעמית{% endif %}
+  </div>
+
+  <form id="upload-form" onsubmit="uploadFile(event)">
+
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" name="file"
+             accept=".mp3,.wav,.flac,.m4a,.aac,.ogg,audio/*"
+             onchange="onFileChange(this)">
+      <div class="drop-icon">📁</div>
+      <div class="drop-text">
+        <strong>גרור קובץ לכאן</strong><br>או לחץ לבחירת קובץ
+      </div>
+      <div class="file-chosen" id="file-chosen"></div>
+    </div>
+
+    <div class="field">
+      <label>זמן שידור</label>
+      <input type="datetime-local" id="broadcast_time" name="broadcast_time" required>
+    </div>
+
+    <div class="field">
+      <label>מספר פרק <span class="opt">(אופציונלי)</span></label>
+      <input type="text" id="episode_num" name="episode_num" placeholder="לדוגמה: 42">
+    </div>
+
+    <div class="field">
+      <label>רשימת שירים <span class="opt">(אופציונלי)</span></label>
+      <textarea id="description" name="description" rows="6"
+                placeholder="שיר אחד בכל שורה&#10;לדוגמה:&#10;Led Zeppelin – Stairway to Heaven"></textarea>
+    </div>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <button type="submit" class="btn-upload" id="btn-upload" disabled>
+      העלה את הפרק 🚀
+    </button>
+    <div class="formats">MP3, WAV, FLAC, M4A, AAC, OGG</div>
+
+    <div class="one-time-note">
+      ⚠️ קישור חד-פעמי — לאחר העלאה הקישור יבוטל.
+    </div>
+
+    <div class="msg" id="msg"></div>
+  </form>
+{% endif %}
+
+</div>
+
+<script>
+const dz = document.getElementById('drop-zone');
+if (dz) {
+  dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',      e  => {
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    const fi = document.getElementById('file-input');
+    if (e.dataTransfer.files.length) {
+      fi.files = e.dataTransfer.files;
+      onFileChange(fi);
+    }
+  });
+}
+
+function onFileChange(input) {
+  const btn   = document.getElementById('btn-upload');
+  const label = document.getElementById('file-chosen');
+  if (input.files && input.files[0]) {
+    const f = input.files[0];
+    label.textContent = '✓ ' + f.name + ' (' + (f.size / 1048576).toFixed(1) + ' MB)';
+    btn.disabled = false;
+  } else {
+    label.textContent = '';
+    btn.disabled = true;
+  }
+}
+
+async function uploadFile(e) {
+  e.preventDefault();
+  const fi  = document.getElementById('file-input');
+  const bt  = document.getElementById('broadcast_time');
+  const en  = document.getElementById('episode_num');
+  const ds  = document.getElementById('description');
+  const msg = document.getElementById('msg');
+  const btn = document.getElementById('btn-upload');
+  const pw  = document.getElementById('progress-wrap');
+  const pb  = document.getElementById('progress-bar');
+
+  if (!fi.files || !fi.files[0]) {
+    msg.innerHTML = '<span class="msg-err">נא לבחור קובץ</span>'; return;
+  }
+  if (!bt.value) {
+    msg.innerHTML = '<span class="msg-err">נא לבחור זמן שידור</span>'; return;
+  }
+
+  btn.disabled = true; btn.textContent = 'מעלה…';
+  pw.style.display = 'block'; pb.style.width = '0%'; msg.innerHTML = '';
+
+  const fd = new FormData();
+  fd.append('file', fi.files[0]);
+  fd.append('broadcast_time', bt.value);
+  if (en.value.trim()) fd.append('episode_num', en.value.trim());
+  if (ds.value.trim()) fd.append('description', ds.value.trim());
+
+  try {
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', window.location.pathname.replace('/one-time-upload/', '/api/one-time-upload/'));
+      xhr.upload.onprogress = ev => {
+        if (ev.lengthComputable) pb.style.width = Math.round(ev.loaded / ev.total * 90) + '%';
+      };
+      xhr.onload = () => {
+        pb.style.width = '100%';
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (xhr.status === 200 && data.ok) resolve(data);
+          else reject(data.error || 'שגיאה');
+        } catch(_) { reject('תשובה לא תקינה מהשרת'); }
+      };
+      xhr.onerror = () => reject('שגיאת תקשורת');
+      xhr.send(fd);
+    });
+
+    document.getElementById('upload-form').innerHTML = `
+      <div style="padding:20px 0">
+        <div style="font-size:2.5em;margin-bottom:12px">🎉</div>
+        <div class="state-title" style="color:#4caf50">הפרק הועלה בהצלחה!</div>
+        <div class="state-sub" style="margin-top:10px">
+          הפרק ישודר בזמן שבחרת.<br>שידור מוצלח! 🤘
+        </div>
+      </div>`;
+  } catch(err) {
+    pb.style.width = '0%'; pw.style.display = 'none';
+    msg.innerHTML = '<span class="msg-err">' + (err || 'שגיאה. נסה שוב.') + '</span>';
+    btn.disabled = false; btn.textContent = 'העלה את הפרק 🚀';
+  }
+}
+</script>
+</body>
+</html>
