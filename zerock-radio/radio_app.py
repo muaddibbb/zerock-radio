@@ -4256,6 +4256,177 @@ def api_al_haroker_subscribers():
     return jsonify(subs)
 
 
+# ─── One-Time Upload Links (admin-issued, single-use) ─────────────────────────
+
+_one_time_lock = threading.Lock()
+
+def _load_one_time_links():
+    try:
+        with open(ONE_TIME_LINKS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_one_time_links(data):
+    with open(ONE_TIME_LINKS_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+@app.route('/api/one-time-link', methods=['POST'])
+def api_one_time_link_create():
+    """Admin: generate a one-time upload link for a show."""
+    data = request.get_json(silent=True) or request.form
+    show_key = (data.get('show_key') or '').strip()
+    if not show_key:
+        return jsonify({'error': 'show_key required'}), 400
+
+    show_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == show_key), None)
+    if not show_cfg:
+        return jsonify({'error': 'unknown show'}), 404
+
+    import secrets as _secrets
+    token = _secrets.token_urlsafe(24)
+
+    entry = {
+        'token':       token,
+        'show_key':    show_key,
+        'show_name':   show_cfg['name'],
+        'broadcaster': show_cfg.get('broadcaster', ''),
+        'created_at':  datetime.now().isoformat(),
+    }
+    with _one_time_lock:
+        links = _load_one_time_links()
+        links.append(entry)
+        _save_one_time_links(links)
+
+    url = f"{ZEROCK_PUBLIC_URL}/one-time-upload/{token}"
+    print(f"[OneTimeLink] Generated for {show_cfg['name']} ({show_cfg.get('broadcaster','')}) → {token}", flush=True)
+    return jsonify({'ok': True, 'token': token, 'url': url, 'entry': entry})
+
+
+@app.route('/api/one-time-link', methods=['GET'])
+def api_one_time_link_list():
+    """Admin: list all active (unused) one-time links."""
+    return jsonify(_load_one_time_links())
+
+
+@app.route('/api/one-time-link/<token>', methods=['DELETE'])
+def api_one_time_link_delete(token):
+    """Admin: revoke a one-time link."""
+    with _one_time_lock:
+        links = _load_one_time_links()
+        new_links = [l for l in links if l['token'] != token]
+        if len(new_links) == len(links):
+            return jsonify({'error': 'not found'}), 404
+        _save_one_time_links(new_links)
+    return jsonify({'ok': True})
+
+
+@app.route('/one-time-upload/<token>')
+def one_time_upload_page(token):
+    """Public: broadcaster's upload form."""
+    links = _load_one_time_links()
+    entry = next((l for l in links if l['token'] == token), None)
+    if not entry:
+        return render_template('one_time_upload.html', invalid=True, entry=None)
+    return render_template('one_time_upload.html', invalid=False, entry=entry)
+
+
+@app.route('/api/one-time-upload/<token>', methods=['POST'])
+def api_one_time_upload(token):
+    """Public: receive the file + chosen broadcast time, schedule it, then burn the token."""
+    # Validate + claim token under lock
+    with _one_time_lock:
+        links = _load_one_time_links()
+        entry = next((l for l in links if l['token'] == token), None)
+        if not entry:
+            return jsonify({'error': 'invalid_or_used_token'}), 404
+
+    audio_file       = request.files.get('file')
+    broadcast_time_s = (request.form.get('broadcast_time') or '').strip()
+    episode_num      = (request.form.get('episode_num') or '').strip()
+    description      = (request.form.get('description') or '').strip()
+
+    if not audio_file or not audio_file.filename:
+        return jsonify({'error': 'קובץ אודיו נדרש'}), 400
+    if not broadcast_time_s:
+        return jsonify({'error': 'יש לבחור זמן שידור'}), 400
+
+    # Parse "YYYY-MM-DDTHH:MM" from <input type=datetime-local>
+    try:
+        broadcast_dt = datetime.fromisoformat(broadcast_time_s)
+    except Exception:
+        return jsonify({'error': 'זמן שידור לא תקין'}), 400
+
+    if broadcast_dt < datetime.now() - timedelta(minutes=5):
+        return jsonify({'error': 'זמן השידור חייב להיות בעתיד'}), 400
+
+    show_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == entry['show_key']), None)
+    if not show_cfg:
+        return jsonify({'error': 'show config missing'}), 500
+
+    # Save file locally
+    show_id   = str(int(time.time() * 1000))
+    safe_name = "".join(c if c.isalnum() or c in ' _-.' else '_'
+                        for c in os.path.basename(audio_file.filename))
+    filename   = f"{int(time.time())}_{safe_name}"
+    local_path = os.path.join(LOCAL_TEMP, filename)
+    nas_path   = os.path.join(NAS_TEMP, filename)
+    audio_file.save(local_path)
+
+    # Build schedule entry — broadcaster-chosen time, NO rerun, mode queue_to_broadcast
+    show = {
+        'id':              show_id,
+        'name':            show_cfg['name'],
+        'show_key':        show_cfg['key'],
+        'broadcaster':     entry.get('broadcaster') or show_cfg.get('broadcaster', ''),
+        'mode':            'queue_to_broadcast',
+        'episode_num':     episode_num,
+        'description':     description,
+        'scheduled_time':  broadcast_dt.isoformat(),
+        'upload_time':     broadcast_dt.isoformat(),  # upload to Podbean/WP at broadcast time
+        'rerun_time':      None,  # disregards regular schedule — no rerun
+        'file_path':       local_path,
+        'nas_path':        nas_path,
+        'nas_ready':       False,
+        'albums':          None,
+        'files':           None,
+        'original_name':   audio_file.filename,
+        'triggered':       False,
+        'rerun_scheduled': False,
+        'upload_done':     False,
+        'is_rerun':        False,
+        'one_time_link':   True,
+        'added_at':        datetime.now().isoformat(),
+    }
+
+    with _schedule_lock:
+        schedule = load_schedule()
+        schedule.append(show)
+        save_schedule(schedule)
+
+    # BURN THE TOKEN — single-use, removed after upload
+    with _one_time_lock:
+        links = _load_one_time_links()
+        new_links = [l for l in links if l['token'] != token]
+        _save_one_time_links(new_links)
+
+    # Move to NAS + upload to Podbean/WP
+    threading.Thread(target=_move_to_nas, args=(show_id, local_path, nas_path), daemon=True).start()
+    with _schedule_lock:
+        schedule = load_schedule()
+        for s in schedule:
+            if s['id'] == show_id:
+                s['upload_in_progress'] = True
+                break
+        save_schedule(schedule)
+    threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
+    threading.Thread(target=_sync_wp_board, daemon=True).start()
+
+    print(f"[OneTimeLink] Used by {entry.get('broadcaster','?')} for {show_cfg['name']} → broadcast {broadcast_dt.isoformat()}", flush=True)
+    return jsonify({'ok': True, 'broadcast_time': broadcast_dt.isoformat()})
+
+
 # ─── Al HaRoker — monthly invite emails ───────────────────────────────────────
 
 def _send_monthly_invite_email(subscriber, next_year, next_month):
