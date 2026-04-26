@@ -141,6 +141,7 @@ PODBEAN_CLIENT_SECRET = os.environ.get('PODBEAN_CLIENT_SECRET', '')
 # ─── Al HaRoker self-service scheduling ───────────────────────────────────────
 AL_HAROKER_BOOKINGS_FILE    = f"{RADIO_DIR}/al_haroker_bookings.json"
 AL_HAROKER_SUBSCRIBERS_FILE = f"{RADIO_DIR}/al_haroker_subscribers.json"
+ONE_TIME_LINKS_FILE         = f"{RADIO_DIR}/one_time_links.json"
 AL_HAROKER_MONTHLY_SENT_FILE= f"{RADIO_DIR}/al_haroker_monthly_sent.json"
 AL_HAROKER_SCHEDULE_START   = _date(2026, 5, 1)   # first bookable date
 AL_HAROKER_BROADCAST_HOUR   = 7                   # 07:00
