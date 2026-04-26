@@ -763,6 +763,43 @@
       <div id="pollList" style="display:flex;flex-direction:column;gap:8px;margin-top:14px"></div>
     </div>
 
+    <!-- Auto-generate Next Chart from Poll Votes -->
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px">
+      <h2>🤖 Generate Next Chart from Poll</h2>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Auto-build the next מצעד episode from poll results. Top 20 inherit audio from the poll's source episode. Badges (כניסה / כניסה חדשה / עליה / ירידה) are computed from the votes. Upload 5 new פל״ש songs for next week.
+      </div>
+      <div class="form-group">
+        <label>Source poll</label>
+        <select id="nextChartPollSelect" onchange="loadNextChartPreview()"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 10px;color:var(--text);font-size:0.85rem">
+          <option value="">— Select a closed poll —</option>
+        </select>
+      </div>
+      <div id="nextChartPreview" style="display:none;margin-bottom:12px">
+        <label style="display:block;font-size:0.82rem;color:var(--text-muted);margin-bottom:8px">Preview (top 20)</label>
+        <div id="nextChartTable" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;max-height:340px;overflow:auto"></div>
+        <div id="nextChartHighlights" style="font-size:0.74rem;color:var(--text-muted);margin-top:8px;line-height:1.6"></div>
+      </div>
+      <div class="form-group" id="nextChartPalashGroup" style="display:none">
+        <label>5 NEW פל״ש songs (for next week)</label>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <input type="file" id="ncPalash0" accept="audio/*" style="font-size:0.78rem">
+          <input type="file" id="ncPalash1" accept="audio/*" style="font-size:0.78rem">
+          <input type="file" id="ncPalash2" accept="audio/*" style="font-size:0.78rem">
+          <input type="file" id="ncPalash3" accept="audio/*" style="font-size:0.78rem">
+          <input type="file" id="ncPalash4" accept="audio/*" style="font-size:0.78rem">
+        </div>
+      </div>
+      <div class="form-group" id="nextChartDateGroup" style="display:none">
+        <label style="font-size:0.78rem;color:var(--text-muted)">Broadcast date (optional — defaults to next Thursday 13:00)</label>
+        <input type="date" id="ncManualDate"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:0.82rem">
+      </div>
+      <button class="btn" id="ncCreateBtn" disabled
+        onclick="createChartFromPoll()" style="width:100%">🚀 Create Next Chart</button>
+    </div>
+
     <div class="card" data-mgmt-section="shows haroker album matzad">
       <h2 id="scheduleFormTitle">Schedule a Show</h2>
       <form id="scheduleForm" enctype="multipart/form-data">
