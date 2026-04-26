@@ -4788,29 +4788,71 @@ def api_poll_results(poll_id):
 
 @app.route('/api/polls/<poll_id>/close', methods=['POST'])
 def api_poll_close(poll_id):
-    """Admin: close a poll (lock voting, keep results)."""
+    """Admin: close voting now (sets closes_at to now)."""
+    now = datetime.now()
     with _polls_lock:
         polls = _load_polls()
         poll  = next((p for p in polls if p['id'] == poll_id), None)
         if not poll:
             return jsonify({'error': 'not found'}), 404
         poll['open']       = False
-        poll['closed_at']  = datetime.now().isoformat()
+        poll['closes_at']  = now.isoformat()
+        poll['closed_at']  = now.isoformat()
         _save_polls(polls)
     return jsonify({'ok': True})
 
 
 @app.route('/api/polls/<poll_id>/reopen', methods=['POST'])
 def api_poll_reopen(poll_id):
+    """Admin: extend voting to the next Thu→Wed window (or current week if active)."""
+    now = datetime.now()
+    opens_default, closes_default = _calc_default_voting_window(now)
     with _polls_lock:
         polls = _load_polls()
         poll  = next((p for p in polls if p['id'] == poll_id), None)
         if not poll:
             return jsonify({'error': 'not found'}), 404
+        # If we're inside a default window, extend to its end; else next window
         poll['open']       = True
+        poll['opens_at']   = opens_default.isoformat()
+        poll['closes_at']  = closes_default.isoformat()
         poll['closed_at']  = None
         _save_polls(polls)
+    return jsonify({'ok': True, 'opens_at': poll['opens_at'], 'closes_at': poll['closes_at']})
+
+
+@app.route('/api/polls/<poll_id>/schedule', methods=['POST'])
+def api_poll_set_schedule(poll_id):
+    """Admin: update opens_at / closes_at directly."""
+    data = request.get_json(silent=True) or {}
+    opens_in  = (data.get('opens_at')  or '').strip()
+    closes_in = (data.get('closes_at') or '').strip()
+    if not opens_in or not closes_in:
+        return jsonify({'error': 'opens_at and closes_at required'}), 400
+    try:
+        opens_at  = datetime.fromisoformat(opens_in)
+        closes_at = datetime.fromisoformat(closes_in)
+    except Exception:
+        return jsonify({'error': 'invalid datetime'}), 400
+    if closes_at <= opens_at:
+        return jsonify({'error': 'closes_at must be after opens_at'}), 400
+    with _polls_lock:
+        polls = _load_polls()
+        poll  = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return jsonify({'error': 'not found'}), 404
+        poll['opens_at']  = opens_at.isoformat()
+        poll['closes_at'] = closes_at.isoformat()
+        poll['closed_at'] = None
+        _save_polls(polls)
     return jsonify({'ok': True})
+
+
+@app.route('/api/voting-window-default')
+def api_voting_window_default():
+    """Admin helper: return the default Thu→Wed window from now."""
+    o, c = _calc_default_voting_window()
+    return jsonify({'opens_at': o.isoformat(), 'closes_at': c.isoformat()})
 
 
 @app.route('/api/polls/<poll_id>', methods=['DELETE'])
