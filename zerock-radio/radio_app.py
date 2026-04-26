@@ -2617,13 +2617,24 @@ def api_stream_start():
 
 @app.route('/api/stream/external/start', methods=['POST'])
 def api_stream_external_start():
-    resp = lq_send(["var.set ext_active = true"])
+    # Re-enable audio AND reconnect the icecast output (releases/reclaims the mount)
+    resp = lq_send([
+        "var.set ext_active = true",
+        "external_out.start",
+    ])
     _update_stream_state('ext_active', True)
     return jsonify({"success": True, "response": resp.strip()[:200]})
 
 @app.route('/api/stream/external/stop', methods=['POST'])
 def api_stream_external_stop():
-    resp = lq_send(["var.set ext_active = false"])
+    # Disconnect the icecast output entirely so another broadcaster can take the
+    # mount on icecast.live. Just flipping ext_active=false would keep the
+    # connection alive (streaming silence) and Icecast only allows one source
+    # per mount → other broadcasters get "mount busy".
+    resp = lq_send([
+        "var.set ext_active = false",
+        "external_out.stop",
+    ])
     _update_stream_state('ext_active', False)
     return jsonify({"success": True, "response": resp.strip()[:200]})
 
