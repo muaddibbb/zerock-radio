@@ -128,10 +128,12 @@ output.icecast(%mp3(bitrate=128),
   local_source)
 
 # External Icecast stream — toggle via web UI using interactive.bool
-# When ext_active=false the output connects but plays silence; true = full audio
+# When ext_active=false the source becomes unavailable AND (because the
+# icecast output is fallible) the output disconnects from icecast.live,
+# releasing the /zerock mount so a different broadcaster can take over.
+# When ext_active=true the output reconnects automatically.
 ext_active = interactive.bool("ext_active", true)
 ext_source  = switch(track_sensitive=false, [(ext_active, main)])
-ext_source  = mksafe(ext_source)
 
 output.icecast(%mp3(bitrate=128),
   id          = "external_out",
@@ -141,4 +143,5 @@ output.icecast(%mp3(bitrate=128),
   mount       = "/zerock",
   name        = "ZeRock Radio",
   description = "ZeRock Radio - Rocky 24/7",
+  fallible    = true,
   ext_source)
