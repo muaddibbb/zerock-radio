@@ -1086,17 +1086,111 @@ let _shows = [];
 async function loadShowList() {
   try {
     _shows = await fetch('/api/shows').then(r => r.json());
-    const sel = document.getElementById('showSelect');
-    _shows.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.key;
-      opt.textContent = s.label;
-      sel.appendChild(opt);
-    });
     renderBroadcasterLinks();
+    // Populate dropdown based on the active management subsection
+    applyMgmtSubsection();
   } catch(e) { console.error('Failed to load shows', e); }
 }
 loadShowList();
+
+// ── Page tabs (Home / Management) ─────────────────────────────────────────────
+function switchPage(page) {
+  document.body.classList.toggle('mode-home',   page === 'home');
+  document.body.classList.toggle('mode-manage', page === 'manage');
+  document.querySelectorAll('.page-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+  try { localStorage.setItem('rocky.page', page); } catch(_) {}
+}
+
+// ── Management subsection (Shows / Al Harocker / Album / Matzad) ──────────────
+const _MGMT_KEYS_FOR_SUB = {
+  shows:   null,                   // null = all keys EXCEPT the special ones
+  haroker: ['al_harocker'],
+  album:   ['erev_albumim'],
+  matzad:  ['matzad_harok'],
+};
+const _SPECIAL_KEYS = new Set(['al_harocker', 'erev_albumim', 'matzad_harok']);
+
+function _currentMgmtSub() {
+  const active = document.querySelector('.mgmt-subnav-btn.active');
+  return active ? active.dataset.mgmt : 'shows';
+}
+
+function _populateShowSelect(allowedKeys, autoSelect) {
+  const sel = document.getElementById('showSelect');
+  if (!sel || !_shows.length) return;
+  const current = sel.value;
+  // Clear existing options (except the placeholder)
+  sel.innerHTML = '<option value="">— Select show —</option>';
+  const filtered = _shows.filter(s =>
+    allowedKeys ? allowedKeys.includes(s.key) : !_SPECIAL_KEYS.has(s.key)
+  );
+  filtered.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.key;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  });
+  // Pre-select: if the user's previously-selected show is still in the list, keep it.
+  // Otherwise, if there's exactly one option (locked subsection), auto-select it.
+  if (current && filtered.some(s => s.key === current)) {
+    sel.value = current;
+  } else if (autoSelect && filtered.length === 1) {
+    sel.value = filtered[0].key;
+  } else {
+    sel.value = '';
+  }
+  if (typeof onShowChange === 'function') onShowChange();
+}
+
+function applyMgmtSubsection() {
+  const sub = _currentMgmtSub();
+  const allowed = _MGMT_KEYS_FOR_SUB[sub];   // null for 'shows'
+  // Toggle .mgmt-active on every card carrying data-mgmt-section
+  document.querySelectorAll('#page-manage [data-mgmt-section]').forEach(el => {
+    const sections = (el.getAttribute('data-mgmt-section') || '').split(/\s+/);
+    el.classList.toggle('mgmt-active', sections.includes(sub));
+  });
+  // Update form title + dropdown contents
+  const title = document.getElementById('scheduleFormTitle');
+  if (title) {
+    title.textContent =
+      sub === 'haroker' ? 'Schedule על הרוקר' :
+      sub === 'album'   ? 'Schedule ערב של אלבומים' :
+      sub === 'matzad'  ? 'Schedule מצעד הרוק של ישראל' :
+                          'Schedule a Show';
+  }
+  _populateShowSelect(allowed, /*autoSelect*/ sub !== 'shows');
+}
+
+function switchMgmt(sub) {
+  document.querySelectorAll('.mgmt-subnav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mgmt === sub);
+  });
+  applyMgmtSubsection();
+  try { localStorage.setItem('rocky.mgmt', sub); } catch(_) {}
+}
+
+// ── Initial state on load ─────────────────────────────────────────────────────
+(function _initPageTabs() {
+  let page = 'home', sub = 'shows';
+  try {
+    page = localStorage.getItem('rocky.page') || 'home';
+    sub  = localStorage.getItem('rocky.mgmt') || 'shows';
+  } catch(_) {}
+  // Set initial classes synchronously so the user never sees a flash.
+  document.body.classList.add(page === 'manage' ? 'mode-manage' : 'mode-home');
+  document.querySelectorAll('.page-tab').forEach(b => {
+    if (b.dataset.page === page) b.classList.add('active');
+  });
+  document.querySelectorAll('.mgmt-subnav-btn').forEach(b => {
+    if (b.dataset.mgmt === sub) b.classList.add('active');
+  });
+  // Cards' .mgmt-active toggle happens once _shows loads (via applyMgmtSubsection),
+  // but apply it now too for the static cards (which don't depend on _shows).
+  applyMgmtSubsection();
+})();
 
 function renderBroadcasterLinks() {
   const container = document.getElementById('broadcasterLinks');
