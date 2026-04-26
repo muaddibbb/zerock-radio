@@ -1810,6 +1810,13 @@ def scheduler_loop():
         try:
             with _schedule_lock:
                 schedule = load_schedule()
+            # Snapshot the on-disk state at load time. The scheduler's iteration
+            # mutates `schedule` in-memory and saves it later — but background
+            # threads (AutoRerun fetch, API endpoints) can write to schedule.json
+            # in the meantime. At save time we re-read disk and apply ONLY the
+            # field-level deltas we actually changed (vs. this snapshot), so
+            # concurrent updates aren't clobbered. See merge-save below.
+            _orig_by_id = {s['id']: dict(s) for s in schedule}
             now = datetime.now()
             changed = False
             to_add = []
@@ -1914,7 +1921,29 @@ def scheduler_loop():
 
             if changed:
                 with _schedule_lock:
-                    save_schedule(schedule)
+                    # Merge-save: re-read latest disk state and apply only the
+                    # field-level changes scheduler made (vs. _orig_by_id snapshot).
+                    # This preserves concurrent updates from background threads
+                    # (e.g. AutoRerun fetch saving placeholder→ready + appending the
+                    # rerun entry) that landed between our load and this save.
+                    disk_sched = load_schedule()
+                    disk_by_id = {s['id']: s for s in disk_sched}
+                    for s in schedule:
+                        sid = s['id']
+                        if sid not in disk_by_id:
+                            # New entry that scheduler added in-memory (e.g. to_add
+                            # auto-scheduled rerun) and not yet on disk → append.
+                            if sid not in _orig_by_id:
+                                disk_sched.append(s)
+                            # else: was on disk at load, deleted by another thread —
+                            # respect that deletion, don't resurrect.
+                            continue
+                        orig = _orig_by_id.get(sid, {})
+                        d = disk_by_id[sid]
+                        for k, v in s.items():
+                            if orig.get(k) != v:
+                                d[k] = v
+                    save_schedule(disk_sched)
 
             # ── Auto-rerun: schedule latest Podbean episode if no upload at T-60min ──
             # Runs outside the lock — _check_auto_reruns manages its own locking
