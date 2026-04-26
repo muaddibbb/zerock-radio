@@ -4709,13 +4709,30 @@ def api_poll_create():
         else:
             title = 'מצעד הרוק של ישראל'
 
+    # Voting window: default Thu 15:00 → next Wed 20:00, admin can override.
+    opens_default, closes_default = _calc_default_voting_window()
+    opens_in  = (data.get('opens_at')  or '').strip()
+    closes_in = (data.get('closes_at') or '').strip()
+    try:
+        opens_at = datetime.fromisoformat(opens_in)  if opens_in  else opens_default
+    except Exception:
+        opens_at = opens_default
+    try:
+        closes_at = datetime.fromisoformat(closes_in) if closes_in else closes_default
+    except Exception:
+        closes_at = closes_default
+    if closes_at <= opens_at:
+        return jsonify({'error': 'closes_at must be after opens_at'}), 400
+
     poll = {
         'id':             poll_id,
         'title':          title,
         'matzad_show_id': show_id,
         'songs':          songs,
         'max_votes':      5,
-        'open':           True,
+        'open':           True,                       # legacy flag, kept for compat
+        'opens_at':       opens_at.isoformat(),
+        'closes_at':      closes_at.isoformat(),
         'created_at':     datetime.now().isoformat(),
         'closed_at':      None,
     }
@@ -4731,14 +4748,16 @@ def api_poll_create():
 
 @app.route('/api/polls', methods=['GET'])
 def api_poll_list():
-    """Admin: list all polls with vote counts."""
+    """Admin: list all polls with vote counts and effective open state."""
     polls = _load_polls()
     votes = _load_poll_votes()
+    now   = datetime.now()
     counts = {}
     for v in votes:
         counts[v['poll_id']] = counts.get(v['poll_id'], 0) + 1
     return jsonify([{
         **p,
+        'open':       _poll_is_open(p, now),   # derived from schedule
         'vote_count': counts.get(p['id'], 0),
         'url':        f"{ZEROCK_PUBLIC_URL}/poll/{p['id']}",
     } for p in polls])
