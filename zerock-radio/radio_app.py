@@ -1399,6 +1399,11 @@ def _sync_yom_kippur_to_streams():
     in_window = is_yom_kippur_window()
     if in_window == _yom_kippur_lq_state:
         return
+    # First call after boot: just seed state, no transition (don't surprise the
+    # user by toggling streams when nothing changed since last run).
+    if _yom_kippur_lq_state is None:
+        _yom_kippur_lq_state = in_window
+        return
     try:
         if in_window:
             # Enter window — stop both streams
