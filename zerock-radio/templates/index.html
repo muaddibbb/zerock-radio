@@ -841,6 +841,22 @@
       </div>
     </div>
 
+    <!-- One-Time Upload Link -->
+    <div class="card" data-mgmt-section="shows" style="margin-top:20px">
+      <h2>🔗 One-Time Upload Link</h2>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Generate a single-use link that lets a broadcaster upload a file and pick their own broadcast time. Disregards the show's regular schedule. Link is removed after use.
+      </div>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <select id="oneTimeShowSelect"
+          style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 10px;color:var(--text);font-size:0.85rem">
+          <option value="">— Select show —</option>
+        </select>
+        <button class="btn" style="width:auto;padding:9px 16px;margin-top:0" onclick="generateOneTimeLink()">+ Generate</button>
+      </div>
+      <div id="oneTimeLinks" style="display:flex;flex-direction:column;gap:6px;margin-top:12px;font-size:0.82rem;"></div>
+    </div>
+
     <!-- Broadcaster Links -->
     <div class="card" data-mgmt-section="shows" style="margin-top:20px">
       <h2>Broadcaster Links</h2>
