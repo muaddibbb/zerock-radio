@@ -881,11 +881,24 @@
           <div id="albumSlots"></div>
         </div>
 
-        <!-- Playlist mode marker (מצעד הרוק של ישראל is always playlist mode) -->
+        <!-- Matzad mode toggle: playlist (default) vs. prerecorded single-file -->
         <div class="form-group" id="playlistModeGroup" style="display:none">
-          <div style="font-size:0.82rem;color:var(--text-muted);background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
-            🎶 <strong>Playlist mode</strong> — מצעד הרוק של ישראל uses 20 מקום + 5 פל״ש (always on).
+          <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:6px">Episode source</label>
+          <div style="display:flex;gap:6px">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+                          background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:0.82rem">
+              <input type="radio" name="matzadMode" value="playlist" checked
+                style="margin:0" onchange="onMatzadModeChange()">
+              🎶 Playlist (20 מקום + 5 פל״ש)
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+                          background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:0.82rem">
+              <input type="radio" name="matzadMode" value="prerecorded"
+                style="margin:0" onchange="onMatzadModeChange()">
+              🎙 Prerecorded show
+            </label>
           </div>
+          <!-- legacy hidden checkbox kept in sync; existing submit logic reads it -->
           <input type="checkbox" id="playlistModeCheckbox" style="display:none" checked>
         </div>
 
