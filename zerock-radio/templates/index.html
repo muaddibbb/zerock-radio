@@ -1185,11 +1185,118 @@ async function loadShowList() {
   try {
     _shows = await fetch('/api/shows').then(r => r.json());
     renderBroadcasterLinks();
+    populateOneTimeShowSelect();
+    refreshOneTimeLinks();
     // Populate dropdown based on the active management subsection
     applyMgmtSubsection();
   } catch(e) { console.error('Failed to load shows', e); }
 }
 loadShowList();
+
+// ── One-Time Upload Links ─────────────────────────────────────────────────────
+const _ONE_TIME_EXCLUDE = new Set(['al_harocker']);  // al-haroker has its own flow
+
+function populateOneTimeShowSelect() {
+  const sel = document.getElementById('oneTimeShowSelect');
+  if (!sel || !_shows.length) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select show —</option>';
+  _shows.filter(s => !_ONE_TIME_EXCLUDE.has(s.key)).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.key;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+async function generateOneTimeLink() {
+  const sel = document.getElementById('oneTimeShowSelect');
+  const showKey = sel.value;
+  if (!showKey) { showToast('Pick a show first'); return; }
+  try {
+    const res = await fetch('/api/one-time-link', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({show_key: showKey})
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showToast(data.error || 'Error'); return; }
+    showToast('Link generated');
+    sel.value = '';
+    refreshOneTimeLinks();
+  } catch(e) { showToast('Network error'); }
+}
+
+async function refreshOneTimeLinks() {
+  try {
+    const res = await fetch('/api/one-time-link');
+    const links = await res.json();
+    renderOneTimeLinks(links || []);
+  } catch(e) { /* silent */ }
+}
+
+function renderOneTimeLinks(links) {
+  const container = document.getElementById('oneTimeLinks');
+  if (!container) return;
+  if (!links.length) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem">No active one-time links.</div>';
+    return;
+  }
+  container.innerHTML = links.map(l => {
+    const url = window.location.origin + '/one-time-upload/' + l.token;
+    const created = l.created_at ? new Date(l.created_at).toLocaleString() : '';
+    const broadcaster = l.broadcaster ? ' — ' + l.broadcaster : '';
+    return `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px">
+          <strong style="font-size:0.86rem">${escapeHtml(l.show_name)}${escapeHtml(broadcaster)}</strong>
+          <span style="font-size:0.72rem;color:var(--text-muted)">${escapeHtml(created)}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" readonly value="${escapeHtml(url)}"
+            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:0.75rem;font-family:monospace"
+            onclick="this.select()">
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem"
+            onclick="copyOneTimeLink('${l.token}', this)">📋 Copy</button>
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem;background:#5a2a2a"
+            onclick="revokeOneTimeLink('${l.token}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function copyOneTimeLink(token, btn) {
+  const url = window.location.origin + '/one-time-upload/' + token;
+  navigator.clipboard.writeText(url).then(() => {
+    const t = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = t; }, 1200);
+  }).catch(() => showToast('Copy failed'));
+}
+
+async function revokeOneTimeLink(token) {
+  if (!confirm('Revoke this one-time link?')) return;
+  try {
+    const res = await fetch('/api/one-time-link/' + encodeURIComponent(token), {method: 'DELETE'});
+    if (res.ok) { showToast('Revoked'); refreshOneTimeLinks(); }
+    else        { showToast('Error'); }
+  } catch(e) { showToast('Network error'); }
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Refresh active links when management page or shows subsection becomes visible
+setInterval(() => {
+  if (document.body.classList.contains('mode-manage')) {
+    const sub = document.querySelector('.mgmt-subnav-btn.active');
+    if (sub && sub.dataset.mgmt === 'shows') refreshOneTimeLinks();
+  }
+}, 30000);
 
 // ── Page tabs (Home / Management) ─────────────────────────────────────────────
 function switchPage(page) {
