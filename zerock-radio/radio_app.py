@@ -1360,6 +1360,60 @@ def _restore_stream_states():
     except Exception as e:
         print(f"[StreamState] Restore failed: {e}", flush=True)
 
+def load_yom_kippur_schedule():
+    """Return {'from': iso|None, 'until': iso|None}."""
+    try:
+        if os.path.exists(YOM_KIPPUR_FILE):
+            with open(YOM_KIPPUR_FILE) as f:
+                data = json.load(f) or {}
+                return {'from': data.get('from'), 'until': data.get('until')}
+    except Exception:
+        pass
+    return {'from': None, 'until': None}
+
+def save_yom_kippur_schedule(data):
+    with open(YOM_KIPPUR_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False)
+
+def is_yom_kippur_window():
+    s = load_yom_kippur_schedule()
+    if not s.get('from') or not s.get('until'):
+        return False
+    try:
+        now = datetime.now()
+        return datetime.fromisoformat(s['from']) <= now <= datetime.fromisoformat(s['until'])
+    except Exception:
+        return False
+
+_yom_kippur_lq_state = None   # last applied state (True=window active, both stopped)
+
+def _sync_yom_kippur_to_streams():
+    """When Yom Kippur window opens/closes, stop/start both streams.
+
+    Behaviour per user spec:
+      • At `from`  → stop  broadcast on local + external streams.
+      • At `until` → start broadcast on local + external streams.
+    Only fires on edge transitions to avoid stream-state thrashing.
+    """
+    global _yom_kippur_lq_state
+    in_window = is_yom_kippur_window()
+    if in_window == _yom_kippur_lq_state:
+        return
+    try:
+        if in_window:
+            # Enter window — stop both streams
+            lq_send(['var.set local_active = false', 'var.set ext_active = false'])
+            _save_stream_states(False, False)
+            print('[YomKippur] Window entered — both streams stopped', flush=True)
+        else:
+            # Exit window — start both streams
+            lq_send(['var.set local_active = true', 'var.set ext_active = true'])
+            _save_stream_states(True, True)
+            print('[YomKippur] Window exited — both streams started', flush=True)
+        _yom_kippur_lq_state = in_window
+    except Exception as e:
+        print(f'[YomKippur] Sync error: {e}', flush=True)
+
 def _sync_zikaron_to_lq():
     """Send var.set zikaron_active to Liquidsoap only when state changes.
     Plays the quiet jingle at the transition (both entering and exiting Zikaron mode)."""
