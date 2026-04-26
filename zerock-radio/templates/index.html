@@ -1038,7 +1038,8 @@ async function toggleExternalStream(cb) {
 // ── Zikaron mode ─────────────────────────────────────────────────────────────
 // Mark fields dirty when user edits them so pollStatus won't overwrite
 document.addEventListener('DOMContentLoaded', () => {
-  ['holocaustFrom','holocaustUntil','memorialFrom','memorialUntil'].forEach(id => {
+  ['holocaustFrom','holocaustUntil','memorialFrom','memorialUntil',
+   'yomKippurFrom','yomKippurUntil'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => { el._dirty = true; });
   });
