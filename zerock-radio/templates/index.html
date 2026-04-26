@@ -1495,16 +1495,26 @@ function renderPollList(polls) {
   }
   c.innerHTML = polls.map(p => {
     const url     = window.location.origin + '/poll/' + p.id;
-    const status  = p.open ? '<span style="color:#4caf50">🟢 Open</span>' : '<span style="color:#888">🔴 Closed</span>';
+    const now     = new Date();
+    const opens   = p.opens_at  ? new Date(p.opens_at)  : null;
+    const closes  = p.closes_at ? new Date(p.closes_at) : null;
+    let status;
+    if (opens && now < opens)        status = '<span style="color:#7aa">⏳ Pre-open</span>';
+    else if (closes && now > closes) status = '<span style="color:#888">🔴 Closed</span>';
+    else                             status = '<span style="color:#4caf50">🟢 Open</span>';
     const created = p.created_at ? new Date(p.created_at).toLocaleString() : '';
     const songsCount = (p.songs || []).length;
+    const window = (opens && closes)
+      ? `${opens.toLocaleString('he-IL', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})} → ${closes.toLocaleString('he-IL', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`
+      : '';
     return `
       <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px">
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
           <strong style="font-size:0.88rem">${escapeHtml(p.title)}</strong>
           <span style="font-size:0.74rem;color:var(--text-muted)">${status} · ${p.vote_count || 0} votes · ${songsCount} songs</span>
         </div>
-        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:6px">${escapeHtml(created)}</div>
+        ${window ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">🗓 ${escapeHtml(window)}</div>` : ''}
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:6px">Created ${escapeHtml(created)}</div>
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <input type="text" readonly value="${escapeHtml(url)}"
             style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:0.74rem;font-family:monospace"
