@@ -2319,6 +2319,18 @@ document.getElementById('scheduleForm').addEventListener('submit', async (e) => 
 });
 
 // ── Actions ───────────────────────────────────────────────────────────────────
+function downloadShow(id) {
+  // Trigger a browser download. Server picks single file vs ZIP automatically.
+  const url = '/api/schedule/' + encodeURIComponent(id) + '/download';
+  const a = document.createElement('a');
+  a.href = url;
+  a.rel = 'noopener';
+  // Let the server's Content-Disposition set the filename
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 500);
+}
+
 async function deleteShow(id) {
   if (!confirm('Remove this show?')) return;
   try {
