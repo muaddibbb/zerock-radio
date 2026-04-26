@@ -202,6 +202,29 @@ async function uploadFile(e) {
   if (en.value.trim()) fd.append('episode_num', en.value.trim());
   if (ds.value.trim()) fd.append('description', ds.value.trim());
 
+  const showSuccess = () => {
+    document.getElementById('upload-form').innerHTML = `
+      <div style="padding:20px 0">
+        <div style="font-size:2.5em;margin-bottom:12px">🎉</div>
+        <div class="state-title" style="color:#4caf50">הפרק הועלה בהצלחה!</div>
+        <div class="state-sub" style="margin-top:10px">
+          הפרק ישודר בזמן שבחרת.<br>שידור מוצלח! 🤘
+        </div>
+      </div>`;
+  };
+
+  // Verify with the server whether the upload actually succeeded (token consumed).
+  // Used when the connection drops AFTER the server processed the request.
+  const verifyServerSide = async () => {
+    const token = window.location.pathname.split('/').pop();
+    try {
+      const r = await fetch('/api/one-time-link/' + encodeURIComponent(token) + '/status', {cache: 'no-store'});
+      if (!r.ok) return false;
+      const d = await r.json();
+      return d && d.exists === false;  // token gone = upload succeeded
+    } catch(_) { return false; }
+  };
+
   try {
     await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -215,21 +238,25 @@ async function uploadFile(e) {
           const data = JSON.parse(xhr.responseText);
           if (xhr.status === 200 && data.ok) resolve(data);
           else reject(data.error || 'שגיאה');
-        } catch(_) { reject('תשובה לא תקינה מהשרת'); }
+        } catch(_) { reject('__verify__'); }
       };
-      xhr.onerror = () => reject('שגיאת תקשורת');
+      xhr.onerror   = () => reject('__verify__');
+      xhr.ontimeout = () => reject('__verify__');
       xhr.send(fd);
     });
-
-    document.getElementById('upload-form').innerHTML = `
-      <div style="padding:20px 0">
-        <div style="font-size:2.5em;margin-bottom:12px">🎉</div>
-        <div class="state-title" style="color:#4caf50">הפרק הועלה בהצלחה!</div>
-        <div class="state-sub" style="margin-top:10px">
-          הפרק ישודר בזמן שבחרת.<br>שידור מוצלח! 🤘
-        </div>
-      </div>`;
+    showSuccess();
   } catch(err) {
+    if (err === '__verify__') {
+      msg.innerHTML = '<span style="color:#888">בודק את סטטוס ההעלאה…</span>';
+      // Give the server a moment to finish writing state (file save → schedule → token delete)
+      let ok = false;
+      for (let i = 0; i < 6 && !ok; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        ok = await verifyServerSide();
+      }
+      if (ok) { showSuccess(); return; }
+      err = 'שגיאת תקשורת';
+    }
     pb.style.width = '0%'; pw.style.display = 'none';
     msg.innerHTML = '<span class="msg-err">' + (err || 'שגיאה. נסה שוב.') + '</span>';
     btn.disabled = false; btn.textContent = 'העלה את הפרק 🚀';
