@@ -31,6 +31,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Sync triggered" >> "$LOG"
   --exclude='zerock-radio/schedule.json' \
   --exclude='zerock-radio/board_cancellations.json' \
   --exclude='zerock-radio/zikaron_schedule.json' \
+  --exclude='zerock-radio/yom_kippur_schedule.json' \
   --exclude='zerock-radio/al_haroker_bookings.json' \
   --exclude='zerock-radio/now_playing.txt' \
   --exclude='zerock-radio/playlists/' \

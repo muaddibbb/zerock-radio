@@ -591,6 +591,29 @@
       </div>
     </div>
 
+    <!-- Yom Kippur card — stops both streams during the window -->
+    <div class="card" data-mgmt-section="zikaron" style="margin-bottom:20px;border-color:#3a3a4a">
+      <h2 style="color:#a3b8e0">🕊 יום כיפור</h2>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        בזמן החלון: שתי השידורים מופסקים (Local + External). בסוף החלון: שני השידורים מופעלים.
+      </div>
+      <div id="yomKippurStatus" style="font-size:0.82rem;margin-bottom:14px;color:var(--text-muted)">Inactive</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">From</label>
+          <input type="datetime-local" id="yomKippurFrom" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">Until</label>
+          <input type="datetime-local" id="yomKippurUntil" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveYomKippur()" class="btn" style="background:#1e3a5f;border-color:#2563eb;flex:1">Set Schedule</button>
+        <button onclick="clearYomKippur()" class="btn" style="background:var(--surface2);border-color:var(--border);color:var(--text-muted)">Clear</button>
+      </div>
+    </div>
+
     <!-- Al HaRoker self-scheduling panel -->
     <div class="card" data-mgmt-section="haroker" style="margin-bottom:20px;border-color:#3a2a4a">
       <h2 style="color:#c084fc">🎙️ על הרוקר – הרשמות</h2>
