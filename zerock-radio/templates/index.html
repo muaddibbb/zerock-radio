@@ -996,6 +996,27 @@ async function pollStatus() {
         badge.textContent = d.zikaron_type === 'holocaust' ? '🕯 יום השואה' : '🕯 יום הזיכרון';
       }
     }
+
+    // Sync Yom Kippur status
+    const ykStatus = document.getElementById('yomKippurStatus');
+    if (ykStatus) {
+      const yk = d.yom_kippur_schedule || {};
+      if (d.yom_kippur_active) {
+        const until = yk.until ? fmtDt(yk.until) : '';
+        ykStatus.textContent = `🔴 Active — both streams stopped until ${until}`;
+        ykStatus.style.color = 'var(--danger)';
+      } else if (yk.from) {
+        ykStatus.textContent = `Scheduled: ${fmtDt(yk.from)} → ${fmtDt(yk.until)}`;
+        ykStatus.style.color = 'var(--text-muted)';
+        const fEl = document.getElementById('yomKippurFrom');
+        const uEl = document.getElementById('yomKippurUntil');
+        if (fEl && !fEl._dirty) fEl.value = yk.from.slice(0,16);
+        if (uEl && !uEl._dirty) uEl.value = yk.until.slice(0,16);
+      } else {
+        ykStatus.textContent = 'Inactive — set a schedule below to stop streams automatically';
+        ykStatus.style.color = 'var(--text-muted)';
+      }
+    }
   } catch {}
 }
 setInterval(pollStatus, 8000);
