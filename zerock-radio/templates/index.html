@@ -472,6 +472,7 @@
             <div class="show-actions">
               <button class="btn-sm btn-play" onclick="triggerNow('{{ s.id }}')">▶ Now</button>
               <button class="btn-sm btn-reschedule" onclick="openReschedule('{{ s.id }}','{{ s.scheduled_time }}')">📅</button>
+              <button class="btn-sm btn-download" onclick="downloadShow('{{ s.id }}')" title="Download audio">📥</button>
               <button class="btn-sm btn-del" onclick="deleteShow('{{ s.id }}')">✕</button>
             </div>
           </div>
