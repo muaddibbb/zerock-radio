@@ -511,10 +511,19 @@
     </div>
   </div>
 
-  <!-- Right column: add show -->
-  <div>
+  <!-- Right column (Management page) -->
+  <div id="page-manage">
+
+    <!-- Management subsection nav -->
+    <nav class="mgmt-subnav" role="tablist">
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="shows"   onclick="switchMgmt('shows')">📤 Shows upload</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="haroker" onclick="switchMgmt('haroker')">🎙️ Al Harocker uploads</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="album"   onclick="switchMgmt('album')">💿 ערב של אלבומים</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="matzad"  onclick="switchMgmt('matzad')">📊 מצעד הרוק של ישראל</button>
+    </nav>
+
     <!-- Streams card -->
-    <div class="card" style="margin-bottom:20px">
+    <div class="card" data-mgmt-section="shows" style="margin-bottom:20px">
       <h2>Streams</h2>
       <div class="toggle-wrap">
         <div>
