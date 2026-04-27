@@ -4,7 +4,7 @@ ZeRock Radio — Web interface & show scheduler
 Runs on port 5000. Communicates with Liquidsoap via telnet on port 1234.
 """
 
-import os, glob, json, random, socket, threading, time, shutil, hashlib, secrets, calendar as _calendar, subprocess
+import os, glob, json, random, re, socket, threading, time, shutil, hashlib, secrets, calendar as _calendar, subprocess
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
