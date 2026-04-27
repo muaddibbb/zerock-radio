@@ -2539,6 +2539,87 @@ def api_status():
         "yom_kippur_schedule":    load_yom_kippur_schedule(),
     })
 
+# ─── Read-only log access ─────────────────────────────────────────────────────
+# Token-gated tail/grep endpoint over web/liquidsoap logs so we don't have to
+# rely on SSH for after-the-fact investigation. Public via Caddy at
+#   https://rocky.kupernet.com/logs/?token=...
+_LOGS_TOKEN = os.environ.get('LOGS_TOKEN') or hashlib.sha256(b'YudaKaka2026!').hexdigest()[:24]
+_LOG_FILES = {
+    'web':                f"{RADIO_DIR}/logs/web.log",
+    'liquidsoap':         f"{RADIO_DIR}/logs/liquidsoap.log",
+    'liquidsoap-stderr':  f"{RADIO_DIR}/logs/liquidsoap-stderr.log",
+    'liquidsoap-stdout':  f"{RADIO_DIR}/logs/liquidsoap-stdout.log",
+    'now-playing':        f"{RADIO_DIR}/now_playing.txt",
+}
+
+@app.route('/logs/')
+@app.route('/logs/<path:logfile>')
+def admin_logs(logfile=None):
+    """Tail/grep recent lines from a log file. Read-only.
+
+    Auth: ?token=<LOGS_TOKEN>  (also accepts X-Logs-Token header)
+    Params:
+      n     — number of trailing lines (default 500, max 50000)
+      grep  — Python regex; only lines matching are kept (applied before tail)
+    Without a logfile name, returns a JSON listing of available logs.
+    """
+    token = request.args.get('token') or request.headers.get('X-Logs-Token', '')
+    if token != _LOGS_TOKEN:
+        return Response('Unauthorized\n', status=401, mimetype='text/plain')
+
+    if not logfile:
+        out = []
+        for k, p in _LOG_FILES.items():
+            try:
+                st = os.stat(p)
+                out.append({
+                    'name':  k,
+                    'path':  p,
+                    'size':  st.st_size,
+                    'mtime': datetime.fromtimestamp(st.st_mtime).isoformat(),
+                })
+            except FileNotFoundError:
+                out.append({'name': k, 'path': p, 'missing': True})
+        return jsonify(out)
+
+    p = _LOG_FILES.get(logfile)
+    if not p:
+        return Response(f"unknown log: {logfile}\n", status=404, mimetype='text/plain')
+    if not os.path.exists(p):
+        return Response(f"log not present yet: {p}\n", status=404, mimetype='text/plain')
+
+    try:
+        n = max(1, min(int(request.args.get('n', 500)), 50000))
+    except ValueError:
+        return Response('n must be an integer\n', status=400, mimetype='text/plain')
+    grep_pat = request.args.get('grep', '')
+    rx = None
+    if grep_pat:
+        try:
+            rx = re.compile(grep_pat)
+        except re.error as e:
+            return Response(f"bad regex: {e}\n", status=400, mimetype='text/plain')
+
+    # Tail efficiently: read a bounded chunk from the end. If the user filtered
+    # via grep, we need a wider window because matches may be sparse — so when
+    # grep is set we read up to 8 MB from the tail; otherwise n*400 bytes.
+    try:
+        with open(p, 'rb') as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            window = 8 * 1024 * 1024 if rx else max(n * 400, 65536)
+            f.seek(max(0, size - window))
+            data = f.read().decode('utf-8', errors='replace')
+        lines = data.splitlines()
+        if rx is not None:
+            lines = [l for l in lines if rx.search(l)]
+        lines = lines[-n:]
+        return Response('\n'.join(lines) + ('\n' if lines else ''),
+                        mimetype='text/plain; charset=utf-8')
+    except Exception as e:
+        return Response(f"error reading log: {e}\n", status=500, mimetype='text/plain')
+
+
 @app.route('/api/zikaron', methods=['GET'])
 def api_zikaron_get():
     sched = load_zikaron_schedule()
