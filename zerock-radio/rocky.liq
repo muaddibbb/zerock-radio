@@ -85,6 +85,15 @@ zikaron_switch = switch(track_sensitive=false, [(zikaron_active, zikaron_src)])
 # Background: zikaron when active (switch non-fallible), else rocky
 background = fallback(track_sensitive=false, [zikaron_switch, rocky])
 
+# Skip background tracks that fall silent for 4+ seconds — typically a corrupt
+# / truncated music file. Applied here (NOT to main) so shows are exempt:
+# radio shows naturally have pauses (segment breaks, host silences, dramatic
+# beats, music fade-outs that drop below threshold for a few seconds) and we
+# do NOT want those to abort a show. Past incidents:
+#   - השאלטר 27/04/26 cut at 14:06 — file had a 14.7s silence at 14:03
+#   - סן פטרוק 27/04/26 cut at 28:08 — file had a 6.6s silence at 28:04
+background = blank.skip(background, max_blank=4.)
+
 # Main stream: shows take priority over background
 main = fallback(track_sensitive=false, [shows, background])
 
