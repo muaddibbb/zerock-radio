@@ -467,56 +467,89 @@ function addToUploadLog(entry) {
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// Fetch latest Podbean episode for a given show (used by Rocky auto-rerun)
+// Fetch latest Podbean episode for a given show (used by Rocky auto-rerun).
+//
+// Implementation note: Podbean's /v1/episodes API caps each page at 100
+// episodes regardless of the `limit` we ask for. The previous version asked
+// for limit=200 and got 100, so for a busy account (~ZeRock has 1,600+ eps)
+// the search window only spanned the last ~5–6 weeks. Shows with longer
+// gaps between airings (e.g. Beat-On, ~3 months between episodes) silently
+// returned 404 even though episodes existed.
+//
+// Fix: paginate up to MAX_PAGES (15 → ~1,500 episodes ≈ 12+ months of
+// history at ZeRock's rate). Episodes come back newest-first, so we stop
+// as soon as we find any matching title — that's guaranteed to be the
+// latest match.
 app.get('/api/latest-podbean-episode', async (req, res) => {
   const { showName, broadcaster } = req.query;
   if (!showName) return res.status(400).json({ error: 'showName required' });
+
+  const PAGE_SIZE = 100;
+  const MAX_PAGES = 15;
 
   try {
     const accounts = podbeanAccounts();
     if (!accounts.length) return res.status(500).json({ error: 'No Podbean accounts configured' });
 
-    // Try accounts in order until we get a result
-    let episodes = [];
+    const snLower = showName.toLowerCase().trim();
+    const bcLower = (broadcaster || '').toLowerCase().trim();
+
+    let bestMatch  = null;          // latest matching episode found across all pages
+    let scannedAny = false;          // whether any account ever returned episodes
+
+    // Try accounts in order; for each, paginate until match found or exhausted.
     for (const acct of accounts) {
       try {
         const accessToken = await getTokenForAccount(acct.clientId, acct.clientSecret);
         const podcastId   = await getPodcastId(accessToken);
-        // Fetch up to 200 most recent episodes
-        const epResp = await axios.get('https://api.podbean.com/v1/episodes', {
-          params: { access_token: accessToken, podcast_id: podcastId, offset: 0, limit: 200 }
-        });
-        episodes = epResp.data.episodes || [];
-        if (episodes.length) break;
+
+        for (let page = 0; page < MAX_PAGES; page++) {
+          const epResp = await axios.get('https://api.podbean.com/v1/episodes', {
+            params: {
+              access_token: accessToken,
+              podcast_id:   podcastId,
+              offset:       page * PAGE_SIZE,
+              limit:        PAGE_SIZE,
+            },
+          });
+          const pageEps = epResp.data.episodes || [];
+          if (!pageEps.length) break;        // no more episodes on this account
+          scannedAny = true;
+
+          const matches = pageEps.filter(ep => {
+            const t = (ep.title || '').toLowerCase();
+            return t.startsWith(snLower) && (!bcLower || t.includes(bcLower));
+          });
+          if (matches.length) {
+            // Podbean returns newest-first; first match on the earliest page
+            // we see one is the latest overall match.
+            matches.sort((a, b) => (b.publish_time || 0) - (a.publish_time || 0));
+            bestMatch = matches[0];
+            break;
+          }
+
+          // If this page is short, it's the last page on this account.
+          if (pageEps.length < PAGE_SIZE) break;
+        }
+
+        if (bestMatch) break;             // got a match on this account, stop
       } catch (e) {
         console.warn(`[LatestEpisode] Account error: ${e.message}`);
       }
     }
 
-    if (!episodes.length) return res.status(404).json({ error: 'No episodes found on Podbean' });
-
-    // Filter: title must start with showName; if broadcaster given, title must include it
-    const snLower = showName.toLowerCase().trim();
-    const bcLower = (broadcaster || '').toLowerCase().trim();
-
-    const matches = episodes.filter(ep => {
-      const t = (ep.title || '').toLowerCase();
-      return t.startsWith(snLower) && (!bcLower || t.includes(bcLower));
-    });
-
-    if (!matches.length) {
+    if (!scannedAny) {
+      return res.status(404).json({ error: 'No episodes found on Podbean' });
+    }
+    if (!bestMatch) {
       return res.status(404).json({ error: `No episodes found for: ${showName}${broadcaster ? ' / ' + broadcaster : ''}` });
     }
 
-    // Podbean returns newest first; sort by publish_time descending to be safe
-    matches.sort((a, b) => (b.publish_time || 0) - (a.publish_time || 0));
-    const ep = matches[0];
-
     return res.json({
-      mediaUrl:    ep.media_url,
-      title:       ep.title,
-      episodeId:   ep.id,
-      publishTime: ep.publish_time
+      mediaUrl:    bestMatch.media_url,
+      title:       bestMatch.title,
+      episodeId:   bestMatch.id,
+      publishTime: bestMatch.publish_time,
     });
 
   } catch (err) {
