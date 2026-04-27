@@ -2529,14 +2529,24 @@ async function refreshSchedule() {
       if (!past.length) {
         pastCard.innerHTML = '<div class="empty-msg">No shows played yet</div>';
       } else {
-        pastCard.innerHTML = past.map(s => `
+        pastCard.innerHTML = past.map(s => {
+          // "Play again" only makes sense if the show file is still on disk.
+          // Past shows whose temp file was cleaned up (file_deleted=true) get a
+          // muted disabled state so the user knows the audio is no longer there.
+          const fileGone = !!s.file_deleted;
+          const actionBtn = fileGone
+            ? `<button class="btn-sm" disabled title="File no longer on disk" style="opacity:0.4;cursor:not-allowed">▶ Again</button>`
+            : `<button class="btn-sm btn-play" onclick="playAgain('${s.id}')" title="Play this show again now (jingle → show → jingle)">▶ Again</button>`;
+          return `
           <div class="show-item">
             <div class="show-dot done"></div>
             <div class="show-info">
               <div class="show-name">${s.name}${s.broadcaster && !s.name.includes(s.broadcaster) ? ' — ' + s.broadcaster : ''}</div>
               <div class="show-time">Played ${fmtScheduleTime((s.triggered_at || '').slice(0,16))}</div>
             </div>
-          </div>`).join('');
+            <div class="show-actions">${actionBtn}</div>
+          </div>`;
+        }).join('');
       }
     }
   } catch {}
