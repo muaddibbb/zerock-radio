@@ -2357,6 +2357,26 @@ async function triggerNow(id) {
   } catch { toast('Error', 'err'); }
 }
 
+// Replay a past show. Same backend as triggerNow, but a different UX:
+// — different confirm string (so the user knows it's a replay, not a normal trigger)
+// — gentler reload (refresh schedule only, no full page reload mid-play)
+// — surfaces the backend error if the file is no longer on disk
+async function playAgain(id) {
+  if (!confirm('Play this show again now? (Jingle → Show → Jingle)')) return;
+  try {
+    const r = await fetch('/api/trigger/' + id, { method: 'POST' });
+    const j = await r.json();
+    if (j.success) {
+      toast('Show queued!', 'ok');
+      // Light refresh — the past list will resort with this show at the top
+      // (its triggered_at gets bumped to now). No full reload.
+      setTimeout(refreshSchedule, 1000);
+    } else {
+      toast(j.error || 'Failed — file may have been deleted', 'err');
+    }
+  } catch { toast('Error', 'err'); }
+}
+
 async function skipTrack() {
   try {
     const r = await fetch('/api/skip', { method: 'POST' });
