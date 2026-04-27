@@ -117,8 +117,9 @@ main = source.on_metadata(main, _write_now_playing)
 
 main = mksafe(main)
 
-# Skip current track after 4 seconds of silence
-main = blank.skip(main, max_blank=4.)
+# (Previously blank.skip was applied here, on `main`. That cut shows whose
+# recordings had natural pauses ≥ 4 s. blank.skip now lives on `background`
+# only — see comment near the background definition above.)
 
 # Local Icecast output — toggle via web UI using interactive.bool
 # local_active=true (default) = broadcast audio; false = silence
