@@ -274,6 +274,14 @@ function escapeHtml(s) {
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+function docIcon(ct, name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (ct.startsWith('image/') || ['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼';
+  if (ct === 'application/pdf' || ext === 'pdf') return '📄';
+  if (['doc','docx','rtf'].includes(ext)) return '📝';
+  return '📎';
+}
+
 let _loading = false;
 let _allReleases = [];
 
