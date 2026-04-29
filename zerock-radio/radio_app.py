@@ -5937,6 +5937,17 @@ def _nr_poll_once_locked():
                 continue
             with _releases_lock:
                 rels = _nr_load()
+                # Defensive re-check: if another path slipped this UID in
+                # while we were downloading/transcoding, drop the files we
+                # just saved and skip — the existing entry wins.
+                if any(r.get('imap_uid') == entry['imap_uid'] for r in rels):
+                    for f in entry.get('files', []):
+                        for path_key in ('path', 'orig_path'):
+                            p = f.get(path_key, '')
+                            if p and os.path.exists(p):
+                                try: os.remove(p)
+                                except Exception: pass
+                    continue
                 rels.append(entry)
                 _nr_save(rels)
             new_count += 1
