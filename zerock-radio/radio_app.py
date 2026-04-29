@@ -5907,6 +5907,7 @@ def _nr_process_message(M, msg_uid):
         'from_name':   from_name,
         'from_email':  from_email,
         'subject':     subject,
+        'body_text':   body_text,
         'received_at': received_at,
         'fetched_at':  datetime.now().isoformat(),
         'files':       saved,
