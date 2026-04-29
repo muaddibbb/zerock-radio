@@ -5767,6 +5767,52 @@ def _nr_is_audio_part(part):
     return False
 
 
+def _nr_extract_body(msg):
+    """Extract plain-text body from an email message (best-effort, ≤2000 chars).
+
+    Prefers text/plain parts. Falls back to a tag-stripped text/html part.
+    Skips parts that are attachments (Content-Disposition: attachment).
+    Returns '' if nothing useful is found.
+    """
+    import re as _re
+    candidates = []
+    for part in msg.walk():
+        ct = part.get_content_type()
+        disp = part.get('Content-Disposition', '')
+        if 'attachment' in disp.lower():
+            continue
+        if ct == 'text/plain':
+            try:
+                raw = part.get_payload(decode=True) or b''
+                charset = part.get_content_charset() or 'utf-8'
+                text = raw.decode(charset, errors='replace')
+                candidates.insert(0, ('plain', text))  # prefer plain
+            except Exception:
+                pass
+        elif ct == 'text/html' and not any(c[0] == 'plain' for c in candidates):
+            try:
+                raw = part.get_payload(decode=True) or b''
+                charset = part.get_content_charset() or 'utf-8'
+                html = raw.decode(charset, errors='replace')
+                # Strip tags, collapse whitespace
+                text = _re.sub(r'<[^>]+>', ' ', html)
+                text = _re.sub(r'[ \t]+', ' ', text)
+                candidates.append(('html', text))
+            except Exception:
+                pass
+
+    for _, text in candidates:
+        # Collapse blank lines (≥2 consecutive newlines → single blank line)
+        text = _re.sub(r'\n{3,}', '\n\n', text).strip()
+        # Remove quoted-reply boilerplate (lines starting with >)
+        lines = [l for l in text.splitlines() if not l.strip().startswith('>')]
+        text = '\n'.join(lines).strip()
+        text = _re.sub(r'\n{3,}', '\n\n', text)
+        if text:
+            return text[:2000]  # cap at 2000 chars
+    return ''
+
+
 def _nr_process_message(M, msg_uid):
     """Pull one IMAP message. Save audio attachments. Return release dict or None."""
     typ, msg_data = M.uid('FETCH', msg_uid, '(BODY.PEEK[])')
@@ -5788,6 +5834,8 @@ def _nr_process_message(M, msg_uid):
         received_at = (rcv_dt or datetime.now()).isoformat()
     except Exception:
         received_at = datetime.now().isoformat()
+
+    body_text = _nr_extract_body(msg)
 
     audio_parts = [p for p in msg.walk()
                    if p.get_content_maintype() != 'multipart' and _nr_is_audio_part(p)]
