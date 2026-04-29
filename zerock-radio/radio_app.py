@@ -5926,6 +5926,37 @@ def _nr_process_message(M, msg_uid):
     if not saved:
         return None
 
+    # Save non-audio attachments (PDFs, images, docs describing the song)
+    doc_parts = [p for p in msg.walk()
+                 if p.get_content_maintype() != 'multipart' and _nr_is_doc_part(p)]
+    saved_docs = []
+    if doc_parts:
+        os.makedirs(NEW_RELEASES_DOCS_DIR, exist_ok=True)
+    for part in doc_parts:
+        orig_name = _nr_decode_header(part.get_filename() or 'attachment')
+        safe_name = _nr_safe_filename(orig_name)
+        ts = int(time.time() * 1000)
+        try:
+            payload = part.get_payload(decode=True)
+        except Exception:
+            continue
+        if not payload or len(payload) > NEW_RELEASES_MAX_DOC_BYTES:
+            continue
+        doc_path = os.path.join(NEW_RELEASES_DOCS_DIR, f'{ts}_{safe_name}')
+        try:
+            with open(doc_path, 'wb') as fh:
+                fh.write(payload)
+        except Exception as e:
+            print(f"[NewReleases] doc write error {orig_name}: {e}", flush=True)
+            continue
+        saved_docs.append({
+            'filename':     orig_name,
+            'safe_name':    safe_name,
+            'path':         doc_path,
+            'size':         len(payload),
+            'content_type': part.get_content_type() or 'application/octet-stream',
+        })
+
     return {
         'id':          f"{msg_uid.decode()}_{int(time.time() * 1000)}",
         'imap_uid':    msg_uid.decode(),
@@ -5936,6 +5967,7 @@ def _nr_process_message(M, msg_uid):
         'received_at': received_at,
         'fetched_at':  datetime.now().isoformat(),
         'files':       saved,
+        'docs':        saved_docs,
     }
 
 
