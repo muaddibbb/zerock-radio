@@ -5774,6 +5774,24 @@ def _nr_is_audio_part(part):
     return False
 
 
+def _nr_is_doc_part(part):
+    """True if this part is a non-audio attachment worth keeping (PDF, image, doc…)."""
+    disp = part.get('Content-Disposition', '').lower()
+    # Must look like an attachment (explicit or has a name= parameter)
+    fn = _nr_decode_header(part.get_filename() or '')
+    if not fn:
+        return False
+    ext = os.path.splitext(fn)[1].lower()
+    if ext in _AUDIO_EXTENSIONS:
+        return False  # already handled as audio
+    if ext not in _DOC_EXTENSIONS:
+        return False
+    # Skip inline images that are likely signature logos (small, cid: referenced)
+    if part.get_content_maintype() == 'image' and 'attachment' not in disp:
+        return False
+    return True
+
+
 def _nr_extract_body(msg):
     """Extract plain-text body from an email message (best-effort, ≤2000 chars).
 
