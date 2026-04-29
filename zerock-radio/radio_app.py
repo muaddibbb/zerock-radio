@@ -5661,6 +5661,13 @@ _AUDIO_EXTENSIONS = {
     '.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg', '.aiff',
     '.aif', '.wma', '.opus',
 }
+# Non-audio attachment types we want to keep as downloadable "about the song" docs
+_DOC_EXTENSIONS = {
+    '.pdf', '.doc', '.docx', '.rtf', '.txt',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp',
+}
+NEW_RELEASES_DOCS_DIR = "/mnt/nas/Music/NewReleases/docs"
+NEW_RELEASES_MAX_DOC_BYTES = 20 * 1024 * 1024   # 20 MB per doc attachment
 
 _releases_lock = threading.Lock()
 # Separate lock guarding the whole poll cycle. Without this, the background
