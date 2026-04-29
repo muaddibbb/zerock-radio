@@ -1000,11 +1000,14 @@
 
 <script>
 // ── Now playing + seek slider ─────────────────────────────────────────────────
-let npDuration   = 0;
-let npRemaining  = 0;
-let npLastPoll   = Date.now();
-let npIsShow     = false;   // true when current file supports seeking
-let _seekDragging = false;  // true while user has the thumb held down
+let npDuration    = 0;
+let npRemaining   = 0;
+let npLastPoll    = Date.now();
+let _npIsShow     = false;
+let _seekDragging = false;   // thumb is being held
+let _seekPending  = false;   // fetch in flight — freeze display
+let _seekOffset   = 0;       // added to elapsed after a successful seek
+let _currentNpPath = '';
 
 function fmtTime(secs) {
   if (!isFinite(secs) || secs < 0) return '–:––';
@@ -1013,38 +1016,47 @@ function fmtTime(secs) {
   return `${m}:${String(s % 60).padStart(2, '0')}`;
 }
 
+// Total apparent duration = file duration + seek offset we added
+function apparentDuration() { return npDuration + _seekOffset; }
+
 function updateProgressBar() {
   if (npDuration <= 0) return;
+  if (_seekDragging || _seekPending) return;  // don't override user interaction
+
   const secsSincePoll = (Date.now() - npLastPoll) / 1000;
-  const remaining = Math.max(0, npRemaining - secsSincePoll);
-  const elapsed   = npDuration - remaining;
-  const pct       = Math.min(100, (elapsed / npDuration) * 100);
+  const remaining  = Math.max(0, npRemaining - secsSincePoll);
+  const fileElapsed = npDuration - remaining;
+  const elapsed    = fileElapsed + _seekOffset;
+  const total      = apparentDuration();
+  const pct        = total > 0 ? Math.min(100, (elapsed / total) * 100) : 0;
 
   document.getElementById('npElapsed').textContent  = fmtTime(elapsed);
-  document.getElementById('npRemaining').textContent = '-' + fmtTime(remaining);
+  document.getElementById('npRemaining').textContent = '-' + fmtTime(Math.max(0, total - elapsed));
 
-  // Only update slider position when user is not dragging
-  if (!_seekDragging) {
-    const seek = document.getElementById('npSeek');
-    seek.value = pct;
-    seek.style.setProperty('--np-pct', pct + '%');
-  }
+  const seek = document.getElementById('npSeek');
+  seek.value = pct;
+  seek.style.setProperty('--np-pct', pct + '%');
 }
-
-let _currentNpPath = '';
-let _npIsShow = false;
 
 async function pollNowPlaying() {
   try {
     const d = await fetch('/api/nowplaying').then(r => r.json());
-    _currentNpPath = d.full_path || d.filename || '';
+    const newPath = d.full_path || d.filename || '';
+
+    // Reset seek offset when a genuinely new track starts
+    if (newPath && newPath !== _currentNpPath && !newPath.startsWith('_seek_')) {
+      _seekOffset = 0;
+    }
+    _currentNpPath = newPath;
+
     const hasTime = d.duration > 0;
     document.getElementById('npProgressWrap').style.display = hasTime ? 'block' : 'none';
 
-    // Seek is only available for show/upload files (LOCAL_TEMP / NAS_TEMP)
     const isShow = _currentNpPath.includes('ZeRock_Temp') || _currentNpPath.includes('/shows/');
     const seek = document.getElementById('npSeek');
-    seek.disabled = !isShow;
+    if (!_seekDragging && !_seekPending) {
+      seek.disabled = !isShow;
+    }
     seek.title = isShow ? 'Drag to seek' : 'Seek not available for playlist tracks';
     _npIsShow = isShow;
 
@@ -1052,34 +1064,38 @@ async function pollNowPlaying() {
       npDuration  = d.duration;
       npRemaining = d.remaining;
       npLastPoll  = Date.now();
-      if (!_seekDragging) updateProgressBar();
+      updateProgressBar();
     }
   } catch {}
 }
 
-// Seek on slider release
+// ── Seek interaction ──────────────────────────────────────────────────────────
 (function() {
   const seek = document.getElementById('npSeek');
 
   seek.addEventListener('mousedown',  () => { if (!seek.disabled) _seekDragging = true; });
   seek.addEventListener('touchstart', () => { if (!seek.disabled) _seekDragging = true; }, {passive:true});
 
-  // While dragging, update the track fill colour live
   seek.addEventListener('input', () => {
-    const pct = seek.value;
+    if (!_seekDragging) return;
+    const pct = parseFloat(seek.value);
     seek.style.setProperty('--np-pct', pct + '%');
-    // Show preview time
-    const previewSec = (pct / 100) * npDuration;
-    document.getElementById('npElapsed').textContent   = fmtTime(previewSec);
-    document.getElementById('npRemaining').textContent = '-' + fmtTime(npDuration - previewSec);
+    const previewSec = (pct / 100) * apparentDuration();
+    document.getElementById('npElapsed').textContent  = fmtTime(previewSec);
+    document.getElementById('npRemaining').textContent = '-' + fmtTime(Math.max(0, apparentDuration() - previewSec));
   });
 
   async function doSeek() {
-    if (!_npIsShow || seek.disabled) { _seekDragging = false; return; }
-    const pct = parseFloat(seek.value);
-    const position = (pct / 100) * npDuration;
+    if (!_seekDragging) return;
     _seekDragging = false;
+    if (!_npIsShow) return;
+
+    const pct      = parseFloat(seek.value);
+    const position = (pct / 100) * apparentDuration();  // position in original file
+
+    _seekPending  = true;
     seek.disabled = true;
+
     try {
       const r = await fetch('/api/seek', {
         method: 'POST',
@@ -1087,15 +1103,33 @@ async function pollNowPlaying() {
         body: JSON.stringify({position})
       });
       const data = await r.json();
-      if (!data.ok) console.warn('Seek failed:', data.error);
+      if (data.ok) {
+        // The new file starts at 0 but represents content from `position` onward.
+        // Store offset so elapsed display continues from the right spot.
+        _seekOffset = position;
+        npRemaining = npDuration; // the new file's remaining = its full duration
+        npLastPoll  = Date.now();
+        // Keep slider at the sought position visually
+        seek.value = pct;
+        seek.style.setProperty('--np-pct', pct + '%');
+        document.getElementById('npElapsed').textContent  = fmtTime(position);
+        document.getElementById('npRemaining').textContent = '-' + fmtTime(Math.max(0, apparentDuration() - position));
+      } else {
+        console.warn('Seek failed:', data.error);
+      }
     } catch(e) { console.warn('Seek error:', e); }
-    finally { seek.disabled = false; }
+    finally {
+      _seekPending  = false;
+      seek.disabled = false;
+    }
   }
 
   seek.addEventListener('mouseup',  doSeek);
   seek.addEventListener('touchend', doSeek);
   seek.addEventListener('keyup', e => {
-    if (['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) doSeek();
+    if (['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) {
+      _seekDragging = true; doSeek();
+    }
   });
 })();
 
