@@ -6201,6 +6201,25 @@ def api_new_releases_download(rel_id, idx):
                      download_name=download_name, mimetype='audio/mpeg')
 
 
+@app.route('/api/new-releases/<rel_id>/doc/<int:idx>')
+def api_new_releases_doc(rel_id, idx):
+    """Force-download a non-audio attachment (PDF, image, doc…)."""
+    rels = _nr_load()
+    r = next((x for x in rels if x.get('id') == rel_id), None)
+    if not r:
+        return ('Not found', 404)
+    docs = r.get('docs', []) or []
+    if idx < 0 or idx >= len(docs):
+        return ('Not found', 404)
+    d = docs[idx]
+    path = d.get('path', '')
+    if not path or not os.path.exists(path):
+        return ('Not found', 404)
+    return send_file(path, as_attachment=True,
+                     download_name=d.get('filename', 'attachment'),
+                     mimetype=d.get('content_type', 'application/octet-stream'))
+
+
 @app.route('/api/new-releases/poll-now', methods=['POST'])
 def api_new_releases_poll_now():
     """Admin trigger — force an immediate IMAP poll instead of waiting 5 min."""
