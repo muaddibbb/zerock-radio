@@ -5663,6 +5663,11 @@ _AUDIO_EXTENSIONS = {
 }
 
 _releases_lock = threading.Lock()
+# Separate lock guarding the whole poll cycle. Without this, the background
+# poller and an admin-triggered /poll-now can both load_releases() at once,
+# both see the same UID as missing, and both download+save it — duplicate
+# files and duplicate entries.
+_nr_poll_lock  = threading.Lock()
 
 
 def _nr_load():
