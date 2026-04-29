@@ -458,7 +458,9 @@
         <div class="np-progress-wrap" id="npProgressWrap" style="display:none">
           <div class="np-timebar">
             <span id="npElapsed">0:00</span>
-            <div class="np-bar-track"><div class="np-bar-fill" id="npBarFill"></div></div>
+            <input type="range" class="np-seek" id="npSeek"
+                   min="0" max="100" step="0.1" value="0" disabled
+                   title="Drag to seek">
             <span id="npRemaining">0:00</span>
           </div>
         </div>
