@@ -6101,7 +6101,7 @@ def _nr_cleanup_loop():
             except Exception:
                 rcv = datetime.now()
             if rcv < cutoff:
-                # Delete files (both mp3 and original)
+                # Delete audio files (both mp3 and original)
                 for f in r.get('files', []) or []:
                     for path_key in ('path', 'orig_path'):
                         p = f.get(path_key, '')
@@ -6110,6 +6110,14 @@ def _nr_cleanup_loop():
                                 os.remove(p)
                             except Exception:
                                 pass
+                # Delete non-audio doc attachments
+                for d in r.get('docs', []) or []:
+                    p = d.get('path', '')
+                    if p and os.path.exists(p):
+                        try:
+                            os.remove(p)
+                        except Exception:
+                            pass
                 removed += 1
             else:
                 kept.append(r)
