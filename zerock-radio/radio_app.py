@@ -3241,6 +3241,29 @@ def _sync_wp_board(force=False):
                 results['wc-admin'] = f'err:{e2}'
                 print(f"[WPSync] wc-admin/options error: {e2}", flush=True)
 
+            # ── 2b. Push now-playing JSON for the homepage "Now Broadcasting" widget ──
+            # Same source-of-truth as the weekly grid (_build_wp_schedule_slots).
+            # The widget PHP reads `zerock_now_playing_json`, finds the slot
+            # covering current Israel-time, and renders the .hp-live-now block.
+            # Without this, the homepage widget reads a hardcoded list in the
+            # theme that drifts from reality (e.g. zifim 13:00–15:00 showing
+            # mid-Wednesday morning).
+            try:
+                np_payload = _json.dumps(_build_wp_now_playing_json(), ensure_ascii=False)
+                r2b = _requests.post(
+                    f"{WP_REST_BASE}/wc-admin/options",
+                    json={'zerock_now_playing_json': np_payload},
+                    auth=auth, headers=headers, timeout=15
+                )
+                results['now-playing-json'] = r2b.status_code
+                if r2b.status_code == 200:
+                    print("[WPSync] ✓ wc-admin/options (zerock_now_playing_json updated)", flush=True)
+                else:
+                    print(f"[WPSync] now-playing-json → {r2b.status_code}: {r2b.text[:100]}", flush=True)
+            except Exception as e2b:
+                results['now-playing-json'] = f'err:{e2b}'
+                print(f"[WPSync] now-playing-json error: {e2b}", flush=True)
+
             # ── 3. PUT page 254 content (WAF blocks PATCH, not PUT) ──
             try:
                 r3 = _requests.put(
