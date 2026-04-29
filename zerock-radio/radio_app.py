@@ -509,6 +509,10 @@ def _np_updater():
                                 log_title      = match.get('name', title)
                                 log_artist     = match.get('broadcaster', artist)
                                 log_auto_rerun = bool(match.get('auto_rerun'))
+                                # Also override display title/artist so _np_cache
+                                # shows the show name, not the file's ID3 tags.
+                                title  = log_title
+                                artist = log_artist
                         except Exception:
                             pass
                     _append_history(log_title, log_artist, os.path.basename(full_path),
