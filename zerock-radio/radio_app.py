@@ -2999,6 +2999,49 @@ def _build_wp_schedule_slots():
 
     return slots
 
+
+def _build_wp_now_playing_json():
+    """Build a JSON-serializable view of the weekly schedule for the WordPress
+    "Now Broadcasting" homepage widget.
+
+    The homepage widget historically read from a hardcoded weekly schedule in
+    the WP theme PHP, which drifted from Rocky's source-of-truth (zifim moved,
+    cancellations, queue overrides, etc). With this option populated, the
+    widget can read a single source — the same `_build_wp_schedule_slots()`
+    that drives the weekly schedule grid — and pick the slot covering "now"
+    plus the one immediately after.
+
+    Shape (deliberately small + JSON-flat for easy PHP consumption):
+        {
+          "slots":      [ {day, start_min, end_min, name, broadcaster,
+                           slug, rerun}, ... ],
+          "updated_at": "2026-04-29T09:30:00",
+          "tz":         "Asia/Jerusalem"
+        }
+
+    `day`         : 0=Sun..6=Sat (matches PHP's date('w'))
+    `start_min`/`end_min` : minutes since 00:00 (PHP-friendly integer math)
+    """
+    slots_by_day = _build_wp_schedule_slots()
+    flat = []
+    for day, items in slots_by_day.items():
+        for s in items:
+            flat.append({
+                'day':         day,
+                'start_min':   int(round(s['start_h'] * 60)),
+                'end_min':     int(round(s['end_h']   * 60)),
+                'name':        s.get('name', ''),
+                'broadcaster': s.get('broadcaster', ''),
+                'slug':        s.get('slug', ''),
+                'rerun':       bool(s.get('rerun', False)),
+            })
+    return {
+        'slots':      flat,
+        'updated_at': datetime.now().isoformat(timespec='seconds'),
+        'tz':         'Asia/Jerusalem',
+    }
+
+
 def _build_wp_schedule_html():
     """Generate a CSS-Grid-based schedule where every column shares the same time axis.
 
