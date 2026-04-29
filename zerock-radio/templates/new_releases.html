@@ -272,6 +272,11 @@ function releaseCard(r) {
         <div class="received">${fmtDate(r.received_at)}</div>
       </div>
       ${r.subject ? `<div class="subject">${escapeHtml(r.subject)}</div>` : ''}
+      ${(r.body_text || '').trim() ? `
+        <details class="body-details">
+          <summary>על השיר</summary>
+          <div class="body-text">${escapeHtml((r.body_text || '').trim())}</div>
+        </details>` : ''}
       ${(r.files || []).map(f => `
         <div class="file">
           ${(f.artist || f.title) ? `
