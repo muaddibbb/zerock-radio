@@ -6151,6 +6151,15 @@ def api_new_releases():
                 'play_url':     f"/api/new-releases/{r['id']}/play/{i}",
                 'download_url': f"/api/new-releases/{r['id']}/download/{i}",
             })
+        docs = []
+        for j, d in enumerate(r.get('docs', []) or []):
+            docs.append({
+                'idx':          j,
+                'filename':     d.get('filename', ''),
+                'size':         d.get('size', 0),
+                'content_type': d.get('content_type', ''),
+                'doc_url':      f"/api/new-releases/{r['id']}/doc/{j}",
+            })
         out.append({
             'id':          r['id'],
             'from_name':   r.get('from_name', ''),
@@ -6159,6 +6168,7 @@ def api_new_releases():
             'body_text':   r.get('body_text', ''),
             'received_at': r.get('received_at', ''),
             'files':       files,
+            'docs':        docs,
         })
     return jsonify(out)
 
