@@ -5620,6 +5620,459 @@ def api_al_haroker_send_invites():
                     'month_name': _HEB_MONTHS[next_month]})
 
 
+# =============================================================================
+# NEW HEBREW RELEASES — broadcasters' inbox of incoming song demos
+# -----------------------------------------------------------------------------
+# Artists send their new tracks to rockzerock@gmail.com. This module:
+#   1. Polls the inbox via IMAP every 5 minutes (no Seen-flag mutation, so it
+#      doesn't disturb the team's actual inbox state).
+#   2. Pulls audio attachments from any email seen in the last 100 days.
+#   3. Saves them to NAS at /mnt/nas/Music/NewReleases/ — converts non-MP3
+#      sources to MP3 via ffmpeg so broadcasters always download a uniform
+#      format.
+#   4. Indexes everything in new_releases.json with sender / subject / ID3
+#      metadata, deduped by IMAP UID across restarts.
+#   5. Renders /new-heb-releases — RTL Hebrew page with HTML5 audio player +
+#      download buttons.
+#   6. Cleans up entries (and their files) older than 90 days, hourly.
+# =============================================================================
+import imaplib
+import email as _email_mod
+from email.header import decode_header as _email_decode_header
+from email.utils import parsedate_to_datetime as _email_parsedate
+
+NEW_RELEASES_DIR  = "/mnt/nas/Music/NewReleases"
+NEW_RELEASES_JSON = f"{RADIO_DIR}/new_releases.json"
+NEW_RELEASES_TTL_DAYS = 90
+NEW_RELEASES_LOOKBACK_DAYS = 100  # SINCE search window (TTL + small buffer)
+NEW_RELEASES_POLL_SEC = 300       # 5 min
+NEW_RELEASES_MAX_FILE_BYTES = 60 * 1024 * 1024   # 60 MB per attachment
+
+_IMAP_HOST = "imap.gmail.com"
+_IMAP_USER = os.environ.get('ZEROCK_SMTP_USER', '')
+_IMAP_PASS = os.environ.get('ZEROCK_SMTP_PASS', '')
+
+_AUDIO_MIMETYPES = {
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/wave',
+    'audio/flac', 'audio/x-flac', 'audio/aac', 'audio/m4a', 'audio/x-m4a',
+    'audio/mp4', 'audio/ogg', 'audio/x-aiff', 'audio/aiff',
+}
+_AUDIO_EXTENSIONS = {
+    '.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg', '.aiff',
+    '.aif', '.wma', '.opus',
+}
+
+_releases_lock = threading.Lock()
+
+
+def _nr_load():
+    """Load new_releases.json — list of release dicts. Empty list on missing/corrupt."""
+    try:
+        with open(NEW_RELEASES_JSON, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+
+def _nr_save(data):
+    """Atomic write to new_releases.json."""
+    tmp = NEW_RELEASES_JSON + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    os.replace(tmp, NEW_RELEASES_JSON)
+
+
+def _nr_decode_header(raw):
+    """Decode an RFC 2047 MIME-encoded header (handles Hebrew Subject/From)."""
+    if not raw:
+        return ''
+    parts = _email_decode_header(raw)
+    out = []
+    for txt, enc in parts:
+        if isinstance(txt, bytes):
+            try:
+                out.append(txt.decode(enc or 'utf-8', errors='replace'))
+            except (LookupError, UnicodeDecodeError):
+                out.append(txt.decode('utf-8', errors='replace'))
+        else:
+            out.append(txt)
+    return ''.join(out).strip()
+
+
+def _nr_safe_filename(name):
+    """Filesystem-safe filename — keep ASCII alnum, Hebrew, basic punctuation."""
+    out = []
+    for c in (name or ''):
+        if c.isalnum() or c in ' -_.()[]':
+            out.append(c)
+        elif '֐' <= c <= '׿':  # Hebrew block
+            out.append(c)
+        else:
+            out.append('_')
+    cleaned = ''.join(out).strip().strip('.')
+    return (cleaned[:120] or 'untitled')
+
+
+def _nr_ffprobe(path):
+    """Best-effort ID3 + duration extraction. Returns dict — empty on failure."""
+    try:
+        result = subprocess.run(
+            ['ffprobe', '-v', 'quiet', '-print_format', 'json',
+             '-show_format', '-show_streams', path],
+            capture_output=True, text=True, timeout=30
+        )
+        data = json.loads(result.stdout or '{}')
+        fmt = data.get('format', {}) or {}
+        # ffprobe lowercases tag keys for some containers, preserves for others.
+        tags = {k.lower(): v for k, v in (fmt.get('tags') or {}).items()}
+        return {
+            'duration_sec': float(fmt.get('duration', 0) or 0),
+            'artist':       tags.get('artist', '') or tags.get('album_artist', '') or '',
+            'title':        tags.get('title', '') or '',
+            'album':        tags.get('album', '') or '',
+        }
+    except Exception:
+        return {'duration_sec': 0, 'artist': '', 'title': '', 'album': ''}
+
+
+def _nr_convert_to_mp3(src_path, dst_path):
+    """Convert any audio file to 192k stereo MP3. Returns True on success."""
+    try:
+        result = subprocess.run(
+            ['ffmpeg', '-y', '-i', src_path,
+             '-vn', '-c:a', 'libmp3lame', '-b:a', '192k', '-ac', '2',
+             dst_path],
+            capture_output=True, timeout=600
+        )
+        return (result.returncode == 0
+                and os.path.exists(dst_path)
+                and os.path.getsize(dst_path) > 1024)
+    except Exception:
+        return False
+
+
+def _nr_is_audio_part(part):
+    """Heuristic — MIME type or filename extension looks like audio."""
+    ct = (part.get_content_type() or '').lower()
+    if ct in _AUDIO_MIMETYPES:
+        return True
+    fn = part.get_filename() or ''
+    if fn:
+        return os.path.splitext(fn)[1].lower() in _AUDIO_EXTENSIONS
+    return False
+
+
+def _nr_process_message(M, msg_uid):
+    """Pull one IMAP message. Save audio attachments. Return release dict or None."""
+    typ, msg_data = M.uid('FETCH', msg_uid, '(BODY.PEEK[])')
+    if typ != 'OK' or not msg_data or not msg_data[0]:
+        return None
+    raw = msg_data[0][1]
+    msg = _email_mod.message_from_bytes(raw)
+
+    subject   = _nr_decode_header(msg.get('Subject', ''))
+    from_raw  = msg.get('From', '')
+    name, addr = _email_mod.utils.parseaddr(from_raw)
+    from_name  = _nr_decode_header(name)
+    from_email = (addr or '').strip()
+    try:
+        rcv_dt = _email_parsedate(msg.get('Date', ''))
+        # Strip tzinfo so we compare consistently with our naive datetimes.
+        if rcv_dt and rcv_dt.tzinfo is not None:
+            rcv_dt = rcv_dt.replace(tzinfo=None)
+        received_at = (rcv_dt or datetime.now()).isoformat()
+    except Exception:
+        received_at = datetime.now().isoformat()
+
+    audio_parts = [p for p in msg.walk()
+                   if p.get_content_maintype() != 'multipart' and _nr_is_audio_part(p)]
+    if not audio_parts:
+        return None
+
+    os.makedirs(NEW_RELEASES_DIR, exist_ok=True)
+    saved = []
+    for i, part in enumerate(audio_parts):
+        orig_name = _nr_decode_header(part.get_filename() or f'song_{i+1}.mp3')
+        safe_orig = _nr_safe_filename(orig_name)
+        ext = (os.path.splitext(safe_orig)[1] or '.bin').lower()
+        ts = int(time.time() * 1000) + i
+
+        try:
+            payload = part.get_payload(decode=True)
+        except Exception as e:
+            print(f"[NewReleases] payload decode error for {orig_name}: {e}", flush=True)
+            continue
+        if not payload:
+            continue
+        if len(payload) > NEW_RELEASES_MAX_FILE_BYTES:
+            print(f"[NewReleases] skip {orig_name} ({len(payload)} bytes > cap)", flush=True)
+            continue
+
+        # Always save the original first
+        raw_path = os.path.join(NEW_RELEASES_DIR, f'{ts}_{safe_orig}')
+        try:
+            with open(raw_path, 'wb') as f:
+                f.write(payload)
+        except Exception as e:
+            print(f"[NewReleases] write error for {orig_name}: {e}", flush=True)
+            continue
+
+        # If non-MP3, transcode. Keep mp3_path pointing at whichever is the MP3.
+        if ext == '.mp3':
+            mp3_path = raw_path
+        else:
+            stem = os.path.splitext(safe_orig)[0]
+            mp3_path = os.path.join(NEW_RELEASES_DIR, f'{ts}_{stem}.mp3')
+            if not _nr_convert_to_mp3(raw_path, mp3_path):
+                # Conversion failed — fall back to serving the original.
+                mp3_path = raw_path
+
+        meta = _nr_ffprobe(mp3_path)
+        try:
+            size = os.path.getsize(mp3_path)
+        except OSError:
+            size = 0
+
+        saved.append({
+            'filename':     orig_name,
+            'safe_name':    safe_orig,
+            'path':         mp3_path,
+            'orig_path':    raw_path if raw_path != mp3_path else '',
+            'size':         size,
+            'duration_sec': meta['duration_sec'],
+            'id3_artist':   meta['artist'],
+            'id3_title':    meta['title'],
+            'id3_album':    meta['album'],
+        })
+
+    if not saved:
+        return None
+
+    return {
+        'id':          f"{msg_uid.decode()}_{int(time.time() * 1000)}",
+        'imap_uid':    msg_uid.decode(),
+        'from_name':   from_name,
+        'from_email':  from_email,
+        'subject':     subject,
+        'received_at': received_at,
+        'fetched_at':  datetime.now().isoformat(),
+        'files':       saved,
+    }
+
+
+def _nr_poll_once():
+    """One IMAP poll cycle. Returns (new_release_count, error_str_or_None).
+
+    Idempotent across restarts: dedupes by IMAP UID using new_releases.json.
+    Doesn't mutate Seen flags so the human inbox state is preserved.
+    """
+    if not _IMAP_USER or not _IMAP_PASS:
+        return 0, 'IMAP creds (ZEROCK_SMTP_USER/PASS) not set'
+    try:
+        M = imaplib.IMAP4_SSL(_IMAP_HOST)
+        M.login(_IMAP_USER, _IMAP_PASS)
+        M.select('INBOX', readonly=False)
+    except Exception as e:
+        return 0, f'IMAP login error: {e}'
+
+    try:
+        since_str = (datetime.now() - timedelta(days=NEW_RELEASES_LOOKBACK_DAYS))\
+                        .strftime('%d-%b-%Y')
+        typ, data = M.uid('SEARCH', None, f'(SINCE "{since_str}")')
+        if typ != 'OK':
+            return 0, 'IMAP search failed'
+        uids = (data[0] or b'').split()
+        if not uids:
+            return 0, None
+
+        with _releases_lock:
+            rels = _nr_load()
+            seen_uids = {r.get('imap_uid') for r in rels}
+
+        new_count = 0
+        for uid in uids:
+            if uid.decode() in seen_uids:
+                continue
+            try:
+                entry = _nr_process_message(M, uid)
+            except Exception as e:
+                print(f"[NewReleases] process error uid={uid}: {e}", flush=True)
+                continue
+            if not entry:
+                # Mark this UID as processed too (so we don't keep parsing the
+                # same headerless or audio-less message every poll), with a
+                # placeholder so it dedupes — but no files, so cleanup ignores.
+                with _releases_lock:
+                    rels = _nr_load()
+                    if not any(r.get('imap_uid') == uid.decode() for r in rels):
+                        rels.append({
+                            'id':          f"{uid.decode()}_skip",
+                            'imap_uid':    uid.decode(),
+                            'from_name':   '',
+                            'from_email':  '',
+                            'subject':     '',
+                            'received_at': datetime.now().isoformat(),
+                            'fetched_at':  datetime.now().isoformat(),
+                            'files':       [],
+                            'no_audio':    True,
+                        })
+                        _nr_save(rels)
+                continue
+            with _releases_lock:
+                rels = _nr_load()
+                rels.append(entry)
+                _nr_save(rels)
+            new_count += 1
+            print(f"[NewReleases] +{len(entry['files'])} file(s) from "
+                  f"{entry['from_email']!r}: {entry['subject'][:80]!r}", flush=True)
+    finally:
+        try:
+            M.logout()
+        except Exception:
+            pass
+
+    return new_count, None
+
+
+def _nr_loop():
+    """Background poller thread."""
+    print("[NewReleases] poller started", flush=True)
+    # Stagger startup so we don't all hit Gmail in the first second after restart
+    time.sleep(20)
+    while True:
+        try:
+            n, err = _nr_poll_once()
+            if err:
+                print(f"[NewReleases] poll: {err}", flush=True)
+            elif n:
+                print(f"[NewReleases] poll: +{n} new release(s)", flush=True)
+        except Exception as e:
+            print(f"[NewReleases] loop error: {e}", flush=True)
+        time.sleep(NEW_RELEASES_POLL_SEC)
+
+
+def _nr_cleanup_loop():
+    """Hourly cleanup: drop entries (and their files) older than TTL days."""
+    while True:
+        time.sleep(3600)
+        cutoff = datetime.now() - timedelta(days=NEW_RELEASES_TTL_DAYS)
+        with _releases_lock:
+            rels = _nr_load()
+        kept, removed = [], 0
+        for r in rels:
+            try:
+                rcv = datetime.fromisoformat((r.get('received_at') or '').replace('Z', ''))
+                if rcv.tzinfo is not None:
+                    rcv = rcv.replace(tzinfo=None)
+            except Exception:
+                rcv = datetime.now()
+            if rcv < cutoff:
+                # Delete files (both mp3 and original)
+                for f in r.get('files', []) or []:
+                    for path_key in ('path', 'orig_path'):
+                        p = f.get(path_key, '')
+                        if p and os.path.exists(p):
+                            try:
+                                os.remove(p)
+                            except Exception:
+                                pass
+                removed += 1
+            else:
+                kept.append(r)
+        if removed:
+            with _releases_lock:
+                _nr_save(kept)
+            print(f"[NewReleases] cleanup: removed {removed} entries (>{NEW_RELEASES_TTL_DAYS}d old)",
+                  flush=True)
+
+
+threading.Thread(target=_nr_loop,         daemon=True).start()
+threading.Thread(target=_nr_cleanup_loop, daemon=True).start()
+
+
+@app.route('/new-heb-releases')
+def new_heb_releases_page():
+    """Hebrew RTL page listing new releases sent to rockzerock@gmail.com."""
+    return render_template('new_releases.html')
+
+
+@app.route('/api/new-releases')
+def api_new_releases():
+    """JSON list of releases (newest first), absolute paths stripped from output."""
+    rels = _nr_load()
+    rels = [r for r in rels if r.get('files') and not r.get('no_audio')]
+    rels.sort(key=lambda r: r.get('received_at', ''), reverse=True)
+    out = []
+    for r in rels:
+        files = []
+        for i, f in enumerate(r.get('files', []) or []):
+            files.append({
+                'idx':          i,
+                'filename':     f.get('filename', ''),
+                'size':         f.get('size', 0),
+                'duration':     f.get('duration_sec', 0),
+                'artist':       f.get('id3_artist', ''),
+                'title':        f.get('id3_title', ''),
+                'album':        f.get('id3_album', ''),
+                'play_url':     f"/api/new-releases/{r['id']}/play/{i}",
+                'download_url': f"/api/new-releases/{r['id']}/download/{i}",
+            })
+        out.append({
+            'id':          r['id'],
+            'from_name':   r.get('from_name', ''),
+            'from_email':  r.get('from_email', ''),
+            'subject':     r.get('subject', ''),
+            'received_at': r.get('received_at', ''),
+            'files':       files,
+        })
+    return jsonify(out)
+
+
+def _nr_get_file(rel_id, idx):
+    rels = _nr_load()
+    r = next((x for x in rels if x.get('id') == rel_id), None)
+    if not r:
+        return None, None
+    files = r.get('files', []) or []
+    if idx < 0 or idx >= len(files):
+        return r, None
+    return r, files[idx]
+
+
+@app.route('/api/new-releases/<rel_id>/play/<int:idx>')
+def api_new_releases_play(rel_id, idx):
+    """Stream an audio file inline for browser <audio> playback."""
+    _, f = _nr_get_file(rel_id, idx)
+    if not f or not os.path.exists(f.get('path', '')):
+        return ('Not found', 404)
+    return send_file(f['path'], mimetype='audio/mpeg', conditional=True)
+
+
+@app.route('/api/new-releases/<rel_id>/download/<int:idx>')
+def api_new_releases_download(rel_id, idx):
+    """Force-download as MP3 with a friendly artist-title.mp3 name."""
+    _, f = _nr_get_file(rel_id, idx)
+    if not f or not os.path.exists(f.get('path', '')):
+        return ('Not found', 404)
+    artist = (f.get('id3_artist') or '').strip()
+    title  = (f.get('id3_title')  or '').strip()
+    if artist and title:
+        download_name = f"{artist} - {title}.mp3"
+    else:
+        base = os.path.splitext(f.get('filename', 'song'))[0]
+        download_name = f"{base or 'song'}.mp3"
+    download_name = _nr_safe_filename(download_name)
+    return send_file(f['path'], as_attachment=True,
+                     download_name=download_name, mimetype='audio/mpeg')
+
+
+@app.route('/api/new-releases/poll-now', methods=['POST'])
+def api_new_releases_poll_now():
+    """Admin trigger — force an immediate IMAP poll instead of waiting 5 min."""
+    n, err = _nr_poll_once()
+    return jsonify({'ok': err is None, 'new': n, 'error': err})
+
+
 if __name__ == '__main__':
     print("ZeRock Radio web interface starting on port 5000...")
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
