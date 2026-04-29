@@ -318,6 +318,8 @@ async function load() {
   }
 }
 
+document.getElementById('searchInput').addEventListener('input', applyFilter);
+
 document.getElementById('refreshBtn').addEventListener('click', async () => {
   const btn = document.getElementById('refreshBtn');
   btn.disabled = true;
