@@ -6059,6 +6059,42 @@ def _nr_poll_once_locked():
                             try: os.remove(p)
                             except Exception: pass
                     continue
+                # Content-based dedup: skip if same sender already has a file
+                # with the same name and size (sender clicked send twice).
+                new_keys = {
+                    (entry.get('from_email','').lower(), f.get('filename','').lower(), f.get('size',0))
+                    for f in entry.get('files', [])
+                }
+                existing_keys = {
+                    (r.get('from_email','').lower(), f.get('filename','').lower(), f.get('size',0))
+                    for r in rels if r.get('files')
+                    for f in r['files']
+                }
+                if new_keys & existing_keys:
+                    print(f"[NewReleases] skip content-dup uid={entry['imap_uid']} "
+                          f"from={entry['from_email']!r}", flush=True)
+                    for f in entry.get('files', []):
+                        for path_key in ('path', 'orig_path'):
+                            p = f.get(path_key, '')
+                            if p and os.path.exists(p):
+                                try: os.remove(p)
+                                except Exception: pass
+                    for d in entry.get('docs', []):
+                        p = d.get('path', '')
+                        if p and os.path.exists(p):
+                            try: os.remove(p)
+                            except Exception: pass
+                    # Still mark the UID as seen so we don't re-check it
+                    rels.append({
+                        'id': f"{entry['imap_uid']}_skip",
+                        'imap_uid': entry['imap_uid'],
+                        'from_name': '', 'from_email': '', 'subject': '',
+                        'received_at': datetime.now().isoformat(),
+                        'fetched_at':  datetime.now().isoformat(),
+                        'files': [], 'no_audio': True,
+                    })
+                    _nr_save(rels)
+                    continue
                 rels.append(entry)
                 _nr_save(rels)
             new_count += 1
