@@ -6053,6 +6053,11 @@ def _nr_poll_once_locked():
                             if p and os.path.exists(p):
                                 try: os.remove(p)
                                 except Exception: pass
+                    for d in entry.get('docs', []):
+                        p = d.get('path', '')
+                        if p and os.path.exists(p):
+                            try: os.remove(p)
+                            except Exception: pass
                     continue
                 rels.append(entry)
                 _nr_save(rels)
