@@ -5870,7 +5870,19 @@ def _nr_poll_once():
 
     Idempotent across restarts: dedupes by IMAP UID using new_releases.json.
     Doesn't mutate Seen flags so the human inbox state is preserved.
+
+    Wrapped in _nr_poll_lock so concurrent calls (background loop +
+    /api/new-releases/poll-now) don't double-process the same UIDs.
     """
+    if not _nr_poll_lock.acquire(blocking=False):
+        return 0, 'poll already in progress'
+    try:
+        return _nr_poll_once_locked()
+    finally:
+        _nr_poll_lock.release()
+
+
+def _nr_poll_once_locked():
     if not _IMAP_USER or not _IMAP_PASS:
         return 0, 'IMAP creds (ZEROCK_SMTP_USER/PASS) not set'
     try:
