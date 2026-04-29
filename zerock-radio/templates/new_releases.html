@@ -301,6 +301,15 @@ function releaseCard(r) {
           <summary>על השיר</summary>
           <div class="body-text">${escapeHtml((r.body_text || '').trim())}</div>
         </details>` : ''}
+      ${(r.docs || []).length ? `
+        <div class="doc-list">
+          ${(r.docs || []).map(d => `
+            <a class="doc-link" href="${d.doc_url}" download>
+              <span class="doc-icon">${docIcon(d.content_type || '', d.filename || '')}</span>
+              ${escapeHtml(d.filename)}
+            </a>
+          `).join('')}
+        </div>` : ''}
       ${(r.files || []).map(f => `
         <div class="file">
           ${(f.artist || f.title) ? `
