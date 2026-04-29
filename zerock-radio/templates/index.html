@@ -134,15 +134,33 @@
       display: flex; align-items: center; gap: 10px;
       font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums;
     }
-    .np-bar-track {
-      flex: 1; height: 4px; background: var(--surface2);
-      border-radius: 2px; overflow: hidden; cursor: pointer;
+    .np-seek {
+      flex: 1; height: 4px; cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background: transparent; outline: none; padding: 0; margin: 0;
+      position: relative;
     }
-    .np-bar-fill {
-      height: 100%; background: var(--accent);
-      border-radius: 2px; transition: width 1s linear;
-      width: 0%;
+    .np-seek::-webkit-slider-runnable-track {
+      height: 4px; border-radius: 2px;
+      background: linear-gradient(to right, var(--accent) var(--np-pct, 0%), var(--surface2) var(--np-pct, 0%));
     }
+    .np-seek::-moz-range-track {
+      height: 4px; border-radius: 2px; background: var(--surface2);
+    }
+    .np-seek::-moz-range-progress {
+      height: 4px; border-radius: 2px; background: var(--accent);
+    }
+    .np-seek::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px;
+      border-radius: 50%; background: var(--accent);
+      margin-top: -4px; cursor: pointer; transition: transform 0.1s;
+    }
+    .np-seek::-webkit-slider-thumb:hover { transform: scale(1.4); }
+    .np-seek::-moz-range-thumb {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--accent); border: none; cursor: pointer;
+    }
+    .np-seek:disabled { opacity: 0.4; cursor: default; }
     .np-skip {
       background: transparent;
       border: 1px solid var(--border);
