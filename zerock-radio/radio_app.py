@@ -3249,7 +3249,7 @@ def _sync_wp_board(force=False):
             # theme that drifts from reality (e.g. zifim 13:00–15:00 showing
             # mid-Wednesday morning).
             try:
-                np_payload = _json.dumps(_build_wp_now_playing_json(), ensure_ascii=False)
+                np_payload = json.dumps(_build_wp_now_playing_json(), ensure_ascii=False)
                 r2b = _requests.post(
                     f"{WP_REST_BASE}/wc-admin/options",
                     json={'zerock_now_playing_json': np_payload},
