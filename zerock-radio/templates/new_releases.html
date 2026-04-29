@@ -220,6 +220,70 @@ function escapeHtml(s) {
 }
 
 let _loading = false;
+let _allReleases = [];
+
+function releaseCard(r) {
+  return `
+    <div class="release">
+      <div class="release-header">
+        <div class="from">
+          ${escapeHtml(r.from_name) || escapeHtml(r.from_email)}
+          ${r.from_name ? `<span class="from-email">&lt;${escapeHtml(r.from_email)}&gt;</span>` : ''}
+        </div>
+        <div class="received">${fmtDate(r.received_at)}</div>
+      </div>
+      ${r.subject ? `<div class="subject">${escapeHtml(r.subject)}</div>` : ''}
+      ${(r.files || []).map(f => `
+        <div class="file">
+          ${(f.artist || f.title) ? `
+            <div class="id3">
+              ${f.artist ? `<strong>${escapeHtml(f.artist)}</strong>` : ''}
+              ${(f.artist && f.title) ? ' — ' : ''}
+              ${f.title ? escapeHtml(f.title) : ''}
+            </div>` : ''}
+          <div class="file-name">${escapeHtml(f.filename)}</div>
+          <div class="file-meta">
+            ${fmtSize(f.size)}${f.duration ? ' · ' + fmtDur(f.duration) : ''}
+          </div>
+          <audio controls preload="none" src="${f.play_url}"></audio>
+          <div class="actions">
+            <a class="btn btn-dl" href="${f.download_url}">⬇ הורד MP3</a>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function applyFilter() {
+  const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+  const list = document.getElementById('list');
+  const countEl = document.getElementById('searchCount');
+
+  if (!_allReleases.length) return;
+
+  const filtered = q
+    ? _allReleases.filter(r => {
+        const hay = [
+          r.from_name, r.from_email, r.subject,
+          ...(r.files || []).flatMap(f => [f.artist, f.title, f.filename])
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      })
+    : _allReleases;
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty">לא נמצאו תוצאות עבור "<strong>${escapeHtml(q)}</strong>"</div>`;
+    countEl.textContent = '';
+    return;
+  }
+
+  list.innerHTML = filtered.map(releaseCard).join('');
+  const totalFiles = filtered.reduce((s, r) => s + (r.files || []).length, 0);
+  countEl.textContent = q
+    ? `${filtered.length} אימיילים, ${totalFiles} שירים (מתוך ${_allReleases.length})`
+    : '';
+}
 
 async function load() {
   if (_loading) return;
@@ -229,7 +293,7 @@ async function load() {
   try {
     const r = await fetch('/api/new-releases', { headers: { 'Cache-Control': 'no-cache' } });
     const data = await r.json();
-    const list = document.getElementById('list');
+    _allReleases = data;
     const meta = document.getElementById('metaBar');
     const total = data.length;
     const totalFiles = data.reduce((s, r) => s + (r.files || []).length, 0);
@@ -237,42 +301,13 @@ async function load() {
       ? `<strong>${total}</strong> אימיילים, <strong>${totalFiles}</strong> שירים`
       : '';
     if (!total) {
-      list.innerHTML = `<div class="empty">
+      document.getElementById('list').innerHTML = `<div class="empty">
         עוד לא הגיעו שירים חדשים.<br>
         שלחו ל-<strong>rockzerock@gmail.com</strong> והם יופיעו כאן תוך 5 דקות.
       </div>`;
       return;
     }
-    list.innerHTML = data.map(r => `
-      <div class="release">
-        <div class="release-header">
-          <div class="from">
-            ${escapeHtml(r.from_name) || escapeHtml(r.from_email)}
-            ${r.from_name ? `<span class="from-email">&lt;${escapeHtml(r.from_email)}&gt;</span>` : ''}
-          </div>
-          <div class="received">${fmtDate(r.received_at)}</div>
-        </div>
-        ${r.subject ? `<div class="subject">${escapeHtml(r.subject)}</div>` : ''}
-        ${(r.files || []).map(f => `
-          <div class="file">
-            ${(f.artist || f.title) ? `
-              <div class="id3">
-                ${f.artist ? `<strong>${escapeHtml(f.artist)}</strong>` : ''}
-                ${(f.artist && f.title) ? ' — ' : ''}
-                ${f.title ? escapeHtml(f.title) : ''}
-              </div>` : ''}
-            <div class="file-name">${escapeHtml(f.filename)}</div>
-            <div class="file-meta">
-              ${fmtSize(f.size)}${f.duration ? ' · ' + fmtDur(f.duration) : ''}
-            </div>
-            <audio controls preload="none" src="${f.play_url}"></audio>
-            <div class="actions">
-              <a class="btn btn-dl" href="${f.download_url}">⬇ הורד MP3</a>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `).join('');
+    applyFilter(); // render with current search query (or all if empty)
   } catch (e) {
     document.getElementById('list').innerHTML =
       '<div class="empty">שגיאה בטעינת הרשימה</div>';
