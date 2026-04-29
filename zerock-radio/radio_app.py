@@ -6099,6 +6099,7 @@ def api_new_releases():
             'from_name':   r.get('from_name', ''),
             'from_email':  r.get('from_email', ''),
             'subject':     r.get('subject', ''),
+            'body_text':   r.get('body_text', ''),
             'received_at': r.get('received_at', ''),
             'files':       files,
         })
