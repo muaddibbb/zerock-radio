@@ -3952,6 +3952,63 @@ def api_skip():
     _np_track_start = None
     return jsonify({'response': resp.strip()[:200]})
 
+@app.route('/api/seek', methods=['POST'])
+def api_seek():
+    """Seek to a position in the currently playing show/track.
+
+    Body JSON: {"position": <float seconds>}
+
+    Strategy: trim the current file from the requested position using ffmpeg
+    (stream copy — near-instant), flush the shows queue, and push the trimmed
+    file so playback resumes from the desired point.  Only works for show files
+    (LOCAL_TEMP / NAS_TEMP); regular playlist tracks are skipped instead.
+    """
+    global _np_last_path, _np_track_start
+
+    data     = request.get_json(silent=True) or {}
+    position = float(data.get('position', 0))
+    if position < 0:
+        position = 0
+
+    np = get_now_playing()
+    full_path = np.get('full_path', '')
+    duration  = np.get('duration', 0)
+
+    if not full_path or not os.path.exists(full_path):
+        return jsonify({'ok': False, 'error': 'No file playing'})
+
+    is_show = full_path.startswith(LOCAL_TEMP) or NAS_TEMP in full_path
+    if not is_show:
+        # For regular playlist tracks we can't seek — just note the request
+        return jsonify({'ok': False, 'error': 'Seek only supported for show/upload files'})
+
+    if duration > 0:
+        position = min(position, duration - 1)
+
+    # Trim with ffmpeg (stream copy = no re-encode, runs in <1 sec)
+    base, ext = os.path.splitext(os.path.basename(full_path))
+    seek_path = os.path.join(NAS_TEMP, f'_seek_{int(time.time()*1000)}{ext or ".mp3"}')
+    try:
+        result = subprocess.run(
+            ['ffmpeg', '-y', '-ss', str(position), '-i', full_path,
+             '-c', 'copy', seek_path],
+            capture_output=True, timeout=15
+        )
+        if result.returncode != 0 or not os.path.exists(seek_path):
+            return jsonify({'ok': False, 'error': 'ffmpeg trim failed'})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)})
+
+    # Flush current queue and skip current track, then push trimmed file
+    lq_send_direct(['shows.flush_and_skip', f'shows.push {seek_path}'])
+
+    # Reset NP tracking so updater immediately picks up the new track
+    _np_last_path   = ''
+    _np_track_start = None
+
+    return jsonify({'ok': True, 'position': position, 'seek_path': os.path.basename(seek_path)})
+
+
 @app.route('/api/play-now', methods=['POST'])
 def api_play_now():
     """Immediately play an uploaded file (no jingles). Push directly to shows queue."""
