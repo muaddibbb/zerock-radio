@@ -3550,7 +3550,8 @@ def api_add_show():
         'id':             show_id,
         'name':           name,
         'show_key':       show_key,
-        'broadcaster':    (al_haroker_broadcaster if show_key == 'al_harocker' and al_haroker_broadcaster
+        'broadcaster':    (al_haroker_broadcaster   if show_key == 'al_harocker'   and al_haroker_broadcaster
+                          else erev_albumim_broadcaster if show_key == 'erev_albumim' and erev_albumim_broadcaster
                           else (show_cfg['broadcaster'] if show_cfg else '')),
         'mode':           mode,
         'episode_num':    episode_num,
