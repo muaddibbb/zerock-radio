@@ -2314,7 +2314,10 @@ function onShowChange() {
     document.getElementById('playlistModeCheckbox').checked = false;
   }
 
-  document.getElementById('albumUploadGroup').style.display = isAlbum ? '' : 'none';
+  document.getElementById('albumUploadGroup').style.display              = isAlbum ? '' : 'none';
+  document.getElementById('erevAlbumimBroadcasterGroup').style.display  = isAlbum ? '' : 'none';
+  if (isAlbum) document.getElementById('erevAlbumimBroadcaster').required = true;
+  else { document.getElementById('erevAlbumimBroadcaster').required = false; document.getElementById('erevAlbumimBroadcaster').value = ''; }
   document.getElementById('modeGroup').style.display        = (isAlbum || noPodbean) ? 'none' : '';
   document.getElementById('playlistModeGroup').style.display = isMatzad ? '' : 'none';
 
