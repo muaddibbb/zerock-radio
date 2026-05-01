@@ -3392,8 +3392,9 @@ def api_shows():
 @app.route('/api/schedule', methods=['POST'])
 def api_add_show():
     show_key              = request.form.get('show_key', '').strip()
-    manual_date           = request.form.get('manual_date', '').strip()   # YYYY-MM-DD, only for על הרוקר
-    al_haroker_broadcaster = request.form.get('al_haroker_broadcaster', '').strip()  # broadcaster for על הרוקר
+    manual_date              = request.form.get('manual_date', '').strip()          # YYYY-MM-DD, only for על הרוקר
+    al_haroker_broadcaster   = request.form.get('al_haroker_broadcaster', '').strip()   # broadcaster for על הרוקר
+    erev_albumim_broadcaster = request.form.get('erev_albumim_broadcaster', '').strip() # broadcaster for ערב של אלבומים
     mode                  = request.form.get('mode', 'queue_to_broadcast').strip()
     episode_num           = request.form.get('episode_num', '').strip()
     description           = request.form.get('description', '').strip()
