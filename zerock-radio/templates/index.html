@@ -2128,6 +2128,14 @@ function copyText(text, btn) {
   });
 }
 
+async function clearPalash(pollId) {
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('palash-' + i);
+    if (el) el.value = '';
+  }
+  await savePalash(pollId);
+}
+
 async function savePalash(pollId) {
   const songs = [];
   for (let i = 0; i < 5; i++) {
