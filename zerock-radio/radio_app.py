@@ -5274,20 +5274,32 @@ def poll_results_page(poll_id):
         for sid in (v.get('song_ids') or []):
             if sid in tally:
                 tally[sid] += 1
+    # Sort ALL songs by votes descending (combined ranking — palash included)
     results = sorted([
         {**s, 'votes': tally[s['id']]} for s in poll['songs']
     ], key=lambda x: (-x['votes'], x.get('slot') or 999))
-    # split back into groups maintaining relative rank order
-    matzad_sorted  = [r for r in results if r['group'] == 'matzad']
-    palash_sorted  = [r for r in results if r['group'] == 'palash']
-    all_sorted     = matzad_sorted + palash_sorted
-    max_votes_any  = max((r['votes'] for r in all_sorted), default=0)
+    # Compute movement vs previous chart if prev_positions is provided
+    prev_pos = poll.get('prev_positions') or {}
+    for curr_rank, song in enumerate(results, start=1):
+        sid = song['id']
+        pp  = prev_pos.get(sid)
+        if pp is None or pp in ('new', 'palash'):
+            song['movement'] = 'new'
+        else:
+            delta = int(pp) - curr_rank
+            if delta > 0:
+                song['movement'] = f'+{delta}'
+            elif delta < 0:
+                song['movement'] = str(delta)
+            else:
+                song['movement'] = '0'
+    max_votes_any  = max((r['votes'] for r in results), default=0)
     any_votes      = max_votes_any > 0
     vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
     return render_template('poll_results.html',
         invalid=False,
         poll=poll,
-        results=all_sorted,
+        results=results,
         total_voters=len(votes),
         total_songs=len(poll['songs']),
         max_votes_any=max_votes_any,
