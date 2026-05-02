@@ -320,11 +320,18 @@ function getPollApiBase() {
 // ── Email verification ──────────────────────────────────────────
 
 async function sendCode() {
+  const nameInput  = document.getElementById('voter-name');
   const emailInput = document.getElementById('voter-email');
+  const name  = nameInput.value.trim();
   const email = emailInput.value.trim();
   const msg   = document.getElementById('email-msg');
   const btn   = document.getElementById('btn-send-code');
 
+  if (!name) {
+    msg.innerHTML = '<span class="msg-err">יש להזין שם מלא</span>';
+    nameInput.focus();
+    return;
+  }
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     msg.innerHTML = '<span class="msg-err">יש להזין כתובת אימייל תקינה</span>';
     return;
