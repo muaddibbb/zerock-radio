@@ -274,14 +274,6 @@
     </div>
     {% endif %}
 
-    <!-- listen buttons -->
-    {% if s.spotify_url %}
-      <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
-         rel="noopener noreferrer" title="Spotify">🎧</a>
-    {% endif %}
-    {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
-    <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
-       rel="noopener noreferrer" title="YouTube">▶</a>
   </div>
   {% if loop.index == 20 %}
   <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px">
