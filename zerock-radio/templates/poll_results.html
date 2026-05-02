@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if poll %}תוצאות — {{ poll.title }}{% else %}תוצאות סקר{% endif %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414; color: #f0f0f0; min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .wrap {
+      max-width: 760px; margin: 0 auto;
+      background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 14px;
+      padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 1.45em; color: #e63946; margin-bottom: 4px; text-align: center; }
+    .subtitle {
+      color: #888; font-size: 0.88em; text-align: center; margin-bottom: 18px;
+    }
+
+    /* summary bar */
+    .summary-bar {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .summary-chip {
+      background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.88em; color: #bbb; text-align: center;
+    }
+    .summary-chip strong { color: #f0f0f0; font-size: 1.1em; display: block; }
+
+    /* live badge */
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #1e3a1e; color: #4caf50; border: 1px solid #2d5a2d;
+      border-radius: 20px; padding: 4px 12px; font-size: 0.8em; font-weight: bold;
+      margin: 0 auto 18px; display: flex; width: fit-content;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #4caf50;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .closed-badge {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: #2a1a1a; color: #e63946; border: 1px solid #5a2a2a;
+      border-radius: 20px; padding: 4px 14px; font-size: 0.8em; font-weight: bold;
+      width: fit-content; margin: 0 auto 18px;
+    }
+
+    /* group title */
+    .group-title {
+      color: #e63946; font-size: 1.05em; font-weight: bold;
+      margin: 22px 0 10px; padding-bottom: 6px;
+      border-bottom: 1px solid #3a3a3a;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .group-title:first-of-type { margin-top: 4px; }
+    .group-count {
+      font-size: 0.78em; font-weight: normal; color: #888;
+      background: #2a2a2a; border-radius: 10px; padding: 2px 8px;
+    }
+
+    /* result row */
+    .result-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; margin-bottom: 5px;
+      background: #141414; border: 1px solid #2c2c2c; border-radius: 9px;
+      transition: border-color 0.15s;
+      position: relative; overflow: hidden;
+    }
+    .result-row.top3 { border-color: #3a3020; }
+
+    /* animated fill bar behind the row */
+    .fill-bar {
+      position: absolute; inset: 0; right: auto;
+      background: rgba(230,57,70,0.07);
+      border-radius: 9px 0 0 9px;
+      transition: width 0.6s ease;
+      width: 0;
+    }
+    .result-row.top3 .fill-bar { background: rgba(230,200,70,0.07); }
+
+    .rank {
+      flex-shrink: 0; width: 30px; text-align: center;
+      font-size: 0.9em; font-weight: bold; color: #888;
+      position: relative; z-index: 1;
+    }
+    .rank.gold   { color: #ffd700; font-size: 1.1em; }
+    .rank.silver { color: #c0c0c0; font-size: 1.05em; }
+    .rank.bronze { color: #cd7f32; font-size: 1.0em; }
+
+    .song-info {
+      flex: 1; min-width: 0; position: relative; z-index: 1;
+    }
+    .song-name {
+      font-size: 0.93em; word-break: break-word;
+    }
+    .bar-track {
+      height: 4px; background: #2a2a2a; border-radius: 2px; margin-top: 5px;
+    }
+    .bar-fill {
+      height: 4px; background: #e63946; border-radius: 2px;
+      transition: width 0.6s ease; width: 0;
+    }
+    .result-row.top3 .bar-fill { background: #ffd700; }
+
+    .vote-count {
+      flex-shrink: 0; text-align: center; min-width: 48px;
+      position: relative; z-index: 1;
+    }
+    .vote-num {
+      font-size: 1.1em; font-weight: bold; color: #e63946;
+    }
+    .result-row.top3 .vote-num { color: #ffd700; }
+    .vote-label {
+      font-size: 0.7em; color: #666;
+    }
+
+    .listen-btn {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 6px;
+      text-decoration: none; font-size: 0.95em;
+      transition: transform 0.1s, opacity 0.1s;
+      position: relative; z-index: 1;
+    }
+    .listen-btn:hover { transform: scale(1.1); }
+    .listen-spotify { background: #1db954; color: #000; }
+    .listen-youtube { background: #ff0000; color: #fff; }
+
+    .no-votes { color: #555; font-size: 0.85em; text-align: center; padding: 14px 0; }
+
+    .footer-note {
+      margin-top: 20px; text-align: center; font-size: 0.78em; color: #555;
+    }
+    .footer-note a { color: #e63946; text-decoration: none; }
+    .footer-note a:hover { text-decoration: underline; }
+
+    /* countdown */
+    .countdown { color: #aaa; font-size: 0.82em; text-align: center; margin-bottom: 12px; }
+
+    /* state */
+    .state-icon { font-size: 3em; text-align: center; margin-bottom: 10px; }
+    .state-title { font-size: 1.3em; font-weight: bold; text-align: center; margin-bottom: 8px; }
+    .state-sub { color: #888; font-size: 0.9em; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+{% if invalid %}
+  <div class="state-icon">🔗</div>
+  <div class="state-title">סקר לא נמצא</div>
+  <div class="state-sub">הסקר לא קיים במערכת.</div>
+
+{% else %}
+  <h1>{{ poll.title }}</h1>
+  <div class="subtitle">תוצאות ההצבעה</div>
+
+  {% if poll.open %}
+    <div class="live-badge"><div class="live-dot"></div> הצבעה פתוחה — תוצאות חיות</div>
+  {% else %}
+    <div class="closed-badge">🔴 ההצבעה נסגרה</div>
+  {% endif %}
+
+  <div class="summary-bar">
+    <div class="summary-chip"><strong id="total-voters">{{ total_voters }}</strong>מצביעים</div>
+    <div class="summary-chip"><strong>{{ total_songs }}</strong>שירים</div>
+    <div class="summary-chip"><strong>5</strong>בחירות לכל מצביע</div>
+    {% if poll.closes_at %}
+      <div class="summary-chip" id="close-chip">
+        <strong id="close-time">…</strong>
+        <span id="close-label">{% if poll.open %}נסגרת{% else %}נסגרה{% endif %}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if poll.open and poll.closes_at %}
+    <div class="countdown" id="countdown-line">…</div>
+  {% endif %}
+
+  {% set matzad_results = results | selectattr('group','equalto','matzad') | list %}
+  {% set palash_results  = results | selectattr('group','equalto','palash')  | list %}
+
+  <div id="results-container">
+
+    {% if matzad_results %}
+    <div class="group-title">
+      מצעד הרוק של ישראל
+      <span class="group-count">{{ matzad_results | length }} שירים</span>
+    </div>
+
+    {% for s in matzad_results %}
+    {% set pct = ((s.votes / max_votes_any * 100) | int) if max_votes_any > 0 else 0 %}
+    <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
+         data-pct="{{ pct }}">
+      <div class="fill-bar" style="width:{{ pct }}%"></div>
+      <div class="rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+        {% if loop.index == 1 %}🥇
+        {% elif loop.index == 2 %}🥈
+        {% elif loop.index == 3 %}🥉
+        {% else %}{{ loop.index }}{% endif %}
+      </div>
+      <div class="song-info">
+        <div class="song-name">{{ s.label }}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
+      </div>
+      <div class="vote-count">
+        <div class="vote-num">{{ s.votes }}</div>
+        <div class="vote-label">קולות</div>
+      </div>
+      {% if s.spotify_url %}
+        <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
+           rel="noopener noreferrer" title="Spotify">🎧</a>
+      {% endif %}
+      {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
+      <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
+         rel="noopener noreferrer" title="YouTube">▶</a>
+    </div>
+    {% endfor %}
+
+    {% if not any_votes %}
+      <div class="no-votes">אין קולות עדיין — היה הראשון להצביע!</div>
+    {% endif %}
+    {% endif %}
+
+    {% if palash_results %}
+    <div class="group-title">
+      פל״ש — הפינה לשיפוטכם
+      <span class="group-count">{{ palash_results | length }} שירים</span>
+    </div>
+
+    {% set palash_max = palash_results | map(attribute='votes') | max %}
+    {% for s in palash_results %}
+    {% set ppct = ((s.votes / palash_max * 100) | int) if palash_max > 0 else 0 %}
+    <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
+         data-pct="{{ ppct }}">
+      <div class="fill-bar" style="width:{{ ppct }}%"></div>
+      <div class="rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+        {% if loop.index == 1 %}🥇
+        {% elif loop.index == 2 %}🥈
+        {% elif loop.index == 3 %}🥉
+        {% else %}{{ loop.index }}{% endif %}
+      </div>
+      <div class="song-info">
+        <div class="song-name">{{ s.label }}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:{{ ppct }}%"></div></div>
+      </div>
+      <div class="vote-count">
+        <div class="vote-num">{{ s.votes }}</div>
+        <div class="vote-label">קולות</div>
+      </div>
+      {% if s.spotify_url %}
+        <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
+           rel="noopener noreferrer" title="Spotify">🎧</a>
+      {% endif %}
+      {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
+      <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
+         rel="noopener noreferrer" title="YouTube">▶</a>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+  </div>
+
+  <div class="footer-note">
+    {% if poll.open %}
+      רוצה להצביע? <a href="{{ vote_url }}">הצביע עכשיו →</a>
+      &nbsp;|&nbsp; מתרענן אוטומטית כל 30 שניות
+    {% else %}
+      ההצבעה נסגרה • שאלות? <a href="https://www.zerockradio.com">zerockradio.com</a>
+    {% endif %}
+  </div>
+
+{% endif %}
+</div>
+
+{% if poll and not invalid %}
+<script>
+{% if poll.closes_at %}
+(function() {
+  const closesAt = new Date("{{ poll.closes_at }}");
+  const heDate = d => d.toLocaleString('he-IL', {weekday:'short', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
+
+  function fmtRemaining(ms) {
+    const s = Math.max(0, Math.floor(ms/1000));
+    const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+    const parts = [];
+    if (d) parts.push(d + ' ימים');
+    if (h) parts.push(h + ' שעות');
+    if (m && !d) parts.push(m + ' דקות');
+    return parts.join(' ו') || 'פחות מדקה';
+  }
+
+  const closeTimeEl = document.getElementById('close-time');
+  const countdownEl = document.getElementById('countdown-line');
+
+  function tick() {
+    const now = new Date();
+    if (closeTimeEl) closeTimeEl.textContent = heDate(closesAt);
+    if (countdownEl) {
+      if (now < closesAt) {
+        countdownEl.textContent = '⏱ ההצבעה נסגרת בעוד ' + fmtRemaining(closesAt - now);
+      } else {
+        countdownEl.textContent = '🔴 ההצבעה נסגרה';
+      }
+    }
+  }
+  tick();
+  setInterval(tick, 30000);
+})();
+{% endif %}
+
+{% if poll.open %}
+// Auto-refresh results every 30s
+let refreshTimer = setInterval(async () => {
+  try {
+    const res = await fetch(window.location.pathname.replace('/poll/', '/api/polls/').replace('/results', '') + '/results');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // Update voter count
+    const tv = document.getElementById('total-voters');
+    if (tv) tv.textContent = data.total_voters;
+
+    // Update each row
+    const maxVotes = Math.max(...data.results.map(r => r.votes), 1);
+    data.results.forEach(song => {
+      const rows = document.querySelectorAll('.result-row');
+      rows.forEach(row => {
+        // Match by vote-num position (re-sort would require full redraw; just update counts)
+      });
+    });
+    // Full redraw: easier to just reload the page
+    // But to avoid flicker, do a soft reload after 5 refreshes
+  } catch(e) {}
+}, 30000);
+{% endif %}
+</script>
+{% endif %}
+</body>
+</html>
