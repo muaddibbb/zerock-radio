@@ -5324,7 +5324,7 @@ def poll_results_page(poll_id):
     badge_yerida_id = None  # הירידה הגבוהה — biggest drop
     badge_vatik_id  = None  # השיר הותיק   — most weeks on chart
     max_rise = 0; max_drop = 0; max_weeks = 0
-    for song in results:
+    for song in results[:20]:
         mv    = song.get('movement', '')
         weeks = song.get('weeks') or 0
         if mv and mv not in ('new', '0'):
