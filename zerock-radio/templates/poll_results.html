@@ -266,6 +266,14 @@
       <div class="vote-label">קולות</div>
     </div>
 
+    <!-- weeks on chart -->
+    {% if s.weeks is defined and s.weeks %}
+    <div class="weeks-badge">
+      <div class="weeks-num">{{ s.weeks }}</div>
+      <div class="weeks-label">שבועות</div>
+    </div>
+    {% endif %}
+
     <!-- listen buttons -->
     {% if s.spotify_url %}
       <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
