@@ -148,6 +148,7 @@ AL_HAROKER_SUBSCRIBERS_FILE = f"{RADIO_DIR}/al_haroker_subscribers.json"
 ONE_TIME_LINKS_FILE         = f"{RADIO_DIR}/one_time_links.json"
 POLLS_FILE                  = f"{RADIO_DIR}/polls.json"
 POLL_VOTES_FILE             = f"{RADIO_DIR}/poll_votes.json"
+POLL_CODES_FILE             = f"{RADIO_DIR}/poll_codes.json"
 AL_HAROKER_MONTHLY_SENT_FILE= f"{RADIO_DIR}/al_haroker_monthly_sent.json"
 AL_HAROKER_SCHEDULE_START   = _date(2026, 5, 1)   # first bookable date
 AL_HAROKER_BROADCAST_HOUR   = 7                   # 07:00
