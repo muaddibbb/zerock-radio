@@ -5400,6 +5400,139 @@ def api_poll_set_next_palash(poll_id):
     return jsonify({'ok': True, 'next_palash': songs})
 
 
+@app.route('/api/polls/weekly-renew', methods=['POST'])
+def api_polls_weekly_renew():
+    """Admin: close current poll and open next week's poll (top-20 + next_palash)."""
+    import random as _rand, secrets as _sec2
+    from datetime import timezone, timedelta as _td2
+
+    polls = _load_polls()
+    if not polls:
+        return jsonify({'error': 'no polls found'}), 404
+
+    # Find most recent poll by closes_at
+    def _parse_dt2(s):
+        try:
+            return datetime.fromisoformat(s)
+        except Exception:
+            return datetime.min.replace(tzinfo=timezone.utc)
+
+    old_poll = max(polls, key=lambda p: _parse_dt2(p.get('closes_at', '')))
+
+    # Compute vote tally for old poll
+    votes = _load_poll_votes()
+    tally = {s['id']: 0 for s in old_poll['songs']}
+    for v in votes:
+        if v.get('poll_id') == old_poll['id']:
+            for sid in (v.get('choices') or []):
+                if sid in tally:
+                    tally[sid] += 1
+
+    # Sort songs by votes descending with random tiebreak
+    ranked = sorted(old_poll['songs'],
+                    key=lambda s: (-tally[s['id']], _rand.random()))
+
+    # Top 20 become new matzad
+    new_matzad = ranked[:20]
+
+    # Palash songs for next week
+    next_palash_labels = [
+        s.strip() for s in (old_poll.get('next_palash') or [])
+        if isinstance(s, str) and s.strip()
+    ][:5]
+
+    # Old song_weeks and prev_positions references
+    old_song_weeks = old_poll.get('song_weeks') or {}
+
+    # Build rank map: old_id -> rank_in_current_week (int) or 'palash'
+    old_rank_map = {}
+    for i, s in enumerate(ranked[:20]):
+        if s.get('group') == 'palash':
+            old_rank_map[s['id']] = 'palash'
+        else:
+            old_rank_map[s['id']] = i + 1
+
+    # Build new songs, prev_positions, song_weeks
+    new_songs = []
+    new_prev_positions = {}
+    new_song_weeks = {}
+
+    for i, s in enumerate(new_matzad):
+        new_id = f's{i + 1:02d}'
+        new_songs.append({
+            'id':          new_id,
+            'group':       'matzad',
+            'slot':        i + 1,
+            'label':       s['label'],
+            'spotify_url': s.get('spotify_url'),
+            'youtube_url': s.get('youtube_url'),
+        })
+        prev_pos = old_rank_map.get(s['id'])
+        if prev_pos is not None:
+            new_prev_positions[new_id] = prev_pos
+        # If not in map: brand-new song (prev absent = 'new' on results page)
+        new_song_weeks[new_id] = (old_song_weeks.get(s['id']) or 0) + 1
+
+    for i, label in enumerate(next_palash_labels):
+        new_id = f's{21 + i:02d}'
+        new_songs.append({
+            'id':          new_id,
+            'group':       'palash',
+            'slot':        i + 1,
+            'label':       label,
+            'spotify_url': None,
+            'youtube_url': None,
+        })
+        # Palash entries are new to the chart — no prev_position entry
+        new_song_weeks[new_id] = 1
+
+    # Next Wednesday 19:00 Israel time (UTC+3)
+    israel_tz = timezone(_td2(hours=3))
+    now_israel = datetime.now(israel_tz)
+    days_until_wed = (2 - now_israel.weekday()) % 7
+    if days_until_wed == 0:
+        days_until_wed = 7  # Already Wednesday → next Wednesday
+    next_wed = (now_israel + _td2(days=days_until_wed)).replace(
+        hour=19, minute=0, second=0, microsecond=0)
+    closes_at_str = next_wed.strftime('%Y-%m-%dT%H:%M:%S+03:00')
+    opens_at_str  = now_israel.strftime('%Y-%m-%dT%H:%M:%S+03:00')
+
+    # Close old poll
+    old_poll['open']      = False
+    old_poll['closed_at'] = opens_at_str
+
+    # Create new poll
+    new_poll_id = _sec2.token_urlsafe(12)
+    new_poll = {
+        'id':             new_poll_id,
+        'title':          old_poll.get('title', 'מצעד הרוק של ישראל'),
+        'matzad_show_id': None,
+        'songs':          new_songs,
+        'max_votes':      old_poll.get('max_votes', 5),
+        'open':           True,
+        'opens_at':       opens_at_str,
+        'closes_at':      closes_at_str,
+        'created_at':     opens_at_str,
+        'closed_at':      None,
+        'prev_positions': new_prev_positions,
+        'song_weeks':     new_song_weeks,
+        'staff':          old_poll.get('staff', ''),
+        'next_palash':    [],
+    }
+
+    polls.append(new_poll)
+    _save_polls(polls)
+
+    return jsonify({
+        'ok':           True,
+        'old_poll_id':  old_poll['id'],
+        'new_poll_id':  new_poll_id,
+        'new_closes_at': closes_at_str,
+        'matzad_songs': [s['label'] for s in new_songs[:20]],
+        'palash_songs': [s['label'] for s in new_songs[20:]],
+    })
+
+
 @app.route('/api/poll/<poll_id>/send-code', methods=['POST'])
 def api_poll_send_code(poll_id):
     """Public: send 6-digit email verification code."""
