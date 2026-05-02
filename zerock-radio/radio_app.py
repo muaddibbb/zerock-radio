@@ -5259,6 +5259,43 @@ def poll_vote_page(poll_id):
     return render_template('poll_vote.html', invalid=False, poll=poll, already_voted=already)
 
 
+@app.route('/poll/<poll_id>/results')
+def poll_results_page(poll_id):
+    """Public: live results page for a poll."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return render_template('poll_results.html', invalid=True, poll=None)
+    now  = datetime.now()
+    poll = {**poll, 'open': _poll_is_open(poll, now)}
+    votes = [v for v in _load_poll_votes() if v['poll_id'] == poll_id]
+    tally = {s['id']: 0 for s in poll['songs']}
+    for v in votes:
+        for sid in (v.get('song_ids') or []):
+            if sid in tally:
+                tally[sid] += 1
+    results = sorted([
+        {**s, 'votes': tally[s['id']]} for s in poll['songs']
+    ], key=lambda x: (-x['votes'], x.get('slot') or 999))
+    # split back into groups maintaining relative rank order
+    matzad_sorted  = [r for r in results if r['group'] == 'matzad']
+    palash_sorted  = [r for r in results if r['group'] == 'palash']
+    all_sorted     = matzad_sorted + palash_sorted
+    max_votes_any  = max((r['votes'] for r in all_sorted), default=0)
+    any_votes      = max_votes_any > 0
+    vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
+    return render_template('poll_results.html',
+        invalid=False,
+        poll=poll,
+        results=all_sorted,
+        total_voters=len(votes),
+        total_songs=len(poll['songs']),
+        max_votes_any=max_votes_any,
+        any_votes=any_votes,
+        vote_url=vote_url,
+    )
+
+
 @app.route('/api/poll/<poll_id>/send-code', methods=['POST'])
 def api_poll_send_code(poll_id):
     """Public: send 6-digit email verification code."""
