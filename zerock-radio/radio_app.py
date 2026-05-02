@@ -5259,9 +5259,99 @@ def poll_vote_page(poll_id):
     return render_template('poll_vote.html', invalid=False, poll=poll, already_voted=already)
 
 
+@app.route('/api/poll/<poll_id>/send-code', methods=['POST'])
+def api_poll_send_code(poll_id):
+    """Public: send 6-digit email verification code."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'invalid poll'}), 404
+    if not _poll_is_open(poll, datetime.now()):
+        return jsonify({'error': 'ההצבעה סגורה'}), 403
+
+    data  = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email or '@' not in email or '.' not in email.split('@')[-1]:
+        return jsonify({'error': 'כתובת מייל לא תקינה'}), 400
+
+    # Reject if already voted with this email
+    votes = _load_poll_votes()
+    if any(v['poll_id'] == poll_id and v.get('email', '').lower() == email for v in votes):
+        return jsonify({'error': 'כבר הצבעת בסקר זה עם כתובת מייל זו'}), 409
+
+    now = datetime.now()
+    import random as _rand, secrets as _sec
+    with _poll_codes_lock:
+        codes = _load_poll_codes()
+        # Rate-limit: max 3 send-code requests per email per poll per hour
+        recent = [c for c in codes
+                  if c['poll_id'] == poll_id and c['email'] == email
+                  and datetime.fromisoformat(c['created_at']) > now - timedelta(hours=1)]
+        if len(recent) >= 3:
+            return jsonify({'error': 'יותר מדי בקשות. נסה שוב בעוד שעה'}), 429
+        # Invalidate previous unverified codes for this email+poll
+        codes = [c for c in codes
+                 if not (c['poll_id'] == poll_id and c['email'] == email and not c.get('verified'))]
+        code = f"{_rand.randint(0, 999999):06d}"
+        codes.append({
+            'poll_id':    poll_id,
+            'email':      email,
+            'code':       code,
+            'created_at': now.isoformat(),
+            'expires_at': (now + timedelta(minutes=10)).isoformat(),
+            'verified':   False,
+            'token':      None,
+        })
+        _save_poll_codes(codes)
+
+    try:
+        threading.Thread(target=_send_poll_verification_email,
+                         args=(email, code, poll['title']), daemon=True).start()
+    except Exception as e:
+        print(f"[Poll] Email thread error: {e}", flush=True)
+        return jsonify({'error': 'שגיאה בשליחת המייל. נסה שוב'}), 500
+    return jsonify({'ok': True})
+
+
+@app.route('/api/poll/<poll_id>/verify-code', methods=['POST'])
+def api_poll_verify_code(poll_id):
+    """Public: verify 6-digit code; return a short-lived verify_token."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'invalid poll'}), 404
+
+    data  = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    code  = str(data.get('code') or '').strip()
+    if not email or not code:
+        return jsonify({'error': 'מייל וקוד נדרשים'}), 400
+
+    now = datetime.now()
+    import secrets as _sec
+    with _poll_codes_lock:
+        codes = _load_poll_codes()
+        entry = next((c for c in codes
+                      if c['poll_id'] == poll_id and c['email'] == email
+                      and not c.get('verified') and not c.get('vote_submitted')), None)
+        if not entry:
+            return jsonify({'error': 'לא נמצא קוד. שלח קוד חדש'}), 400
+        if datetime.fromisoformat(entry['expires_at']) < now:
+            return jsonify({'error': 'הקוד פג תוקף. שלח קוד חדש'}), 400
+        if entry['code'] != code:
+            return jsonify({'error': 'קוד שגוי'}), 400
+        token = _sec.token_urlsafe(24)
+        entry['verified']    = True
+        entry['token']       = token
+        entry['verified_at'] = now.isoformat()
+        _save_poll_codes(codes)
+
+    return jsonify({'ok': True, 'verify_token': token})
+
+
 @app.route('/api/poll/<poll_id>/vote', methods=['POST'])
 def api_poll_vote(poll_id):
-    """Public: submit a ballot of exactly 5 song_ids."""
+    """Public: submit a ballot of exactly 5 song_ids (requires email verification)."""
     polls = _load_polls()
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
