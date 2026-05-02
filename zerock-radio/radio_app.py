@@ -5293,10 +5293,11 @@ def poll_results_page(poll_id):
         for sid in (v.get('song_ids') or []):
             if sid in tally:
                 tally[sid] += 1
-    # Sort ALL songs by votes descending (combined ranking — palash included)
+    # Sort ALL songs by votes descending — random tiebreak for equal votes
+    import random as _random
     results = sorted([
-        {**s, 'votes': tally[s['id']]} for s in poll['songs']
-    ], key=lambda x: (-x['votes'], x.get('slot') or 999))
+        {**s, 'votes': tally[s['id']], '_r': _random.random()} for s in poll['songs']
+    ], key=lambda x: (-x['votes'], x['_r']))
     # Compute movement vs previous chart if prev_positions is provided
     prev_pos   = poll.get('prev_positions') or {}
     song_weeks = poll.get('song_weeks') or {}
