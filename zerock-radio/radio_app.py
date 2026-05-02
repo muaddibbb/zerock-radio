@@ -5289,7 +5289,8 @@ def poll_results_page(poll_id):
         {**s, 'votes': tally[s['id']]} for s in poll['songs']
     ], key=lambda x: (-x['votes'], x.get('slot') or 999))
     # Compute movement vs previous chart if prev_positions is provided
-    prev_pos = poll.get('prev_positions') or {}
+    prev_pos   = poll.get('prev_positions') or {}
+    song_weeks = poll.get('song_weeks') or {}
     for curr_rank, song in enumerate(results, start=1):
         sid = song['id']
         pp  = prev_pos.get(sid)
@@ -5303,6 +5304,7 @@ def poll_results_page(poll_id):
                 song['movement'] = str(delta)
             else:
                 song['movement'] = '0'
+        song['weeks'] = song_weeks.get(sid)
     max_votes_any  = max((r['votes'] for r in results), default=0)
     any_votes      = max_votes_any > 0
     vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
