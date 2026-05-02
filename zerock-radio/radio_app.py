@@ -5367,11 +5367,36 @@ def api_poll_vote(poll_id):
             pass
         return jsonify({'error': 'ההצבעה סגורה'}), 403
 
-    data = request.get_json(silent=True) or {}
-    song_ids = data.get('song_ids') or []
+    data         = request.get_json(silent=True) or {}
+    song_ids     = data.get('song_ids') or []
+    email        = (data.get('email') or '').strip().lower()
+    verify_token = (data.get('verify_token') or '').strip()
+
+    # ── Email verification required ───────────────────────────────────────────
+    if not email or not verify_token:
+        return jsonify({'error': 'אימות מייל נדרש לפני הצבעה'}), 403
+
+    now2 = datetime.now()
+    with _poll_codes_lock:
+        codes = _load_poll_codes()
+        code_entry = next((c for c in codes
+                           if c['poll_id'] == poll_id
+                           and c['email'] == email
+                           and c.get('verified')
+                           and c.get('token') == verify_token
+                           and not c.get('vote_submitted')), None)
+        if not code_entry:
+            return jsonify({'error': 'אימות לא תקין. אמת מחדש'}), 403
+        # Token expires 1 hour after verification
+        if datetime.fromisoformat(code_entry['verified_at']) < now2 - timedelta(hours=1):
+            return jsonify({'error': 'פג תוקף האימות. אמת מחדש'}), 403
+        # Claim token immediately to prevent double submission
+        code_entry['vote_submitted'] = True
+        _save_poll_codes(codes)
+
+    # ── Validate song selection ───────────────────────────────────────────────
     if not isinstance(song_ids, list):
         return jsonify({'error': 'song_ids must be a list'}), 400
-    # exactly max_votes, all unique, all valid ids
     n_required = poll.get('max_votes', 5)
     if len(song_ids) != n_required:
         return jsonify({'error': f'יש לבחור בדיוק {n_required} שירים'}), 400
@@ -5381,17 +5406,16 @@ def api_poll_vote(poll_id):
     if any(sid not in valid_ids for sid in song_ids):
         return jsonify({'error': 'מזהה שיר לא תקין'}), 400
 
-    # Soft duplicate guard: cookie + IP
-    if request.cookies.get(f'voted_{poll_id}') == '1':
-        return jsonify({'error': 'כבר הצבעת בסקר זה'}), 409
+    # ── Dedup: email (primary) + cookie + IP (secondary) ─────────────────────
     ip = (request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
           or request.remote_addr or '')
     with _votes_lock:
         votes = _load_poll_votes()
-        if any(v['poll_id'] == poll_id and v.get('ip') == ip for v in votes):
-            return jsonify({'error': 'כבר הצבעת בסקר זה מכתובת זו'}), 409
+        if any(v['poll_id'] == poll_id and v.get('email', '').lower() == email for v in votes):
+            return jsonify({'error': 'כבר הצבעת בסקר זה'}), 409
         votes.append({
             'poll_id':  poll_id,
+            'email':    email,
             'song_ids': song_ids,
             'ip':       ip,
             'ua':       (request.headers.get('User-Agent') or '')[:200],
@@ -5400,9 +5424,8 @@ def api_poll_vote(poll_id):
         _save_poll_votes(votes)
 
     resp = jsonify({'ok': True})
-    # 90-day cookie
     resp.set_cookie(f'voted_{poll_id}', '1', max_age=90*86400, samesite='Lax')
-    print(f"[Poll] Vote received for {poll_id} from {ip}", flush=True)
+    print(f"[Poll] Vote received for {poll_id} from {email} / {ip}", flush=True)
     return resp
 
 
