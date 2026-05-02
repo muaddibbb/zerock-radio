@@ -742,6 +742,75 @@
       {% endif %}
     </div>
 
+    <!-- Poll links panel -->
+    {% if active_polls %}
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px">
+      <h2>🗳 סקרי הצבעה פעילים</h2>
+      {% for poll in active_polls %}
+      {% set vote_url  = zerock_public_url ~ '/poll/' ~ poll.id %}
+      {% set res_url   = zerock_public_url ~ '/poll/' ~ poll.id ~ '/results' %}
+      {% set is_open   = poll.open is defined and poll.open %}
+      <div style="background:var(--surface2);border:1px solid {% if is_open %}#2d5a2d{% else %}#3a3a3a{% endif %};
+                  border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          {% if is_open %}
+            <span style="display:inline-flex;align-items:center;gap:5px;background:#1e3a1e;color:#4caf50;
+                         border:1px solid #2d5a2d;border-radius:12px;padding:2px 10px;font-size:0.72em;font-weight:bold">
+              <span style="width:6px;height:6px;border-radius:50%;background:#4caf50;
+                           animation:pulse 1.5s infinite;display:inline-block"></span>
+              פתוח
+            </span>
+          {% else %}
+            <span style="background:#2a1a1a;color:#e63946;border:1px solid #5a2a2a;
+                         border-radius:12px;padding:2px 10px;font-size:0.72em;font-weight:bold">
+              סגור
+            </span>
+          {% endif %}
+          <span style="font-weight:600;font-size:0.9em;flex:1;min-width:0">{{ poll.title }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <!-- Voting link -->
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">🗳 לינק הצבעה</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:0.75rem;color:#e63946;background:var(--surface);
+                           border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                           flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                           direction:ltr;text-align:left">{{ vote_url }}</code>
+              <button onclick="copyText('{{ vote_url }}', this)"
+                      style="background:#2a1a1a;border:1px solid #5a2a2a;color:#e63946;
+                             border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                             white-space:nowrap;flex-shrink:0">העתק</button>
+              <a href="{{ vote_url }}" target="_blank"
+                 style="background:#2a1a1a;border:1px solid #5a2a2a;color:#e63946;
+                        border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                        text-decoration:none;flex-shrink:0">פתח ↗</a>
+            </div>
+          </div>
+          <!-- Results link -->
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">📊 לינק תוצאות</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:0.75rem;color:#f0a500;background:var(--surface);
+                           border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                           flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                           direction:ltr;text-align:left">{{ res_url }}</code>
+              <button onclick="copyText('{{ res_url }}', this)"
+                      style="background:#2a1a00;border:1px solid #5a4a00;color:#f0a500;
+                             border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                             white-space:nowrap;flex-shrink:0">העתק</button>
+              <a href="{{ res_url }}" target="_blank"
+                 style="background:#2a1a00;border:1px solid #5a4a00;color:#f0a500;
+                        border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                        text-decoration:none;flex-shrink:0">פתח ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
     <div class="card" data-mgmt-section="shows haroker album matzad">
       <h2 id="scheduleFormTitle">Schedule a Show</h2>
       <form id="scheduleForm" enctype="multipart/form-data">
