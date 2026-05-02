@@ -2397,6 +2397,14 @@ def index():
     ah_calendar_url = f"{ZEROCK_PUBLIC_URL}/al-haroker-schedule/{cal_year}/{cal_month}"
     ah_upload_base  = ZEROCK_PUBLIC_URL
 
+    # Polls for matzad admin panel
+    all_polls   = _load_polls()
+    active_polls = sorted(
+        [p for p in all_polls],
+        key=lambda p: p.get('closes_at') or p.get('opens_at') or '',
+        reverse=True
+    )[:10]  # show last 10 polls
+
     from flask import make_response
     resp = make_response(render_template('index.html',
         upcoming=upcoming,
@@ -2407,6 +2415,8 @@ def index():
         ah_upload_base=ah_upload_base,
         heb_months=_HEB_MONTHS,
         heb_days=_HEB_DAYS,
+        active_polls=active_polls,
+        zerock_public_url=ZEROCK_PUBLIC_URL,
     ))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     resp.headers['Pragma'] = 'no-cache'
