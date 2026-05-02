@@ -264,7 +264,12 @@
 
     <!-- song info -->
     <div class="song-info">
-      <div class="song-name">{{ s.label }}</div>
+      <div class="song-name">
+        {{ s.label }}
+        {% if s.id == badge_aliya_id %}<span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>{% endif %}
+        {% if s.id == badge_yerida_id %}<span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>{% endif %}
+        {% if s.id == badge_vatik_id %}<span class="special-badge badge-vatik">★ השיר הותיק</span>{% endif %}
+      </div>
       <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
     </div>
 
