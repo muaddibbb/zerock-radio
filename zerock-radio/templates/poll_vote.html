@@ -470,7 +470,7 @@ async function submitVote(e) {
     const res = await fetch(getPollApiBase() + '/vote', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({song_ids: ids, email: _verifiedEmail, verify_token: _verifyToken}),
+      body: JSON.stringify({song_ids: ids, email: _verifiedEmail, verify_token: _verifyToken, name: _voterName}),
       credentials: 'same-origin',
     });
     const data = await res.json().catch(() => ({}));
