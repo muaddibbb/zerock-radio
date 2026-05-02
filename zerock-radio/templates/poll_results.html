@@ -12,7 +12,7 @@
       padding: 24px 16px;
     }
     .wrap {
-      max-width: 760px; margin: 0 auto;
+      max-width: 820px; margin: 0 auto;
       background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 14px;
       padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
     }
@@ -37,7 +37,7 @@
       display: inline-flex; align-items: center; gap: 5px;
       background: #1e3a1e; color: #4caf50; border: 1px solid #2d5a2d;
       border-radius: 20px; padding: 4px 12px; font-size: 0.8em; font-weight: bold;
-      margin: 0 auto 18px; display: flex; width: fit-content;
+      width: fit-content; margin: 0 auto 18px;
     }
     .live-dot {
       width: 8px; height: 8px; border-radius: 50%; background: #4caf50;
@@ -50,19 +50,6 @@
       background: #2a1a1a; color: #e63946; border: 1px solid #5a2a2a;
       border-radius: 20px; padding: 4px 14px; font-size: 0.8em; font-weight: bold;
       width: fit-content; margin: 0 auto 18px;
-    }
-
-    /* group title */
-    .group-title {
-      color: #e63946; font-size: 1.05em; font-weight: bold;
-      margin: 22px 0 10px; padding-bottom: 6px;
-      border-bottom: 1px solid #3a3a3a;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .group-title:first-of-type { margin-top: 4px; }
-    .group-count {
-      font-size: 0.78em; font-weight: normal; color: #888;
-      background: #2a2a2a; border-radius: 10px; padding: 2px 8px;
     }
 
     /* result row */
@@ -81,7 +68,6 @@
       background: rgba(230,57,70,0.07);
       border-radius: 9px 0 0 9px;
       transition: width 0.6s ease;
-      width: 0;
     }
     .result-row.top3 .fill-bar { background: rgba(230,200,70,0.07); }
 
@@ -93,6 +79,23 @@
     .rank.gold   { color: #ffd700; font-size: 1.1em; }
     .rank.silver { color: #c0c0c0; font-size: 1.05em; }
     .rank.bronze { color: #cd7f32; font-size: 1.0em; }
+
+    /* movement indicator */
+    .movement {
+      flex-shrink: 0; width: 52px; text-align: center;
+      font-size: 0.78em; font-weight: bold;
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .mv-up   { color: #4caf50; }
+    .mv-down { color: #e63946; }
+    .mv-same { color: #666; font-size: 1.0em; }
+    .mv-new  {
+      color: #f0a500; font-size: 0.68em; line-height: 1.2;
+      white-space: nowrap; font-weight: bold;
+    }
+    .mv-arrow { font-size: 1.1em; line-height: 1; }
+    .mv-num   { font-size: 0.88em; }
 
     .song-info {
       flex: 1; min-width: 0; position: relative; z-index: 1;
@@ -147,6 +150,13 @@
     .state-icon { font-size: 3em; text-align: center; margin-bottom: 10px; }
     .state-title { font-size: 1.3em; font-weight: bold; text-align: center; margin-bottom: 8px; }
     .state-sub { color: #888; font-size: 0.9em; text-align: center; }
+
+    /* legend */
+    .legend {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      font-size: 0.74em; color: #666; margin-bottom: 16px;
+    }
+    .legend span { display: flex; align-items: center; gap: 4px; }
   </style>
 </head>
 <body>
@@ -183,88 +193,72 @@
     <div class="countdown" id="countdown-line">…</div>
   {% endif %}
 
-  {% set matzad_results = results | selectattr('group','equalto','matzad') | list %}
-  {% set palash_results  = results | selectattr('group','equalto','palash')  | list %}
+  <!-- movement legend -->
+  {% if results and results[0].movement is defined %}
+  <div class="legend">
+    <span><span class="mv-up">▲</span> עלייה במצעד</span>
+    <span><span class="mv-down">▼</span> ירידה במצעד</span>
+    <span><span class="mv-same">━</span> אותו מקום</span>
+    <span><span class="mv-new" style="color:#f0a500">כניסה חדשה</span> חדש / מהפינה לשיפוטכם</span>
+  </div>
+  {% endif %}
 
   <div id="results-container">
+  {% for s in results %}
+  {% set pct = ((s.votes / max_votes_any * 100) | int) if max_votes_any > 0 else 0 %}
+  <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
+       data-pct="{{ pct }}">
+    <div class="fill-bar" style="width:{{ pct }}%"></div>
 
-    {% if matzad_results %}
-    <div class="group-title">
-      מצעד הרוק של ישראל
-      <span class="group-count">{{ matzad_results | length }} שירים</span>
+    <!-- rank -->
+    <div class="rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+      {% if loop.index == 1 %}🥇
+      {% elif loop.index == 2 %}🥈
+      {% elif loop.index == 3 %}🥉
+      {% else %}{{ loop.index }}{% endif %}
     </div>
 
-    {% for s in matzad_results %}
-    {% set pct = ((s.votes / max_votes_any * 100) | int) if max_votes_any > 0 else 0 %}
-    <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
-         data-pct="{{ pct }}">
-      <div class="fill-bar" style="width:{{ pct }}%"></div>
-      <div class="rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
-        {% if loop.index == 1 %}🥇
-        {% elif loop.index == 2 %}🥈
-        {% elif loop.index == 3 %}🥉
-        {% else %}{{ loop.index }}{% endif %}
-      </div>
-      <div class="song-info">
-        <div class="song-name">{{ s.label }}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
-      </div>
-      <div class="vote-count">
-        <div class="vote-num">{{ s.votes }}</div>
-        <div class="vote-label">קולות</div>
-      </div>
-      {% if s.spotify_url %}
-        <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
-           rel="noopener noreferrer" title="Spotify">🎧</a>
+    <!-- movement -->
+    {% if s.movement is defined %}
+    <div class="movement">
+      {% if s.movement == 'new' %}
+        <span class="mv-new">כניסה<br>חדשה</span>
+      {% elif s.movement == '0' %}
+        <span class="mv-same">━</span>
+      {% elif s.movement.startswith('+') %}
+        <span class="mv-up"><span class="mv-arrow">▲</span><span class="mv-num">{{ s.movement[1:] }}</span></span>
+      {% else %}
+        <span class="mv-down"><span class="mv-arrow">▼</span><span class="mv-num">{{ s.movement[1:] }}</span></span>
       {% endif %}
-      {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
-      <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
-         rel="noopener noreferrer" title="YouTube">▶</a>
     </div>
-    {% endfor %}
-
-    {% if not any_votes %}
-      <div class="no-votes">אין קולות עדיין — היה הראשון להצביע!</div>
-    {% endif %}
     {% endif %}
 
-    {% if palash_results %}
-    <div class="group-title">
-      פל״ש — הפינה לשיפוטכם
-      <span class="group-count">{{ palash_results | length }} שירים</span>
+    <!-- song info -->
+    <div class="song-info">
+      <div class="song-name">{{ s.label }}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
     </div>
 
-    {% set palash_max = palash_results | map(attribute='votes') | max %}
-    {% for s in palash_results %}
-    {% set ppct = ((s.votes / palash_max * 100) | int) if palash_max > 0 else 0 %}
-    <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
-         data-pct="{{ ppct }}">
-      <div class="fill-bar" style="width:{{ ppct }}%"></div>
-      <div class="rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
-        {% if loop.index == 1 %}🥇
-        {% elif loop.index == 2 %}🥈
-        {% elif loop.index == 3 %}🥉
-        {% else %}{{ loop.index }}{% endif %}
-      </div>
-      <div class="song-info">
-        <div class="song-name">{{ s.label }}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:{{ ppct }}%"></div></div>
-      </div>
-      <div class="vote-count">
-        <div class="vote-num">{{ s.votes }}</div>
-        <div class="vote-label">קולות</div>
-      </div>
-      {% if s.spotify_url %}
-        <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
-           rel="noopener noreferrer" title="Spotify">🎧</a>
-      {% endif %}
-      {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
-      <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
-         rel="noopener noreferrer" title="YouTube">▶</a>
+    <!-- vote count -->
+    <div class="vote-count">
+      <div class="vote-num">{{ s.votes }}</div>
+      <div class="vote-label">קולות</div>
     </div>
-    {% endfor %}
+
+    <!-- listen buttons -->
+    {% if s.spotify_url %}
+      <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
+         rel="noopener noreferrer" title="Spotify">🎧</a>
     {% endif %}
+    {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
+    <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
+       rel="noopener noreferrer" title="YouTube">▶</a>
+  </div>
+  {% endfor %}
 
+  {% if not any_votes %}
+    <div class="no-votes">אין קולות עדיין — היה הראשון להצביע!</div>
+  {% endif %}
   </div>
 
   <div class="footer-note">
@@ -316,28 +310,10 @@
 {% endif %}
 
 {% if poll.open %}
-// Auto-refresh results every 30s
-let refreshTimer = setInterval(async () => {
-  try {
-    const res = await fetch(window.location.pathname.replace('/poll/', '/api/polls/').replace('/results', '') + '/results');
-    if (!res.ok) return;
-    const data = await res.json();
-
-    // Update voter count
-    const tv = document.getElementById('total-voters');
-    if (tv) tv.textContent = data.total_voters;
-
-    // Update each row
-    const maxVotes = Math.max(...data.results.map(r => r.votes), 1);
-    data.results.forEach(song => {
-      const rows = document.querySelectorAll('.result-row');
-      rows.forEach(row => {
-        // Match by vote-num position (re-sort would require full redraw; just update counts)
-      });
-    });
-    // Full redraw: easier to just reload the page
-    // But to avoid flicker, do a soft reload after 5 refreshes
-  } catch(e) {}
+// Auto-refresh results every 30s — full page reload for simplicity
+setTimeout(function autoRefresh() {
+  window.location.reload();
+  setTimeout(autoRefresh, 30000);
 }, 30000);
 {% endif %}
 </script>
