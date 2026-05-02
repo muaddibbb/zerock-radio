@@ -2121,6 +2121,24 @@ function copyText(text, btn) {
   });
 }
 
+async function savePalash(pollId) {
+  const songs = [];
+  for (let i = 0; i < 5; i++) {
+    const el = document.getElementById('palash-' + i);
+    if (el) songs.push(el.value.trim());
+  }
+  try {
+    const res = await fetch('/api/polls/' + pollId + '/next-palash', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({songs})
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const st = document.getElementById('palash-status');
+    if (st) { st.style.display = 'inline'; setTimeout(() => st.style.display = 'none', 2500); }
+  } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
+}
+
 // ── Al HaRoker booking management ──────────────────────────────────────────
 function ahDelete(token, name) {
   if (!confirm(`מחוק את ההרשמה של ${name}?`)) return;
