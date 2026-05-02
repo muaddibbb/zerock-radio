@@ -5408,6 +5408,7 @@ def api_poll_vote(poll_id):
     song_ids     = data.get('song_ids') or []
     email        = (data.get('email') or '').strip().lower()
     verify_token = (data.get('verify_token') or '').strip()
+    voter_name   = (data.get('name') or '').strip()[:120]
 
     # ── Email verification required ───────────────────────────────────────────
     if not email or not verify_token:
