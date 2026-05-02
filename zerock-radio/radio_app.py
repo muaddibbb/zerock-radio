@@ -5326,7 +5326,24 @@ def poll_results_page(poll_id):
         max_votes_any=max_votes_any,
         any_votes=any_votes,
         vote_url=vote_url,
+        next_palash=poll.get('next_palash') or [],
     )
+
+
+@app.route('/api/polls/<poll_id>/next-palash', methods=['PUT'])
+def api_poll_set_next_palash(poll_id):
+    """Admin: set the 5 next-week הפינה לשיפוטכם songs."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'poll not found'}), 404
+    data  = request.get_json(silent=True) or {}
+    songs = data.get('songs') or []
+    # Keep up to 5, strip whitespace, drop empty strings
+    songs = [s.strip() for s in songs if isinstance(s, str) and s.strip()][:5]
+    poll['next_palash'] = songs
+    _save_polls(polls)
+    return jsonify({'ok': True, 'next_palash': songs})
 
 
 @app.route('/api/poll/<poll_id>/send-code', methods=['POST'])
