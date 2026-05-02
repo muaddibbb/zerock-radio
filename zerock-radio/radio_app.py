@@ -5289,9 +5289,29 @@ def poll_vote_page(poll_id):
                            already_voted=already, vote_songs=vote_songs)
 
 
-@app.route('/poll/<poll_id>/results')
+_RESULTS_PASSWORD   = 'YudaKaka2026!'
+_RESULTS_AUTH_TOKEN = __import__('hashlib').sha256(
+    ('zerock_results:' + _RESULTS_PASSWORD).encode()).hexdigest()[:32]
+
+
+@app.route('/poll/<poll_id>/results', methods=['GET', 'POST'])
 def poll_results_page(poll_id):
-    """Public: live results page for a poll."""
+    """Public: live results page for a poll (password protected)."""
+    # ── Auth gate ─────────────────────────────────────────────────────────────
+    if request.method == 'POST':
+        pw = (request.form.get('password') or '').strip()
+        if pw == _RESULTS_PASSWORD:
+            from flask import redirect as _redirect
+            resp = _redirect(f'/poll/{poll_id}/results')
+            resp.set_cookie('results_auth', _RESULTS_AUTH_TOKEN,
+                            max_age=30 * 86400, samesite='Lax', httponly=True)
+            return resp
+        return render_template('poll_results.html', invalid=False, poll=None,
+                               auth_required=True, auth_error=True)
+    if request.cookies.get('results_auth') != _RESULTS_AUTH_TOKEN:
+        return render_template('poll_results.html', invalid=False, poll=None,
+                               auth_required=True, auth_error=False)
+    # ── Authenticated — proceed ───────────────────────────────────────────────
     polls = _load_polls()
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:

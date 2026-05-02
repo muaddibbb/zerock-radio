@@ -76,39 +76,27 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // ─── Podbean API ───────────────────────────────────────────────────────────────
 
-// ─── Multi-account Podbean token cache ────────────────────────────────────────
-const _tokenCache = {};
+let cachedToken = null;
+let tokenExpiresAt = 0;
 
-async function getTokenForAccount(clientId, clientSecret) {
-  const cached = _tokenCache[clientId];
-  if (cached && Date.now() < cached.exp - 60000) return cached.tok;
-  const creds = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-  const r = await axios.post(
+async function getAccessToken() {
+  if (cachedToken && Date.now() < tokenExpiresAt - 60000) return cachedToken;
+
+  const { PODBEAN_CLIENT_ID, PODBEAN_CLIENT_SECRET } = process.env;
+  if (!PODBEAN_CLIENT_ID || !PODBEAN_CLIENT_SECRET) {
+    throw new Error('Missing PODBEAN_CLIENT_ID or PODBEAN_CLIENT_SECRET in .env');
+  }
+
+  const credentials = Buffer.from(`${PODBEAN_CLIENT_ID}:${PODBEAN_CLIENT_SECRET}`).toString('base64');
+  const response = await axios.post(
     'https://api.podbean.com/v1/oauth/token',
     'grant_type=client_credentials',
-    { headers: { Authorization: `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' } }
+    { headers: { 'Authorization': `Basic ${credentials}`, 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
-  _tokenCache[clientId] = { tok: r.data.access_token, exp: Date.now() + r.data.expires_in * 1000 };
-  return _tokenCache[clientId].tok;
-}
 
-function podbeanAccounts() {
-  const { PODBEAN_CLIENT_ID: id1, PODBEAN_CLIENT_SECRET: s1,
-          PODBEAN_CLIENT_ID_2: id2, PODBEAN_CLIENT_SECRET_2: s2 } = process.env;
-  const list = [];
-  if (id1 && s1) list.push({ clientId: id1, clientSecret: s1, label: 'zerockradio' });
-  if (id2 && s2) list.push({ clientId: id2, clientSecret: s2, label: 'rockzerock (fallback)' });
-  return list;
-}
-
-// Errors that mean "this account can't handle this upload — try the next one"
-function isPodbeanQuotaError(err) {
-  const code = err.response?.data?.error;
-  const status = err.response?.status;
-  return ['storage_limit_exceeded', 'monthly_bandwidth_exceeded', 'episode_limit_exceeded',
-          'quota_exceeded', 'limit_exceeded', 'account_suspended', 'account_inactive',
-          'account_quota_exceeded'].includes(code)
-      || status === 402;
+  cachedToken = response.data.access_token;
+  tokenExpiresAt = Date.now() + response.data.expires_in * 1000;
+  return cachedToken;
 }
 
 async function getPodcastId(accessToken) {
@@ -217,65 +205,7 @@ const SHOW_FEATURED_IMAGES = {
   'שמונים ארומטיים': 393,
 };
 
-// WP shows taxonomy term IDs (from /wp-json/wp/v2/shows)
-const WP_SHOW_TERM_IDS = {
-  'Beat-oN מקומי':         317,
-  'Black Parade':           49,
-  'ON AIR':                 305,
-  'On the Mend':            316,
-  'Oy Vavoy':               71,
-  'Rocktrip':               318,
-  'RockTrip':               318,
-  'Shabi On The Rocks':     53,
-  'Stage Dive':             313,
-  'The Breakdown':          253,
-  'Time Warp':              308,
-  'אני לא בפסקול':          43,
-  'האחות':                  314,
-  'השאלטר':                 306,
-  'זה פרוג':                149,
-  'זה רוק פורטה':           45,
-  'מצעד הרוק של ישראל':    58,
-  'נגד כיוון הזיפים':       42,
-  'סינגלס':                 48,
-  'סן פטרוק':               44,
-  'פטרוק לילה':             50,
-  'על הרוקר':               38,
-  'ערב של אלבומים':         60,
-  'מורידים את הרף':         28,
-  'ספיישלים':               144,
-  'רדיו זה פופ':            195,
-};
-
-// WP broadcasters taxonomy term IDs (from /wp-json/wp/v2/broadcasters)
-const WP_BROADCASTER_TERM_IDS = {
-  'יובל יוספסון':   37,
-  'ערן הר-פז':      63,
-  'ליאת בלו':       65,
-  'ירון חכם':       39,
-  'אלעד אביגן':     76,
-  "ג'קי שרגא":      187,
-  'ירון הורינג':    72,
-  'רועי ויינברג':   67,
-  'גלית קורני':     77,
-  'אחיעד לוק':      83,
-  'מתן בכור':       87,
-  'טל סיון ובר קציר': 79,
-  'אפרת קוטגרו':    315,
-  'דוד שאבי':       78,
-  'דורית אורן':     312,
-  'יובל ביטון':     85,
-  'יותם "דפיילר" אבני': 75,
-  'שיר אסולין':     84,
-  'נופר נירן':      310,
-  'עדן גולן':       255,
-  'עופר פרוינד':    168,
-  'רועי קופרמן':    304,
-  'סיון פישמן':     262,
-  'טל אופיר':       263,
-};
-
-async function createWordPressEpisode(title, content, publishTimestamp, wpShowId, wpBroadcasterId, showName, date, podbeanUrl, broadcaster) {
+async function createWordPressEpisode(title, content, publishTimestamp, wpShowId, wpBroadcasterId, showName, date, podbeanUrl) {
   const { WP_URL, WP_USERNAME, WP_APP_PASSWORD } = process.env;
   if (!WP_URL || !WP_USERNAME || !WP_APP_PASSWORD) {
     console.warn('[WordPress] Credentials not configured — skipping WP post');
@@ -296,16 +226,12 @@ async function createWordPressEpisode(title, content, publishTimestamp, wpShowId
     body.date_gmt = new Date(publishTimestamp * 1000).toISOString().slice(0, 19);
   }
 
-  // Shows taxonomy — look up by show name, fall back to passed wpShowId
-  const showTermId = WP_SHOW_TERM_IDS[showName] || (wpShowId ? parseInt(wpShowId, 10) : null);
-  if (showTermId) {
-    body.shows = [showTermId];
+  if (wpShowId) {
+    body.shows = [parseInt(wpShowId, 10)];
   }
 
-  // Broadcasters taxonomy — look up by broadcaster name, fall back to passed wpBroadcasterId
-  const broadcasterTermId = WP_BROADCASTER_TERM_IDS[broadcaster] || (wpBroadcasterId ? parseInt(wpBroadcasterId, 10) : null);
-  if (broadcasterTermId) {
-    body.broadcasters = [broadcasterTermId];
+  if (wpBroadcasterId) {
+    body.broadcasters = [parseInt(wpBroadcasterId, 10)];
   }
 
   const featuredMedia = SHOW_FEATURED_IMAGES[showName];
@@ -406,7 +332,7 @@ function getShowKey(showName, broadcaster) {
 
 // Queue a file on Rocky by copying it to /media/ (HTTP-accessible) then calling Rocky's download endpoint.
 // This avoids multipart-file-forwarding issues — Rocky fetches the file itself over HTTP.
-async function queueOnRocky(filePath, originalName, showKey, broadcaster, date, existingMediaUrl, isManual, scheduleTime, wpPostId) {
+async function queueOnRocky(filePath, originalName, showKey, broadcaster, date, existingMediaUrl, isManual, scheduleTime) {
   if (!showKey) {
     console.log(`[Rocky] No show_key mapping for this show, skipping`);
     return { ok: false, reason: 'no_key' };
@@ -436,7 +362,6 @@ async function queueOnRocky(filePath, originalName, showKey, broadcaster, date, 
       mode:                   'queue_only',  // ZeRock already handled Podbean/WP; Rocky just queues for radio
       manual_schedule:        isManual || false,
       manual_broadcast_time:  manualBroadcastTime,
-      wp_post_id:             wpPostId || null,
     }, { timeout: 30000 });
 
     console.log('[Rocky] Queued via URL:', resp.data);
@@ -467,97 +392,6 @@ function addToUploadLog(entry) {
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
-// Fetch latest Podbean episode for a given show (used by Rocky auto-rerun).
-//
-// Implementation note: Podbean's /v1/episodes API caps each page at 100
-// episodes regardless of the `limit` we ask for. The previous version asked
-// for limit=200 and got 100, so for a busy account (~ZeRock has 1,600+ eps)
-// the search window only spanned the last ~5–6 weeks. Shows with longer
-// gaps between airings (e.g. Beat-On, ~3 months between episodes) silently
-// returned 404 even though episodes existed.
-//
-// Fix: paginate up to MAX_PAGES (15 → ~1,500 episodes ≈ 12+ months of
-// history at ZeRock's rate). Episodes come back newest-first, so we stop
-// as soon as we find any matching title — that's guaranteed to be the
-// latest match.
-app.get('/api/latest-podbean-episode', async (req, res) => {
-  const { showName, broadcaster } = req.query;
-  if (!showName) return res.status(400).json({ error: 'showName required' });
-
-  const PAGE_SIZE = 100;
-  const MAX_PAGES = 15;
-
-  try {
-    const accounts = podbeanAccounts();
-    if (!accounts.length) return res.status(500).json({ error: 'No Podbean accounts configured' });
-
-    const snLower = showName.toLowerCase().trim();
-    const bcLower = (broadcaster || '').toLowerCase().trim();
-
-    let bestMatch  = null;          // latest matching episode found across all pages
-    let scannedAny = false;          // whether any account ever returned episodes
-
-    // Try accounts in order; for each, paginate until match found or exhausted.
-    for (const acct of accounts) {
-      try {
-        const accessToken = await getTokenForAccount(acct.clientId, acct.clientSecret);
-        const podcastId   = await getPodcastId(accessToken);
-
-        for (let page = 0; page < MAX_PAGES; page++) {
-          const epResp = await axios.get('https://api.podbean.com/v1/episodes', {
-            params: {
-              access_token: accessToken,
-              podcast_id:   podcastId,
-              offset:       page * PAGE_SIZE,
-              limit:        PAGE_SIZE,
-            },
-          });
-          const pageEps = epResp.data.episodes || [];
-          if (!pageEps.length) break;        // no more episodes on this account
-          scannedAny = true;
-
-          const matches = pageEps.filter(ep => {
-            const t = (ep.title || '').toLowerCase();
-            return t.startsWith(snLower) && (!bcLower || t.includes(bcLower));
-          });
-          if (matches.length) {
-            // Podbean returns newest-first; first match on the earliest page
-            // we see one is the latest overall match.
-            matches.sort((a, b) => (b.publish_time || 0) - (a.publish_time || 0));
-            bestMatch = matches[0];
-            break;
-          }
-
-          // If this page is short, it's the last page on this account.
-          if (pageEps.length < PAGE_SIZE) break;
-        }
-
-        if (bestMatch) break;             // got a match on this account, stop
-      } catch (e) {
-        console.warn(`[LatestEpisode] Account error: ${e.message}`);
-      }
-    }
-
-    if (!scannedAny) {
-      return res.status(404).json({ error: 'No episodes found on Podbean' });
-    }
-    if (!bestMatch) {
-      return res.status(404).json({ error: `No episodes found for: ${showName}${broadcaster ? ' / ' + broadcaster : ''}` });
-    }
-
-    return res.json({
-      mediaUrl:    bestMatch.media_url,
-      title:       bestMatch.title,
-      episodeId:   bestMatch.id,
-      publishTime: bestMatch.publish_time,
-    });
-
-  } catch (err) {
-    console.error('[LatestEpisode]', err.response?.data || err.message);
-    return res.status(500).json({ error: err.message });
-  }
-});
-
 app.get('/api/status', (req, res) => {
   const configured = !!(process.env.PODBEAN_CLIENT_ID && process.env.PODBEAN_CLIENT_SECRET);
   res.json({ configured });
@@ -578,56 +412,6 @@ app.post('/api/reschedule-wp', async (req, res) => {
     res.json({ ok: true, link: result?.link });
   } catch (err) {
     console.error('[WordPress] Reschedule failed:', err.response?.data || err.message);
-    res.status(500).json({ ok: false, error: err.response?.data?.message || err.message });
-  }
-});
-
-// Explicitly publish a WP episode post at air time (bypasses wp-cron).
-// Accepts { wp_post_id } OR fallback { show_name, date } to look up by slug.
-app.post('/api/wp-publish', async (req, res) => {
-  const { WP_URL, WP_USERNAME, WP_APP_PASSWORD } = process.env;
-  if (!WP_URL || !WP_USERNAME || !WP_APP_PASSWORD) {
-    return res.status(503).json({ error: 'WordPress not configured' });
-  }
-  const credentials = Buffer.from(`${WP_USERNAME}:${WP_APP_PASSWORD}`).toString('base64');
-  const headers = { Authorization: `Basic ${credentials}`, 'Content-Type': 'application/json' };
-  const { wp_post_id, show_name, date: broadcastDate } = req.body || {};
-
-  let postId = wp_post_id ? parseInt(wp_post_id, 10) : null;
-
-  // Fallback: look up by slug when no ID is stored
-  if (!postId && show_name && broadcastDate) {
-    const showSlug = SHOW_SLUGS[show_name];
-    if (showSlug) {
-      const [y, m, d] = broadcastDate.split('-');
-      const slug = `${showSlug}-${d}${m}${y.slice(2)}`;
-      try {
-        const srResp = await axios.get(`${WP_URL}/wp-json/wp/v2/episodes`, {
-          params: { slug, status: 'future,publish', per_page: 1 },
-          headers: { Authorization: `Basic ${credentials}` }
-        });
-        postId = srResp.data?.[0]?.id || null;
-        if (postId) console.log(`[WordPress] Resolved slug ${slug} → post ${postId}`);
-      } catch (e) {
-        console.error('[WordPress] Slug lookup failed:', e.response?.data || e.message);
-      }
-    }
-  }
-
-  if (!postId) {
-    return res.status(404).json({ ok: false, error: 'WP post not found (no ID and slug lookup failed)' });
-  }
-
-  try {
-    const patchResp = await axios.post(
-      `${WP_URL}/wp-json/wp/v2/episodes/${postId}`,
-      { status: 'publish' },
-      { headers }
-    );
-    console.log(`[WordPress] Published post ${postId}: ${patchResp.data.link}`);
-    res.json({ ok: true, post_id: postId, link: patchResp.data.link, status: patchResp.data.status });
-  } catch (err) {
-    console.error('[WordPress] Publish failed:', err.response?.data || err.message);
     res.status(500).json({ ok: false, error: err.response?.data?.message || err.message });
   }
 });
@@ -664,9 +448,10 @@ app.post('/api/upload', upload.single('audioFile'), async (req, res) => {
     const {
       showName, episodeNumber, episodeText, broadcaster, date, scheduleTime,
       publishTimestamp: rawTs, playlist, wpShowId, wpBroadcasterId,
-      manual_schedule
+      manual_schedule, skipWP
     } = req.body;
     const isManual = manual_schedule === 'on';
+    const doSkipWP = skipWP === '1' || skipWP === 'true';
 
     if (!showName || !broadcaster || !date || !scheduleTime) {
       return res.status(400).json({ error: 'All form fields are required' });
@@ -684,9 +469,7 @@ app.post('/api/upload', upload.single('audioFile'), async (req, res) => {
 
     const title = showName === 'Shabi On The Rocks'
       ? ['Shabi on the Rocks', episodeNumber, episodeText ? `- ${episodeText}` : '', `דוד שאבי ${formattedDate}`].filter(Boolean).join(' ')
-      : showName === 'על הרוקר'
-        ? `על הרוקר בעריכת ${broadcaster} - ${formattedDate}`
-        : [showName, episodeNumber, `- ${broadcaster} ${formattedDate}`].filter(Boolean).join(' ');
+      : [showName, episodeNumber, `- ${broadcaster} ${formattedDate}`].filter(Boolean).join(' ');
     const description = [
       `<strong>Show:</strong> ${showName}`,
       `<strong>Episode:</strong> ${episodeNumber}`,
@@ -700,71 +483,29 @@ app.post('/api/upload', upload.single('audioFile'), async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain', 'Transfer-Encoding': 'chunked' });
     const send = (msg) => res.write(JSON.stringify({ message: msg }) + '\n');
 
-    // ── Upload to Podbean (with per-account fallback) + WordPress ────────────
+    // ── Upload to Podbean + WordPress ─────────────────────────────────────────
+    send('Authenticating with Podbean...');
+    const accessToken = await getAccessToken();
+
+    send('Fetching podcast ID...');
+    const podcastId = await getPodcastId(accessToken);
+
+    send('Requesting upload authorization...');
     const originalName = req.file.originalname;
     const fileSize = req.file.size;
     const contentType = req.file.mimetype || 'audio/mpeg';
 
-    const accounts = podbeanAccounts();
-    if (!accounts.length) throw new Error('No Podbean accounts configured in .env');
+    const { presigned_url, file_key } = await authorizeUpload(accessToken, originalName, fileSize, contentType);
 
-    let episode = null;
-    for (let i = 0; i < accounts.length; i++) {
-      const acct = accounts[i];
-      try {
-        send(`Authenticating with Podbean (${acct.label})...`);
-        const accessToken = await getTokenForAccount(acct.clientId, acct.clientSecret);
-        send('Fetching podcast ID...');
-        const podcastId = await getPodcastId(accessToken);
-        send('Requesting upload authorization...');
-        const { presigned_url, file_key } = await authorizeUpload(accessToken, originalName, fileSize, contentType);
-        send(`Uploading audio file (${(fileSize / 1024 / 1024).toFixed(1)} MB)...`);
-        await uploadFileToS3(presigned_url, tempFilePath, contentType);
-        send('Publishing episode to Podbean...');
-        episode = await createEpisode(accessToken, podcastId, title, description, file_key);
-        if (i > 0) console.log(`[Podbean] Used fallback account: ${acct.label}`);
-        break; // success — stop trying accounts
-      } catch (err) {
-        const errCode = err.response?.data?.error;
-        const errDesc = err.response?.data?.error_description || err.response?.data?.error || err.message;
-        if (i < accounts.length - 1 && isPodbeanQuotaError(err)) {
-          send(`Podbean ${acct.label} quota/limit: ${errDesc} — switching to fallback account...`);
-          console.log(`[Podbean] Quota error on ${acct.label}: ${errCode} — trying next account`);
-          continue;
-        }
-        throw err; // no more accounts or non-quota error
-      }
-    }
+    send(`Uploading audio file (${(fileSize / 1024 / 1024).toFixed(1)} MB)...`);
+    await uploadFileToS3(presigned_url, tempFilePath, contentType);
 
-    // ── WordPress first (so wp_post_id is available for Rocky) ─────────────
-    let wpPostId = null;
-    if (isScheduled) {
-      send('Scheduling WordPress episode...');
-      try {
-        const wpResult = await createWordPressEpisode(title, description, publishTimestamp, wpShowId, wpBroadcasterId, showName, date, episode.media_url, broadcaster);
-        wpPostId = wpResult?.id || null;
-        send('WordPress episode scheduled!');
-      } catch (err) {
-        const wpErr = err.response?.data?.message || err.message;
-        send(`WordPress warning: ${wpErr}`);
-        console.error('[WordPress] Scheduled post failed:', err.response?.data || err.message);
-      }
-    } else {
-      send('Publishing to WordPress...');
-      try {
-        const wpResult = await createWordPressEpisode(title, description, null, wpShowId, wpBroadcasterId, showName, date, episode.media_url, broadcaster);
-        wpPostId = wpResult?.id || null;
-        send('WordPress episode published!');
-      } catch (err) {
-        const wpErr = err.response?.data?.message || err.message;
-        send(`WordPress warning: ${wpErr}`);
-        console.error('[WordPress] Post failed:', err.response?.data || err.message);
-      }
-    }
+    send('Publishing episode to Podbean...');
+    const episode = await createEpisode(accessToken, podcastId, title, description, file_key);
 
-    // Queue on Rocky Radio (with wp_post_id so Rocky can publish at air time)
+    // Queue on Rocky Radio
     const showKeyR = getShowKey(showName, broadcaster);
-    const rockyR = await queueOnRocky(tempFilePath, req.file.originalname, showKeyR, broadcaster, date, null, isManual, scheduleTime, wpPostId);
+    const rockyR = await queueOnRocky(tempFilePath, req.file.originalname, showKeyR, broadcaster, date, null, isManual, scheduleTime);
     send(rockyR.ok ? 'Queued for Rocky Radio!' : `Rocky Radio: ${rockyR.reason || rockyR.error || 'skipped'}`);
 
     // Log upload
@@ -775,9 +516,37 @@ app.post('/api/upload', upload.single('audioFile'), async (req, res) => {
       type: 'podbean'
     });
 
-    if (isScheduled) {
+    let wpPostId = null;
+    if (doSkipWP) {
+      send('WordPress update skipped (Podbean only).');
+      if (isScheduled) {
+        send(`SCHEDULED:${episode.permalink_url || ''}|${publishTimestamp}|`);
+      } else {
+        send(`SUCCESS:Episode published! URL: ${episode.permalink_url}|`);
+      }
+    } else if (isScheduled) {
+      send('Scheduling WordPress episode...');
+      try {
+        const wpResult = await createWordPressEpisode(title, description, publishTimestamp, wpShowId, wpBroadcasterId, showName, date, episode.media_url);
+        wpPostId = wpResult?.id || null;
+        send('WordPress episode scheduled!');
+      } catch (err) {
+        const wpErr = err.response?.data?.message || err.message;
+        send(`WordPress warning: ${wpErr}`);
+        console.error('[WordPress] Scheduled post failed:', err.response?.data || err.message);
+      }
       send(`SCHEDULED:${episode.permalink_url || ''}|${publishTimestamp}|${wpPostId || ''}`);
     } else {
+      send('Publishing to WordPress...');
+      try {
+        const wpResult = await createWordPressEpisode(title, description, null, wpShowId, wpBroadcasterId, showName, date, episode.media_url);
+        wpPostId = wpResult?.id || null;
+        send('WordPress episode published!');
+      } catch (err) {
+        const wpErr = err.response?.data?.message || err.message;
+        send(`WordPress warning: ${wpErr}`);
+        console.error('[WordPress] Post failed:', err.response?.data || err.message);
+      }
       send(`SUCCESS:Episode published! URL: ${episode.permalink_url}|${wpPostId || ''}`);
     }
 
