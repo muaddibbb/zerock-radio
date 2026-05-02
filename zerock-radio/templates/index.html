@@ -831,12 +831,19 @@
         </div>
         {% endfor %}
       </div>
-      <button onclick="savePalash('{{ first_poll.id }}')"
-              style="background:#e63946;border:none;color:#fff;padding:8px 20px;
-                     border-radius:6px;cursor:pointer;font-size:0.88em;font-weight:600">
-        💾 שמור הפינה לשיפוטכם
-      </button>
-      <span id="palash-status" style="font-size:0.8em;color:#4caf50;margin-right:10px;display:none">✓ נשמר</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="savePalash('{{ first_poll.id }}')"
+                style="background:#e63946;border:none;color:#fff;padding:8px 20px;
+                       border-radius:6px;cursor:pointer;font-size:0.88em;font-weight:600">
+          💾 שמור הפינה לשיפוטכם
+        </button>
+        <button onclick="clearPalash('{{ first_poll.id }}')"
+                style="background:transparent;border:1px solid #555;color:#888;padding:8px 16px;
+                       border-radius:6px;cursor:pointer;font-size:0.88em">
+          🗑 נקה
+        </button>
+        <span id="palash-status" style="font-size:0.8em;color:#4caf50;display:none">✓ נשמר</span>
+      </div>
     </div>
     {% endif %}
 
