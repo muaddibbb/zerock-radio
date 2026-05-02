@@ -229,7 +229,7 @@
       {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
       <div class="song-item" data-id="{{ s.id }}">
         <label class="song-tap">
-          <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" {% if not poll.open %}disabled{% endif %}>
+          <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" disabled>
           <span class="song-slot">{% if s.slot %}#{{ s.slot }}{% endif %}</span>
           <span class="song-label">{{ s.label }}</span>
         </label>
