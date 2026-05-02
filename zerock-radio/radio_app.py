@@ -2400,7 +2400,7 @@ def index():
     # Polls for matzad admin panel
     all_polls   = _load_polls()
     active_polls = sorted(
-        [p for p in all_polls],
+        [{**p, 'open': _poll_is_open(p, now)} for p in all_polls],
         key=lambda p: p.get('closes_at') or p.get('opens_at') or '',
         reverse=True
     )[:10]  # show last 10 polls
