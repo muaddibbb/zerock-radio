@@ -2905,6 +2905,9 @@ def _build_wp_schedule_slots():
     # ── Scan queue for overrides + queue-only shows ────────────────────────────
     queue_overrides    = {}   # show_key → (wp_day, start_h)   for regular rescheduled shows
     queue_only_entries = {}   # show_key → LIST of {wp_day, start_h, broadcaster}  for QUEUE_ONLY_BOARD_SHOWS
+    # Track the earliest (soonest) datetime seen per (key, wp_day) to deduplicate
+    # episodes that land on the same weekday in different weeks within the 14-day window.
+    _queue_only_day_seen = {}   # (key, wp_day) → earliest datetime
     try:
         queue = load_schedule()
         now   = datetime.now()
@@ -2922,6 +2925,12 @@ def _build_wp_schedule_slots():
                 ep_wp_day  = DAY_MAP[t.weekday()]
                 ep_start_h = t.hour + t.minute / 60.0
                 if key in QUEUE_ONLY_BOARD_SHOWS or (show_cfg_q and show_cfg_q['day'] is None):
+                    _day_key = (key, ep_wp_day)
+                    # Only keep the soonest episode per (show, weekday) — prevents
+                    # two consecutive weeks' episodes from overlapping on the grid.
+                    if _day_key in _queue_only_day_seen:
+                        continue
+                    _queue_only_day_seen[_day_key] = t
                     _bc_raw = (entry.get('broadcaster', '')
                                or (show_cfg_q.get('broadcaster', '') if show_cfg_q else ''))
                     _bc_prefix = _WP_BROADCASTER_PREFIX.get(key, '')
