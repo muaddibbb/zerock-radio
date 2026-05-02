@@ -185,9 +185,13 @@
     <!-- ── Email verification ── -->
     <div id="email-verify-section">
 
-      <!-- Step 1: email input -->
+      <!-- Step 1: name + email input -->
       <div id="step-email" class="verify-step">
-        <div class="verify-label">כדי להצביע, יש לאמת את כתובת האימייל שלך</div>
+        <div class="verify-label">כדי להצביע, יש למלא שם ולאמת כתובת אימייל</div>
+        <div class="verify-row" style="margin-bottom:8px">
+          <input type="text" id="voter-name" placeholder="שמך המלא"
+                 autocomplete="name" dir="rtl" style="flex:1">
+        </div>
         <div class="verify-row">
           <input type="email" id="voter-email" placeholder="your@email.com"
                  autocomplete="email" dir="ltr" inputmode="email">
