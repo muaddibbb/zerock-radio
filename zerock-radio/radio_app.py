@@ -4787,6 +4787,48 @@ def api_one_time_upload(token):
 
 _polls_lock = threading.Lock()
 _votes_lock = threading.Lock()
+_poll_codes_lock = threading.Lock()
+
+def _load_poll_codes():
+    try:
+        with open(POLL_CODES_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_poll_codes(data):
+    with open(POLL_CODES_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def _send_poll_verification_email(to_email, code, poll_title):
+    """Send a 6-digit email verification code to a poll voter."""
+    if not SMTP_USER or not SMTP_PASS:
+        print(f"[Poll] SMTP not configured — verification code for {to_email}: {code}", flush=True)
+        return
+    body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.6">
+<p>שלום,</p>
+<p>קיבלנו בקשת אימות להצבעה ב-<strong>{poll_title}</strong>.</p>
+<p>קוד האימות שלך:</p>
+<p style="font-size:2.4em;font-weight:bold;letter-spacing:10px;color:#e63946;
+          text-align:center;padding:22px 0;background:#f9f9f9;border-radius:8px;
+          margin:18px 0">{code}</p>
+<p style="color:#888;font-size:13px">הקוד תקף ל-10 דקות.<br>
+אם לא ביקשת קוד זה, התעלם מהודעה זו.</p>
+<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
+<p><strong>צוות ZeRock Radio</strong> 🤘</p>
+</div>"""
+    body_text = f"קוד האימות שלך להצבעה ב-{poll_title}: {code}\n(תקף ל-10 דקות)\n\nZeRock Radio"
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f"ZeRock Radio — קוד אימות {code}"
+    msg['From']    = SMTP_FROM_ADDR
+    msg['To']      = to_email
+    msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+    msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+        s.ehlo(); s.starttls()
+        s.login(SMTP_USER, SMTP_PASS)
+        s.sendmail(SMTP_FROM_ADDR, [to_email], msg.as_bytes())
+    print(f"[Poll] Verification code sent → {to_email}", flush=True)
 
 def _load_polls():
     try:
