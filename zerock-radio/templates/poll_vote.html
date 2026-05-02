@@ -304,6 +304,114 @@
 {% if poll and poll.open and not already_voted %}
 <script>
 const MAX_VOTES = {{ poll.max_votes }};
+let _verifiedEmail = null;
+let _verifyToken   = null;
+
+function getPollApiBase() {
+  // /poll/<id>  →  /api/poll/<id>
+  return window.location.pathname.replace('/poll/', '/api/poll/');
+}
+
+// ── Email verification ──────────────────────────────────────────
+
+async function sendCode() {
+  const emailInput = document.getElementById('voter-email');
+  const email = emailInput.value.trim();
+  const msg   = document.getElementById('email-msg');
+  const btn   = document.getElementById('btn-send-code');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.innerHTML = '<span class="msg-err">יש להזין כתובת אימייל תקינה</span>';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'שולח…'; msg.innerHTML = '';
+
+  try {
+    const res = await fetch(getPollApiBase() + '/send-code', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email}),
+      credentials: 'same-origin',
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      msg.innerHTML = '<span class="msg-err">' + (data.error || 'שגיאה בשליחת הקוד') + '</span>';
+      btn.disabled = false; btn.textContent = 'שלח קוד';
+      return;
+    }
+    // → Step 2
+    document.getElementById('step-email').style.display = 'none';
+    document.getElementById('sent-to-email').textContent = email;
+    document.getElementById('step-code').style.display  = '';
+    document.getElementById('voter-code').focus();
+  } catch(err) {
+    msg.innerHTML = '<span class="msg-err">שגיאת תקשורת. נסה שוב.</span>';
+    btn.disabled = false; btn.textContent = 'שלח קוד';
+  }
+}
+
+function backToEmail() {
+  document.getElementById('step-code').style.display  = 'none';
+  document.getElementById('step-email').style.display = '';
+  const btn = document.getElementById('btn-send-code');
+  btn.disabled = false; btn.textContent = 'שלח קוד';
+  document.getElementById('voter-code').value  = '';
+  document.getElementById('code-msg').innerHTML = '';
+}
+
+async function verifyCode() {
+  const email = document.getElementById('voter-email').value.trim();
+  const code  = document.getElementById('voter-code').value.trim();
+  const msg   = document.getElementById('code-msg');
+  const btn   = document.getElementById('btn-verify-code');
+
+  if (!code || !/^\d{6}$/.test(code)) {
+    msg.innerHTML = '<span class="msg-err">יש להזין קוד בן 6 ספרות</span>';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'מאמת…'; msg.innerHTML = '';
+
+  try {
+    const res = await fetch(getPollApiBase() + '/verify-code', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, code}),
+      credentials: 'same-origin',
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      msg.innerHTML = '<span class="msg-err">' + (data.error || 'קוד שגוי או שפג תוקפו') + '</span>';
+      btn.disabled = false; btn.textContent = 'אמת';
+      return;
+    }
+    // → Step 3: verified!
+    _verifiedEmail = email;
+    _verifyToken   = data.verify_token;
+    document.getElementById('step-code').style.display    = 'none';
+    document.getElementById('verified-email-display').textContent = email;
+    document.getElementById('step-verified').style.display = '';
+    // Unlock checkboxes
+    document.querySelectorAll('input[name=song]').forEach(b => { b.disabled = false; });
+    updateCount();
+  } catch(err) {
+    msg.innerHTML = '<span class="msg-err">שגיאת תקשורת. נסה שוב.</span>';
+    btn.disabled = false; btn.textContent = 'אמת';
+  }
+}
+
+// Handle Enter key in code box
+document.addEventListener('DOMContentLoaded', () => {
+  const codeInput = document.getElementById('voter-code');
+  if (codeInput) {
+    codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); verifyCode(); } });
+  }
+  const emailInput = document.getElementById('voter-email');
+  if (emailInput) {
+    emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendCode(); } });
+  }
+});
+
+// ── Song picking & submission ─────────────────────────────────
 
 function onPick(cb) {
   const item = cb.closest('.song-item');
@@ -316,11 +424,13 @@ function updateCount() {
   const n = checked.length;
   const badge = document.getElementById('count-badge');
   const btn   = document.getElementById('btn-submit');
+  if (!badge) return;
   badge.textContent = n + ' / ' + MAX_VOTES;
   badge.classList.toggle('full',     n === MAX_VOTES);
   badge.classList.toggle('too-many', n >  MAX_VOTES);
-  btn.disabled = (n !== MAX_VOTES);
-  // Disable unchecked checkboxes once max is reached, to enforce the limit visually
+  // Only enable submit when verified + exact count
+  btn.disabled = (!_verifyToken || n !== MAX_VOTES);
+  // Disable unchecked boxes once max reached
   document.querySelectorAll('input[name=song]').forEach(box => {
     if (!box.checked) box.disabled = (n >= MAX_VOTES);
   });
@@ -333,6 +443,10 @@ async function submitVote(e) {
   const msg = document.getElementById('msg');
   const btn = document.getElementById('btn-submit');
 
+  if (!_verifyToken || !_verifiedEmail) {
+    msg.innerHTML = '<span class="msg-err">יש לאמת את האימייל לפני ההצבעה</span>';
+    return;
+  }
   if (ids.length !== MAX_VOTES) {
     msg.innerHTML = '<span class="msg-err">יש לבחור בדיוק ' + MAX_VOTES + ' שירים</span>';
     return;
@@ -340,10 +454,10 @@ async function submitVote(e) {
   btn.disabled = true; btn.textContent = 'שולח…'; msg.innerHTML = '';
 
   try {
-    const res = await fetch(window.location.pathname.replace('/poll/', '/api/poll/') + '/vote', {
+    const res = await fetch(getPollApiBase() + '/vote', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({song_ids: ids}),
+      body: JSON.stringify({song_ids: ids, email: _verifiedEmail, verify_token: _verifyToken}),
       credentials: 'same-origin',
     });
     const data = await res.json().catch(() => ({}));
