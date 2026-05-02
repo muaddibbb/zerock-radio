@@ -3590,6 +3590,7 @@ def api_add_show():
         'upload_done':    False,
         'is_rerun':       False,
         'added_at':       datetime.now().isoformat(),
+        'skip_wp':        podbean_skip_wp,
     }
     with _schedule_lock:
         schedule = load_schedule()
