@@ -399,8 +399,9 @@ async function verifyCode() {
     // → Step 3: verified!
     _verifiedEmail = email;
     _verifyToken   = data.verify_token;
+    _voterName     = document.getElementById('voter-name').value.trim();
     document.getElementById('step-code').style.display    = 'none';
-    document.getElementById('verified-email-display').textContent = email;
+    document.getElementById('verified-name-display').textContent = _voterName;
     document.getElementById('step-verified').style.display = '';
     // Unlock checkboxes
     document.querySelectorAll('input[name=song]').forEach(b => { b.disabled = false; });
