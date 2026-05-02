@@ -3438,9 +3438,14 @@ def api_add_show():
 
     # ── Look up show config ────────────────────────────────────────────────────
     show_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == show_key), None)
-    # Force queue_only for shows that have no Podbean/WP upload
+    # Force queue_only for shows that have no Podbean/WP upload.
+    # Exception: matzad_harok pre-recorded (single file) → upload to Podbean, skip WP.
+    podbean_skip_wp = False
     if show_cfg and show_cfg.get('no_podbean'):
-        mode = 'queue_only'
+        if show_key == 'matzad_harok' and not is_playlist and not is_album and audio_file:
+            podbean_skip_wp = True   # Podbean only, no WP
+        else:
+            mode = 'queue_only'
     if not show_cfg:
         # Legacy: support free-form name + manual scheduled_time
         name           = request.form.get('name', '').strip()
