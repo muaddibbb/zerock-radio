@@ -182,6 +182,45 @@
 
   <form id="vote-form" onsubmit="submitVote(event)">
 
+    <!-- ── Email verification ── -->
+    <div id="email-verify-section">
+
+      <!-- Step 1: email input -->
+      <div id="step-email" class="verify-step">
+        <div class="verify-label">כדי להצביע, יש לאמת את כתובת האימייל שלך</div>
+        <div class="verify-row">
+          <input type="email" id="voter-email" placeholder="your@email.com"
+                 autocomplete="email" dir="ltr" inputmode="email">
+          <button type="button" class="btn-verify" id="btn-send-code" onclick="sendCode()">שלח קוד</button>
+        </div>
+        <div class="msg" id="email-msg"></div>
+      </div>
+
+      <!-- Step 2: 6-digit code (hidden) -->
+      <div id="step-code" class="verify-step" style="display:none">
+        <div class="verify-label">
+          קוד אימות נשלח ל-<strong id="sent-to-email"></strong><br>
+          <span style="font-size:0.85em;color:#888">הקוד תקף ל-10 דקות</span>
+        </div>
+        <div class="verify-row">
+          <input type="text" id="voter-code" placeholder="123456"
+                 maxlength="6" inputmode="numeric" dir="ltr" autocomplete="one-time-code">
+          <button type="button" class="btn-verify" id="btn-verify-code" onclick="verifyCode()">אמת</button>
+        </div>
+        <div class="msg" id="code-msg"></div>
+        <div class="resend-link">
+          <span onclick="backToEmail()">שלח קוד חדש</span>
+        </div>
+      </div>
+
+      <!-- Step 3: verified badge (hidden) -->
+      <div id="step-verified" class="verify-step" style="display:none">
+        <div class="verify-badge">✅ האימייל <strong id="verified-email-display"></strong> אומת — עכשיו בחר את השירים שלך 🎸</div>
+      </div>
+
+    </div>
+    <!-- ── /Email verification ── -->
+
     {% set matzad_songs = poll.songs | selectattr('group','equalto','matzad') | list %}
     {% set palash_songs = poll.songs | selectattr('group','equalto','palash') | list %}
 
