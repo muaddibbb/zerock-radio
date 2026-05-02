@@ -279,8 +279,8 @@
       <div class="vote-label">קולות</div>
     </div>
 
-    <!-- weeks on chart -->
-    {% if s.weeks is defined and s.weeks %}
+    <!-- weeks on chart (positions 1-20 only) -->
+    {% if s.weeks is defined and s.weeks and loop.index <= 20 %}
     <div class="weeks-badge">
       <div class="weeks-num">{{ s.weeks }}</div>
       <div class="weeks-label">שבועות</div>
