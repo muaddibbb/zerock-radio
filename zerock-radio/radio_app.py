@@ -5255,6 +5255,15 @@ def api_poll_delete(poll_id):
     return jsonify({'ok': True})
 
 
+@app.route('/poll/<poll_id>/reset-cookie')
+def poll_reset_cookie(poll_id):
+    """Clear the 'already voted' browser cookie so the user can vote again."""
+    from flask import redirect
+    resp = redirect(f'/poll/{poll_id}')
+    resp.delete_cookie(f'voted_{poll_id}')
+    return resp
+
+
 @app.route('/poll/<poll_id>')
 def poll_vote_page(poll_id):
     """Public: voting form."""
