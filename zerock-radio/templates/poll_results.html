@@ -188,6 +188,9 @@
 {% else %}
   <h1>{{ poll.title }}</h1>
   <div class="subtitle">תוצאות ההצבעה</div>
+  {% if poll.staff %}
+  <div class="staff-line"><strong>צוות המצעד:</strong> {{ poll.staff }}</div>
+  {% endif %}
 
   {% if poll.open %}
     <div class="live-badge"><div class="live-dot"></div> הצבעה פתוחה — תוצאות חיות</div>
