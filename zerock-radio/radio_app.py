@@ -5315,6 +5315,25 @@ def poll_results_page(poll_id):
             else:
                 song['movement'] = '0'
         song['weeks'] = song_weeks.get(sid)
+    # Compute special badges
+    badge_aliya_id  = None  # העלייה הגבוהה — biggest rise
+    badge_yerida_id = None  # הירידה הגבוהה — biggest drop
+    badge_vatik_id  = None  # השיר הותיק   — most weeks on chart
+    max_rise = 0; max_drop = 0; max_weeks = 0
+    for song in results:
+        mv    = song.get('movement', '')
+        weeks = song.get('weeks') or 0
+        if mv and mv not in ('new', '0'):
+            if mv.startswith('+'):
+                rise = int(mv[1:])
+                if rise > max_rise:
+                    max_rise = rise; badge_aliya_id = song['id']
+            elif mv.startswith('-'):
+                drop = int(mv[1:])
+                if drop > max_drop:
+                    max_drop = drop; badge_yerida_id = song['id']
+        if weeks > max_weeks:
+            max_weeks = weeks; badge_vatik_id = song['id']
     max_votes_any  = max((r['votes'] for r in results), default=0)
     any_votes      = max_votes_any > 0
     vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
@@ -5328,6 +5347,9 @@ def poll_results_page(poll_id):
         any_votes=any_votes,
         vote_url=vote_url,
         next_palash=poll.get('next_palash') or [],
+        badge_aliya_id=badge_aliya_id,
+        badge_yerida_id=badge_yerida_id,
+        badge_vatik_id=badge_vatik_id,
     )
 
 
