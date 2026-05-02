@@ -5275,7 +5275,11 @@ def poll_vote_page(poll_id):
     now = datetime.now()
     poll = {**poll, 'open': _poll_is_open(poll, now)}
     already = request.cookies.get(f'voted_{poll_id}') == '1'
-    return render_template('poll_vote.html', invalid=False, poll=poll, already_voted=already)
+    import random as _random
+    vote_songs = list(poll.get('songs') or [])
+    _random.shuffle(vote_songs)
+    return render_template('poll_vote.html', invalid=False, poll=poll,
+                           already_voted=already, vote_songs=vote_songs)
 
 
 @app.route('/poll/<poll_id>/results')
