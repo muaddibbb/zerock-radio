@@ -5454,6 +5454,7 @@ def api_poll_vote(poll_id):
         votes.append({
             'poll_id':  poll_id,
             'email':    email,
+            'name':     voter_name,
             'song_ids': song_ids,
             'ip':       ip,
             'ua':       (request.headers.get('User-Agent') or '')[:200],
