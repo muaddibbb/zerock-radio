@@ -254,6 +254,13 @@
     <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank"
        rel="noopener noreferrer" title="YouTube">▶</a>
   </div>
+  {% if loop.index == 20 %}
+  <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px">
+    <div style="flex:1;height:1px;background:#3a3a3a"></div>
+    <div style="font-size:0.72em;color:#555;white-space:nowrap;padding:0 6px">הפינה לשיפוטכם</div>
+    <div style="flex:1;height:1px;background:#3a3a3a"></div>
+  </div>
+  {% endif %}
   {% endfor %}
 
   {% if not any_votes %}
