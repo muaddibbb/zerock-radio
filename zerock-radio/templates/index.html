@@ -811,6 +811,35 @@
     </div>
     {% endif %}
 
+    {% if active_polls %}
+    {% set first_poll = active_polls[0] %}
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px" id="palash-card">
+      <h2>🎵 הפינה לשיפוטכם — שבוע הבא</h2>
+      <div style="font-size:0.82em;color:var(--text-muted);margin-bottom:14px">
+        5 השירים שיופיעו בטופס ההצבעה השבוע הבא ({{ first_poll.title }})
+      </div>
+      <div id="palash-inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        {% for i in range(5) %}
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:0.8em;color:#888;width:16px;text-align:center;flex-shrink:0">{{ i+1 }}</span>
+          <input type="text" id="palash-{{ i }}"
+                 value="{{ first_poll.next_palash[i] if first_poll.next_palash is defined and first_poll.next_palash|length > i else '' }}"
+                 placeholder="מבצע — שם השיר"
+                 style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                        padding:7px 10px;color:var(--text);font-size:0.9em;font-family:inherit;
+                        direction:rtl;text-align:right">
+        </div>
+        {% endfor %}
+      </div>
+      <button onclick="savePalash('{{ first_poll.id }}')"
+              style="background:#e63946;border:none;color:#fff;padding:8px 20px;
+                     border-radius:6px;cursor:pointer;font-size:0.88em;font-weight:600">
+        💾 שמור הפינה לשיפוטכם
+      </button>
+      <span id="palash-status" style="font-size:0.8em;color:#4caf50;margin-right:10px;display:none">✓ נשמר</span>
+    </div>
+    {% endif %}
+
     <div class="card" data-mgmt-section="shows haroker album matzad">
       <h2 id="scheduleFormTitle">Schedule a Show</h2>
       <form id="scheduleForm" enctype="multipart/form-data">
