@@ -188,7 +188,29 @@
 <body>
 <div class="wrap">
 
-{% if invalid %}
+{% if auth_required %}
+  <div style="text-align:center;margin-bottom:18px">
+    <img src="/static/logo.png" alt="ZeRock Radio" style="height:64px;width:auto;opacity:0.9">
+  </div>
+  <div style="font-size:1.2em;font-weight:700;color:#e63946;text-align:center;margin-bottom:6px">תוצאות ההצבעה</div>
+  <div style="color:#888;font-size:0.85em;text-align:center;margin-bottom:22px">הזן סיסמה כדי לצפות בתוצאות</div>
+  <form method="POST" style="display:flex;flex-direction:column;align-items:center;gap:12px">
+    <input type="password" name="password" autofocus
+           placeholder="סיסמה"
+           style="background:#141414;border:1px solid {% if auth_error %}#e63946{% else %}#3a3a3a{% endif %};
+                  border-radius:8px;padding:10px 16px;color:#f0f0f0;font-size:1em;
+                  width:260px;text-align:center;direction:ltr;outline:none">
+    {% if auth_error %}
+    <div style="color:#e63946;font-size:0.82em">סיסמה שגויה, נסה שוב</div>
+    {% endif %}
+    <button type="submit"
+            style="background:#e63946;border:none;color:#fff;padding:10px 32px;
+                   border-radius:8px;cursor:pointer;font-size:0.95em;font-weight:600;width:260px">
+      כניסה →
+    </button>
+  </form>
+
+{% elif invalid %}
   <div class="state-icon">🔗</div>
   <div class="state-title">סקר לא נמצא</div>
   <div class="state-sub">הסקר לא קיים במערכת.</div>
