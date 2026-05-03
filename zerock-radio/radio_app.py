@@ -3491,14 +3491,17 @@ def api_add_show():
         return jsonify({'error': 'לא ניתן להעלות פרק ליותר מחודשיים מראש'}), 400
 
     # ── Duplicate guard ────────────────────────────────────────────────────────
-    # Reject if a non-rerun entry for the same show_key + broadcast time already exists
+    # Reject if a non-rerun, non-triggered entry for the same show_key + broadcast
+    # time already exists.  Already-triggered entries are ignored so a fresh upload
+    # for the same slot (e.g. a new episode on a day that had a rerun) is accepted.
     if show_cfg and broadcast_dt:
         existing = load_schedule()
         bcast_iso = broadcast_dt.isoformat()
         dup = next((e for e in existing
                     if e.get('show_key') == show_key
                     and e.get('scheduled_time') == bcast_iso
-                    and not e.get('is_rerun')), None)
+                    and not e.get('is_rerun')
+                    and not e.get('triggered')), None)
         if dup:
             print(f"[Schedule] Duplicate rejected: {show_key} @ {bcast_iso}", flush=True)
             return jsonify({'success': True, 'show': dup, '_duplicate': True}), 200
