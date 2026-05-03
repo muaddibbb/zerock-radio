@@ -2925,6 +2925,13 @@ def _build_wp_schedule_slots():
                 ep_wp_day  = DAY_MAP[t.weekday()]
                 ep_start_h = t.hour + t.minute / 60.0
                 if key in QUEUE_ONLY_BOARD_SHOWS or (show_cfg_q and show_cfg_q['day'] is None):
+                    # Queue-only shows (e.g. על הרוקר) only appear on the board if
+                    # the episode is within the current 7-day window.  The 14-day
+                    # window is intentionally wider for regular-show overrides, but
+                    # queue-only episodes that fall in a future week would bleed onto
+                    # this week's weekday column (same wp_day, different calendar week).
+                    if t > now + timedelta(days=7):
+                        continue
                     _day_key = (key, ep_wp_day)
                     # Only keep the soonest episode per (show, weekday) — prevents
                     # two consecutive weeks' episodes from overlapping on the grid.
