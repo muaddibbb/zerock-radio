@@ -3562,6 +3562,10 @@ def api_add_show():
 
     # ── Look up show config ────────────────────────────────────────────────────
     show_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == show_key), None)
+    # Hard block: NEVER_UPLOAD_SHOWS (e.g. ערב של אלבומים) must never go to Podbean or WP.
+    if show_key in NEVER_UPLOAD_SHOWS:
+        mode = 'queue_only'
+        print(f"[Schedule] Hard-blocked upload for '{show_key}' — forced queue_only", flush=True)
     # Force queue_only for shows that have no Podbean/WP upload.
     # Exception: matzad_harok pre-recorded (single file) → upload to Podbean, skip WP.
     podbean_skip_wp = False
