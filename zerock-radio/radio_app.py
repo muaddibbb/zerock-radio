@@ -1050,7 +1050,21 @@ def _create_wp_post_direct(show) -> tuple:
             data = resp.json()
             wp_id = data.get('id')
             link  = data.get('link', '')
-            print(f"[WP-Direct] Created post {wp_id} → {link} (status={data.get('status')})", flush=True)
+            wp_post_status = data.get('status', '')
+            print(f"[WP-Direct] Created post {wp_id} → {link} (status={wp_post_status})", flush=True)
+            # If the post was created as 'future', mark the schedule entry so
+            # _check_wp_posts can flip it to 'publish' once air time passes.
+            if wp_post_status == 'future':
+                try:
+                    with _schedule_lock:
+                        sched = load_schedule()
+                        for _s in sched:
+                            if _s.get('id') == show.get('id'):
+                                _s['wp_future_pending'] = True
+                                break
+                        save_schedule(sched)
+                except Exception as _fe:
+                    print(f"[WP-Direct] Could not set wp_future_pending: {_fe}", flush=True)
             return True, wp_id
         else:
             print(f"[WP-Direct] HTTP {resp.status_code}: {resp.text[:300]}", flush=True)
