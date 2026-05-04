@@ -1806,17 +1806,78 @@ def _reload_jingle_source(reason=''):
 _last_wp_check = 0.0   # epoch time of last WP verification run
 
 def _check_wp_posts(schedule):
-    """Scan schedule for shows whose Podbean upload succeeded but WP post is missing.
-    Runs at most every 30 minutes (throttled by _last_wp_check). Calls
-    _create_wp_post_direct() for any show flagged wp_post_missing=True, then
-    clears the flag and saves the schedule on success.
+    """Scan schedule for shows whose Podbean upload succeeded but WP post is missing,
+    and for shows whose WP post was created with status='future' but air time has passed.
+    Runs at most every 30 minutes (throttled by _last_wp_check).
 
-    Candidates: queue_to_broadcast, not a rerun, upload_done, wp_post_missing,
-                not already abandoned (upload_failed + 3 attempts)."""
+    Candidates for missing WP: queue_to_broadcast, not a rerun, upload_done, wp_post_missing,
+                                not already abandoned (upload_failed + 3 attempts).
+    Candidates for future→publish: any entry with wp_future_pending=True and scheduled_time
+                                   at least 10 minutes in the past."""
     global _last_wp_check
+    import base64 as _b64
     now = time.time()
     if now - _last_wp_check < 1800:   # 30-minute throttle
         return
+    _last_wp_check = now   # set upfront so we don't spam on errors
+
+    changed = False
+
+    # ── Pass 1: flip WP 'future' posts to 'publish' ──────────────────────────
+    future_pending = [
+        s for s in schedule
+        if s.get('wp_future_pending') and s.get('wp_post_id')
+    ]
+    if future_pending:
+        print(f"[WP-Check] {len(future_pending)} post(s) with wp_future_pending — checking…", flush=True)
+        _creds = _b64.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
+        _hdrs = {'Authorization': f'Basic {_creds}', 'Content-Type': 'application/json'}
+        for show in future_pending:
+            try:
+                bcast_dt = datetime.fromisoformat(show['scheduled_time'])
+            except Exception:
+                continue
+            if bcast_dt > datetime.now() - timedelta(minutes=10):
+                continue   # not aired yet — too early to publish
+            wp_id = show['wp_post_id']
+            try:
+                resp = _requests.get(
+                    f"{WP_URL}/wp-json/wp/v2/episodes/{wp_id}",
+                    headers=_hdrs, timeout=15
+                )
+                if resp.status_code != 200:
+                    print(f"[WP-Check] Could not fetch post {wp_id}: HTTP {resp.status_code}", flush=True)
+                    continue
+                wp_status = resp.json().get('status', '')
+                if wp_status == 'publish':
+                    # Already published (wp-cron fired) — just clear our flag
+                    print(f"[WP-Check] Post {wp_id} already published — clearing flag", flush=True)
+                elif wp_status == 'future':
+                    upd = _requests.post(
+                        f"{WP_URL}/wp-json/wp/v2/episodes/{wp_id}",
+                        json={'status': 'publish'}, headers=_hdrs, timeout=15
+                    )
+                    if upd.status_code in (200, 201):
+                        print(f"[WP-Check] ✓ Published future post {wp_id} for '{show.get('name')}'", flush=True)
+                    else:
+                        print(f"[WP-Check] ✗ Failed to publish post {wp_id}: HTTP {upd.status_code}", flush=True)
+                        continue   # don't clear flag — retry next time
+                else:
+                    print(f"[WP-Check] Post {wp_id} status={wp_status!r} — clearing flag", flush=True)
+
+                # Clear the flag
+                with _schedule_lock:
+                    sched = load_schedule()
+                    for s in sched:
+                        if s.get('id') == show['id']:
+                            s.pop('wp_future_pending', None)
+                            break
+                    save_schedule(sched)
+                changed = True
+            except Exception as e:
+                print(f"[WP-Check] Error checking post {wp_id}: {e}", flush=True)
+
+    # ── Pass 2: create missing WP posts ──────────────────────────────────────
     candidates = [
         s for s in schedule
         if (s.get('wp_post_missing')
@@ -1826,11 +1887,8 @@ def _check_wp_posts(schedule):
             and s.get('mode') == 'queue_to_broadcast')
     ]
     if not candidates:
-        _last_wp_check = now
-        return
-    _last_wp_check = now   # set even before requests so we don't spam on errors
+        return changed
     print(f"[WP-Check] {len(candidates)} show(s) missing WP post — retrying…", flush=True)
-    changed = False
     for show in candidates:
         ok, wp_id = _create_wp_post_direct(show)
         if ok and wp_id:
