@@ -930,6 +930,36 @@ def _get_podbean_media_url(podbean_permalink: str) -> str:
     return None
 
 
+def _get_latest_podbean_episode_for_show(show_name: str) -> tuple:
+    """Search Podbean for the most recent episode whose title contains show_name.
+    Searches up to 300 episodes with NO recency filter — so old episodes are found too.
+    Returns (media_url, episode_title) or (None, None) if not found."""
+    token = _get_podbean_access_token()
+    if not token:
+        return None, None
+    name_lower = show_name.strip().lower()
+    try:
+        for offset in range(0, 300, 20):
+            resp = _requests.get(
+                'https://api.podbean.com/v1/episodes',
+                params={'access_token': token, 'limit': 20, 'offset': offset},
+                timeout=15
+            )
+            episodes = resp.json().get('episodes', [])
+            if not episodes:
+                break
+            for ep in episodes:
+                title = ep.get('title', '')
+                if name_lower in title.lower():
+                    media_url = ep.get('media_url')
+                    if media_url:
+                        print(f"[Podbean] Found episode for '{show_name}': {title}", flush=True)
+                        return media_url, title
+    except Exception as e:
+        print(f"[Podbean] episode lookup error for '{show_name}': {e}", flush=True)
+    return None, None
+
+
 def _create_wp_post_direct(show) -> tuple:
     """Create a WordPress episode post directly via REST API (no audio re-upload).
     Used when the uploader's WP call failed but Podbean succeeded, or as a fallback
