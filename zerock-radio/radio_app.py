@@ -2097,7 +2097,8 @@ def scheduler_loop():
                             _up_scfg = next(
                                 (s for s in SHOW_SCHEDULE if s['key'] == show.get('show_key')),
                                 None)
-                            _needs_podbean = not (_up_scfg and _up_scfg.get('no_podbean'))
+                            _needs_podbean = (show.get('show_key') not in NEVER_UPLOAD_SHOWS
+                                              and not (_up_scfg and _up_scfg.get('no_podbean')))
                             if _needs_podbean:
                                 # Check retry cooldown (avoid hammering uploader every 15 s)
                                 _retry_after = show.get('podbean_retry_after')
