@@ -1859,8 +1859,14 @@ def scheduler_loop():
                             # Sync WP schedule board so it reflects the new "now playing" show
                             threading.Thread(target=_sync_wp_board, daemon=True).start()
 
-                            # Publish WP post at air time — don't rely on wp-cron
-                            if not show.get('is_rerun') and not show.get('wp_published'):
+                            # Publish WP post at air time — don't rely on wp-cron.
+                            # Skip for queue_only shows and shows with no_podbean flag
+                            # (e.g. ערב של אלבומים, מצעד הרוק) — they are broadcast-only.
+                            _skey_wp  = show.get('show_key', '')
+                            _scfg_wp  = next((s for s in SHOW_SCHEDULE if s['key'] == _skey_wp), None)
+                            _skip_wp  = (show.get('mode') == 'queue_only'
+                                         or (_scfg_wp and _scfg_wp.get('no_podbean')))
+                            if not show.get('is_rerun') and not show.get('wp_published') and not _skip_wp:
                                 wp_id   = show.get('wp_post_id')
                                 sname   = show.get('show_key', '')
                                 # derive broadcast date for slug fallback
