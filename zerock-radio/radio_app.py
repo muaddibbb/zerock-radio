@@ -172,6 +172,9 @@ ZEROCK_PUBLIC_URL = os.environ.get('ZEROCK_PUBLIC_URL', 'http://zerock.kupernet.
 
 # Shows excluded from the auto-rerun feature (no Podbean episodes to pull from)
 AUTO_RERUN_EXCLUDED = {'al_harocker', 'erev_albumim', 'matzad_harok'}
+# Shows that must NEVER be uploaded to Podbean or WordPress, regardless of submitted mode.
+# This is a hard override applied at every layer: upload ingestion, trigger, and WP publish.
+NEVER_UPLOAD_SHOWS = {'erev_albumim'}
 # Auth token for zerock uploader API (SHA-256 of the login password)
 _UPLOADER_AUTH = hashlib.sha256(b'YudaKaka2026!').hexdigest()
 
