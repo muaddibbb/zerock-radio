@@ -1526,25 +1526,12 @@ def _fetch_and_schedule_auto_rerun(show_cfg, broadcast_dt, placeholder_id):
     broadcaster = _resolve_broadcaster(show_cfg)
 
     try:
-        # Ask the uploader server for the latest Podbean episode for this specific show
-        params = {'showName': show_name}
-        if broadcaster:
-            params['broadcaster'] = broadcaster
-        resp = _requests.get(
-            f"{UPLOADER_BASE_URL}/api/latest-podbean-episode",
-            params=params, timeout=30,
-            cookies={'auth': _UPLOADER_AUTH}
-        )
-        if resp.status_code == 404:
-            raise Exception(f"No Podbean episodes found for '{show_name}'")
-        if resp.status_code != 200:
-            raise Exception(f"Uploader returned {resp.status_code}: {resp.text[:200]}")
-
-        data      = resp.json()
-        media_url = data.get('mediaUrl')
-        ep_title  = data.get('title', show_name)
+        # Search Podbean directly for the latest episode of this show.
+        # No recency filter — searches up to 300 episodes so even older episodes are found.
+        media_url, ep_title = _get_latest_podbean_episode_for_show(show_name)
         if not media_url:
-            raise Exception("No media_url in response")
+            raise Exception(f"No Podbean episodes found for '{show_name}'")
+        ep_title = ep_title or show_name
 
         # Download the MP3 to NAS_TEMP
         safe_key = show_key.replace('/', '_')
