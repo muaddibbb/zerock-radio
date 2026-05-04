@@ -1194,6 +1194,15 @@ def _upload_and_mark_done(show_id):
                     if wp_post_id:
                         s['wp_post_id'] = wp_post_id
                         s.pop('wp_post_missing', None)  # clear flag if WP succeeded
+                        # If the upload happened before the broadcast time, the WP post
+                        # was created with status='future'. Mark it so _check_wp_posts
+                        # can flip it to 'publish' once the air time passes.
+                        try:
+                            _bcast_dt = datetime.fromisoformat(s.get('scheduled_time', ''))
+                            if _bcast_dt > datetime.now():
+                                s['wp_future_pending'] = True
+                        except Exception:
+                            pass
                     else:
                         # Podbean OK but WP creation failed — flag for retry
                         s['wp_post_missing'] = True
