@@ -1223,9 +1223,32 @@ def _do_podbean_wp_upload(show):
         publish_ts = str(int(_pub_dt.timestamp()))
     else:
         publish_ts = str(int(broadcast_dt.timestamp()))
+    # ── Convert WAV → MP3 before upload to avoid huge files timing out ──────────
+    upload_path   = file_path
+    upload_name   = show.get('original_name', 'show.mp3')
+    _tmp_mp3      = None
+    if file_path.lower().endswith('.wav'):
+        _tmp_mp3 = file_path[:-4] + '_upload.mp3'
+        try:
+            print(f"[Upload] Converting WAV→MP3 for upload: {os.path.basename(file_path)}", flush=True)
+            _conv = subprocess.run(
+                ['ffmpeg', '-y', '-i', file_path, '-codec:a', 'libmp3lame',
+                 '-qscale:a', '2', '-ar', '44100', '-ac', '2', _tmp_mp3],
+                capture_output=True, timeout=600
+            )
+            if _conv.returncode == 0 and os.path.exists(_tmp_mp3):
+                upload_path = _tmp_mp3
+                upload_name = os.path.splitext(upload_name)[0] + '.mp3'
+                print(f"[Upload] Converted to MP3: {os.path.getsize(_tmp_mp3)//1024//1024}MB", flush=True)
+            else:
+                print(f"[Upload] WAV→MP3 conversion failed, using original WAV", flush=True)
+                _tmp_mp3 = None
+        except Exception as _ce:
+            print(f"[Upload] WAV→MP3 conversion error: {_ce} — using original WAV", flush=True)
+            _tmp_mp3 = None
     try:
-        with open(file_path, 'rb') as f:
-            files  = {'audioFile': (show.get('original_name', 'show.mp3'), f, 'audio/mpeg')}
+        with open(upload_path, 'rb') as f:
+            files  = {'audioFile': (upload_name, f, 'audio/mpeg')}
             data   = {
                 'showName':        show_cfg['name'],
                 'broadcaster':     broadcaster,
@@ -1241,7 +1264,7 @@ def _do_podbean_wp_upload(show):
                 'skipWP':          '1' if show.get('skip_wp') else '0',
             }
             resp = _requests.post(
-                UPLOADER_URL, files=files, data=data, timeout=300, stream=True,
+                UPLOADER_URL, files=files, data=data, timeout=600, stream=True,
                 cookies={'auth': _UPLOADER_AUTH}
             )
             if resp.status_code != 200:
