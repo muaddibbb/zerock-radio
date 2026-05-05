@@ -1839,21 +1839,27 @@ def _check_wp_posts(schedule):
     changed = False
 
     # ── Pass 1: flip WP 'future' posts to 'publish' ──────────────────────────
-    future_pending = [
+    # Scan ALL recent queue_to_broadcast episodes that have a wp_post_id and
+    # aired in the past 3 days — no flag needed.  Also catches episodes created
+    # before wp_future_pending tracking was introduced.
+    cutoff_past  = datetime.now() - timedelta(days=3)
+    cutoff_early = datetime.now() - timedelta(minutes=10)   # must have aired
+    future_candidates = [
         s for s in schedule
-        if s.get('wp_future_pending') and s.get('wp_post_id')
+        if (s.get('wp_post_id')
+            and s.get('upload_done')
+            and s.get('mode') == 'queue_to_broadcast'
+            and not s.get('is_rerun')
+            and not s.get('auto_rerun')
+            and not s.get('upload_failed'))
+        and _safe_dt(s.get('scheduled_time')) is not None
+        and cutoff_past <= _safe_dt(s.get('scheduled_time')) <= cutoff_early
     ]
-    if future_pending:
-        print(f"[WP-Check] {len(future_pending)} post(s) with wp_future_pending — checking…", flush=True)
+    if future_candidates:
+        print(f"[WP-Check] Verifying {len(future_candidates)} recent post(s) for future→publish…", flush=True)
         _creds = _b64.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
         _hdrs = {'Authorization': f'Basic {_creds}', 'Content-Type': 'application/json'}
-        for show in future_pending:
-            try:
-                bcast_dt = datetime.fromisoformat(show['scheduled_time'])
-            except Exception:
-                continue
-            if bcast_dt > datetime.now() - timedelta(minutes=10):
-                continue   # not aired yet — too early to publish
+        for show in future_candidates:
             wp_id = show['wp_post_id']
             try:
                 resp = _requests.get(
@@ -1864,31 +1870,31 @@ def _check_wp_posts(schedule):
                     print(f"[WP-Check] Could not fetch post {wp_id}: HTTP {resp.status_code}", flush=True)
                     continue
                 wp_status = resp.json().get('status', '')
-                if wp_status == 'publish':
-                    # Already published (wp-cron fired) — just clear our flag
-                    print(f"[WP-Check] Post {wp_id} already published — clearing flag", flush=True)
-                elif wp_status == 'future':
+                if wp_status == 'future':
                     upd = _requests.post(
                         f"{WP_URL}/wp-json/wp/v2/episodes/{wp_id}",
                         json={'status': 'publish'}, headers=_hdrs, timeout=15
                     )
                     if upd.status_code in (200, 201):
                         print(f"[WP-Check] ✓ Published future post {wp_id} for '{show.get('name')}'", flush=True)
+                        changed = True
                     else:
                         print(f"[WP-Check] ✗ Failed to publish post {wp_id}: HTTP {upd.status_code}", flush=True)
-                        continue   # don't clear flag — retry next time
+                elif wp_status == 'publish':
+                    pass   # already good — clear pending flag if set
                 else:
-                    print(f"[WP-Check] Post {wp_id} status={wp_status!r} — clearing flag", flush=True)
+                    print(f"[WP-Check] Post {wp_id} status={wp_status!r} — skipping", flush=True)
+                    continue
 
-                # Clear the flag
-                with _schedule_lock:
-                    sched = load_schedule()
-                    for s in sched:
-                        if s.get('id') == show['id']:
-                            s.pop('wp_future_pending', None)
-                            break
-                    save_schedule(sched)
-                changed = True
+                # Clear wp_future_pending flag if present
+                if show.get('wp_future_pending'):
+                    with _schedule_lock:
+                        sched = load_schedule()
+                        for s in sched:
+                            if s.get('id') == show['id']:
+                                s.pop('wp_future_pending', None)
+                                break
+                        save_schedule(sched)
             except Exception as e:
                 print(f"[WP-Check] Error checking post {wp_id}: {e}", flush=True)
 
