@@ -1068,6 +1068,15 @@ def _create_wp_post_direct(show) -> tuple:
                         save_schedule(sched)
                 except Exception as _fe:
                     print(f"[WP-Direct] Could not set wp_future_pending: {_fe}", flush=True)
+            # ── Post-creation verification (60s delay to let WP settle) ────────
+            _v_wp_id   = wp_id
+            _v_name    = show_name
+            _v_bcast   = broadcast_dt
+            _v_podbean = podbean_permalink or ''
+            def _run_direct_verify():
+                time.sleep(60)
+                _verify_and_fix_wp_post(_v_wp_id, _v_name, _v_bcast, _v_podbean)
+            threading.Thread(target=_run_direct_verify, daemon=True).start()
             return True, wp_id
         else:
             print(f"[WP-Direct] HTTP {resp.status_code}: {resp.text[:300]}", flush=True)
