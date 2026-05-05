@@ -3745,6 +3745,7 @@ def api_shows():
             'upload_time':  s['upload_time'],
             'has_rerun':    s['rerun_days_offset'] is not None,
             'no_podbean':   s.get('no_podbean', False),
+            'no_wp':        s.get('no_wp', False),
             'next_broadcast': broadcast_dt.isoformat() if broadcast_dt else None,
             'next_upload':    upload_dt.isoformat()    if upload_dt    else None,
             'next_rerun':     rerun_dt.isoformat()     if rerun_dt     else None,
