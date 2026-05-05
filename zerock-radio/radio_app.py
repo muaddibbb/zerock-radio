@@ -217,7 +217,7 @@ SHOW_SCHEDULE = [
     {'key': 'beat_on',              'name': 'Beat-On מקומי',       'broadcaster': 'יובל ביטון',   'day': 3,    'time': '15:00', 'upload_time': '16:00', 'rerun_days_offset': 4,    'rerun_time': '10:00','wp_show_id': ''},
     {'key': 'stage_dive',           'name': 'Stage Dive',          'broadcaster': 'עדן גולן',     'day': 3,    'time': '18:00', 'upload_time': '19:00', 'rerun_days_offset': 3,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'erev_albumim',         'name': 'ערב של אלבומים',      'broadcaster': '',              'day': 4,    'time': '17:00', 'upload_time': '17:00', 'rerun_days_offset': None,  'rerun_time': None,  'wp_show_id': '', 'no_podbean': True},
-    {'key': 'matzad_harok',         'name': 'מצעד הרוק של ישראל', 'broadcaster': '',              'day': 3,    'time': '13:00', 'upload_time': '13:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': '', 'no_podbean': True},
+    {'key': 'matzad_harok',         'name': 'מצעד הרוק של ישראל', 'broadcaster': '',              'day': 3,    'time': '13:00', 'upload_time': '15:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': '', 'no_wp': True},
 ]
 
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
