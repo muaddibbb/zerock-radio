@@ -2095,6 +2095,36 @@ def _check_wp_posts(schedule):
             changed = True
         else:
             print(f"[WP-Check] ✗ Still failed for '{show.get('name')}' — will retry later", flush=True)
+
+    # ── Pass 3: verify ALL recent posts for missing taxonomy/media/date/podbean ──
+    # This is the safety net — catches anything missed at upload time.
+    # Runs on every show with a wp_post_id that aired within the last 3 days.
+    verify_candidates = [
+        s for s in schedule
+        if (s.get('wp_post_id')
+            and s.get('upload_done')
+            and s.get('mode') == 'queue_to_broadcast'
+            and not s.get('is_rerun')
+            and not s.get('auto_rerun')
+            and not s.get('upload_failed'))
+        and _safe_dt(s.get('scheduled_time')) is not None
+        and cutoff_past <= _safe_dt(s.get('scheduled_time')) <= datetime.now()
+    ]
+    # Deduplicate by wp_post_id (multiple schedule entries may share one post)
+    seen_wp_ids = set()
+    for show in verify_candidates:
+        wp_id = show.get('wp_post_id')
+        if wp_id in seen_wp_ids:
+            continue
+        seen_wp_ids.add(wp_id)
+        show_cfg_v = next((sc for sc in SHOW_SCHEDULE if sc['key'] == show.get('show_key')), None)
+        show_name_v = show_cfg_v['name'] if show_cfg_v else show.get('name', '')
+        try:
+            bcast_v = datetime.fromisoformat(show['scheduled_time'])
+        except Exception:
+            bcast_v = None
+        _verify_and_fix_wp_post(wp_id, show_name_v, bcast_v, show.get('podbean_url', ''))
+
     return changed
 
 
