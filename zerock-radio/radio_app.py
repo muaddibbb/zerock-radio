@@ -995,6 +995,9 @@ def _create_wp_post_direct(show) -> tuple:
         if not show_cfg:
             print(f"[WP-Direct] Unknown show_key: {show.get('show_key')}", flush=True)
             return False, None
+        if show_cfg.get('no_wp'):
+            print(f"[WP-Direct] Skipping WP post for '{show_cfg['name']}' (no_wp=True)", flush=True)
+            return False, None
         show_name  = show_cfg['name']
         broadcaster = (show.get('broadcaster') or show_cfg.get('broadcaster', ''))
         broadcast_dt = datetime.fromisoformat(show['scheduled_time'])
