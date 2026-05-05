@@ -1113,6 +1113,15 @@ def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbe
     import base64 as _b64_v
     if not WP_USERNAME or not WP_APP_PASS or not wp_post_id:
         return False
+    # Normalise show_name: if it carries a broadcaster suffix ("ShowName — Broadcaster")
+    # strip it so _WP_SHOW_IDS / _WP_FEATURED_IMAGES lookups work correctly.
+    _canon_name = show_name
+    if ' — ' in show_name or ' - ' in show_name:
+        _sep = ' — ' if ' — ' in show_name else ' - '
+        _base = show_name.split(_sep)[0].strip()
+        if _base in _WP_SHOW_IDS or _base in _WP_FEATURED_IMAGES:
+            _canon_name = _base
+    show_name = _canon_name   # use canonical name for all lookups below
     # Skip WP verification for shows that should never have a WP post
     _scfg_v = next((s for s in SHOW_SCHEDULE if s['name'] == show_name), None)
     if _scfg_v and _scfg_v.get('no_wp'):
