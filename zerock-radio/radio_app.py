@@ -245,6 +245,20 @@ def _calc_upload_dt(broadcast_dt, show_cfg):
     h, m = map(int, show_cfg['upload_time'].split(':'))
     return broadcast_dt.replace(hour=h, minute=m, second=0, microsecond=0)
 
+def _upload_time_reached(show, show_cfg=None) -> bool:
+    """Return True if the upload_time for this show has passed (safe to upload now).
+    If no upload_time restriction, always returns True."""
+    if show_cfg is None:
+        show_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == show.get('show_key')), None)
+    if not show_cfg or not show_cfg.get('upload_time'):
+        return True
+    try:
+        broadcast_dt = datetime.fromisoformat(show['scheduled_time'])
+        upload_dt    = _calc_upload_dt(broadcast_dt, show_cfg)
+        return datetime.now() >= upload_dt
+    except Exception:
+        return True   # on parse error, don't block
+
 def _calc_rerun_dt(broadcast_dt, show_cfg):
     if show_cfg['rerun_days_offset'] is None:
         return None
