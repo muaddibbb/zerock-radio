@@ -1305,6 +1305,13 @@ def _do_podbean_wp_upload(show):
     except Exception as e:
         print(f"[Upload] Error: {e}", flush=True)
         return False, None, None
+    finally:
+        # Clean up temp MP3 if we created one
+        if _tmp_mp3 and os.path.exists(_tmp_mp3):
+            try:
+                os.remove(_tmp_mp3)
+            except Exception:
+                pass
 
 def _upload_and_mark_done(show_id):
     """Run upload in background thread; update schedule with result (success or retry)."""
