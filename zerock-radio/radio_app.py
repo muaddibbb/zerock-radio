@@ -1304,7 +1304,17 @@ def _upload_and_mark_done(show_id):
                             if _bcast_dt > datetime.now():
                                 s['wp_future_pending'] = True
                         except Exception:
-                            pass
+                            _bcast_dt = None
+                        # ── Verify & auto-fix WP post fields (60s delay to let WP settle) ──
+                        _verify_show_name = s.get('name', '')
+                        _verify_podbean   = podbean_url or ''
+                        _verify_bcast     = _bcast_dt
+                        _verify_wp_id     = wp_post_id
+                        def _run_verify():
+                            time.sleep(60)
+                            _verify_and_fix_wp_post(_verify_wp_id, _verify_show_name,
+                                                    _verify_bcast, _verify_podbean)
+                        threading.Thread(target=_run_verify, daemon=True).start()
                     else:
                         # Podbean OK but WP creation failed — flag for retry
                         s['wp_post_missing'] = True
