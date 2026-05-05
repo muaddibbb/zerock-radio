@@ -1287,7 +1287,7 @@ def _do_podbean_wp_upload(show):
                 'wpBroadcasterId': '',
                 'scheduleToSam':   '0',
                 'samOnly':         '0',
-                'skipWP':          '1' if show.get('skip_wp') else '0',
+                'skipWP':          '1' if (show.get('skip_wp') or show_cfg.get('no_wp')) else '0',
             }
             resp = _requests.post(
                 UPLOADER_URL, files=files, data=data, timeout=600, stream=True,
