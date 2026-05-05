@@ -1314,22 +1314,33 @@ def _update_podbean_title(podbean_url, new_title):
 
 
 def _publish_wp_post(show_id, wp_post_id=None, show_name=None, broadcast_date=None):
-    """Explicitly PATCH a WP episode post to 'publish' at air time, bypassing wp-cron.
+    """Explicitly publish a WP episode post to 'publish' at air time, bypassing wp-cron.
+    Calls the WP REST API directly — does NOT go through the uploader server.
     If no wp_post_id exists, falls back to creating a new post directly via REST API."""
+    import base64 as _b64
     try:
         if wp_post_id:
-            # Post exists — ask uploader to publish it (handles the future→publish transition)
-            payload = {'wp_post_id': wp_post_id}
+            # Call WP REST API directly to flip status to 'publish'
+            _creds = _b64.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
+            _hdrs  = {'Authorization': f'Basic {_creds}', 'Content-Type': 'application/json'}
             resp = _requests.post(
-                f"{UPLOADER_BASE_URL}/api/wp-publish",
-                json=payload, timeout=30,
-                cookies={'auth': _UPLOADER_AUTH}
+                f"{WP_URL}/wp-json/wp/v2/episodes/{wp_post_id}",
+                json={'status': 'publish'}, headers=_hdrs, timeout=30
             )
-            data = resp.json() if resp.content else {}
-            if resp.status_code == 200 and data.get('ok'):
-                print(f"[WP] Published post {data.get('post_id') or wp_post_id} → {data.get('link','')}", flush=True)
+            if resp.status_code in (200, 201):
+                data = resp.json()
+                print(f"[WP] Published post {wp_post_id} → {data.get('link','')} "
+                      f"(status={data.get('status')})", flush=True)
+                # Clear wp_future_pending flag if set
+                with _schedule_lock:
+                    sched = load_schedule()
+                    for s in sched:
+                        if s.get('id') == show_id:
+                            s.pop('wp_future_pending', None)
+                            break
+                    save_schedule(sched)
             else:
-                print(f"[WP] Publish returned {resp.status_code}: {data.get('error', resp.text[:200])}", flush=True)
+                print(f"[WP] Publish returned {resp.status_code}: {resp.text[:200]}", flush=True)
         else:
             # No WP post exists — create one directly via REST API
             with _schedule_lock:
