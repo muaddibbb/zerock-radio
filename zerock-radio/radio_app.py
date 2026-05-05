@@ -1283,7 +1283,7 @@ def _do_podbean_wp_upload(show):
                 'episodeNumber':   show.get('episode_num', ''),
                 'playlist':        show.get('description', ''),
                 'publishTimestamp': publish_ts,
-                'wpShowId':        show_cfg.get('wp_show_id', ''),
+                'wpShowId':        str(_WP_SHOW_IDS.get(show_cfg['name'], '')) or show_cfg.get('wp_show_id', ''),
                 'wpBroadcasterId': '',
                 'scheduleToSam':   '0',
                 'samOnly':         '0',
