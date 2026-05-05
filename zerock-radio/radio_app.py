@@ -2152,7 +2152,8 @@ def scheduler_loop():
                             _scfg_wp  = next((s for s in SHOW_SCHEDULE if s['key'] == _skey_wp), None)
                             _skip_wp  = (_skey_wp in NEVER_UPLOAD_SHOWS
                                          or show.get('mode') == 'queue_only'
-                                         or (_scfg_wp and _scfg_wp.get('no_podbean')))
+                                         or (_scfg_wp and _scfg_wp.get('no_podbean'))
+                                         or (_scfg_wp and _scfg_wp.get('no_wp')))
                             if not show.get('is_rerun') and not show.get('wp_published') and not _skip_wp:
                                 wp_id   = show.get('wp_post_id')
                                 sname   = show.get('show_key', '')
