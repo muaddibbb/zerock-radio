@@ -2196,12 +2196,18 @@ def scheduler_loop():
                     try:
                         added_at = datetime.fromisoformat(show['added_at'])
                         if now >= added_at + timedelta(minutes=5):
-                            print(f"[Scheduler] Podbean/WP retry upload for '{show['name']}'")
-                            show['upload_in_progress'] = True
-                            changed = True
-                            threading.Thread(
-                                target=_upload_and_mark_done, args=(show['id'],), daemon=True
-                            ).start()
+                            # Respect upload_time gate — don't upload before the configured time
+                            if not _upload_time_reached(show):
+                                _show_cfg_ut = next((s for s in SHOW_SCHEDULE if s['key'] == show.get('show_key')), None)
+                                _ut = _show_cfg_ut.get('upload_time', '?') if _show_cfg_ut else '?'
+                                print(f"[Scheduler] '{show['name']}' upload held — waiting until {_ut}", flush=True)
+                            else:
+                                print(f"[Scheduler] Podbean/WP retry upload for '{show['name']}'")
+                                show['upload_in_progress'] = True
+                                changed = True
+                                threading.Thread(
+                                    target=_upload_and_mark_done, args=(show['id'],), daemon=True
+                                ).start()
                     except Exception as e:
                         print(f"[Scheduler] Upload trigger error: {e}")
 
