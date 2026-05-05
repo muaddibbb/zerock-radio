@@ -3959,15 +3959,21 @@ def api_add_show():
 
     # Immediately upload to Podbean/WP for queue_to_broadcast (non-album, non-playlist, non-manual) shows
     if mode == 'queue_to_broadcast' and not is_album and not is_playlist and not manual_schedule:
-        with _schedule_lock:
-            schedule = load_schedule()
-            for s in schedule:
-                if s['id'] == show_id:
-                    s['upload_in_progress'] = True
-                    break
-            save_schedule(schedule)
-        threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
-        print(f"[Schedule] Upload thread started for '{name}'")
+        # Respect upload_time gate — hold upload until configured time (e.g. מצעד הרוק at 15:00)
+        _show_entry_for_gate = next((s for s in load_schedule() if s['id'] == show_id), {})
+        if not _upload_time_reached(_show_entry_for_gate, show_cfg):
+            _ut_str = show_cfg.get('upload_time', '?')
+            print(f"[Schedule] '{name}' upload held — will fire at {_ut_str} (upload_time not yet reached)", flush=True)
+        else:
+            with _schedule_lock:
+                schedule = load_schedule()
+                for s in schedule:
+                    if s['id'] == show_id:
+                        s['upload_in_progress'] = True
+                        break
+                save_schedule(schedule)
+            threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
+            print(f"[Schedule] Upload thread started for '{name}'")
 
     print(f"[Schedule] Queued '{name}' for {broadcast_dt.isoformat()} — {original_name}")
     return jsonify({'success': True, 'show': show})
