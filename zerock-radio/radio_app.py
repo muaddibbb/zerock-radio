@@ -1113,6 +1113,11 @@ def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbe
     import base64 as _b64_v
     if not WP_USERNAME or not WP_APP_PASS or not wp_post_id:
         return False
+    # Skip WP verification for shows that should never have a WP post
+    _scfg_v = next((s for s in SHOW_SCHEDULE if s['name'] == show_name), None)
+    if _scfg_v and _scfg_v.get('no_wp'):
+        print(f"[WP-Verify] Skipping verification for '{show_name}' (no_wp=True)", flush=True)
+        return True
     try:
         _creds = _b64_v.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
         _hdrs  = {'Authorization': f'Basic {_creds}', 'Content-Type': 'application/json'}
