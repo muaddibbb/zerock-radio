@@ -1077,6 +1077,91 @@ def _create_wp_post_direct(show) -> tuple:
         return False, None
 
 
+def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbean_url: str = '') -> bool:
+    """Check a WP episode post for missing required fields and auto-fix what we can.
+    Returns True if all fields OK (or fixed), False if anything remains broken."""
+    import base64 as _b64_v
+    if not WP_USERNAME or not WP_APP_PASS or not wp_post_id:
+        return False
+    try:
+        _creds = _b64_v.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
+        _hdrs  = {'Authorization': f'Basic {_creds}', 'Content-Type': 'application/json'}
+
+        # ── 1. Fetch current post state ──────────────────────────────────────────
+        resp = _requests.get(f"{WP_URL}/wp-json/wp/v2/episodes/{wp_post_id}",
+                             headers=_hdrs, timeout=15)
+        if resp.status_code != 200:
+            print(f"[WP-Verify] Could not fetch post {wp_post_id}: HTTP {resp.status_code}", flush=True)
+            return False
+        post = resp.json()
+        acf  = post.get('acf', {}) or {}
+
+        fixes = {}   # accumulated PATCH payload
+        issues = []  # human-readable list for logging
+
+        # ── 2. status: must be 'publish' once broadcast time has passed ──────────
+        if post.get('status') == 'future' and broadcast_dt and broadcast_dt <= datetime.now():
+            fixes['status'] = 'publish'
+            issues.append('status=future→publish')
+
+        # ── 3. featured_media ────────────────────────────────────────────────────
+        if not post.get('featured_media'):
+            fi = _WP_FEATURED_IMAGES.get(show_name)
+            if fi:
+                fixes['featured_media'] = fi
+                issues.append(f'featured_media={fi}')
+
+        # ── 4. shows taxonomy ────────────────────────────────────────────────────
+        if not post.get('shows'):
+            sid = _WP_SHOW_IDS.get(show_name)
+            if sid:
+                fixes['shows'] = [sid]
+                issues.append(f'shows=[{sid}]')
+
+        # ── 5. ACF date ──────────────────────────────────────────────────────────
+        if not acf.get('date') and broadcast_dt:
+            if 'acf' not in fixes:
+                fixes['acf'] = {}
+            fixes['acf']['date'] = broadcast_dt.strftime('%Y%m%d')
+            issues.append(f'date={broadcast_dt.strftime("%Y%m%d")}')
+
+        # ── 6. podbean_link ──────────────────────────────────────────────────────
+        if not acf.get('podbean_link'):
+            media_url = None
+            # Try resolving from the passed podbean permalink first
+            if podbean_url and podbean_url.startswith('http'):
+                media_url = _get_podbean_media_url(podbean_url) if 'podbean.com' in podbean_url else None
+                if not media_url and podbean_url.startswith('https://mcdn.podbean.com'):
+                    media_url = podbean_url   # already a CDN URL
+            # Fallback: search Podbean API by show name
+            if not media_url:
+                media_url, _ep_title = _get_latest_podbean_episode_for_show(show_name)
+            if media_url:
+                if 'acf' not in fixes:
+                    fixes['acf'] = {}
+                fixes['acf']['podbean_link'] = media_url
+                issues.append(f'podbean_link set')
+            else:
+                issues.append('podbean_link MISSING (Podbean lookup failed)')
+
+        if not fixes:
+            print(f"[WP-Verify] Post {wp_post_id} ({show_name}): all fields OK ✓", flush=True)
+            return True
+
+        # ── 7. Apply fixes in one PATCH ──────────────────────────────────────────
+        patch = _requests.post(f"{WP_URL}/wp-json/wp/v2/episodes/{wp_post_id}",
+                               json=fixes, headers=_hdrs, timeout=20)
+        if patch.status_code in (200, 201):
+            print(f"[WP-Verify] Post {wp_post_id} ({show_name}): fixed [{', '.join(issues)}] ✓", flush=True)
+            return 'podbean_link MISSING' not in ' '.join(issues)
+        else:
+            print(f"[WP-Verify] Post {wp_post_id}: PATCH failed HTTP {patch.status_code}: {patch.text[:200]}", flush=True)
+            return False
+    except Exception as e:
+        print(f"[WP-Verify] Post {wp_post_id} error: {e}", flush=True)
+        return False
+
+
 def _do_podbean_wp_upload(show):
     """POST show file + metadata to the uploader server for Podbean & WordPress."""
     # Use NAS copy only when fully written (nas_ready=True); otherwise use local file.
