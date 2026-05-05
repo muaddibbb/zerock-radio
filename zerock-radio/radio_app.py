@@ -2453,8 +2453,30 @@ def _queue_updater():
                         title_oa   = _get_metadata_field(meta_raw, 'title')
                         artist_oa  = _get_metadata_field(meta_raw, 'artist')
                         is_show    = bool(uri) and (LOCAL_TEMP in uri or NAS_TEMP in uri)
+                        raw_label  = label or (os.path.splitext(os.path.basename(uri))[0] if uri else '')
+                        # If label is a _seek_* file, resolve to scheduled show name
+                        if is_show and raw_label.startswith('_seek_'):
+                            try:
+                                _now_for_seek = datetime.now()
+                                _cutoff_seek  = _now_for_seek - timedelta(hours=6)
+                                _best_show    = None
+                                for _s in _schedule:
+                                    _ta = _s.get('triggered_at')
+                                    if not _ta:
+                                        continue
+                                    try:
+                                        _ta_dt = datetime.fromisoformat(_ta)
+                                    except Exception:
+                                        continue
+                                    if _ta_dt >= _cutoff_seek and _ta_dt <= _now_for_seek:
+                                        if _best_show is None or _ta_dt > datetime.fromisoformat(_best_show.get('triggered_at','')):
+                                            _best_show = _s
+                                if _best_show:
+                                    raw_label = _best_show.get('name') or _best_show.get('show_name') or raw_label
+                            except Exception:
+                                pass
                         on_air_info = {
-                            'label':  label or (os.path.splitext(os.path.basename(uri))[0] if uri else ''),
+                            'label':  raw_label,
                             'title':  title_oa,
                             'artist': artist_oa,
                             'uri':    uri,
