@@ -1820,6 +1820,13 @@ def _reload_jingle_source(reason=''):
 _last_wp_check        = 0.0   # epoch time of last WP post verification run
 _last_board_sync      = 0.0   # epoch time of last periodic WP board sync
 
+def _safe_dt(iso_str):
+    """Parse an ISO datetime string, returning None on failure."""
+    try:
+        return datetime.fromisoformat(iso_str) if iso_str else None
+    except Exception:
+        return None
+
 def _check_wp_posts(schedule):
     """Scan schedule for shows whose Podbean upload succeeded but WP post is missing,
     and for shows whose WP post was created with status='future' but air time has passed.
