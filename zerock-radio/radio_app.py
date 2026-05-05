@@ -1371,7 +1371,10 @@ def _upload_and_mark_done(show_id):
                         except Exception:
                             _bcast_dt = None
                         # ── Verify & auto-fix WP post fields (60s delay to let WP settle) ──
-                        _verify_show_name = s.get('name', '')
+                        # Use canonical show name from SHOW_SCHEDULE (not schedule entry name
+                        # which may include broadcaster suffix e.g. "פטרוק לילה — אלירן קטנוב")
+                        _scfg_v = next((sc for sc in SHOW_SCHEDULE if sc['key'] == s.get('show_key')), None)
+                        _verify_show_name = _scfg_v['name'] if _scfg_v else s.get('name', '')
                         _verify_podbean   = podbean_url or ''
                         _verify_bcast     = _bcast_dt
                         _verify_wp_id     = wp_post_id
