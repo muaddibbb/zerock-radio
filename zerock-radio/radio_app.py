@@ -5613,6 +5613,72 @@ def api_poll_list():
     } for p in polls])
 
 
+@app.route('/api/polls/history')
+def api_polls_history():
+    """Admin: all past polls with final ranked results (newest first)."""
+    import random as _rng
+    polls      = _load_polls()
+    all_votes  = _load_poll_votes()
+    now        = datetime.now()
+
+    def _sort_key(p):
+        for k in ('closes_at', 'created_at', 'opens_at'):
+            v = p.get(k)
+            if v:
+                try: return datetime.fromisoformat(v)
+                except Exception: pass
+        return datetime.min
+
+    result = []
+    for poll in sorted(polls, key=_sort_key, reverse=True):
+        is_current = _poll_is_open(poll, now)
+
+        # Use existing snapshot if available, else compute from votes
+        snap = poll.get('public_snapshot')
+        if snap:
+            ranked = snap.get('results', [])
+            total  = snap.get('total_voters', 0)
+            taken_at = snap.get('taken_at', '')
+        else:
+            votes  = [v for v in all_votes if v['poll_id'] == poll['id']]
+            tally  = {s['id']: 0 for s in poll.get('songs', [])}
+            for v in votes:
+                for sid in (v.get('song_ids') or []):
+                    if sid in tally:
+                        tally[sid] += 1
+            ranked = sorted(
+                [{**s, 'votes': tally[s['id']], '_r': _rng.random()} for s in poll.get('songs', [])],
+                key=lambda x: (-x['votes'], x['_r'])
+            )
+            # Add movement
+            prev_pos   = poll.get('prev_positions') or {}
+            song_weeks = poll.get('song_weeks') or {}
+            for rank, song in enumerate(ranked, 1):
+                sid = song['id']
+                pp  = prev_pos.get(sid)
+                if pp is None or pp in ('new', 'palash'):
+                    song['movement'] = 'new'
+                else:
+                    delta = int(pp) - rank
+                    song['movement'] = f'+{delta}' if delta > 0 else (str(delta) if delta < 0 else '0')
+                song['weeks'] = song_weeks.get(sid)
+            total    = len(votes)
+            taken_at = poll.get('closes_at', '')
+
+        result.append({
+            'id':         poll['id'],
+            'title':      poll.get('title', ''),
+            'closes_at':  poll.get('closes_at', ''),
+            'opens_at':   poll.get('opens_at', ''),
+            'is_current': is_current,
+            'total_voters': total,
+            'taken_at':   taken_at,
+            'results':    ranked,
+        })
+
+    return jsonify(result)
+
+
 @app.route('/api/polls/<poll_id>/results')
 def api_poll_results(poll_id):
     """Admin: tally per song."""
