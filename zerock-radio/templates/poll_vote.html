@@ -182,7 +182,8 @@
 
   <form id="vote-form" onsubmit="submitVote(event)">
 
-    <!-- ── Email verification ── -->
+    <!-- ── Email verification (only when poll is open) ── -->
+    {% if poll.open %}
     <div id="email-verify-section">
 
       <!-- Step 1: name + email input -->
