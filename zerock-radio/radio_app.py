@@ -1397,9 +1397,6 @@ def _upload_and_mark_done(show_id):
                         s['wp_post_missing'] = True
                         print(f"[Upload] ⚠ WP post missing for '{show.get('name')}' — flagged for retry", flush=True)
                     print(f"[Upload] Complete: '{show.get('name')}' wp_post_id={wp_post_id}", flush=True)
-                    # ── Public chart snapshot: freeze results when matzad uploads ──
-                    if show.get('show_key') == 'matzad_harok':
-                        threading.Thread(target=_take_public_snapshot, daemon=True).start()
                 else:
                     attempts = s.get('upload_attempts', 0) + 1
                     s['upload_attempts'] = attempts
