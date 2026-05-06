@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תוצאות המצעד האחרון</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414; color: #f0f0f0; min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .wrap {
+      max-width: 820px; margin: 0 auto;
+      background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 14px;
+      padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 1.45em; color: #e63946; margin-bottom: 4px; text-align: center; }
+    .subtitle {
+      color: #888; font-size: 0.88em; text-align: center; margin-bottom: 10px;
+    }
+    .snapshot-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #1a2a3a; color: #5bc8f5; border: 1px solid #2a4a6a;
+      border-radius: 20px; padding: 4px 14px; font-size: 0.8em; font-weight: bold;
+      width: fit-content; margin: 0 auto 18px; display: flex; justify-content: center;
+    }
+
+    /* summary bar */
+    .summary-bar {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .summary-chip {
+      background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.88em; color: #bbb; text-align: center;
+    }
+    .summary-chip strong { color: #f0f0f0; font-size: 1.1em; display: block; }
+
+    /* result row */
+    .result-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; margin-bottom: 5px;
+      background: #141414; border: 1px solid #2c2c2c; border-radius: 9px;
+      transition: border-color 0.15s;
+      position: relative; overflow: hidden;
+    }
+    .result-row.top3 { border-color: #3a3020; }
+
+    .fill-bar {
+      position: absolute; inset: 0; right: auto;
+      background: rgba(230,57,70,0.07);
+      border-radius: 9px 0 0 9px;
+      transition: width 0.6s ease;
+    }
+    .result-row.top3 .fill-bar { background: rgba(230,200,70,0.07); }
+
+    .rank {
+      flex-shrink: 0; width: 30px; text-align: center;
+      font-size: 0.9em; font-weight: bold; color: #888;
+      position: relative; z-index: 1;
+    }
+    .rank.gold   { color: #ffd700; font-size: 1.1em; }
+    .rank.silver { color: #c0c0c0; font-size: 1.05em; }
+    .rank.bronze { color: #cd7f32; font-size: 1.0em; }
+
+    .movement {
+      flex-shrink: 0; width: 52px; text-align: center;
+      font-size: 0.78em; font-weight: bold;
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .mv-up   { color: #4caf50; }
+    .mv-down { color: #e63946; }
+    .mv-same { color: #666; font-size: 1.0em; }
+    .mv-new  {
+      color: #f0a500; font-size: 0.68em; line-height: 1.2;
+      white-space: nowrap; font-weight: bold;
+    }
+    .mv-arrow { font-size: 1.1em; line-height: 1; }
+    .mv-num   { font-size: 0.88em; }
+
+    .song-info {
+      flex: 1; min-width: 0; position: relative; z-index: 1;
+    }
+    .song-name {
+      font-size: 0.93em; word-break: break-word;
+    }
+    .special-badge {
+      display: inline-block; font-size: 0.62em; font-weight: 700;
+      padding: 1px 6px; border-radius: 4px; margin-right: 5px;
+      vertical-align: middle; white-space: nowrap; line-height: 1.6;
+    }
+    .badge-aliya  { background: rgba(76,175,80,0.18);  color: #4caf50; border: 1px solid rgba(76,175,80,0.35); }
+    .badge-yerida { background: rgba(230,57,70,0.15);  color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
+    .badge-vatik  { background: rgba(180,140,60,0.18); color: #c8a84b; border: 1px solid rgba(180,140,60,0.35); }
+
+    .bar-track {
+      height: 4px; background: #2a2a2a; border-radius: 2px; margin-top: 5px;
+    }
+    .bar-fill {
+      height: 4px; background: #e63946; border-radius: 2px;
+      transition: width 0.6s ease; width: 0;
+    }
+    .result-row.top3 .bar-fill { background: #ffd700; }
+
+    .vote-count {
+      flex-shrink: 0; text-align: center; min-width: 48px;
+      position: relative; z-index: 1;
+    }
+    .vote-num {
+      font-size: 1.1em; font-weight: bold; color: #e63946;
+    }
+    .result-row.top3 .vote-num { color: #ffd700; }
+    .vote-label { font-size: 0.7em; color: #666; }
+
+    .listen-btn {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 6px;
+      text-decoration: none; font-size: 0.95em;
+      transition: transform 0.1s, opacity 0.1s;
+      position: relative; z-index: 1;
+    }
+    .listen-btn:hover { transform: scale(1.1); }
+    .listen-spotify { background: #1db954; color: #000; }
+    .listen-youtube { background: #ff0000; color: #fff; }
+
+    .weeks-badge {
+      flex-shrink: 0; min-width: 36px; text-align: center;
+      position: relative; z-index: 1;
+    }
+    .weeks-num   { font-size: 0.92em; font-weight: bold; color: #aaa; line-height: 1; }
+    .weeks-label { font-size: 0.62em; color: #555; white-space: nowrap; }
+
+    .section-header {
+      text-align: center; font-size: 0.75em; color: #666; text-transform: uppercase;
+      letter-spacing: 0.06em; margin: 18px 0 8px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-header::before, .section-header::after {
+      content: ''; flex: 1; height: 1px; background: #2c2c2c;
+    }
+
+    /* legend */
+    .legend {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      font-size: 0.74em; color: #666; margin-bottom: 16px;
+    }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+
+    /* state screens */
+    .state-wrap { text-align: center; padding: 32px 16px; }
+    .state-icon { font-size: 3em; margin-bottom: 14px; }
+    .state-title { font-size: 1.3em; font-weight: bold; color: #e63946; margin-bottom: 10px; }
+    .state-sub { color: #888; font-size: 0.92em; line-height: 1.6; }
+    .next-open {
+      margin-top: 18px; display: inline-block; background: #1e2e1e;
+      border: 1px solid #2d4a2d; border-radius: 8px; padding: 10px 18px;
+      color: #4caf50; font-size: 0.85em;
+    }
+    .footer-note {
+      margin-top: 20px; text-align: center; font-size: 0.78em; color: #555;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div style="text-align:center;margin-bottom:16px">
+    <img src="/static/logo.png" alt="ZeRock Radio" style="height:52px;width:auto;opacity:0.9">
+  </div>
+  <h1>מצעד הרוק של ישראל</h1>
+  <div class="subtitle">תוצאות המצעד האחרון</div>
+
+{% if invalid %}
+  <div class="state-wrap">
+    <div class="state-icon">❌</div>
+    <div class="state-title">סקר לא נמצא</div>
+  </div>
+
+{% elif not in_window %}
+  <div class="state-wrap">
+    <div class="state-icon">🕐</div>
+    <div class="state-title">התוצאות יפורסמו ביום חמישי ב-15:00</div>
+    <div class="state-sub">
+      לאחר שידור המצעד, התוצאות יהיו פתוחות לצפייה עד יום רביעי ב-19:00<br>
+      ההצבעה לשבוע הבא כבר פתוחה!
+    </div>
+    <div class="next-open">📅 חמישי הקרוב · 15:00</div>
+  </div>
+
+{% elif not snapshot %}
+  <div class="state-wrap">
+    <div class="state-icon">⏳</div>
+    <div class="state-title">התוצאות עדיין לא פורסמו</div>
+    <div class="state-sub">חזרו לאחר שידור המצעד (יום חמישי, 13:00–15:00)</div>
+  </div>
+
+{% else %}
+  {# ── Main results view ── #}
+  {% set results    = snapshot.results %}
+  {% set matzad     = results | selectattr('group','equalto','matzad') | list %}
+  {% set palash     = results | selectattr('group','equalto','palash')  | list %}
+  {% set max_votes  = (results | map(attribute='votes') | max) if results else 0 %}
+  {% set total      = snapshot.total_voters %}
+
+  <div style="display:flex;justify-content:center;margin-bottom:14px">
+    <div class="snapshot-badge">
+      📋 תוצאות סופיות · {{ snapshot.taken_at[:10] if snapshot.taken_at else '' }}
+    </div>
+  </div>
+
+  <div class="summary-bar">
+    <div class="summary-chip"><strong>{{ total }}</strong>מצביעים</div>
+    <div class="summary-chip"><strong>{{ matzad | length }}</strong>שירים במצעד</div>
+    {% if palash %}<div class="summary-chip"><strong>{{ palash | length }}</strong>הפינה לשיפוטכם</div>{% endif %}
+  </div>
+
+  <div class="legend">
+    <span>🟢 <span class="mv-up">עלה</span></span>
+    <span>🔴 <span class="mv-down">ירד</span></span>
+    <span>🌟 חדש</span>
+    <span>— ➡ ללא שינוי</span>
+  </div>
+
+  {# ── Chart songs (top 20) ── #}
+  {% if matzad %}
+  <div class="section-header">המצעד השבועי — 20 הגדולים</div>
+  {% for i in range(matzad|length) %}
+    {% set song = matzad[i] %}
+    {% set rank = i + 1 %}
+    {% set pct  = ((song.votes / max_votes * 100) | int) if max_votes > 0 else 0 %}
+    {% set is_top3 = rank <= 3 %}
+    <div class="result-row {% if is_top3 %}top3{% endif %}">
+      <div class="fill-bar" style="width:{{ pct }}%"></div>
+
+      <div class="rank {% if rank==1 %}gold{% elif rank==2 %}silver{% elif rank==3 %}bronze{% endif %}">
+        {% if rank==1 %}🥇{% elif rank==2 %}🥈{% elif rank==3 %}🥉{% else %}{{ rank }}{% endif %}
+      </div>
+
+      <div class="movement">
+        {% set mv = song.movement %}
+        {% if mv == 'new' %}
+          <span class="mv-new">✦ חדש</span>
+        {% elif mv == '0' or mv == None %}
+          <span class="mv-same">—</span>
+        {% elif mv and mv.startswith('+') %}
+          <span class="mv-up"><span class="mv-arrow">▲</span><span class="mv-num">{{ mv[1:] }}</span></span>
+        {% elif mv and mv.startswith('-') %}
+          <span class="mv-down"><span class="mv-arrow">▼</span><span class="mv-num">{{ mv[1:] }}</span></span>
+        {% else %}
+          <span class="mv-same">—</span>
+        {% endif %}
+      </div>
+
+      <div class="song-info">
+        <div class="song-name">
+          {% if song.id == snapshot.badge_aliya_id %}
+            <span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>
+          {% elif song.id == snapshot.badge_yerida_id %}
+            <span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>
+          {% elif song.id == snapshot.badge_vatik_id %}
+            <span class="special-badge badge-vatik">⭐ השיר הותיק</span>
+          {% endif %}
+          {{ song.label }}
+        </div>
+        {% if max_votes > 0 %}
+        <div class="bar-track"><div class="bar-fill" data-pct="{{ pct }}"></div></div>
+        {% endif %}
+      </div>
+
+      {% if song.weeks %}
+      <div class="weeks-badge">
+        <div class="weeks-num">{{ song.weeks }}</div>
+        <div class="weeks-label">שבועות</div>
+      </div>
+      {% endif %}
+
+      <div class="vote-count">
+        <div class="vote-num">{{ song.votes }}</div>
+        <div class="vote-label">קולות</div>
+      </div>
+
+      {% if song.spotify_url %}
+        <a href="{{ song.spotify_url }}" target="_blank" class="listen-btn listen-spotify" title="Spotify">♫</a>
+      {% elif song.youtube_url %}
+        <a href="{{ song.youtube_url }}" target="_blank" class="listen-btn listen-youtube" title="YouTube">▶</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+  {% endif %}
+
+  {# ── הפינה לשיפוטכם ── #}
+  {% if palash %}
+  <div class="section-header">הפינה לשיפוטכם</div>
+  {% for i in range(palash|length) %}
+    {% set song = palash[i] %}
+    {% set rank = i + 1 %}
+    {% set pct  = ((song.votes / max_votes * 100) | int) if max_votes > 0 else 0 %}
+    <div class="result-row">
+      <div class="fill-bar" style="width:{{ pct }}%"></div>
+      <div class="rank">{{ rank }}</div>
+      <div class="movement">
+        <span class="mv-new" style="color:#888;font-size:0.7em">פל"ש</span>
+      </div>
+      <div class="song-info">
+        <div class="song-name">{{ song.label }}</div>
+        {% if max_votes > 0 %}
+        <div class="bar-track"><div class="bar-fill" data-pct="{{ pct }}"></div></div>
+        {% endif %}
+      </div>
+      <div class="vote-count">
+        <div class="vote-num" style="color:#aaa">{{ song.votes }}</div>
+        <div class="vote-label">קולות</div>
+      </div>
+      {% if song.spotify_url %}
+        <a href="{{ song.spotify_url }}" target="_blank" class="listen-btn listen-spotify" title="Spotify">♫</a>
+      {% elif song.youtube_url %}
+        <a href="{{ song.youtube_url }}" target="_blank" class="listen-btn listen-youtube" title="YouTube">▶</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="footer-note">
+    📻 רדיו זה רוק · מצעד הרוק של ישראל · כל יום חמישי 13:00–15:00
+  </div>
+{% endif %}
+
+</div>
+
+<script>
+  // Animate vote bars after load
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.bar-fill[data-pct]').forEach(el => {
+      el.style.width = el.dataset.pct + '%';
+    });
+  });
+</script>
+</body>
+</html>
