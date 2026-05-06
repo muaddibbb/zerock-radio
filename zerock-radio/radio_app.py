@@ -2206,12 +2206,19 @@ def scheduler_loop():
                                     bdate = None
                                 show_cfg_wp = next((s for s in SHOW_SCHEDULE if s['key'] == sname), None)
                                 wp_show_name = show_cfg_wp['name'] if show_cfg_wp else None
-                                threading.Thread(
-                                    target=_publish_wp_post,
-                                    args=(show['id'],),
-                                    kwargs={'wp_post_id': wp_id, 'show_name': wp_show_name, 'broadcast_date': bdate},
-                                    daemon=True
-                                ).start()
+                                # Only publish/create WP post at air time if one already exists
+                                # (flip future→publish) or the upload is already done.
+                                # If upload is still pending (time-gated), the upload thread
+                                # will create the WP post — creating one here causes duplicates.
+                                _upload_pending = (show.get('mode') == 'queue_to_broadcast'
+                                                   and not show.get('upload_done'))
+                                if wp_id or not _upload_pending:
+                                    threading.Thread(
+                                        target=_publish_wp_post,
+                                        args=(show['id'],),
+                                        kwargs={'wp_post_id': wp_id, 'show_name': wp_show_name, 'broadcast_date': bdate},
+                                        daemon=True
+                                    ).start()
                                 show['wp_published'] = True
 
                             # Auto-schedule rerun (only for first-broadcast shows with rerun info)
