@@ -156,6 +156,48 @@
     .footer-note a { color: #e63946; text-decoration: none; }
     .footer-note a:hover { text-decoration: underline; }
 
+    /* Palash song comment */
+    .palash-comment-row {
+      margin: -2px 0 6px 0;
+      padding: 0 10px 6px 10px;
+    }
+    .palash-comment-display {
+      font-size: 0.82em; color: #888; line-height: 1.5;
+      cursor: pointer; padding: 5px 8px;
+      border: 1px dashed transparent; border-radius: 6px;
+      transition: border-color 0.15s, background 0.15s;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    .palash-comment-display:hover {
+      border-color: #3a3a6a; background: rgba(60,60,120,0.08);
+    }
+    .palash-comment-display.empty { color: #555; font-style: italic; }
+    .palash-comment-edit {
+      display: none; position: relative;
+    }
+    .palash-comment-edit textarea {
+      width: 100%; background: #111; color: #e8e8e8;
+      border: 1px solid #4a4a8a; border-radius: 6px;
+      padding: 7px 10px; font-size: 0.82em; line-height: 1.5;
+      resize: vertical; min-height: 56px; outline: none;
+      font-family: inherit; direction: rtl;
+    }
+    .palash-comment-edit textarea:focus { border-color: #7777cc; }
+    .palash-comment-actions {
+      display: flex; gap: 6px; margin-top: 5px; justify-content: flex-start;
+    }
+    .btn-comment-save {
+      background: #4a4a9a; color: #fff; border: none; border-radius: 5px;
+      padding: 5px 14px; font-size: 0.8em; cursor: pointer; font-weight: 600;
+    }
+    .btn-comment-save:hover { background: #6060b8; }
+    .btn-comment-cancel {
+      background: transparent; color: #888; border: 1px solid #333; border-radius: 5px;
+      padding: 5px 12px; font-size: 0.8em; cursor: pointer;
+    }
+    .btn-comment-cancel:hover { color: #ccc; border-color: #555; }
+    .comment-status { font-size: 0.75em; color: #666; margin-top: 3px; }
+
     /* countdown */
     .countdown { color: #aaa; font-size: 0.82em; text-align: center; margin-bottom: 12px; }
 
