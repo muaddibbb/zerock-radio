@@ -3803,6 +3803,9 @@ def api_add_show():
     al_haroker_broadcaster   = request.form.get('al_haroker_broadcaster', '').strip()   # broadcaster for על הרוקר
     erev_albumim_broadcaster = request.form.get('erev_albumim_broadcaster', '').strip() # broadcaster for ערב של אלבומים
     mode                  = request.form.get('mode', 'queue_to_broadcast').strip()
+    # על הרוקר always uploads to Podbean/WP — never allow queue_only for this show.
+    if show_key == 'al_harocker':
+        mode = 'queue_to_broadcast'
     episode_num           = request.form.get('episode_num', '').strip()
     description           = request.form.get('description', '').strip()
     manual_schedule       = request.form.get('manual_schedule', '') == 'on'
