@@ -2048,20 +2048,38 @@ def _check_wp_posts(schedule):
                 if resp.status_code != 200:
                     print(f"[WP-Check] Could not fetch post {wp_id}: HTTP {resp.status_code}", flush=True)
                     continue
-                wp_status = resp.json().get('status', '')
+                post_data = resp.json()
+                wp_status = post_data.get('status', '')
+                # Always build a patch that re-asserts shows + featured_media
+                # in addition to the status flip — some WP hooks clear taxonomy
+                # on status transitions, so we send them together.
+                _scfg_chk = next((s for s in SHOW_SCHEDULE if s.get('key') == show.get('show_key')), None)
+                _tax_id   = _WP_SHOW_IDS.get(_scfg_chk['name']) if _scfg_chk else None
+                _feat_id  = _WP_FEATURED_IMAGES.get(_scfg_chk['name']) if _scfg_chk else None
+                patch_body = {}
                 if wp_status == 'future':
+                    patch_body['status'] = 'publish'
+                # Re-assert shows if missing or wrong
+                if _tax_id and post_data.get('shows') != [_tax_id]:
+                    patch_body['shows'] = [_tax_id]
+                # Re-assert featured_media if missing
+                if _feat_id and not post_data.get('featured_media'):
+                    patch_body['featured_media'] = _feat_id
+                if patch_body:
                     upd = _requests.post(
                         f"{WP_URL}/wp-json/wp/v2/episodes/{wp_id}",
-                        json={'status': 'publish'}, headers=_hdrs, timeout=15
+                        json=patch_body, headers=_hdrs, timeout=15
                     )
                     if upd.status_code in (200, 201):
-                        print(f"[WP-Check] ✓ Published future post {wp_id} for '{show.get('name')}'", flush=True)
-                        changed = True
+                        print(f"[WP-Check] ✓ Post {wp_id} patched {list(patch_body.keys())} for '{show.get('name')}'", flush=True)
+                        if 'status' in patch_body:
+                            changed = True
                     else:
-                        print(f"[WP-Check] ✗ Failed to publish post {wp_id}: HTTP {upd.status_code}", flush=True)
-                elif wp_status == 'publish':
-                    pass   # already good — clear pending flag if set
-                else:
+                        print(f"[WP-Check] ✗ Failed to patch post {wp_id}: HTTP {upd.status_code}", flush=True)
+                elif wp_status == 'future':
+                    print(f"[WP-Check] Post {wp_id} still future but no patch needed", flush=True)
+                    continue
+                elif wp_status not in ('publish', 'future'):
                     print(f"[WP-Check] Post {wp_id} status={wp_status!r} — skipping", flush=True)
                     continue
 
