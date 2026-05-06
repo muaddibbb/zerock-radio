@@ -5800,6 +5800,140 @@ def poll_results_page(poll_id):
     )
 
 
+def _public_results_window():
+    """Return True if we're currently in the Thursday 15:00 → Wednesday 19:00 window
+    (Israel server time) when public chart results should be visible."""
+    now = datetime.now()
+    wd  = now.weekday()   # 0=Mon … 3=Thu … 6=Sun
+    h   = now.hour
+    if wd == 3:   return h >= 15          # Thursday 15:00+
+    if wd == 2:   return h < 19           # Wednesday before 19:00
+    return wd in (4, 5, 6, 0, 1)          # Fri / Sat / Sun / Mon / Tue
+
+
+def _take_public_snapshot():
+    """Freeze the current vote tally for the most recent poll into public_snapshot.
+    Called every Thursday at 15:00 when the matzad upload completes."""
+    import random as _rng
+    polls = _load_polls()
+    if not polls:
+        print('[PubSnapshot] No polls found', flush=True)
+        return
+    # Find the most recent poll (by creation date or closes_at)
+    def _dt(p):
+        for k in ('created_at', 'closes_at', 'opens_at'):
+            v = p.get(k)
+            if v:
+                try: return datetime.fromisoformat(v)
+                except Exception: pass
+        return datetime.min
+    poll = max(polls, key=_dt)
+
+    votes = [v for v in _load_poll_votes() if v['poll_id'] == poll['id']]
+    tally = {s['id']: 0 for s in poll['songs']}
+    for v in votes:
+        for sid in (v.get('song_ids') or []):
+            if sid in tally:
+                tally[sid] += 1
+
+    # Sort with random tiebreak (same as team results page)
+    results_raw = sorted(
+        [{**s, 'votes': tally[s['id']], '_r': _rng.random()} for s in poll['songs']],
+        key=lambda x: (-x['votes'], x['_r'])
+    )
+
+    # Annotate with movement + weeks
+    prev_pos   = poll.get('prev_positions') or {}
+    song_weeks = poll.get('song_weeks') or {}
+    results_out = []
+    badge_aliya_id  = None
+    badge_yerida_id = None
+    badge_vatik_id  = None
+    max_rise = 0; max_drop = 0; max_weeks = 0
+
+    for curr_rank, song in enumerate(results_raw, start=1):
+        sid = song['id']
+        pp  = prev_pos.get(sid)
+        if pp is None or pp in ('new', 'palash'):
+            movement = 'new'
+        else:
+            delta = int(pp) - curr_rank
+            movement = f'+{delta}' if delta > 0 else (str(delta) if delta < 0 else '0')
+        weeks = song_weeks.get(sid)
+        entry = {
+            'id':          sid,
+            'group':       song.get('group', 'matzad'),
+            'slot':        song.get('slot'),
+            'label':       song.get('label', ''),
+            'spotify_url': song.get('spotify_url'),
+            'youtube_url': song.get('youtube_url'),
+            'votes':       song['votes'],
+            'movement':    movement,
+            'weeks':       weeks,
+        }
+        # Compute badges (matzad-only songs in top 20)
+        if song.get('group') != 'palash' and curr_rank <= 20:
+            if movement not in ('new', '0') and movement:
+                if movement.startswith('+'):
+                    rise = int(movement[1:])
+                    if rise > max_rise:
+                        max_rise = rise; badge_aliya_id = sid
+                elif movement.startswith('-'):
+                    drop = abs(int(movement))
+                    if drop > max_drop:
+                        max_drop = drop; badge_yerida_id = sid
+        wk = weeks or 0
+        if wk > max_weeks:
+            max_weeks = wk; badge_vatik_id = sid
+        results_out.append(entry)
+
+    snapshot = {
+        'taken_at':        datetime.now().isoformat(),
+        'poll_id':         poll['id'],
+        'poll_title':      poll.get('title', ''),
+        'total_voters':    len(votes),
+        'results':         results_out,
+        'badge_aliya_id':  badge_aliya_id,
+        'badge_yerida_id': badge_yerida_id,
+        'badge_vatik_id':  badge_vatik_id,
+    }
+    poll['public_snapshot'] = snapshot
+    _save_polls(polls)
+    print(f"[PubSnapshot] ✓ Snapshot taken for poll '{poll['id']}' "
+          f"({len(votes)} voters, {len(results_out)} songs)", flush=True)
+    return snapshot
+
+
+@app.route('/poll/<poll_id>/public-results')
+def poll_public_results_page(poll_id):
+    """Public (no password): last chart results — visible Thursday 15:00 → Wednesday 19:00."""
+    in_window = _public_results_window()
+
+    polls    = _load_polls()
+    poll     = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return render_template('poll_public_results.html',
+                               invalid=True, in_window=in_window, snapshot=None)
+
+    snapshot = poll.get('public_snapshot')
+    return render_template('poll_public_results.html',
+                           invalid=False,
+                           in_window=in_window,
+                           snapshot=snapshot,
+                           poll=poll)
+
+
+@app.route('/api/polls/<poll_id>/take-snapshot', methods=['POST'])
+def api_poll_take_snapshot(poll_id):
+    """Admin: manually trigger a public-results snapshot for a specific poll."""
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'poll not found'}), 404
+    snap = _take_public_snapshot()
+    return jsonify({'ok': True, 'snapshot': snap})
+
+
 @app.route('/api/polls/<poll_id>/next-palash', methods=['PUT'])
 def api_poll_set_next_palash(poll_id):
     """Admin: set the 5 next-week הפינה לשיפוטכם songs."""
