@@ -2492,6 +2492,48 @@ def _nightly_rebuild_loop():
 
 threading.Thread(target=_nightly_rebuild_loop, daemon=True).start()
 
+
+# ── Weekly poll auto-renew (every Thursday 15:00) ─────────────────────────────
+def _weekly_poll_renew_loop():
+    """Every Thursday at 15:00: snapshot old poll results → renew poll → update WP vote button."""
+    _already_renewed_week = [None]   # track which ISO-week we last renewed
+
+    while True:
+        now  = datetime.now()
+        # Next Thursday 15:00
+        days_until_thu = (3 - now.weekday()) % 7
+        next_thu = (now + timedelta(days=days_until_thu)).replace(
+            hour=15, minute=0, second=0, microsecond=0)
+        if next_thu <= now:
+            next_thu += timedelta(weeks=1)
+        sleep_secs = (next_thu - now).total_seconds()
+        print(f"[WeeklyPoll] Next auto-renew: {next_thu.strftime('%A %Y-%m-%d %H:%M')} "
+              f"(in {sleep_secs/3600:.1f}h)", flush=True)
+        time.sleep(sleep_secs)
+
+        iso_week = datetime.now().isocalendar()[1]
+        if _already_renewed_week[0] == iso_week:
+            print("[WeeklyPoll] Already renewed this week — skipping", flush=True)
+            time.sleep(600)
+            continue
+
+        print("[WeeklyPoll] Thursday 15:00 — auto-renewing poll…", flush=True)
+        try:
+            r = _requests.post(
+                'http://127.0.0.1:5000/api/polls/weekly-renew',
+                timeout=30
+            )
+            print(f"[WeeklyPoll] Renewal result: {r.status_code} {r.text[:200]}", flush=True)
+            if r.status_code == 200:
+                _already_renewed_week[0] = iso_week
+        except Exception as e:
+            print(f"[WeeklyPoll] Renewal failed: {e}", flush=True)
+
+        time.sleep(600)   # prevent double-fire within the same hour
+
+threading.Thread(target=_weekly_poll_renew_loop, daemon=True).start()
+
+
 # ── Background queue cache ────────────────────────────────────────────────────
 # Rocky rotation order matches rocky.liq: rotate([english1, english2, hebrew1, english3, hebrew2, jingle])
 # Each source has an explicit id= set in rocky.liq so these names are stable.
