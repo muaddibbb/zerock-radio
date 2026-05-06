@@ -6005,9 +6005,9 @@ def poll_results_page(poll_id):
     )
 
 
-@app.route('/api/polls/<poll_id>/song/<song_id>/comment', methods=['POST'])
-def api_poll_song_comment(poll_id, song_id):
-    """Authenticated: save a free-text comment for a palash song."""
+@app.route('/api/polls/<poll_id>/next-palash/<int:np_index>/comment', methods=['POST'])
+def api_next_palash_comment(poll_id, np_index):
+    """Authenticated: save a free-text comment for a next-week palash song by position."""
     if request.cookies.get('results_auth') != _RESULTS_AUTH_TOKEN:
         return jsonify({'error': 'unauthorized'}), 401
     data    = request.get_json(force=True) or {}
@@ -6016,13 +6016,16 @@ def api_poll_song_comment(poll_id, song_id):
     poll    = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return jsonify({'error': 'poll not found'}), 404
-    song = next((s for s in poll.get('songs', [])
-                 if s['id'] == song_id and s.get('group') == 'palash'), None)
-    if not song:
-        return jsonify({'error': 'palash song not found'}), 404
-    song['comment'] = comment
+    next_palash = poll.get('next_palash') or []
+    if np_index < 0 or np_index >= len(next_palash):
+        return jsonify({'error': 'index out of range'}), 400
+    comments = poll.setdefault('next_palash_comments', [''] * len(next_palash))
+    # Ensure list is long enough
+    while len(comments) <= np_index:
+        comments.append('')
+    comments[np_index] = comment
     _save_polls(polls)
-    print(f"[Poll] Comment saved for {song_id} in {poll_id}: {comment!r}", flush=True)
+    print(f"[Poll] next_palash[{np_index}] comment saved in {poll_id}: {comment!r}", flush=True)
     return jsonify({'ok': True, 'comment': comment})
 
 
