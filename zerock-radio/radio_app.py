@@ -6005,6 +6005,27 @@ def poll_results_page(poll_id):
     )
 
 
+@app.route('/api/polls/<poll_id>/song/<song_id>/comment', methods=['POST'])
+def api_poll_song_comment(poll_id, song_id):
+    """Authenticated: save a free-text comment for a palash song."""
+    if request.cookies.get('results_auth') != _RESULTS_AUTH_TOKEN:
+        return jsonify({'error': 'unauthorized'}), 401
+    data    = request.get_json(force=True) or {}
+    comment = data.get('comment', '').strip()
+    polls   = _load_polls()
+    poll    = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return jsonify({'error': 'poll not found'}), 404
+    song = next((s for s in poll.get('songs', [])
+                 if s['id'] == song_id and s.get('group') == 'palash'), None)
+    if not song:
+        return jsonify({'error': 'palash song not found'}), 404
+    song['comment'] = comment
+    _save_polls(polls)
+    print(f"[Poll] Comment saved for {song_id} in {poll_id}: {comment!r}", flush=True)
+    return jsonify({'ok': True, 'comment': comment})
+
+
 def _public_results_window():
     """Return True if we're currently in the Thursday 15:00 → Wednesday 19:00 window
     (Israel server time) when public chart results should be visible."""
