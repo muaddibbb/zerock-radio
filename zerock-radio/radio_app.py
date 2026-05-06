@@ -5434,7 +5434,12 @@ def _poll_is_open(poll, now=None):
         # Legacy polls without a schedule fall back to the manual `open` flag.
         return bool(poll.get('open', True))
     try:
-        return datetime.fromisoformat(o) <= now <= datetime.fromisoformat(c)
+        opens_dt  = datetime.fromisoformat(o)
+        closes_dt = datetime.fromisoformat(c)
+        # Strip timezone so comparison works against naive datetime.now()
+        if opens_dt.tzinfo  is not None: opens_dt  = opens_dt.replace(tzinfo=None)
+        if closes_dt.tzinfo is not None: closes_dt = closes_dt.replace(tzinfo=None)
+        return opens_dt <= now <= closes_dt
     except Exception:
         return bool(poll.get('open', True))
 
