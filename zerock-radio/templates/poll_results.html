@@ -415,6 +415,76 @@
 {% endif %}
 </div>
 
+{% if poll and not invalid and not auth_required %}
+<script>
+// ── Palash song comments ─────────────────────────────────────────────────────
+function openComment(displayEl) {
+  const row   = displayEl.closest('.palash-comment-row');
+  const edit  = row.querySelector('.palash-comment-edit');
+  const ta    = edit.querySelector('textarea');
+  displayEl.style.display = 'none';
+  edit.style.display = 'block';
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+}
+
+function cancelComment(btn) {
+  const row     = btn.closest('.palash-comment-row');
+  const display = row.querySelector('.palash-comment-display');
+  const edit    = row.querySelector('.palash-comment-edit');
+  edit.style.display = 'none';
+  display.style.display = '';
+}
+
+async function saveComment(btn) {
+  const row     = btn.closest('.palash-comment-row');
+  const pollId  = row.dataset.pollId;
+  const songId  = row.dataset.songId;
+  const ta      = row.querySelector('textarea');
+  const status  = row.querySelector('.comment-status');
+  const display = row.querySelector('.palash-comment-display');
+  const edit    = row.querySelector('.palash-comment-edit');
+  const comment = ta.value.trim();
+
+  btn.disabled = true;
+  status.textContent = 'שומר…';
+
+  try {
+    const res = await fetch(`/api/polls/${pollId}/song/${songId}/comment`, {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({comment}),
+      credentials: 'same-origin'
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Update display
+      if (comment) {
+        display.textContent = comment;
+        display.classList.remove('empty');
+      } else {
+        display.textContent = '💬 לחץ להוספת הערה לשיר זה…';
+        display.classList.add('empty');
+      }
+      status.textContent = '✓ נשמר';
+      setTimeout(() => {
+        edit.style.display = 'none';
+        display.style.display = '';
+        status.textContent = '';
+        btn.disabled = false;
+      }, 800);
+    } else {
+      status.textContent = '⚠ שגיאה: ' + (data.error || 'unknown');
+      btn.disabled = false;
+    }
+  } catch (e) {
+    status.textContent = '⚠ שגיאת רשת';
+    btn.disabled = false;
+  }
+}
+</script>
+{% endif %}
+
 {% if poll and not invalid %}
 <script>
 {% if poll.closes_at %}
