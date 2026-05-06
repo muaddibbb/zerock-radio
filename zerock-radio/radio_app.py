@@ -6076,6 +6076,37 @@ def api_polls_weekly_renew():
     polls.append(new_poll)
     _save_polls(polls)
 
+    # ── Update WP vote button to new poll URL ────────────────────────────────
+    def _update_wp_vote_snippet(pid):
+        try:
+            vote_url  = f"{ZEROCK_PUBLIC_URL}/poll/{pid}"
+            php_code  = (
+                "add_action('wp_footer', function() {\n"
+                "    if (!is_page('rock-chart')) return;\n"
+                "    echo '<script>\n"
+                "(function(){\n"
+                '    var btn = document.querySelector("a.chart-top-button");\n'
+                f'    if (btn) {{ btn.href = "{vote_url}"; }}\n'
+                "})();\n"
+                "</script>';\n"
+                "});"
+            )
+            auth_wp  = (WP_USERNAME, WP_APP_PASS)
+            hdrs     = {'Content-Type': 'application/json'}
+            r1 = _requests.patch(
+                f"{WP_REST_BASE}/code-snippets/v1/snippets/55",
+                json={'code': php_code, 'scope': 'front-end'},
+                auth=auth_wp, headers=hdrs, timeout=15
+            )
+            _requests.post(
+                f"{WP_REST_BASE}/code-snippets/v1/snippets/55/activate",
+                auth=auth_wp, headers=hdrs, timeout=15
+            )
+            print(f"[WeeklyRenew] WP vote snippet updated → {vote_url} ({r1.status_code})", flush=True)
+        except Exception as e:
+            print(f"[WeeklyRenew] WP snippet update failed: {e}", flush=True)
+    threading.Thread(target=_update_wp_vote_snippet, args=(new_poll_id,), daemon=True).start()
+
     return jsonify({
         'ok':           True,
         'old_poll_id':  old_poll['id'],
