@@ -352,6 +352,22 @@
     {% endif %}
 
   </div>
+  {% if s.group == 'palash' %}
+  <div class="palash-comment-row" data-song-id="{{ s.id }}" data-poll-id="{{ poll.id }}">
+    <div class="palash-comment-display {% if not s.comment %}empty{% endif %}"
+         onclick="openComment(this)">
+      {% if s.comment %}{{ s.comment }}{% else %}💬 לחץ להוספת הערה לשיר זה…{% endif %}
+    </div>
+    <div class="palash-comment-edit">
+      <textarea placeholder="הערה חופשית לשיר…">{{ s.comment or '' }}</textarea>
+      <div class="palash-comment-actions">
+        <button class="btn-comment-save" onclick="saveComment(this)">שמור</button>
+        <button class="btn-comment-cancel" onclick="cancelComment(this)">ביטול</button>
+        <span class="comment-status"></span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
   {% if loop.index == 20 %}
   <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px">
     <div style="flex:1;height:1px;background:#3a3a3a"></div>
