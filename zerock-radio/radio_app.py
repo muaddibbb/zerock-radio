@@ -2552,6 +2552,78 @@ def _weekly_poll_renew_loop():
 threading.Thread(target=_weekly_poll_renew_loop, daemon=True).start()
 
 
+def _poll_close_watcher():
+    """Background thread: watches for polls whose closes_at has passed and
+    - sets open=False in polls.json
+    - updates WP snippet #55 to show 'voting closed' text
+    Checks every 60 seconds.  Safe to restart — idempotent."""
+    _already_closed = set()
+    while True:
+        try:
+            now = datetime.now()
+            polls = _load_polls()
+            for poll in polls:
+                pid = poll.get('id')
+                if pid in _already_closed:
+                    continue
+                if not _poll_is_open(poll, now) and poll.get('open'):
+                    # Poll just crossed its close time — flip flag
+                    polls2 = _load_polls()
+                    changed = False
+                    for p2 in polls2:
+                        if p2.get('id') == pid and p2.get('open'):
+                            p2['open'] = False
+                            changed = True
+                    if changed:
+                        _save_polls(polls2)
+                        print(f'[PollWatcher] Closed poll {pid}', flush=True)
+                    _already_closed.add(pid)
+                    # Update WP snippet to show closed state
+                    threading.Thread(target=_update_wp_vote_snippet_closed, args=(pid,), daemon=True).start()
+        except Exception as e:
+            print(f'[PollWatcher] Error: {e}', flush=True)
+        time.sleep(60)
+
+
+def _update_wp_vote_snippet_closed(poll_id):
+    """Update WP snippet #55 to show 'voting closed' state."""
+    if not WP_USERNAME or not WP_APP_PASS:
+        return
+    try:
+        vote_url = f'{ZEROCK_PUBLIC_URL}/poll/{poll_id}'
+        php_code = f"""add_action('wp_footer', function() {{
+    echo '<script>
+(function(){{
+    function fixChartBtn() {{
+        var btn = document.querySelector("a.chart-top-button");
+        if (btn) {{
+            btn.href = "{vote_url}";
+            btn.textContent = "ההצבעה נסגרה — התוצאות ביום חמישי";
+            btn.style.opacity = "0.6";
+            btn.style.pointerEvents = "none";
+        }}
+    }}
+    fixChartBtn();
+    if (window.jQuery) {{ jQuery(document).on("ajaxComplete", fixChartBtn); }}
+}})();
+</script>';
+}});"""
+        import base64 as _b64c
+        creds = _b64c.b64encode(f'{WP_USERNAME}:{WP_APP_PASS}'.encode()).decode()
+        hdrs  = {'Authorization': f'Basic {creds}', 'Content-Type': 'application/json'}
+        r = _requests.patch(
+            f'{WP_URL}/wp-json/code-snippets/v1/snippets/55',
+            json={'code': php_code, 'scope': 'front-end'},
+            auth=(WP_USERNAME, WP_APP_PASS), timeout=15
+        )
+        print(f'[PollWatcher] WP snippet close update: {r.status_code}', flush=True)
+    except Exception as e:
+        print(f'[PollWatcher] WP snippet update error: {e}', flush=True)
+
+
+threading.Thread(target=_poll_close_watcher, daemon=True).start()
+
+
 # ── Background queue cache ────────────────────────────────────────────────────
 # Rocky rotation order matches rocky.liq: rotate([english1, english2, hebrew1, english3, hebrew2, jingle])
 # Each source has an explicit id= set in rocky.liq so these names are stable.
