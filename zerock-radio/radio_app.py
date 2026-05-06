@@ -6073,6 +6073,9 @@ def api_polls_weekly_renew():
     polls.append(new_poll)
     _save_polls(polls)
 
+    # ── Snapshot: freeze old poll results for public results page ────────────
+    threading.Thread(target=_take_public_snapshot, daemon=True).start()
+
     # ── Update WP vote button to new poll URL ────────────────────────────────
     def _update_wp_vote_snippet(pid):
         try:
