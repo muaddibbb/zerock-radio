@@ -438,10 +438,10 @@ function cancelComment(btn) {
   display.style.display = '';
 }
 
-async function saveComment(btn) {
+async function saveNpComment(btn) {
   const row     = btn.closest('.palash-comment-row');
   const pollId  = row.dataset.pollId;
-  const songId  = row.dataset.songId;
+  const npIndex = row.dataset.npIndex;
   const ta      = row.querySelector('textarea');
   const status  = row.querySelector('.comment-status');
   const display = row.querySelector('.palash-comment-display');
@@ -452,7 +452,7 @@ async function saveComment(btn) {
   status.textContent = 'שומר…';
 
   try {
-    const res = await fetch(`/api/polls/${pollId}/song/${songId}/comment`, {
+    const res = await fetch(`/api/polls/${pollId}/next-palash/${npIndex}/comment`, {
       method:  'POST',
       headers: {'Content-Type': 'application/json'},
       body:    JSON.stringify({comment}),
@@ -460,12 +460,11 @@ async function saveComment(btn) {
     });
     const data = await res.json();
     if (data.ok) {
-      // Update display
       if (comment) {
         display.textContent = comment;
         display.classList.remove('empty');
       } else {
-        display.textContent = '💬 לחץ להוספת הערה לשיר זה…';
+        display.textContent = '💬 לחץ להוספת הערה…';
         display.classList.add('empty');
       }
       status.textContent = '✓ נשמר';
