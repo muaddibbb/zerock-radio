@@ -5999,6 +5999,7 @@ def poll_results_page(poll_id):
         any_votes=any_votes,
         vote_url=vote_url,
         next_palash=poll.get('next_palash') or [],
+        next_palash_comments=poll.get('next_palash_comments') or [],
         badge_aliya_id=badge_aliya_id,
         badge_yerida_id=badge_yerida_id,
         badge_vatik_id=badge_vatik_id,
