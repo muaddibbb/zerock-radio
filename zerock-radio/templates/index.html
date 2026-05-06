@@ -2091,6 +2091,7 @@ async function createChartFromPoll() {
 loadPollEpisodes();
 refreshPollList();
 loadNextChartPolls();
+loadPastCharts();
 setInterval(() => {
   if (document.body.classList.contains('mode-manage')) {
     const sub = document.querySelector('.mgmt-subnav-btn.active');
