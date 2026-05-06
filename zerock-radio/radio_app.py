@@ -2663,8 +2663,10 @@ def _queue_updater():
                         artist_oa  = _get_metadata_field(meta_raw, 'artist')
                         is_show    = bool(uri) and (LOCAL_TEMP in uri or NAS_TEMP in uri)
                         raw_label  = label or (os.path.splitext(os.path.basename(uri))[0] if uri else '')
-                        # If label is a _seek_* file, resolve to scheduled show name
-                        if is_show and raw_label.startswith('_seek_'):
+                        # For show files, always pull the display name from the schedule
+                        # (which has the correct broadcaster per episode), never from ID3 tags
+                        # which may carry stale metadata from a previous episode's file.
+                        if is_show:
                             try:
                                 _now_for_seek = datetime.now()
                                 _cutoff_seek  = _now_for_seek - timedelta(hours=6)
