@@ -1250,14 +1250,10 @@ def _do_podbean_wp_upload(show):
     broadcaster = (show.get('broadcaster')
                    or show_cfg.get('broadcaster', '')
                    or _FIXED_HOSTS.get(show_cfg['key'], ''))
-    # For manual-date shows (day=None, e.g. על הרוקר): publish at upload_time so the
-    # Podbean/WP post goes live 1 hour after the broadcast, not during it.
-    if show_cfg.get('day') is None and show_cfg.get('upload_time'):
-        _uh, _um = map(int, show_cfg['upload_time'].split(':'))
-        _pub_dt = broadcast_dt.replace(hour=_uh, minute=_um, second=0, microsecond=0)
-        publish_ts = str(int(_pub_dt.timestamp()))
-    else:
-        publish_ts = str(int(broadcast_dt.timestamp()))
+    # Always publish immediately at upload time — never create WP/Podbean posts as
+    # 'future'. Using broadcast_dt in the past caused WP to create posts in 'future'
+    # status (since broadcast_dt > now), which then clears the shows taxonomy on flip.
+    publish_ts = str(int(datetime.now().timestamp()))
     # ── Convert WAV → MP3 before upload to avoid huge files timing out ──────────
     upload_path   = file_path
     upload_name   = show.get('original_name', 'show.mp3')
