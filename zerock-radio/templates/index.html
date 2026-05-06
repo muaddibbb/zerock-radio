@@ -1576,6 +1576,100 @@ async function _prefillVotingWindow() {
   } catch(_) {}
 }
 
+async function loadPastCharts() {
+  const container = document.getElementById('past-charts-list');
+  if (!container) return;
+  try {
+    const history = await fetch('/api/polls/history').then(r => r.json());
+    if (!history.length) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85em">אין מצעדים קודמים</div>';
+      return;
+    }
+    container.innerHTML = '';
+    history.forEach((poll, idx) => {
+      const date = poll.closes_at ? new Date(poll.closes_at).toLocaleDateString('he-IL') : '';
+      const isCurrent = poll.is_current;
+      const matzad = (poll.results || []).filter(s => s.group !== 'palash').slice(0, 20);
+      const palash  = (poll.results || []).filter(s => s.group === 'palash');
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'border:1px solid var(--border);border-radius:8px;overflow:hidden';
+
+      // Header row (always visible)
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;' +
+        'background:var(--surface2);user-select:none';
+      header.innerHTML = `
+        <span style="font-size:1em">${isCurrent ? '🟢' : '📋'}</span>
+        <span style="flex:1;font-size:0.88em;font-weight:600">${poll.title || 'מצעד'}</span>
+        ${date ? `<span style="font-size:0.78em;color:var(--text-muted)">${date}</span>` : ''}
+        <span style="font-size:0.78em;color:var(--text-muted)">${poll.total_voters} מצביעים</span>
+        <span class="chevron" style="font-size:0.8em;color:#888;transition:transform 0.2s">${idx === 0 ? '▲' : '▼'}</span>
+      `;
+
+      // Body (collapsible)
+      const body = document.createElement('div');
+      body.style.cssText = `display:${idx === 0 ? 'block' : 'none'};padding:10px 14px`;
+
+      // Render rows
+      const maxVotes = Math.max(...(poll.results || []).map(s => s.votes || 0), 1);
+
+      function renderRows(songs, startRank) {
+        return songs.map((song, i) => {
+          const rank  = startRank + i;
+          const pct   = Math.round((song.votes || 0) / maxVotes * 100);
+          const mv    = song.movement || '';
+          let mvHtml  = '';
+          if (mv === 'new')       mvHtml = '<span style="color:#f0a500;font-size:0.72em">✦ חדש</span>';
+          else if (mv === '0')    mvHtml = '<span style="color:#555">—</span>';
+          else if (mv.startsWith('+')) mvHtml = `<span style="color:#4caf50">▲${mv.slice(1)}</span>`;
+          else if (mv.startsWith('-')) mvHtml = `<span style="color:#e63946">▼${mv.slice(1)}</span>`;
+          const medals = ['🥇','🥈','🥉'];
+          const rankDisp = rank <= 3 ? medals[rank-1] : `<span style="color:#888;font-size:0.88em">${rank}</span>`;
+          const barColor = rank <= 3 ? '#ffd700' : '#e63946';
+          return `
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1e1e1e">
+              <div style="flex-shrink:0;width:28px;text-align:center">${rankDisp}</div>
+              <div style="flex-shrink:0;width:44px;text-align:center;font-size:0.75em;font-weight:bold">${mvHtml}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${song.label || ''}</div>
+                <div style="height:3px;background:#2a2a2a;border-radius:2px;margin-top:4px">
+                  <div style="height:3px;background:${barColor};border-radius:2px;width:${pct}%"></div>
+                </div>
+              </div>
+              ${song.weeks ? `<div style="flex-shrink:0;text-align:center;font-size:0.72em;color:#888;min-width:30px">${song.weeks}<br>שב׳</div>` : '<div style="min-width:30px"></div>'}
+              <div style="flex-shrink:0;text-align:center;min-width:44px">
+                <span style="font-size:0.95em;font-weight:bold;color:${rank<=3?'#ffd700':'#e63946'}">${song.votes}</span>
+                <div style="font-size:0.68em;color:#555">קולות</div>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      let bodyHtml = `<div style="font-size:0.78em;color:var(--text-muted);margin-bottom:8px">המצעד השבועי — 20 הגדולים</div>`;
+      bodyHtml += renderRows(matzad, 1);
+      if (palash.length) {
+        bodyHtml += `<div style="font-size:0.78em;color:var(--text-muted);margin:12px 0 6px">הפינה לשיפוטכם</div>`;
+        bodyHtml += renderRows(palash, 1);
+      }
+      body.innerHTML = bodyHtml;
+
+      // Toggle
+      header.addEventListener('click', () => {
+        const open = body.style.display !== 'none';
+        body.style.display = open ? 'none' : 'block';
+        header.querySelector('.chevron').textContent = open ? '▼' : '▲';
+      });
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(body);
+      container.appendChild(wrapper);
+    });
+  } catch(e) {
+    container.innerHTML = `<div style="color:#e63946;font-size:0.85em">שגיאה בטעינת המצעדים: ${e.message}</div>`;
+  }
+}
+
 async function loadPollEpisodes() {
   _prefillVotingWindow();
   try {
