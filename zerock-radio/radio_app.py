@@ -4373,16 +4373,22 @@ def api_schedule_url():
     threading.Thread(target=_move_to_nas, args=(show_id, local_path, nas_path), daemon=True).start()
 
     # Immediately upload to Podbean/WP for queue_to_broadcast (non-manual) shows
+    # Respect upload_time gate — hold until configured time (same logic as api_add_show)
     if mode == 'queue_to_broadcast' and not manual_schedule:
-        with _schedule_lock:
-            schedule = load_schedule()
-            for s in schedule:
-                if s['id'] == show_id:
-                    s['upload_in_progress'] = True
-                    break
-            save_schedule(schedule)
-        threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
-        print(f"[ScheduleURL] Upload thread started for '{name}'")
+        _show_entry_for_gate = next((s for s in load_schedule() if s['id'] == show_id), {})
+        if not _upload_time_reached(_show_entry_for_gate, show_cfg):
+            _ut_str = show_cfg.get('upload_time', '?')
+            print(f"[ScheduleURL] '{name}' upload held — will fire at {_ut_str} (upload_time not yet reached)", flush=True)
+        else:
+            with _schedule_lock:
+                schedule = load_schedule()
+                for s in schedule:
+                    if s['id'] == show_id:
+                        s['upload_in_progress'] = True
+                        break
+                save_schedule(schedule)
+            threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
+            print(f"[ScheduleURL] Upload thread started for '{name}'")
 
     print(f"[ScheduleURL] Queued '{name}' for {broadcast_dt.isoformat()}")
     return jsonify({'ok': True, 'id': show_id, 'name': name, 'scheduled_time': broadcast_dt.isoformat()})
