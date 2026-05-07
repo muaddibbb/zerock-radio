@@ -6137,8 +6137,10 @@ def poll_results_page(poll_id):
     for curr_rank, song in enumerate(results, start=1):
         sid = song['id']
         pp  = prev_pos.get(sid)
-        if pp is None or pp in ('new', 'palash'):
+        if pp is None or pp == 'new':
             song['movement'] = 'new'
+        elif pp == 'palash':
+            song['movement'] = 'palash'
         else:
             delta = int(pp) - curr_rank
             if delta > 0:
