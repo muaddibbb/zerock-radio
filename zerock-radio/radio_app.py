@@ -6383,7 +6383,7 @@ def api_polls_weekly_renew():
     tally = {s['id']: 0 for s in old_poll['songs']}
     for v in votes:
         if v.get('poll_id') == old_poll['id']:
-            for sid in (v.get('choices') or []):
+            for sid in (v.get('song_ids') or v.get('choices') or []):
                 if sid in tally:
                     tally[sid] += 1
 
