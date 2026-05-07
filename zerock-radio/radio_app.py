@@ -6301,7 +6301,7 @@ def _take_public_snapshot(poll_id=None):
         }
         # Compute badges (matzad-only songs in top 20)
         if song.get('group') != 'palash' and curr_rank <= 20:
-            if movement not in ('new', '0') and movement:
+            if movement not in ('new', 'palash', '0') and movement:
                 if movement.startswith('+'):
                     rise = int(movement[1:])
                     if rise > max_rise:
