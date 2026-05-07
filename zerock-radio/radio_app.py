@@ -6220,23 +6220,36 @@ def _public_results_window():
     return wd in (4, 5, 6, 0, 1)          # Fri / Sat / Sun / Mon / Tue
 
 
-def _take_public_snapshot():
-    """Freeze the current vote tally for the most recent poll into public_snapshot.
+def _take_public_snapshot(poll_id=None):
+    """Freeze the current vote tally for a poll into public_snapshot.
+    If poll_id is given, snapshots that poll; otherwise snapshots the most
+    recently closed poll (or most recent poll if all open).
     Called every Thursday at 15:00 when the matzad upload completes."""
     import random as _rng
     polls = _load_polls()
     if not polls:
         print('[PubSnapshot] No polls found', flush=True)
         return
-    # Find the most recent poll (by creation date or closes_at)
-    def _dt(p):
-        for k in ('created_at', 'closes_at', 'opens_at'):
-            v = p.get(k)
-            if v:
-                try: return datetime.fromisoformat(v)
-                except Exception: pass
-        return datetime.min
-    poll = max(polls, key=_dt)
+    if poll_id:
+        poll = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            print(f'[PubSnapshot] Poll {poll_id} not found', flush=True)
+            return
+    else:
+        # Find most recent CLOSED poll; fall back to newest poll overall
+        def _dt(p):
+            for k in ('closed_at', 'closes_at', 'created_at', 'opens_at'):
+                v = p.get(k)
+                if v:
+                    try:
+                        dt = datetime.fromisoformat(v)
+                        return dt.replace(tzinfo=None)  # normalise for comparison
+                    except Exception:
+                        pass
+            return datetime.min
+        closed = [p for p in polls if not p.get('open', True)]
+        pool   = closed if closed else polls
+        poll   = max(pool, key=_dt)
 
     votes = [v for v in _load_poll_votes() if v['poll_id'] == poll['id']]
     tally = {s['id']: 0 for s in poll['songs']}
