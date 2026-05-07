@@ -288,7 +288,7 @@
       // Poll closed — next opening is always Thursday 15:00 Israel time
       const nextOpens = new Date(now);
       const day = nextOpens.getDay(); // 0=Sun … 4=Thu … 6=Sat
-      const daysUntilThursday = ((4 - day + 7) % 7) || 7;
+      const daysUntilThursday = (4 - day + 7) % 7;
       nextOpens.setDate(nextOpens.getDate() + daysUntilThursday);
       nextOpens.setHours(15, 0, 0, 0);
       txt.innerHTML = '🔴 ההצבעה סגורה — תיפתח מחדש ב<strong>' + heDate(nextOpens) + '</strong> (בעוד ' + fmtRemaining(nextOpens - now) + ')';
