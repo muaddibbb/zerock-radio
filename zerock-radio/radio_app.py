@@ -6280,8 +6280,10 @@ def _take_public_snapshot(poll_id=None):
     for curr_rank, song in enumerate(results_raw, start=1):
         sid = song['id']
         pp  = prev_pos.get(sid)
-        if pp is None or pp in ('new', 'palash'):
+        if pp is None or pp == 'new':
             movement = 'new'
+        elif pp == 'palash':
+            movement = 'palash'
         else:
             delta = int(pp) - curr_rank
             movement = f'+{delta}' if delta > 0 else (str(delta) if delta < 0 else '0')
