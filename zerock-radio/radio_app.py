@@ -5485,6 +5485,152 @@ def _spotify_search_track(query):
         return None
 
 
+# ── Spotify OAuth (user token) ────────────────────────────────────────────────
+_spotify_user_token_cache = {'token': None, 'expires_at': 0}
+
+def _spotify_get_user_token():
+    """Get a user-scoped Spotify access token using the stored refresh token.
+    Returns None if SPOTIFY_REFRESH_TOKEN is not configured."""
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET or not SPOTIFY_REFRESH_TOKEN:
+        return None
+    import base64, urllib.request, urllib.parse
+    now = time.time()
+    cached = _spotify_user_token_cache
+    if cached['token'] and cached['expires_at'] > now + 30:
+        return cached['token']
+    try:
+        creds = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+        data  = urllib.parse.urlencode({
+            'grant_type':    'refresh_token',
+            'refresh_token': SPOTIFY_REFRESH_TOKEN,
+        }).encode()
+        req = urllib.request.Request(
+            'https://accounts.spotify.com/api/token',
+            data=data,
+            headers={
+                'Authorization': f'Basic {creds}',
+                'Content-Type':  'application/x-www-form-urlencoded',
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            payload = json.loads(r.read())
+        tok = payload.get('access_token')
+        ttl = int(payload.get('expires_in', 3600))
+        cached['token']      = tok
+        cached['expires_at'] = now + ttl
+        return tok
+    except Exception as e:
+        print(f"[Spotify] user-token refresh error: {e}", flush=True)
+        return None
+
+
+def _spotify_replace_playlist(playlist_id, uris):
+    """Replace all tracks in a Spotify playlist with the given track URIs.
+    Uses PUT /playlists/{id}/tracks (replaces entire playlist).
+    uris: list of 'spotify:track:...' strings."""
+    import urllib.request, urllib.parse
+    tok = _spotify_get_user_token()
+    if not tok:
+        print(f"[Spotify] No user token — cannot update playlist {playlist_id}", flush=True)
+        return False
+    try:
+        # Spotify PUT replaces up to 100 tracks per call
+        body = json.dumps({'uris': uris[:100]}).encode()
+        req  = urllib.request.Request(
+            f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks',
+            data=body,
+            method='PUT',
+            headers={
+                'Authorization': f'Bearer {tok}',
+                'Content-Type':  'application/json',
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            status = r.status
+        print(f"[Spotify] Playlist {playlist_id} updated → {len(uris)} tracks (HTTP {status})", flush=True)
+        return True
+    except Exception as e:
+        print(f"[Spotify] replace_playlist error for {playlist_id}: {e}", flush=True)
+        return False
+
+
+def _spotify_track_uri_from_url(url):
+    """Convert a spotify.com track URL to a spotify:track: URI."""
+    if not url:
+        return None
+    import re as _re
+    m = _re.search(r'track/([A-Za-z0-9]+)', url)
+    return f'spotify:track:{m.group(1)}' if m else None
+
+
+# ── Weekly poll voter invite email ────────────────────────────────────────────
+
+def _send_weekly_vote_invites(old_poll, new_poll_id):
+    """Collect real email addresses from old poll votes and send Hebrew invite."""
+    if not SMTP_USER or not SMTP_PASS:
+        print("[WeeklyRenew] SMTP not configured — skipping invite emails", flush=True)
+        return
+    votes     = _load_poll_votes()
+    old_id    = old_poll['id']
+    vote_url  = f"{ZEROCK_PUBLIC_URL}/poll/{new_poll_id}"
+    # Collect real (non-synthetic) emails for the old poll
+    fake_domains = {'forms-import.zerockradio.com', 'admin.zerockradio.com'}
+    emails_seen  = set()
+    recipients   = []
+    for v in votes:
+        if v.get('poll_id') != old_id:
+            continue
+        email = (v.get('email') or '').strip().lower()
+        if not email or '@' not in email:
+            continue
+        domain = email.split('@')[-1]
+        if domain in fake_domains:
+            continue
+        if email in emails_seen:
+            continue
+        emails_seen.add(email)
+        recipients.append(email)
+
+    if not recipients:
+        print("[WeeklyRenew] No real email addresses to invite", flush=True)
+        return
+
+    body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.8">
+<p>היי 👋</p>
+<p>זה אנחנו, מצוות המצעד של <strong>רדיו זה רוק</strong>.</p>
+<p>מוזמנים להצביע שוב למצעד הרוק של ישראל — ההצבעה השבועית החדשה פתוחה!</p>
+<p style="text-align:center;margin:24px 0">
+  <a href="{vote_url}" style="background:#e63946;color:#fff;padding:14px 32px;border-radius:8px;
+     text-decoration:none;font-size:18px;font-weight:bold">להצביע עכשיו 🤘</a>
+</p>
+<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
+<p style="color:#888;font-size:13px">קיבלת מייל זה כי הצבעת בעבר במצעד הרוק של רדיו זה רוק.</p>
+<p><strong>צוות ZeRock Radio</strong> 🎸</p>
+</div>"""
+    body_text = (f"היי!\nמוזמנים להצביע שוב למצעד הרוק של ישראל.\n\n"
+                 f"הנה הלינק: {vote_url}\n\nZeRock Radio 🤘")
+
+    sent = 0
+    errors = 0
+    for email in recipients:
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'מוזמנים להצביע שוב — מצעד הרוק של רדיו זה רוק 🤘'
+            msg['From']    = SMTP_FROM_ADDR
+            msg['To']      = email
+            msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+            msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+                s.ehlo(); s.starttls()
+                s.login(SMTP_USER, SMTP_PASS)
+                s.sendmail(SMTP_FROM_ADDR, [email], msg.as_bytes())
+            sent += 1
+        except Exception as e:
+            print(f"[WeeklyRenew] invite email error → {email}: {e}", flush=True)
+            errors += 1
+    print(f"[WeeklyRenew] Invite emails sent: {sent}, errors: {errors}", flush=True)
+
+
 def _calc_default_voting_window(now=None):
     """Compute the default voting window covering or following 'now'.
     Window: Thursday 15:00 → next Wednesday 20:00 (6 days 5 hours).
