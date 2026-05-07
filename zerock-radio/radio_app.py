@@ -6352,7 +6352,7 @@ def api_poll_take_snapshot(poll_id):
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return jsonify({'error': 'poll not found'}), 404
-    snap = _take_public_snapshot()
+    snap = _take_public_snapshot(poll_id=poll_id)
     return jsonify({'ok': True, 'snapshot': snap})
 
 
