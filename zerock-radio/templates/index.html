@@ -1609,7 +1609,7 @@ async function loadPastCharts() {
 
       // Body (collapsible)
       const body = document.createElement('div');
-      body.style.cssText = `display:${idx === 0 ? 'block' : 'none'};padding:10px 14px`;
+      body.style.cssText = `display:none;padding:10px 14px`;
 
       // Render rows
       const maxVotes = Math.max(...(poll.results || []).map(s => s.votes || 0), 1);
