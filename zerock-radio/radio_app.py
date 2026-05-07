@@ -183,6 +183,7 @@ NEVER_UPLOAD_SHOWS = {'erev_albumim'}
 _UPLOADER_AUTH = hashlib.sha256(b'YudaKaka2026!').hexdigest()
 
 app = Flask(__name__, template_folder=f"{RADIO_DIR}/templates")
+app.config['TEMPLATES_AUTO_RELOAD'] = True   # pick up template changes without restart
 os.makedirs(LOCAL_TEMP, exist_ok=True)
 os.makedirs(NAS_TEMP, exist_ok=True)
 
