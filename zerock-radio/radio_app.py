@@ -6158,7 +6158,7 @@ def poll_results_page(poll_id):
     for song in results[:20]:
         mv    = song.get('movement', '')
         weeks = song.get('weeks') or 0
-        if mv and mv not in ('new', '0'):
+        if mv and mv not in ('new', 'palash', '0'):
             if mv.startswith('+'):
                 rise = int(mv[1:])
                 if rise > max_rise:
