@@ -293,6 +293,7 @@
         {% if s.id == badge_aliya_id %}<span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>{% endif %}
         {% if s.id == badge_yerida_id %}<span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>{% endif %}
         {% if s.id == badge_vatik_id %}<span class="special-badge badge-vatik">★ השיר הותיק</span>{% endif %}
+        {% if loop.index > 20 and (s.weeks == 1 or not s.weeks) %}<span class="special-badge badge-lo-nicnas">לא נכנס למצעד</span>{% endif %}
       </div>
       <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
     </div>
