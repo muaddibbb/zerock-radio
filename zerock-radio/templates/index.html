@@ -2463,11 +2463,11 @@ function onShowChange() {
   const isMatzad  = show && show.key === 'matzad_harok';
   const noPodbean = show && show.no_podbean;
 
-  // Matzad: default to Playlist mode each time it's (re)selected.
+  // Matzad: default to Prerecorded mode each time it's (re)selected.
   if (isMatzad) {
-    const playlistRadio = document.querySelector('input[name="matzadMode"][value="playlist"]');
-    if (playlistRadio) playlistRadio.checked = true;
-    document.getElementById('playlistModeCheckbox').checked = true;
+    const prerecordedRadio = document.querySelector('input[name="matzadMode"][value="prerecorded"]');
+    if (prerecordedRadio) prerecordedRadio.checked = true;
+    document.getElementById('playlistModeCheckbox').checked = false;
   } else {
     document.getElementById('playlistModeCheckbox').checked = false;
   }
