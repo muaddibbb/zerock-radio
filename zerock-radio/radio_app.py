@@ -6422,13 +6422,10 @@ def api_polls_weekly_renew():
     # Old song_weeks and prev_positions references
     old_song_weeks = old_poll.get('song_weeks') or {}
 
-    # Build rank map: old_id -> rank_in_current_week (int) or 'palash'
+    # Build rank map: old_id -> rank_in_current_week (1-based int for all songs)
     old_rank_map = {}
     for i, s in enumerate(ranked[:20]):
-        if s.get('group') == 'palash':
-            old_rank_map[s['id']] = 'palash'
-        else:
-            old_rank_map[s['id']] = i + 1
+        old_rank_map[s['id']] = i + 1
 
     # Build new songs, prev_positions, song_weeks
     new_songs = []
