@@ -145,6 +145,11 @@ PODBEAN_CLIENT_SECRET = os.environ.get('PODBEAN_CLIENT_SECRET', '')
 # Spotify Client Credentials — used to resolve poll songs to direct track URLs
 SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID', '')
 SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '')
+# Spotify OAuth refresh token — needed for playlist modification (user scope)
+SPOTIFY_REFRESH_TOKEN = os.environ.get('SPOTIFY_REFRESH_TOKEN', '')
+# Weekly poll Spotify playlist IDs to update on renewal
+SPOTIFY_PALASH_PLAYLIST  = '5NMCfgaWkLrFpusbgrMhU4'
+SPOTIFY_TOP20_PLAYLIST   = '1ifvWserGDqUQUH6Ows5oA'
 
 # ─── Al HaRoker self-service scheduling ───────────────────────────────────────
 AL_HAROKER_BOOKINGS_FILE    = f"{RADIO_DIR}/al_haroker_bookings.json"
