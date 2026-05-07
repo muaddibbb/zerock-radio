@@ -285,8 +285,12 @@
     } else if (now <= closesAt) {
       txt.innerHTML = '🟢 ההצבעה פתוחה — נסגרת ב<strong>' + heDate(closesAt) + '</strong> (בעוד ' + fmtRemaining(closesAt - now) + ')';
     } else {
-      // Poll closed — show next opening (opensAt + 7 days, same weekday/time)
-      const nextOpens = new Date(opensAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+      // Poll closed — next opening is always Thursday 15:00 Israel time
+      const nextOpens = new Date(now);
+      const day = nextOpens.getDay(); // 0=Sun … 4=Thu … 6=Sat
+      const daysUntilThursday = ((4 - day + 7) % 7) || 7;
+      nextOpens.setDate(nextOpens.getDate() + daysUntilThursday);
+      nextOpens.setHours(15, 0, 0, 0);
       txt.innerHTML = '🔴 ההצבעה סגורה — תיפתח מחדש ב<strong>' + heDate(nextOpens) + '</strong> (בעוד ' + fmtRemaining(nextOpens - now) + ')';
     }
   }
