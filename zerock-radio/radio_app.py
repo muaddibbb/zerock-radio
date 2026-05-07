@@ -6500,6 +6500,51 @@ def api_polls_weekly_renew():
             print(f"[WeeklyRenew] WP snippet update failed: {e}", flush=True)
     threading.Thread(target=_update_wp_vote_snippet, args=(new_poll_id,), daemon=True).start()
 
+    # ── Send invite emails to previous voters ────────────────────────────────
+    _old_poll_snapshot = dict(old_poll)  # capture before anything mutates it
+    threading.Thread(
+        target=_send_weekly_vote_invites,
+        args=(_old_poll_snapshot, new_poll_id),
+        daemon=True,
+    ).start()
+
+    # ── Update Spotify playlists ──────────────────────────────────────────────
+    def _update_spotify_playlists(matzad_songs, palash_songs):
+        """Replace Palash playlist and Top-20 playlist tracks on Spotify."""
+        try:
+            # Resolve Spotify URLs for songs that don't already have them
+            def _ensure_uris(songs):
+                uris = []
+                for s in songs:
+                    url = s.get('spotify_url')
+                    if not url and SPOTIFY_CLIENT_ID:
+                        url = _spotify_search_track(s['label'])
+                    uri = _spotify_track_uri_from_url(url)
+                    if uri:
+                        uris.append(uri)
+                return uris
+
+            palash_uris = _ensure_uris(palash_songs)
+            top20_uris  = _ensure_uris(matzad_songs)
+
+            if palash_uris:
+                _spotify_replace_playlist(SPOTIFY_PALASH_PLAYLIST, palash_uris)
+            else:
+                print("[WeeklyRenew] No Palash Spotify URIs — skipping palash playlist update", flush=True)
+
+            if top20_uris:
+                _spotify_replace_playlist(SPOTIFY_TOP20_PLAYLIST, top20_uris)
+            else:
+                print("[WeeklyRenew] No Top-20 Spotify URIs — skipping top-20 playlist update", flush=True)
+        except Exception as e:
+            print(f"[WeeklyRenew] Spotify playlist update error: {e}", flush=True)
+
+    threading.Thread(
+        target=_update_spotify_playlists,
+        args=(new_songs[:20], new_songs[20:]),
+        daemon=True,
+    ).start()
+
     return jsonify({
         'ok':           True,
         'old_poll_id':  old_poll['id'],
@@ -6508,6 +6553,63 @@ def api_polls_weekly_renew():
         'matzad_songs': [s['label'] for s in new_songs[:20]],
         'palash_songs': [s['label'] for s in new_songs[20:]],
     })
+
+
+# ── Spotify OAuth one-time setup ──────────────────────────────────────────────
+
+@app.route('/api/spotify/auth')
+def api_spotify_auth():
+    """Redirect to Spotify authorization page (one-time admin setup)."""
+    if not SPOTIFY_CLIENT_ID:
+        return 'SPOTIFY_CLIENT_ID not configured', 500
+    import urllib.parse
+    params = urllib.parse.urlencode({
+        'client_id':     SPOTIFY_CLIENT_ID,
+        'response_type': 'code',
+        'redirect_uri':  f"{ZEROCK_PUBLIC_URL}/api/spotify/callback",
+        'scope':         'playlist-modify-public playlist-modify-private',
+        'show_dialog':   'true',
+    })
+    return redirect(f'https://accounts.spotify.com/authorize?{params}')
+
+
+@app.route('/api/spotify/callback')
+def api_spotify_callback():
+    """Receive Spotify OAuth callback and display the refresh token."""
+    import base64, urllib.request, urllib.parse
+    code  = request.args.get('code')
+    error = request.args.get('error')
+    if error or not code:
+        return f'Spotify auth error: {error}', 400
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+        return 'Spotify credentials not configured', 500
+    try:
+        creds = base64.b64encode(f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}".encode()).decode()
+        data  = urllib.parse.urlencode({
+            'grant_type':   'authorization_code',
+            'code':          code,
+            'redirect_uri':  f"{ZEROCK_PUBLIC_URL}/api/spotify/callback",
+        }).encode()
+        req = urllib.request.Request(
+            'https://accounts.spotify.com/api/token',
+            data=data,
+            headers={
+                'Authorization': f'Basic {creds}',
+                'Content-Type':  'application/x-www-form-urlencoded',
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            payload = json.loads(r.read())
+        refresh_token = payload.get('refresh_token', '(none returned)')
+        return (
+            f"<pre style='font-size:18px;padding:24px'>"
+            f"✅ Spotify OAuth success!\n\n"
+            f"Add this to your start script:\n\n"
+            f"export SPOTIFY_REFRESH_TOKEN={refresh_token}\n\n"
+            f"Then restart the radio service.\n</pre>"
+        )
+    except Exception as e:
+        return f'Spotify token exchange failed: {e}', 500
 
 
 @app.route('/api/poll/<poll_id>/send-code', methods=['POST'])
