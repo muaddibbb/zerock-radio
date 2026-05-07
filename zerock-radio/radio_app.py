@@ -5932,8 +5932,10 @@ def api_polls_history():
             for rank, song in enumerate(ranked, 1):
                 sid = song['id']
                 pp  = prev_pos.get(sid)
-                if pp is None or pp in ('new', 'palash'):
+                if pp is None or pp in ('new',):
                     song['movement'] = 'new'
+                elif pp == 'palash':
+                    song['movement'] = 'palash'
                 else:
                     delta = int(pp) - rank
                     song['movement'] = f'+{delta}' if delta > 0 else (str(delta) if delta < 0 else '0')
