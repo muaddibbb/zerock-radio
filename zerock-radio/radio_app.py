@@ -5563,6 +5563,33 @@ def _spotify_track_uri_from_url(url):
     return f'spotify:track:{m.group(1)}' if m else None
 
 
+def _spotify_update_playlist_description(playlist_id, description):
+    """Update the description of a Spotify playlist."""
+    import urllib.request
+    tok = _spotify_get_user_token()
+    if not tok:
+        print(f"[Spotify] No user token — cannot update description for {playlist_id}", flush=True)
+        return False
+    try:
+        body = json.dumps({'description': description}).encode()
+        req  = urllib.request.Request(
+            f'https://api.spotify.com/v1/playlists/{playlist_id}',
+            data=body,
+            method='PUT',
+            headers={
+                'Authorization': f'Bearer {tok}',
+                'Content-Type':  'application/json',
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as r:
+            status = r.status
+        print(f"[Spotify] Playlist {playlist_id} description updated (HTTP {status})", flush=True)
+        return True
+    except Exception as e:
+        print(f"[Spotify] update_description error for {playlist_id}: {e}", flush=True)
+        return False
+
+
 # ── Weekly poll voter invite email ────────────────────────────────────────────
 
 def _send_weekly_vote_invites(old_poll, new_poll_id):
