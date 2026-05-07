@@ -6282,11 +6282,22 @@ def api_polls_weekly_renew():
     old_poll['open']      = False
     old_poll['closed_at'] = opens_at_str
 
-    # Create new poll
+    # Create new poll — increment the chart number in the title and update the date
+    import re as _re
+    old_title   = old_poll.get('title', 'מצעד הרוק הישראלי השבועי של רדיו זה רוק 306')
+    old_num_m   = _re.search(r'(\d{3,})', old_title)
+    new_num     = (int(old_num_m.group(1)) + 1) if old_num_m else ''
+    new_date    = now_israel.strftime('%d/%m/%Y')
+    # Replace old number and date in title
+    new_title   = _re.sub(r'\d{3,}', str(new_num), old_title, count=1)
+    new_title   = _re.sub(r'\d{2}/\d{2}/\d{4}', new_date, new_title)
+    if not _re.search(r'\d{2}/\d{2}/\d{4}', old_title):
+        new_title = new_title.rstrip() + f' — {new_date}'
+
     new_poll_id = _sec2.token_urlsafe(12)
     new_poll = {
         'id':             new_poll_id,
-        'title':          old_poll.get('title', 'מצעד הרוק של ישראל'),
+        'title':          new_title,
         'matzad_show_id': None,
         'songs':          new_songs,
         'max_votes':      old_poll.get('max_votes', 5),
