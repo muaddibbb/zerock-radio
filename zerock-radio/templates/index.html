@@ -745,8 +745,8 @@
     <!-- Poll links panel -->
     {% if active_polls %}
     <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px">
-      <h2>🗳 סקרי הצבעה פעילים</h2>
-      {% for poll in active_polls %}
+      <h2>🗳 סקר הצבעה פעיל</h2>
+      {% for poll in active_polls if poll.open %}
       {% set vote_url  = zerock_public_url ~ '/poll/' ~ poll.id %}
       {% set res_url   = zerock_public_url ~ '/poll/' ~ poll.id ~ '/results' %}
       {% set is_open   = poll.open is defined and poll.open %}
