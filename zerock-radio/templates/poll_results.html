@@ -281,6 +281,8 @@
     <div class="movement">
       {% if s.movement == 'new' %}
         <span class="mv-new">כניסה<br>חדשה</span>
+      {% elif s.movement == 'palash' %}
+        <span class="mv-palash">עלה<br>מהפלש</span>
       {% elif s.movement == '0' %}
         <span class="mv-same">━</span>
       {% elif s.movement.startswith('+') %}
