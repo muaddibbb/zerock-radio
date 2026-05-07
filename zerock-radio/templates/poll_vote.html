@@ -298,7 +298,9 @@
     } else if (now <= closesAt) {
       txt.innerHTML = '🟢 ההצבעה פתוחה — נסגרת ב<strong>' + heDate(closesAt) + '</strong> (בעוד ' + fmtRemaining(closesAt - now) + ')';
     } else {
-      txt.innerHTML = '🔴 ההצבעה נסגרה ב<strong>' + heDate(closesAt) + '</strong>';
+      // Poll closed — show next opening (opensAt + 7 days, same weekday/time)
+      const nextOpens = new Date(opensAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+      txt.innerHTML = '🔴 ההצבעה סגורה — תיפתח מחדש ב<strong>' + heDate(nextOpens) + '</strong> (בעוד ' + fmtRemaining(nextOpens - now) + ')';
     }
   }
   tick();
