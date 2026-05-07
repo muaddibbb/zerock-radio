@@ -149,6 +149,13 @@
 <body>
 <div class="wrap">
 
+{% if poll and not invalid %}
+  <div style="margin: -28px -24px 20px; border-radius: 14px 14px 0 0; overflow: hidden; line-height: 0;">
+    <img src="/static/matzad-banner.png" alt="מצעד הרוק של ישראל"
+         style="width:100%; height:auto; display:block;">
+  </div>
+{% endif %}
+
 {% if invalid %}
   <div class="state-icon">🔗</div>
   <div class="state-title">סקר לא תקין</div>
