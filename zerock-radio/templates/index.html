@@ -1604,7 +1604,7 @@ async function loadPastCharts() {
         <span style="flex:1;font-size:0.88em;font-weight:600">${poll.title || 'מצעד'}</span>
         ${date ? `<span style="font-size:0.78em;color:var(--text-muted)">${date}</span>` : ''}
         <span style="font-size:0.78em;color:var(--text-muted)">${poll.total_voters} מצביעים</span>
-        <span class="chevron" style="font-size:0.8em;color:#888;transition:transform 0.2s">${idx === 0 ? '▲' : '▼'}</span>
+        <span class="chevron" style="font-size:0.8em;color:#888;transition:transform 0.2s">▼</span>
       `;
 
       // Body (collapsible)
