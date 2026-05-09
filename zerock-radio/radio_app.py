@@ -6536,9 +6536,10 @@ def api_polls_weekly_renew():
                 if sid in tally:
                     tally[sid] += 1
 
-    # Sort songs by votes descending with random tiebreak
+    # Sort songs by votes descending with stable tiebreak (persisted per-poll)
+    _tb_order = _get_tiebreak_order(old_poll)
     ranked = sorted(old_poll['songs'],
-                    key=lambda s: (-tally[s['id']], _rand.random()))
+                    key=lambda s: (-tally[s['id']], _tb_order.get(s['id'], 0.5)))
 
     # Top 20 become new matzad
     new_matzad = ranked[:20]
