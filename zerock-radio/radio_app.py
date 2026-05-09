@@ -5446,6 +5446,48 @@ def _save_poll_votes(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _get_tiebreak_order(poll):
+    """Return a stable {song_id: float} dict for tiebreaking within a poll.
+
+    Values are generated once per poll and persisted in polls.json under
+    poll['tiebreak_order'].  Any song not yet in the stored dict gets a
+    freshly generated random float; the result is written to disk inside
+    _polls_lock so concurrent requests stay consistent.
+
+    Ties are therefore broken the same way on every request — the order
+    only changes if new songs are added to the poll (new IDs get new floats).
+    """
+    import random as _tb
+    stored  = poll.get('tiebreak_order') or {}
+    missing = [s['id'] for s in poll.get('songs', []) if s['id'] not in stored]
+    if not missing:
+        return stored
+
+    # Need to generate and persist new entries — use _polls_lock to avoid races
+    with _polls_lock:
+        all_polls = _load_polls()
+        p = next((x for x in all_polls if x['id'] == poll['id']), None)
+        if p is None:
+            # Poll not on disk (race / brand-new) — generate without saving
+            result = dict(stored)
+            for sid in missing:
+                result[sid] = _tb.random()
+            return result
+        stored2 = p.get('tiebreak_order') or {}
+        changed = False
+        for s in p.get('songs', []):
+            if s['id'] not in stored2:
+                stored2[s['id']] = _tb.random()
+                changed = True
+        if changed:
+            p['tiebreak_order'] = stored2
+            _save_polls(all_polls)
+        # Keep the caller's in-memory poll dict in sync (important when the
+        # caller will later call _save_polls on its own polls list copy)
+        poll['tiebreak_order'] = stored2
+        return stored2
+
+
 # ── Spotify Client Credentials token cache ────────────────────────────────────
 _spotify_token_cache = {'token': None, 'expires_at': 0}
 _spotify_lock        = threading.Lock()
