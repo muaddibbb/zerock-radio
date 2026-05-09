@@ -5693,6 +5693,19 @@ def _send_weekly_vote_invites(old_poll, new_poll_id):
         emails_seen.add(email)
         recipients.append(email)
 
+    # Also include all active subscribers from subscribers.json
+    _subs_path = os.path.join(RADIO_DIR, 'subscribers.json')
+    if os.path.exists(_subs_path):
+        try:
+            _subs = json.load(open(_subs_path))
+            for _s in _subs:
+                _em = (_s.get('email') or '').strip().lower()
+                if _em and '@' in _em and _s.get('active', True) and _em not in emails_seen:
+                    emails_seen.add(_em)
+                    recipients.append(_em)
+        except Exception as _e:
+            print(f"[WeeklyRenew] subscribers.json load error: {_e}", flush=True)
+
     if not recipients:
         print("[WeeklyRenew] No real email addresses to invite", flush=True)
         return
