@@ -5591,6 +5591,60 @@ def _spotify_update_playlist_description(playlist_id, description):
         return False
 
 
+def _spotify_update_wp_links(top20_id, palash_id):
+    """Update the Spotify playlist IDs in WP options and in the ihaf_insert_footer JS block."""
+    import re as _re3
+    if not WP_USERNAME or not WP_APP_PASS:
+        return
+    try:
+        auth    = (WP_USERNAME, WP_APP_PASS)
+        headers = {'Content-Type': 'application/json'}
+        base    = f"{WP_URL}/wp-json"
+
+        # 1. Update the WP options for the playlist IDs
+        _requests.post(f"{base}/wc-admin/options",
+            json={'zerock_spotify_top20': top20_id, 'zerock_spotify_palash': palash_id},
+            auth=auth, headers=headers, timeout=15)
+
+        # 2. Update the JS block inside ihaf_insert_footer
+        r = _requests.get(f"{base}/wc-admin/options?options=ihaf_insert_footer",
+            auth=auth, timeout=15)
+        current = (r.json().get('ihaf_insert_footer') or '')
+        new_js = f"""
+<!-- zerock-spotify-fix -->
+<script>
+(function(){{
+  if (window.location.pathname.indexOf("/rock-chart/") === -1) return;
+  var top20  = "{top20_id}";
+  var palash = "{palash_id}";
+  function fix() {{
+    document.querySelectorAll("a[href*=\\"open.spotify.com/playlist/\\"]").forEach(function(a) {{
+      var h = a.href;
+      if (h.indexOf("1ifvWserGDqUQUH6Ows5oA") !== -1 || h.indexOf(top20) !== -1)
+        a.href = "https://open.spotify.com/playlist/" + top20;
+      else if (h.indexOf("5NMCfgaWkLrFpusbgrMhU4") !== -1 || h.indexOf(palash) !== -1)
+        a.href = "https://open.spotify.com/playlist/" + palash;
+    }});
+  }}
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fix);
+  else fix();
+}})();
+</script>
+<!-- /zerock-spotify-fix -->"""
+        updated = _re3.sub(
+            r'<!-- zerock-spotify-fix -->.*?<!-- /zerock-spotify-fix -->',
+            new_js.strip(), current, flags=_re3.DOTALL
+        )
+        if '<!-- zerock-spotify-fix -->' not in updated:
+            updated = current.rstrip() + '\n' + new_js
+        _requests.post(f"{base}/wc-admin/options",
+            json={'ihaf_insert_footer': updated},
+            auth=auth, headers=headers, timeout=15)
+        print(f"[Spotify] WP rock-chart links updated → top20={top20_id} palash={palash_id}", flush=True)
+    except Exception as e:
+        print(f"[Spotify] WP link update error: {e}", flush=True)
+
+
 # ── Weekly poll voter invite email ────────────────────────────────────────────
 
 def _send_weekly_vote_invites(old_poll, new_poll_id):
