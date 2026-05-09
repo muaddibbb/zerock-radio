@@ -6359,7 +6359,6 @@ def _take_public_snapshot(poll_id=None):
     If poll_id is given, snapshots that poll; otherwise snapshots the most
     recently closed poll (or most recent poll if all open).
     Called every Thursday at 15:00 when the matzad upload completes."""
-    import random as _rng
     polls = _load_polls()
     if not polls:
         print('[PubSnapshot] No polls found', flush=True)
