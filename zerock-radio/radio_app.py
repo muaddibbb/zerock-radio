@@ -6256,10 +6256,10 @@ def poll_results_page(poll_id):
         for sid in (v.get('song_ids') or []):
             if sid in tally:
                 tally[sid] += 1
-    # Sort ALL songs by votes descending — random tiebreak for equal votes
-    import random as _random
+    # Sort ALL songs by votes descending — stable tiebreak for equal votes
+    _tb_order = _get_tiebreak_order(poll)
     results = sorted([
-        {**s, 'votes': tally[s['id']], '_r': _random.random()} for s in poll['songs']
+        {**s, 'votes': tally[s['id']], '_r': _tb_order.get(s['id'], 0.5)} for s in poll['songs']
     ], key=lambda x: (-x['votes'], x['_r']))
     # Compute movement vs previous chart if prev_positions is provided
     prev_pos   = poll.get('prev_positions') or {}
