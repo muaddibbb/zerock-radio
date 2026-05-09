@@ -1587,6 +1587,7 @@ async function loadPastCharts() {
     }
     container.innerHTML = '';
     history.forEach((poll, idx) => {
+      if (poll.is_current) return; // active poll is shown in the active section above
       const date = poll.closes_at ? new Date(poll.closes_at).toLocaleDateString('he-IL') : '';
       const isCurrent = poll.is_current;
       const matzad = (poll.results || []).filter(s => s.group !== 'palash').slice(0, 20);
