@@ -143,13 +143,13 @@ PODBEAN_CLIENT_ID     = os.environ.get('PODBEAN_CLIENT_ID', '')
 PODBEAN_CLIENT_SECRET = os.environ.get('PODBEAN_CLIENT_SECRET', '')
 
 # Spotify Client Credentials — used to resolve poll songs to direct track URLs
-SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID', 'a3e66ced71704add9efd41dbfa7209fe')
-SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '2165331a6a83401f976fe65b475f8ab5')
+SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID', '6b6d99c885f543f9b383bd5994720cc1')
+SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '7099b2bcbb3e44e4a0cb8cb2dba7dbab')
 # Spotify OAuth refresh token — needed for playlist modification (user scope)
 SPOTIFY_REFRESH_TOKEN = os.environ.get('SPOTIFY_REFRESH_TOKEN', '')
-# Weekly poll Spotify playlist IDs to update on renewal
-SPOTIFY_PALASH_PLAYLIST  = '5NMCfgaWkLrFpusbgrMhU4'
-SPOTIFY_TOP20_PLAYLIST   = '1ifvWserGDqUQUH6Ows5oA'
+# Weekly poll Spotify playlist IDs to update on renewal (owned by Roy Kuperman)
+SPOTIFY_PALASH_PLAYLIST  = '5pzM2G3wfgBAoU4V7uwrai'
+SPOTIFY_TOP20_PLAYLIST   = '5C6daDPpvGaaqNF2CkfCxf'
 
 # ─── Al HaRoker self-service scheduling ───────────────────────────────────────
 AL_HAROKER_BOOKINGS_FILE    = f"{RADIO_DIR}/al_haroker_bookings.json"
