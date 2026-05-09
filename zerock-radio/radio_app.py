@@ -6511,7 +6511,7 @@ def api_poll_set_next_palash(poll_id):
 @app.route('/api/polls/weekly-renew', methods=['POST'])
 def api_polls_weekly_renew():
     """Admin: close current poll and open next week's poll (top-20 + next_palash)."""
-    import random as _rand, secrets as _sec2
+    import secrets as _sec2
     from datetime import timezone, timedelta as _td2
 
     polls = _load_polls()
