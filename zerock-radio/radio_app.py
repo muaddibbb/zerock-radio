@@ -143,8 +143,8 @@ PODBEAN_CLIENT_ID     = os.environ.get('PODBEAN_CLIENT_ID', '')
 PODBEAN_CLIENT_SECRET = os.environ.get('PODBEAN_CLIENT_SECRET', '')
 
 # Spotify Client Credentials — used to resolve poll songs to direct track URLs
-SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID', '')
-SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '')
+SPOTIFY_CLIENT_ID     = os.environ.get('SPOTIFY_CLIENT_ID', 'a3e66ced71704add9efd41dbfa7209fe')
+SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '2165331a6a83401f976fe65b475f8ab5')
 # Spotify OAuth refresh token — needed for playlist modification (user scope)
 SPOTIFY_REFRESH_TOKEN = os.environ.get('SPOTIFY_REFRESH_TOKEN', '')
 # Weekly poll Spotify playlist IDs to update on renewal
