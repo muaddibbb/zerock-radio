@@ -6051,8 +6051,9 @@ def api_polls_history():
                 for sid in (v.get('song_ids') or []):
                     if sid in tally:
                         tally[sid] += 1
+            _tb_order = _get_tiebreak_order(poll)
             ranked = sorted(
-                [{**s, 'votes': tally[s['id']], '_r': _rng.random()} for s in poll.get('songs', [])],
+                [{**s, 'votes': tally[s['id']], '_r': _tb_order.get(s['id'], 0.5)} for s in poll.get('songs', [])],
                 key=lambda x: (-x['votes'], x['_r'])
             )
             # Add movement
