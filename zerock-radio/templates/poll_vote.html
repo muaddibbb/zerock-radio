@@ -230,7 +230,6 @@
 
     {% for s in vote_songs %}
       {% set sp_url = s.spotify_url or ('https://open.spotify.com/search/' ~ (s.label | urlencode)) %}
-      {% set yt_url = s.youtube_url or ('https://www.youtube.com/results?search_query=' ~ (s.label | urlencode)) %}
       <div class="song-item" data-id="{{ s.id }}">
         <label class="song-tap">
           <input type="checkbox" name="song" value="{{ s.id }}" onchange="onPick(this)" disabled>
@@ -238,8 +237,10 @@
         </label>
         <a class="listen-btn listen-spotify" href="{{ sp_url }}" target="_blank" rel="noopener noreferrer"
            title="Listen on Spotify" aria-label="Listen on Spotify">🎧</a>
-        <a class="listen-btn listen-youtube" href="{{ yt_url }}" target="_blank" rel="noopener noreferrer"
+        {% if s.youtube_url %}
+        <a class="listen-btn listen-youtube" href="{{ s.youtube_url }}" target="_blank" rel="noopener noreferrer"
            title="Watch on YouTube" aria-label="Watch on YouTube">▶</a>
+        {% endif %}
       </div>
     {% endfor %}
 
