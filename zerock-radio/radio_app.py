@@ -6391,9 +6391,10 @@ def _take_public_snapshot(poll_id=None):
             if sid in tally:
                 tally[sid] += 1
 
-    # Sort with random tiebreak (same as team results page)
+    # Sort with stable tiebreak (same as team results page)
+    _tb_order = _get_tiebreak_order(poll)
     results_raw = sorted(
-        [{**s, 'votes': tally[s['id']], '_r': _rng.random()} for s in poll['songs']],
+        [{**s, 'votes': tally[s['id']], '_r': _tb_order.get(s['id'], 0.5)} for s in poll['songs']],
         key=lambda x: (-x['votes'], x['_r'])
     )
 
