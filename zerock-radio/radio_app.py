@@ -6646,6 +6646,9 @@ def api_polls_weekly_renew():
                 print("[WeeklyRenew] No Top-20 Spotify URIs — skipping top-20 playlist update", flush=True)
             _spotify_update_playlist_description(SPOTIFY_TOP20_PLAYLIST, description)
 
+            # Update WP rock-chart page Spotify links
+            _spotify_update_wp_links(SPOTIFY_TOP20_PLAYLIST, SPOTIFY_PALASH_PLAYLIST)
+
         except Exception as e:
             print(f"[WeeklyRenew] Spotify playlist update error: {e}", flush=True)
 
