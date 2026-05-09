@@ -6022,7 +6022,6 @@ def api_poll_list():
 @app.route('/api/polls/history')
 def api_polls_history():
     """Admin: all past polls with final ranked results (newest first)."""
-    import random as _rng
     polls      = _load_polls()
     all_votes  = _load_poll_votes()
     now        = datetime.now()
