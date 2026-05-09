@@ -5526,7 +5526,8 @@ def _spotify_get_user_token():
 
 def _spotify_replace_playlist(playlist_id, uris):
     """Replace all tracks in a Spotify playlist with the given track URIs.
-    Uses PUT /playlists/{id}/tracks (replaces entire playlist).
+    Uses PUT /playlists/{id}/items (replaces entire playlist).
+    NOTE: /tracks was deprecated Feb 2026 — must use /items.
     uris: list of 'spotify:track:...' strings."""
     import urllib.request, urllib.parse
     tok = _spotify_get_user_token()
@@ -5534,10 +5535,10 @@ def _spotify_replace_playlist(playlist_id, uris):
         print(f"[Spotify] No user token — cannot update playlist {playlist_id}", flush=True)
         return False
     try:
-        # Spotify PUT replaces up to 100 tracks per call
+        # Spotify PUT replaces up to 100 items per call
         body = json.dumps({'uris': uris[:100]}).encode()
         req  = urllib.request.Request(
-            f'https://api.spotify.com/v1/playlists/{playlist_id}/tracks',
+            f'https://api.spotify.com/v1/playlists/{playlist_id}/items',
             data=body,
             method='PUT',
             headers={
