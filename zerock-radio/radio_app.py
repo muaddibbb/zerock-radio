@@ -3431,8 +3431,20 @@ def _build_wp_schedule_slots():
         queue = load_schedule()
         now   = datetime.now()
         for entry in sorted(queue, key=lambda e: e.get('scheduled_time', '')):
-            if entry.get('triggered') or entry.get('is_rerun', False):
-                continue
+            # Allow triggered queue-only shows that are CURRENTLY ON AIR
+            # (triggered within the last show-duration hours) so the WP
+            # "now playing" widget reflects what's actually broadcasting.
+            _is_triggered = entry.get('triggered') or entry.get('is_rerun', False)
+            if _is_triggered:
+                _key_t = entry.get('show_key', '')
+                _dur_t = _SHOW_DURATIONS_H.get(_key_t, 1)
+                try:
+                    _t_t = datetime.fromisoformat(entry.get('scheduled_time', ''))
+                    _on_air = (_t_t <= now) and (now < _t_t + timedelta(hours=_dur_t))
+                except Exception:
+                    _on_air = False
+                if not (_is_triggered and _on_air and _key_t in QUEUE_ONLY_BOARD_SHOWS):
+                    continue
             key = entry.get('show_key')
             if not key:
                 continue
