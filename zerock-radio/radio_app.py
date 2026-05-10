@@ -6896,6 +6896,13 @@ def api_polls_weekly_renew():
         daemon=True,
     ).start()
 
+    # Send welcome emails to Palash artists
+    threading.Thread(
+        target=_send_palash_welcome_emails,
+        args=(new_songs[20:],),
+        daemon=True,
+    ).start()
+
     return jsonify({
         'ok':           True,
         'old_poll_id':  old_poll['id'],
