@@ -6127,7 +6127,7 @@ def api_poll_create():
         else:
             title = 'מצעד הרוק של ישראל'
 
-    # Voting window: default Thu 15:00 → next Wed 20:00, admin can override.
+    # Voting window: default Thu 15:00 → next Tue 19:00, admin can override.
     opens_default, closes_default = _calc_default_voting_window()
     opens_in  = (data.get('opens_at')  or '').strip()
     closes_in = (data.get('closes_at') or '').strip()
