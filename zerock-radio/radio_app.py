@@ -3458,18 +3458,20 @@ def _build_wp_schedule_slots():
                 ep_wp_day  = DAY_MAP[t.weekday()]
                 ep_start_h = t.hour + t.minute / 60.0
                 if key in QUEUE_ONLY_BOARD_SHOWS or (show_cfg_q and show_cfg_q['day'] is None):
-                    # Queue-only shows (e.g. על הרוקר) only appear on the board if
-                    # the episode is within the current 7-day window.  The 14-day
-                    # window is intentionally wider for regular-show overrides, but
-                    # queue-only episodes that fall in a future week would bleed onto
-                    # this week's weekday column (same wp_day, different calendar week).
-                    if t > now + timedelta(days=7):
-                        continue
-                    # Extra guard: if this entry falls on the SAME weekday as today
-                    # but is a future date, it belongs to next week — skip it.
-                    # (Prevents e.g. next Sunday's episode showing in this Sunday's column
-                    # when today's episode has already aired.)
-                    if ep_wp_day == DAY_MAP[now.weekday()] and t.date() > now.date():
+                    # Queue-only shows (e.g. על הרוקר) only appear if the episode
+                    # falls within the CURRENT board week (Sun–Sat).  The board
+                    # transitions to the next week on Saturday evening at 18:00 —
+                    # before that, next week's episodes are not yet shown.
+                    #
+                    # days_since_sun: 0=Sun, 1=Mon, …, 6=Sat  (Python Mon=0 → (wd+1)%7)
+                    _days_since_sun = (now.weekday() + 1) % 7
+                    _board_week_end = (
+                        now + timedelta(days=(6 - _days_since_sun))
+                    ).replace(hour=23, minute=59, second=59, microsecond=999999)
+                    # Saturday evening (≥18:00): extend window to cover next week too
+                    if now.weekday() == 5 and now.hour >= 18:
+                        _board_week_end += timedelta(days=7)
+                    if t > _board_week_end:
                         continue
                     _day_key = (key, ep_wp_day)
                     # Only keep the soonest episode per (show, weekday) — prevents
