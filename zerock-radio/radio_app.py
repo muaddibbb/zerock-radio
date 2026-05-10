@@ -4778,6 +4778,122 @@ def _add_subscriber(name, email):
         print(f"[AlHaRoker] Subscriber save error: {e}", flush=True)
 
 
+_unsub_lock = threading.Lock()
+
+def _load_unsubscribe_tokens():
+    try:
+        with open(UNSUBSCRIBE_TOKENS_FILE) as f:
+            return json.load(f)   # {token: email}
+    except Exception:
+        return {}
+
+def _save_unsubscribe_tokens(data):
+    with open(UNSUBSCRIBE_TOKENS_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def _load_unsubscribed_emails():
+    try:
+        with open(UNSUBSCRIBED_EMAILS_FILE) as f:
+            return set(json.load(f))
+    except Exception:
+        return set()
+
+def _save_unsubscribed_emails(emails_set):
+    with open(UNSUBSCRIBED_EMAILS_FILE, 'w') as f:
+        json.dump(sorted(emails_set), f, ensure_ascii=False, indent=2)
+
+def _get_unsubscribe_token(email):
+    """Return a stable unsubscribe token for this email, creating one if needed."""
+    email = email.strip().lower()
+    with _unsub_lock:
+        tokens = _load_unsubscribe_tokens()
+        for tok, em in tokens.items():
+            if em == email:
+                return tok
+        tok = secrets.token_urlsafe(24)
+        tokens[tok] = email
+        _save_unsubscribe_tokens(tokens)
+        return tok
+
+def _is_unsubscribed(email):
+    """Return True if this email has opted out of marketing emails."""
+    return email.strip().lower() in _load_unsubscribed_emails()
+
+def _do_unsubscribe(email):
+    """Mark email as unsubscribed and deactivate in subscriber lists (idempotent)."""
+    email = email.strip().lower()
+    with _unsub_lock:
+        emails = _load_unsubscribed_emails()
+        emails.add(email)
+        _save_unsubscribed_emails(emails)
+        # Deactivate in al_haroker_subscribers
+        try:
+            with open(AL_HAROKER_SUBSCRIBERS_FILE) as f:
+                subs = json.load(f)
+            changed = False
+            for s in subs:
+                if s.get('email', '').strip().lower() == email:
+                    s['active'] = False
+                    changed = True
+            if changed:
+                with open(AL_HAROKER_SUBSCRIBERS_FILE, 'w') as f:
+                    json.dump(subs, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+        # Deactivate in general subscribers.json (poll invites)
+        _subs_path = os.path.join(RADIO_DIR, 'subscribers.json')
+        try:
+            with open(_subs_path) as f:
+                subs2 = json.load(f)
+            changed2 = False
+            for s in subs2:
+                if s.get('email', '').strip().lower() == email:
+                    s['active'] = False
+                    changed2 = True
+            if changed2:
+                with open(_subs_path, 'w') as f:
+                    json.dump(subs2, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
+
+
+@app.route('/unsubscribe/<token>')
+def unsubscribe_page(token):
+    """One-click unsubscribe: marks the email as opted-out and shows confirmation."""
+    with _unsub_lock:
+        tokens = _load_unsubscribe_tokens()
+    email = tokens.get(token)
+    if not email:
+        return ('<div dir="rtl" style="font-family:Arial,sans-serif;text-align:center;'
+                'padding:60px">הקישור אינו תקין.</div>'), 404
+    _do_unsubscribe(email)
+    return f'''<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="utf-8">
+  <title>ביטול הרשמה — ZeRock Radio</title>
+  <style>
+    body {{ font-family: Arial, sans-serif; background: #111; color: #eee;
+            text-align: center; padding: 60px 20px; }}
+    h1   {{ color: #e63946; }}
+    a    {{ color: #e63946; }}
+    .box {{ background: #1e1e1e; border-radius: 12px; max-width: 480px;
+            margin: 0 auto; padding: 40px 32px; }}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🤘 ZeRock Radio</h1>
+    <h2>בוצע ביטול הרשמה</h2>
+    <p>הכתובת <strong>{email}</strong> הוסרה מרשימת התפוצה שלנו.</p>
+    <p>לא תקבל יותר הזמנות למצעד או לעל הרוקר.</p>
+    <br>
+    <a href="https://zerockradio.com">חזרה לאתר →</a>
+  </div>
+</body>
+</html>''', 200
+
+
 def _send_upload_email(booking):
     """Send a personal upload-link email to the registered broadcaster."""
     if not SMTP_USER or not SMTP_PASS:
