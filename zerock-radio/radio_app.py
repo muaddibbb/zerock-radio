@@ -3907,7 +3907,41 @@ def _sync_wp_board(force=False):
                     'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",f);else f();'
                     '})();</script>'
                 )
-                footer_content = css + '\n' + html + spotify_fix
+                # Homepage "עכשיו בשידור" / "התכנית הבאה" live-fix.
+                # The WP theme renders a hardcoded schedule; this JS patches
+                # both paragraphs on the homepage using the public /zr/v1/np
+                # REST endpoint that already reads zerock_now_playing_json.
+                homepage_fix = (
+                    '\n<script id="zerock-home-fix">'
+                    '(function(){'
+                    'if(window.location.pathname!=="/"&&window.location.pathname!=="")return;'
+                    'function run(html){'
+                    'var t=document.createElement("div");t.innerHTML=html;'
+                    'function txt(sel){var e=t.querySelector(sel);return e?e.textContent.trim():"";}'
+                    'var nowName=txt(".hp-live-now .hp-show-name");'
+                    'var nowExtra=txt(".hp-live-now .hp-show-text");'
+                    'var nowTime=txt(".hp-live-now .hp-show-time");'
+                    'var nxtName=txt(".hp-next-show .hp-show-name");'
+                    'var nxtExtra=txt(".hp-next-show .hp-show-text");'
+                    'var nxtTime=txt(".hp-next-show .hp-show-time");'
+                    'var nowStr=[nowName,nowExtra,nowTime].filter(Boolean).join(" ");'
+                    'var nxtStr=[nxtName,nxtExtra,nxtTime].filter(Boolean).join(" ");'
+                    'document.querySelectorAll("p").forEach(function(p){'
+                    'var tx=p.textContent.trim();'
+                    'var s=p.nextElementSibling;'
+                    'if(!s||s.tagName!=="P")return;'
+                    'if(tx==="עכשיו בשידור"&&nowStr)s.textContent=nowStr;'
+                    'if(tx==="התכנית הבאה"&&nxtStr)s.textContent=nxtStr;'
+                    '});}'
+                    'function go(){'
+                    'fetch("/wp-json/zr/v1/np")'
+                    '.then(function(r){return r.json();})'
+                    '.then(function(h){run(h);})'
+                    '.catch(function(){});}'
+                    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",go);else go();'
+                    '})();</script>'
+                )
+                footer_content = css + '\n' + html + spotify_fix + homepage_fix
                 r4 = _requests.post(
                     f"{WP_REST_BASE}/wc-admin/options",
                     json={'ihaf_insert_footer': footer_content},
