@@ -7402,7 +7402,8 @@ def _send_monthly_invite_email(subscriber, next_year, next_month):
         return
     try:
         month_name = _HEB_MONTHS[next_month]
-        link = f"{ZEROCK_PUBLIC_URL}/al-haroker-schedule/{next_year}/{next_month}"
+        link       = f"{ZEROCK_PUBLIC_URL}/al-haroker-schedule/{next_year}/{next_month}"
+        unsub_url  = f"{ZEROCK_PUBLIC_URL}/unsubscribe/{_get_unsubscribe_token(subscriber['email'])}"
 
         body_plain = (
             f"היי רוקרים ורוקריות,\n\n"
@@ -7410,7 +7411,8 @@ def _send_monthly_invite_email(subscriber, next_year, next_month):
             f"הנה הלינק:\n{link}\n\n"
             f"בגלל עומס הבקשות, המערכת מאפשרת רישום אחד כל חודש.\n\n"
             f"Keep on Rockin' !!!\n"
-            f"צוות רדיו זה רוק"
+            f"צוות רדיו זה רוק\n\n"
+            f"לביטול הרשמה: {unsub_url}"
         )
         body_html = (
             '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;'
@@ -7429,6 +7431,9 @@ def _send_monthly_invite_email(subscriber, next_year, next_month):
             '<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">'
             '<p>בגלל עומס הבקשות, המערכת מאפשרת רישום אחד כל חודש.</p>'
             '<p>Keep on Rockin\' !!!<br><strong>צוות רדיו זה רוק</strong></p>'
+            f'<p style="text-align:center;margin-top:20px">'
+            f'<a href="{unsub_url}" style="color:#bbb;font-size:12px;text-decoration:none">'
+            'הסר אותי מרשימת התפוצה</a></p>'
             '</div>'
         )
 
@@ -7456,6 +7461,8 @@ def _do_send_monthly_invites(next_year, next_month):
             subs = json.load(f)
     except Exception:
         subs = []
+    # Filter out inactive and unsubscribed
+    subs = [s for s in subs if s.get('active', True) and not _is_unsubscribed(s.get('email', ''))]
     if not subs:
         print("[AlHaRoker] No subscribers to notify", flush=True)
         return
