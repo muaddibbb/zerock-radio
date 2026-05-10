@@ -3908,31 +3908,26 @@ def _sync_wp_board(force=False):
                     '})();</script>'
                 )
                 # Homepage "עכשיו בשידור" / "התכנית הבאה" live-fix.
-                # The WP theme renders a hardcoded schedule; this JS patches
-                # both paragraphs on the homepage using the public /zr/v1/np
-                # REST endpoint that already reads zerock_now_playing_json.
+                # page-home.php renders .hp-live-now / .hp-next-show from ACF
+                # options (hardcoded per-slot broadcaster text). This JS fetches
+                # /zr/v1/np which reads zerock_now_playing_json and patches
+                # .hp-show-name and .hp-show-text in both widgets.
                 homepage_fix = (
                     '\n<script id="zerock-home-fix">'
                     '(function(){'
                     'if(window.location.pathname!=="/"&&window.location.pathname!=="")return;'
                     'function run(html){'
                     'var t=document.createElement("div");t.innerHTML=html;'
-                    'function txt(sel){var e=t.querySelector(sel);return e?e.textContent.trim():"";}'
-                    'var nowName=txt(".hp-live-now .hp-show-name");'
-                    'var nowExtra=txt(".hp-live-now .hp-show-text");'
-                    'var nowTime=txt(".hp-live-now .hp-show-time");'
-                    'var nxtName=txt(".hp-next-show .hp-show-name");'
-                    'var nxtExtra=txt(".hp-next-show .hp-show-text");'
-                    'var nxtTime=txt(".hp-next-show .hp-show-time");'
-                    'var nowStr=[nowName,nowExtra,nowTime].filter(Boolean).join(" ");'
-                    'var nxtStr=[nxtName,nxtExtra,nxtTime].filter(Boolean).join(" ");'
-                    'document.querySelectorAll("p").forEach(function(p){'
-                    'var tx=p.textContent.trim();'
-                    'var s=p.nextElementSibling;'
-                    'if(!s||s.tagName!=="P")return;'
-                    'if(tx==="עכשיו בשידור"&&nowStr)s.textContent=nowStr;'
-                    'if(tx==="התכנית הבאה"&&nxtStr)s.textContent=nxtStr;'
-                    '});}'
+                    'function patch(srcSel,dstSel){'
+                    'var s=t.querySelector(srcSel),d=document.querySelector(dstSel);'
+                    'if(s&&d)d.textContent=s.textContent.trim();}'
+                    'patch(".hp-live-now .hp-show-name",".hp-live-now .hp-show-name");'
+                    'patch(".hp-live-now .hp-show-text",".hp-live-now .hp-show-text");'
+                    'patch(".hp-live-now .hp-show-time",".hp-live-now .hp-show-time");'
+                    'patch(".hp-next-show .hp-show-name",".hp-next-show .hp-show-name");'
+                    'patch(".hp-next-show .hp-show-text",".hp-next-show .hp-show-text");'
+                    'patch(".hp-next-show .hp-show-time",".hp-next-show .hp-show-time");'
+                    '}'
                     'function go(){'
                     'fetch("/wp-json/zr/v1/np")'
                     '.then(function(r){return r.json();})'
