@@ -5861,6 +5861,95 @@ def _spotify_update_wp_links(top20_id, palash_id):
         print(f"[Spotify] WP link update error: {e}", flush=True)
 
 
+# ── Palash artist welcome emails (sent on Thursday 15:00 with each new poll) ──
+
+def _find_release_email_for_palash(label):
+    """Search new_releases.json for the sender email matching a Palash song label.
+    Label format: 'Artist - Song Title'.
+    Matches against id3_artist / id3_title tags first, then subject / from_name.
+    Returns (email, from_name) or (None, None)."""
+    try:
+        releases = _nr_load()
+    except Exception:
+        return None, None
+    parts     = label.split(' - ', 1)
+    artist_q  = parts[0].strip().lower()  if parts             else ''
+    title_q   = parts[1].strip().lower()  if len(parts) > 1   else ''
+
+    for r in releases:
+        email = (r.get('from_email') or '').strip()
+        if not email or '@' not in email:
+            continue
+        # Check id3 tags on each attached file (most reliable)
+        for f in r.get('files', []) or []:
+            id3_art = (f.get('id3_artist') or '').lower()
+            id3_ttl = (f.get('id3_title')  or '').lower()
+            if artist_q and (artist_q in id3_art or id3_art in artist_q):
+                if not title_q or (title_q in id3_ttl or id3_ttl in title_q):
+                    return email, (r.get('from_name') or '')
+        # Fallback: artist name appears in the email subject line
+        subj = (r.get('subject') or '').lower()
+        if artist_q and artist_q in subj:
+            return email, (r.get('from_name') or '')
+    return None, None
+
+
+def _send_palash_welcome_emails(palash_songs):
+    """Send a welcome / chart-entry notification email to each Palash artist.
+    Called in a background thread immediately after the Thursday 15:00 poll renewal."""
+    if not SMTP_USER or not SMTP_PASS:
+        print("[PalashEmail] SMTP not configured — skipping", flush=True)
+        return
+    sent      = 0
+    not_found = []
+    for song in palash_songs:
+        label = song.get('label', '')
+        email, _ = _find_release_email_for_palash(label)
+        if not email:
+            print(f"[PalashEmail] No email found for: {label}", flush=True)
+            not_found.append(label)
+            continue
+        try:
+            body_html = (
+                '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;'
+                'color:#222;line-height:1.8">'
+                '<p>שלום</p>'
+                '<p>ברוכים הבאים לפינה לשיפוטכם במצעד הרוק של ישראל!<br>'
+                'מוזמנים לשתף לעוקבים שלכם קישור להצבעה ← '
+                '<a href="https://linktr.ee/israelirockchart">'
+                'https://linktr.ee/israelirockchart</a></p>'
+                '<p>שימו לב ניתן להצביע עד יום רביעי בשעה 19:00</p>'
+                '<p>ובנוסף יעלה פוסט עליכם במהלך השבוע</p>'
+                '<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">'
+                '<p><strong>צוות ZeRock Radio</strong> 🤘</p>'
+                '</div>'
+            )
+            body_text = (
+                'שלום\n\n'
+                'ברוכים הבאים לפינה לשיפוטכם במצעד הרוק של ישראל!\n'
+                'מוזמנים לשתף לעוקבים שלכם קישור להצבעה --> '
+                'https://linktr.ee/israelirockchart\n'
+                'שימו לב ניתן להצביע עד יום רביעי בשעה 19:00\n'
+                'ובנוסף יעלה פוסט עליכם במהלך השבוע\n\n'
+                'צוות ZeRock Radio 🤘'
+            )
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'כניסה למצעד הרוק של ישראל'
+            msg['From']    = SMTP_FROM_ADDR
+            msg['To']      = email
+            msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+            msg.attach(MIMEText(body_html, 'html',  'utf-8'))
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+                s.ehlo(); s.starttls()
+                s.login(SMTP_USER, SMTP_PASS)
+                s.sendmail(SMTP_FROM_ADDR, [email], msg.as_bytes())
+            print(f"[PalashEmail] ✓ Sent to {email} ({label})", flush=True)
+            sent += 1
+        except Exception as e:
+            print(f"[PalashEmail] Error → {email} ({label}): {e}", flush=True)
+    print(f"[PalashEmail] Done — sent: {sent}, not found: {not_found}", flush=True)
+
+
 # ── Weekly poll voter invite email ────────────────────────────────────────────
 
 def _send_weekly_vote_invites(old_poll, new_poll_id):
