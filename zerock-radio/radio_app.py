@@ -5894,11 +5894,14 @@ def _send_weekly_vote_invites(old_poll, new_poll_id):
         except Exception as _e:
             print(f"[WeeklyRenew] subscribers.json load error: {_e}", flush=True)
 
+    # Filter out unsubscribed emails
+    recipients = [e for e in recipients if not _is_unsubscribed(e)]
+
     if not recipients:
         print("[WeeklyRenew] No real email addresses to invite", flush=True)
         return
 
-    body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.8">
+    body_html_base = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.8">
 <p>היי 👋</p>
 <p>זה אנחנו, מצוות המצעד של <strong>רדיו זה רוק</strong>.</p>
 <p>מוזמנים להצביע שוב למצעד הרוק של ישראל — ההצבעה השבועית החדשה פתוחה!</p>
@@ -5908,15 +5911,20 @@ def _send_weekly_vote_invites(old_poll, new_poll_id):
 </p>
 <hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
 <p style="color:#888;font-size:13px">קיבלת מייל זה כי הצבעת בעבר במצעד הרוק של רדיו זה רוק.</p>
-<p><strong>צוות ZeRock Radio</strong> 🎸</p>
-</div>"""
-    body_text = (f"היי!\nמוזמנים להצביע שוב למצעד הרוק של ישראל.\n\n"
-                 f"הנה הלינק: {vote_url}\n\nZeRock Radio 🤘")
+<p><strong>צוות ZeRock Radio</strong> 🎸</p>"""
+    body_text_base = (f"היי!\nמוזמנים להצביע שוב למצעד הרוק של ישראל.\n\n"
+                      f"הנה הלינק: {vote_url}\n\nZeRock Radio 🤘")
 
     sent = 0
     errors = 0
     for email in recipients:
         try:
+            unsub_url  = f"{ZEROCK_PUBLIC_URL}/unsubscribe/{_get_unsubscribe_token(email)}"
+            unsub_html = (f'<p style="text-align:center;margin-top:20px">'
+                          f'<a href="{unsub_url}" style="color:#bbb;font-size:12px;text-decoration:none">'
+                          f'הסר אותי מרשימת התפוצה</a></p>\n</div>')
+            body_html  = body_html_base + unsub_html
+            body_text  = body_text_base + f"\n\nלביטול הרשמה: {unsub_url}"
             msg = MIMEMultipart('alternative')
             msg['Subject'] = 'מוזמנים להצביע שוב — מצעד הרוק של רדיו זה רוק 🤘'
             msg['From']    = SMTP_FROM_ADDR
