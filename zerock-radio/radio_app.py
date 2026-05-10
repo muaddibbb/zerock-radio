@@ -5902,6 +5902,7 @@ def _send_palash_welcome_emails(palash_songs):
         return
     sent      = 0
     not_found = []
+    seen_emails = set()   # deduplicate — one email per address regardless of how many songs match
     for song in palash_songs:
         label = song.get('label', '')
         email, _ = _find_release_email_for_palash(label)
@@ -5909,6 +5910,10 @@ def _send_palash_welcome_emails(palash_songs):
             print(f"[PalashEmail] No email found for: {label}", flush=True)
             not_found.append(label)
             continue
+        if email.lower() in seen_emails:
+            print(f"[PalashEmail] Skipping duplicate address {email} for: {label}", flush=True)
+            continue
+        seen_emails.add(email.lower())
         try:
             body_html = (
                 '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;'
