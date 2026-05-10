@@ -3887,56 +3887,43 @@ def _sync_wp_board(force=False):
                     '}'
                     '</style>'
                 )
-                # Spotify playlist link fix for /rock-chart/ page.
-                # Reads IDs from WP options so Thursday renewal auto-updates them.
+                # Combined JS fix — single <script> block (WAF strips 2nd block).
+                # 1. Spotify playlist link fix for /rock-chart/ page.
+                # 2. Homepage now-playing fix: patches .hp-live-now / .hp-next-show
+                #    broadcaster text using the public /zr/v1/np REST endpoint.
                 _sp_top20  = SPOTIFY_TOP20_PLAYLIST
                 _sp_palash = SPOTIFY_PALASH_PLAYLIST
-                spotify_fix = (
-                    '\n<script id="zerock-spotify-fix">'
+                combined_fix = (
+                    '\n<script id="zerock-fix">'
                     '(function(){'
-                    'if(window.location.pathname.indexOf("/rock-chart/")===-1)return;'
+                    # Spotify fix — rock-chart page only
+                    'if(window.location.pathname.indexOf("/rock-chart/")!==-1){'
                     f'var t="{_sp_top20}",p="{_sp_palash}";'
-                    'function f(){'
-                    'document.querySelectorAll("a[href*=\'open.spotify.com/playlist/\']").forEach(function(a){'
+                    'function sf(){document.querySelectorAll("a[href*=\'open.spotify.com/playlist/\']").forEach(function(a){'
                     'var h=a.href;'
-                    'if(h.indexOf("1ifvWserGDqUQUH6Ows5oA")!==-1||h.indexOf(t)!==-1)'
-                    'a.href="https://open.spotify.com/playlist/"+t;'
-                    'else if(h.indexOf("5NMCfgaWkLrFpusbgrMhU4")!==-1||h.indexOf(p)!==-1)'
-                    'a.href="https://open.spotify.com/playlist/"+p;'
+                    'if(h.indexOf("1ifvWserGDqUQUH6Ows5oA")!==-1||h.indexOf(t)!==-1)a.href="https://open.spotify.com/playlist/"+t;'
+                    'else if(h.indexOf("5NMCfgaWkLrFpusbgrMhU4")!==-1||h.indexOf(p)!==-1)a.href="https://open.spotify.com/playlist/"+p;'
                     '});}'
-                    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",f);else f();'
-                    '})();</script>'
-                )
-                # Homepage "עכשיו בשידור" / "התכנית הבאה" live-fix.
-                # page-home.php renders .hp-live-now / .hp-next-show from ACF
-                # options (hardcoded per-slot broadcaster text). This JS fetches
-                # /zr/v1/np which reads zerock_now_playing_json and patches
-                # .hp-show-name and .hp-show-text in both widgets.
-                homepage_fix = (
-                    '\n<script id="zerock-home-fix">'
-                    '(function(){'
-                    'if(window.location.pathname!=="/"&&window.location.pathname!=="")return;'
-                    'function run(html){'
-                    'var t=document.createElement("div");t.innerHTML=html;'
-                    'function patch(srcSel,dstSel){'
-                    'var s=t.querySelector(srcSel),d=document.querySelector(dstSel);'
-                    'if(s&&d)d.textContent=s.textContent.trim();}'
-                    'patch(".hp-live-now .hp-show-name",".hp-live-now .hp-show-name");'
-                    'patch(".hp-live-now .hp-show-text",".hp-live-now .hp-show-text");'
-                    'patch(".hp-live-now .hp-show-time",".hp-live-now .hp-show-time");'
-                    'patch(".hp-next-show .hp-show-name",".hp-next-show .hp-show-name");'
-                    'patch(".hp-next-show .hp-show-text",".hp-next-show .hp-show-text");'
-                    'patch(".hp-next-show .hp-show-time",".hp-next-show .hp-show-time");'
+                    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",sf);else sf();'
                     '}'
-                    'function go(){'
+                    # Homepage fix — patches ACF-hardcoded broadcaster with live data
+                    'var _hp=window.location.pathname;'
+                    'if(_hp==="/"||_hp===""||_hp==="/index.php"){'
+                    'function hf(){'
                     'fetch("/wp-json/zr/v1/np")'
                     '.then(function(r){return r.json();})'
-                    '.then(function(h){run(h);})'
+                    '.then(function(html){'
+                    'var d=document.createElement("div");d.innerHTML=html;'
+                    'function p(s){var a=d.querySelector(s),b=document.querySelector(s);if(a&&b)b.textContent=a.textContent.trim();}'
+                    'p(".hp-live-now .hp-show-name");p(".hp-live-now .hp-show-text");p(".hp-live-now .hp-show-time");'
+                    'p(".hp-next-show .hp-show-name");p(".hp-next-show .hp-show-text");p(".hp-next-show .hp-show-time");'
+                    '})'
                     '.catch(function(){});}'
-                    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",go);else go();'
+                    'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",hf);else hf();'
+                    '}'
                     '})();</script>'
                 )
-                footer_content = css + '\n' + html + spotify_fix + homepage_fix
+                footer_content = css + '\n' + html + combined_fix
                 r4 = _requests.post(
                     f"{WP_REST_BASE}/wc-admin/options",
                     json={'ihaf_insert_footer': footer_content},
