@@ -3465,6 +3465,12 @@ def _build_wp_schedule_slots():
                     # this week's weekday column (same wp_day, different calendar week).
                     if t > now + timedelta(days=7):
                         continue
+                    # Extra guard: if this entry falls on the SAME weekday as today
+                    # but is a future date, it belongs to next week — skip it.
+                    # (Prevents e.g. next Sunday's episode showing in this Sunday's column
+                    # when today's episode has already aired.)
+                    if ep_wp_day == DAY_MAP[now.weekday()] and t.date() > now.date():
+                        continue
                     _day_key = (key, ep_wp_day)
                     # Only keep the soonest episode per (show, weekday) — prevents
                     # two consecutive weeks' episodes from overlapping on the grid.
