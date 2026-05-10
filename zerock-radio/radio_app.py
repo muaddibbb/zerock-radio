@@ -6754,15 +6754,15 @@ def api_polls_weekly_renew():
         # Palash entries are new to the chart — no prev_position entry
         new_song_weeks[new_id] = 1
 
-    # Next Wednesday 19:00 Israel time (UTC+3)
+    # Next Tuesday 19:00 Israel time (UTC+3)
     israel_tz = timezone(_td2(hours=3))
     now_israel = datetime.now(israel_tz)
-    days_until_wed = (2 - now_israel.weekday()) % 7
-    if days_until_wed == 0:
-        days_until_wed = 7  # Already Wednesday → next Wednesday
-    next_wed = (now_israel + _td2(days=days_until_wed)).replace(
+    days_until_tue = (1 - now_israel.weekday()) % 7
+    if days_until_tue == 0:
+        days_until_tue = 7  # Already Tuesday → next Tuesday
+    next_tue = (now_israel + _td2(days=days_until_tue)).replace(
         hour=19, minute=0, second=0, microsecond=0)
-    closes_at_str = next_wed.strftime('%Y-%m-%dT%H:%M:%S+03:00')
+    closes_at_str = next_tue.strftime('%Y-%m-%dT%H:%M:%S+03:00')
     opens_at_str  = now_israel.strftime('%Y-%m-%dT%H:%M:%S+03:00')
 
     # Close old poll
