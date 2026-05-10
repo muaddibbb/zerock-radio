@@ -5952,7 +5952,7 @@ def _send_weekly_vote_invites(old_poll, new_poll_id):
 
 def _calc_default_voting_window(now=None):
     """Compute the default voting window covering or following 'now'.
-    Window: Thursday 15:00 → next Wednesday 20:00 (6 days 5 hours).
+    Window: Thursday 15:00 → next Tuesday 19:00 (5 days 4 hours).
     If 'now' is inside an active window, return that window; otherwise the next one."""
     if now is None:
         now = datetime.now()
@@ -5962,11 +5962,11 @@ def _calc_default_voting_window(now=None):
         hour=15, minute=0, second=0, microsecond=0)
     if last_thu_1500 > now:
         last_thu_1500 -= timedelta(days=7)
-    closes = last_thu_1500 + timedelta(days=6, hours=5)  # → following Wed 20:00
+    closes = last_thu_1500 + timedelta(days=5, hours=4)  # → following Tue 19:00
     if closes >= now:
         return last_thu_1500, closes
     next_thu = last_thu_1500 + timedelta(days=7)
-    return next_thu, next_thu + timedelta(days=6, hours=5)
+    return next_thu, next_thu + timedelta(days=5, hours=4)
 
 
 def _poll_is_open(poll, now=None):
