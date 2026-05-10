@@ -5923,7 +5923,7 @@ def _send_palash_welcome_emails(palash_songs):
                 'מוזמנים לשתף לעוקבים שלכם קישור להצבעה ← '
                 '<a href="https://linktr.ee/israelirockchart">'
                 'https://linktr.ee/israelirockchart</a></p>'
-                '<p>שימו לב ניתן להצביע עד יום רביעי בשעה 19:00</p>'
+                '<p>שימו לב ניתן להצביע עד יום שלישי בשעה 19:00</p>'
                 '<p>ובנוסף יעלה פוסט עליכם במהלך השבוע</p>'
                 '<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">'
                 '<p><strong>צוות ZeRock Radio</strong> 🤘</p>'
