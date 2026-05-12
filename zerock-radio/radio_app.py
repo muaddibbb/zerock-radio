@@ -2097,14 +2097,13 @@ def _check_wp_posts(schedule):
                     print(f"[WP-Check] Post {wp_id} status={wp_status!r} — skipping", flush=True)
                     continue
 
-                # Clear wp_future_pending / wp_draft_pending flags if present
-                if show.get('wp_future_pending') or show.get('wp_draft_pending'):
+                # Clear wp_future_pending flag if present
+                if show.get('wp_future_pending'):
                     with _schedule_lock:
                         sched = load_schedule()
                         for s in sched:
                             if s.get('id') == show['id']:
                                 s.pop('wp_future_pending', None)
-                                s.pop('wp_draft_pending', None)
                                 break
                         save_schedule(sched)
             except Exception as e:
