@@ -812,6 +812,35 @@
     </div>
     {% endif %}
 
+    {% if not open_polls %}
+    {% set closed_polls = active_polls | rejectattr('open') | list %}
+    {% if closed_polls %}
+    {% set last_poll = closed_polls[0] %}
+    {% set res_url = zerock_public_url ~ '/poll/' ~ last_poll.id ~ '/results' %}
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px">
+      <h2>📊 תוצאות מצעד אחרון</h2>
+      <div style="font-size:0.82em;color:var(--text-muted);margin-bottom:12px">
+        {{ last_poll.title }}
+        {% if last_poll.closes_at %}— נסגר {{ last_poll.closes_at[:10] }}{% endif %}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <code style="font-size:0.75rem;color:#f0a500;background:var(--surface);
+                     border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                     flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                     direction:ltr;text-align:left">{{ res_url }}</code>
+        <button onclick="copyText('{{ res_url }}', this)"
+                style="background:#2a1a00;border:1px solid #5a3a00;color:#f0a500;
+                       border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                       white-space:nowrap;flex-shrink:0">העתק</button>
+        <a href="{{ res_url }}" target="_blank"
+           style="background:#2a1a00;border:1px solid #5a3a00;color:#f0a500;
+                  border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                  text-decoration:none;flex-shrink:0">פתח ↗</a>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
     {% if open_polls %}
     {% set first_poll = open_polls[0] %}
     <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px" id="palash-card">
