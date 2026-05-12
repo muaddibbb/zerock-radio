@@ -2081,7 +2081,7 @@ def _check_wp_posts(schedule):
                 _tax_id   = _WP_SHOW_IDS.get(_scfg_chk['name']) if _scfg_chk else None
                 _feat_id  = _WP_FEATURED_IMAGES.get(_scfg_chk['name']) if _scfg_chk else None
                 patch_body = {}
-                if wp_status == 'future':
+                if wp_status in ('future', 'draft'):
                     patch_body['status'] = 'publish'
                 # Re-assert shows if missing or wrong
                 if _tax_id and post_data.get('shows') != [_tax_id]:
