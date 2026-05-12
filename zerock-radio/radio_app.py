@@ -6462,6 +6462,28 @@ def api_poll_delete(poll_id):
     return jsonify({'ok': True})
 
 
+@app.route('/vote')
+@app.route('/poll/current')
+def poll_current_redirect():
+    """Permanent vanity URL — always redirects to the current open poll.
+    If no poll is open, redirects to the most recently closed one."""
+    from flask import redirect
+    polls = _load_polls()
+    now   = datetime.now()
+    # Prefer an open poll; fall back to the most recently closed
+    open_poll = next((p for p in sorted(polls,
+                      key=lambda p: p.get('closes_at') or '', reverse=True)
+                      if _poll_is_open(p, now)), None)
+    if open_poll:
+        return redirect(f'/poll/{open_poll["id"]}', code=302)
+    # Fall back to most recently closed poll
+    closed = sorted([p for p in polls if p.get('closes_at')],
+                    key=lambda p: p['closes_at'], reverse=True)
+    if closed:
+        return redirect(f'/poll/{closed[0]["id"]}', code=302)
+    return redirect('/', code=302)
+
+
 @app.route('/poll/<poll_id>/reset-cookie')
 def poll_reset_cookie(poll_id):
     """Clear the 'already voted' browser cookie so the user can vote again."""
