@@ -1374,13 +1374,33 @@ def _upload_and_mark_done(show_id):
                     if wp_post_id:
                         s['wp_post_id'] = wp_post_id
                         s.pop('wp_post_missing', None)  # clear flag if WP succeeded
-                        # If the upload happened before the broadcast time, the WP post
-                        # was created with status='future'. Mark it so _check_wp_posts
-                        # can flip it to 'publish' once the air time passes.
+                        # If the upload happened before the broadcast time, mark it so
+                        # _check_wp_posts can flip it to 'publish' once air time passes.
+                        # If uploaded >3h before air time, also immediately set the WP post
+                        # to 'draft' so it doesn't appear on the public site prematurely.
                         try:
                             _bcast_dt = datetime.fromisoformat(s.get('scheduled_time', ''))
                             if _bcast_dt > datetime.now():
                                 s['wp_future_pending'] = True
+                            if _bcast_dt > datetime.now() + timedelta(hours=3):
+                                s['wp_draft_pending'] = True
+                                _draft_wp_id = wp_post_id
+                                def _set_draft_status(_wid=_draft_wp_id):
+                                    import base64 as _b64d
+                                    _c = _b64d.b64encode(
+                                        f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
+                                    _h = {'Authorization': f'Basic {_c}',
+                                          'Content-Type': 'application/json'}
+                                    try:
+                                        _r = _requests.post(
+                                            f"{WP_URL}/wp-json/wp/v2/episodes/{_wid}",
+                                            json={'status': 'draft'}, headers=_h, timeout=15)
+                                        print(f"[Upload] Set post {_wid} to draft: "
+                                              f"HTTP {_r.status_code}", flush=True)
+                                    except Exception as _de:
+                                        print(f"[Upload] Draft-set error {_wid}: {_de}",
+                                              flush=True)
+                                threading.Thread(target=_set_draft_status, daemon=True).start()
                         except Exception:
                             _bcast_dt = None
                         # ── Verify & auto-fix WP post fields (60s delay to let WP settle) ──
