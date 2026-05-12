@@ -2099,6 +2099,51 @@ def _check_wp_posts(schedule):
             except Exception as e:
                 print(f"[WP-Check] Error checking post {wp_id}: {e}", flush=True)
 
+    # ── Pass 1b: publish draft WP posts whose upload_time has now passed ─────
+    # These are episodes that were uploaded to Podbean/WP before their designated
+    # upload_time (e.g. a broadcaster submitting a week early). Their WP posts
+    # were held as 'draft' and are published once upload_time is reached.
+    draft_pending = [
+        s for s in schedule
+        if s.get('wp_draft_pending') and s.get('wp_post_id')
+    ]
+    for show in draft_pending:
+        try:
+            upload_time_dt = datetime.fromisoformat(show['upload_time'])
+        except Exception:
+            continue
+        if datetime.now() < upload_time_dt:
+            continue   # not yet — keep as draft
+        wp_id = show['wp_post_id']
+        import base64 as _b64dp
+        _c = _b64dp.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
+        _h = {'Authorization': f'Basic {_c}', 'Content-Type': 'application/json'}
+        _scfg_dp = next((s for s in SHOW_SCHEDULE if s.get('key') == show.get('show_key')), None)
+        _tax_id  = _WP_SHOW_IDS.get(_scfg_dp['name']) if _scfg_dp else None
+        _feat_id = _WP_FEATURED_IMAGES.get(_scfg_dp['name']) if _scfg_dp else None
+        patch = {'status': 'publish'}
+        if _tax_id:
+            patch['shows'] = [_tax_id]
+        if _feat_id:
+            patch['featured_media'] = _feat_id
+        try:
+            r = _requests.post(f"{WP_URL}/wp-json/wp/v2/episodes/{wp_id}",
+                               json=patch, headers=_h, timeout=15)
+            if r.status_code in (200, 201):
+                print(f"[WP-Check] ✓ Draft→publish post {wp_id} '{show.get('name')}'", flush=True)
+                changed = True
+                with _schedule_lock:
+                    sched = load_schedule()
+                    for s in sched:
+                        if s.get('id') == show['id']:
+                            s.pop('wp_draft_pending', None)
+                            break
+                    save_schedule(sched)
+            else:
+                print(f"[WP-Check] ✗ Draft→publish {wp_id}: HTTP {r.status_code}", flush=True)
+        except Exception as _e:
+            print(f"[WP-Check] Draft→publish error {wp_id}: {_e}", flush=True)
+
     # ── Pass 2: create missing WP posts ──────────────────────────────────────
     candidates = [
         s for s in schedule
