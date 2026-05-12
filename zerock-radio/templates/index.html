@@ -806,6 +806,25 @@
                         text-decoration:none;flex-shrink:0">פתח ↗</a>
             </div>
           </div>
+          <!-- Permanent voting link -->
+          {% set perm_url = zerock_public_url ~ '/vote' %}
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">🔗 לינק קבוע להצבעה (מתעדכן שבועית)</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:0.75rem;color:#60c060;background:var(--surface);
+                           border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                           flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                           direction:ltr;text-align:left">{{ perm_url }}</code>
+              <button onclick="copyText('{{ perm_url }}', this)"
+                      style="background:#0d2a0d;border:1px solid #2a5a2a;color:#60c060;
+                             border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                             white-space:nowrap;flex-shrink:0">העתק</button>
+              <a href="{{ perm_url }}" target="_blank"
+                 style="background:#0d2a0d;border:1px solid #2a5a2a;color:#60c060;
+                        border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                        text-decoration:none;flex-shrink:0">פתח ↗</a>
+            </div>
+          </div>
         </div>
       </div>
       {% endfor %}
