@@ -1634,8 +1634,6 @@ async function loadPastCharts() {
       if (poll.is_current) return; // active poll is shown in the active section above
       const date = poll.closes_at ? new Date(poll.closes_at).toLocaleDateString('he-IL') : '';
       const isCurrent = poll.is_current;
-      const matzad = (poll.results || []).filter(s => s.group !== 'palash').slice(0, 20);
-      const palash  = (poll.results || []).filter(s => s.group === 'palash');
 
       const wrapper = document.createElement('div');
       wrapper.style.cssText = 'border:1px solid var(--border);border-radius:8px;overflow:hidden';
