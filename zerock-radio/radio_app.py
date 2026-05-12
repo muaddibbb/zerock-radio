@@ -5256,16 +5256,28 @@ def api_al_haroker_upload(token):
                 break
         _save_al_haroker_bookings(bookings)
 
-    # Move to NAS + kick off Podbean/WP upload thread
+    # Move to NAS
     threading.Thread(target=_move_to_nas, args=(show_id, local_path, nas_path), daemon=True).start()
-    with _schedule_lock:
-        schedule = load_schedule()
-        for s in schedule:
-            if s['id'] == show_id:
-                s['upload_in_progress'] = True
-                break
-        save_schedule(schedule)
-    threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
+
+    # Kick off Podbean/WP upload only if upload_time has been reached.
+    # If uploaded early (e.g. a week before air), hold — the scheduler will
+    # trigger the upload at the configured upload_time on the broadcast date.
+    _show_entry_for_gate = next((s for s in load_schedule() if s['id'] == show_id), {})
+    al_haroker_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == 'al_harocker'), None)
+    if not _upload_time_reached(_show_entry_for_gate, al_haroker_cfg):
+        _ut_str = al_haroker_cfg.get('upload_time', '?') if al_haroker_cfg else '?'
+        print(f"[AlHaRoker] '{booking['broadcaster']}' upload held — will fire at "
+              f"{_ut_str} on {booking['date']} (upload_time not yet reached)", flush=True)
+    else:
+        with _schedule_lock:
+            schedule = load_schedule()
+            for s in schedule:
+                if s['id'] == show_id:
+                    s['upload_in_progress'] = True
+                    break
+            save_schedule(schedule)
+        threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
+
     threading.Thread(target=_sync_wp_board, daemon=True).start()
 
     print(f"[AlHaRoker] File uploaded by {booking['broadcaster']} for {booking['date']}", flush=True)
