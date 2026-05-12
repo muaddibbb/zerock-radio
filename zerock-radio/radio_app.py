@@ -2041,10 +2041,10 @@ def _check_wp_posts(schedule):
 
     changed = False
 
-    # ── Pass 1: flip WP 'future' posts to 'publish' ──────────────────────────
-    # Scan ALL recent queue_to_broadcast episodes that have a wp_post_id and
-    # aired in the past 3 days — no flag needed.  Also catches episodes created
-    # before wp_future_pending tracking was introduced.
+    # ── Pass 1: flip WP 'future'/'draft' posts to 'publish' ─────────────────
+    # Two pools:
+    # a) Recent queue_to_broadcast episodes (aired past 3 days, ≥10 min ago)
+    # b) Any episode with wp_draft_pending=True whose air time has passed ≥10 min
     cutoff_past  = datetime.now() - timedelta(days=3)
     cutoff_early = datetime.now() - timedelta(minutes=10)   # must have aired
     future_candidates = [
@@ -2058,8 +2058,18 @@ def _check_wp_posts(schedule):
         and _safe_dt(s.get('scheduled_time')) is not None
         and cutoff_past <= _safe_dt(s.get('scheduled_time')) <= cutoff_early
     ]
+    # Also include wp_draft_pending entries whose air time has now passed
+    draft_candidates = [
+        s for s in schedule
+        if s.get('wp_draft_pending')
+        and s.get('wp_post_id')
+        and _safe_dt(s.get('scheduled_time')) is not None
+        and _safe_dt(s.get('scheduled_time')) <= cutoff_early
+        and s not in future_candidates
+    ]
+    future_candidates = future_candidates + draft_candidates
     if future_candidates:
-        print(f"[WP-Check] Verifying {len(future_candidates)} recent post(s) for future→publish…", flush=True)
+        print(f"[WP-Check] Verifying {len(future_candidates)} post(s) for future/draft→publish…", flush=True)
         _creds = _b64.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
         _hdrs = {'Authorization': f'Basic {_creds}', 'Content-Type': 'application/json'}
         for show in future_candidates:
