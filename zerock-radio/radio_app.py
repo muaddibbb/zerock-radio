@@ -8373,6 +8373,159 @@ def api_new_releases_poll_now():
     return jsonify({'ok': err is None, 'new': n, 'error': err})
 
 
+# ─── ערב של אלבומים — Cover Grid Generator ───────────────────────────────────
+
+EREV_ALBUMIM_CENTER_LOGO = f"{RADIO_DIR}/static/erev_albumim_center.png"
+EREV_ALBUMIM_GRID_CACHE  = f"{RADIO_DIR}/static/erev_albumim_grid.png"
+
+@app.route('/api/erev-albumim/upload-center-logo', methods=['POST'])
+def api_erev_albumim_upload_center_logo():
+    """Save the center vinyl logo image used in the album cover grid."""
+    f = request.files.get('logo')
+    if not f:
+        return jsonify({'ok': False, 'error': 'No file uploaded'}), 400
+    allowed = {'image/png', 'image/jpeg', 'image/jpg', 'image/webp'}
+    if f.content_type not in allowed:
+        return jsonify({'ok': False, 'error': 'Must be PNG/JPG/WEBP'}), 400
+    try:
+        from PIL import Image
+        import io
+        img = Image.open(io.BytesIO(f.read())).convert('RGBA')
+        img.save(EREV_ALBUMIM_CENTER_LOGO, format='PNG')
+        return jsonify({'ok': True, 'message': 'Logo saved'})
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+def _fetch_album_cover(query: str, size: int = 600) -> 'Image or None':
+    """Fetch an album cover image from the iTunes Search API."""
+    from PIL import Image
+    import io, urllib.parse
+    try:
+        url = 'https://itunes.apple.com/search?' + urllib.parse.urlencode({
+            'term': query, 'entity': 'album', 'limit': '1', 'media': 'music'
+        })
+        r = _requests.get(url, timeout=8)
+        data = r.json()
+        results = data.get('results', [])
+        if not results:
+            return None
+        artwork_url = results[0].get('artworkUrl100', '')
+        if not artwork_url:
+            return None
+        # Upscale: replace 100x100 with requested size
+        artwork_url = artwork_url.replace('100x100bb', f'{size}x{size}bb')
+        img_r = _requests.get(artwork_url, timeout=10)
+        img = Image.open(io.BytesIO(img_r.content)).convert('RGB')
+        return img
+    except Exception as e:
+        print(f'[CoverGrid] Failed to fetch cover for "{query}": {e}', flush=True)
+        return None
+
+
+@app.route('/api/erev-albumim/generate-grid', methods=['POST'])
+def api_erev_albumim_generate_grid():
+    """
+    Accept up to 8 album queries, fetch covers from iTunes,
+    compose a 3×3 grid (center = vinyl logo), return PNG.
+    Body: { "albums": ["Artist Album", ...] }   (1–8 items)
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        import io
+
+        data = request.get_json(force=True) or {}
+        album_queries = [s.strip() for s in (data.get('albums') or []) if s and s.strip()]
+        if not album_queries:
+            return jsonify({'ok': False, 'error': 'No album names provided'}), 400
+        album_queries = album_queries[:8]   # cap at 8
+
+        CELL  = 600   # px per cell
+        GAP   = 6     # px between cells
+        COLS  = 3
+        ROWS  = 3
+        TOTAL = COLS * ROWS   # 9 cells; index 4 = center
+
+        # Grid cell positions (row, col) for 8 surrounding slots (skip center=4)
+        SLOT_ORDER = [0, 1, 2, 3, 5, 6, 7, 8]   # linear indices excluding 4
+
+        # Build background
+        w = COLS * CELL + (COLS - 1) * GAP
+        h = ROWS * CELL + (ROWS - 1) * GAP
+        canvas = Image.new('RGB', (w, h), (20, 20, 20))
+
+        # Fetch covers concurrently
+        covers = [None] * len(album_queries)
+        import concurrent.futures
+        def fetch_one(args):
+            idx, q = args
+            return idx, _fetch_album_cover(q, CELL)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
+            for idx, img in ex.map(fetch_one, enumerate(album_queries)):
+                covers[idx] = img
+
+        # Place covers into grid slots
+        for slot_pos, cover in enumerate(covers):
+            linear_idx = SLOT_ORDER[slot_pos]
+            row = linear_idx // COLS
+            col = linear_idx  % COLS
+            x = col * (CELL + GAP)
+            y = row * (CELL + GAP)
+
+            if cover:
+                # Resize to fill cell, crop to square
+                cover = cover.resize((CELL, CELL), Image.LANCZOS)
+                canvas.paste(cover, (x, y))
+            else:
+                # Placeholder: dark square with query text
+                draw = ImageDraw.Draw(canvas)
+                draw.rectangle([x, y, x + CELL - 1, y + CELL - 1], fill=(40, 40, 40))
+                q = album_queries[slot_pos] if slot_pos < len(album_queries) else ''
+                draw.text((x + CELL // 2, y + CELL // 2), q or '?',
+                          fill=(180, 180, 180), anchor='mm')
+
+        # Place center logo (index 4 → row=1, col=1)
+        cx = 1 * (CELL + GAP)
+        cy = 1 * (CELL + GAP)
+        if os.path.exists(EREV_ALBUMIM_CENTER_LOGO):
+            try:
+                logo = Image.open(EREV_ALBUMIM_CENTER_LOGO).convert('RGBA')
+                logo = logo.resize((CELL, CELL), Image.LANCZOS)
+                # Paste with alpha mask so transparency works
+                canvas.paste(logo, (cx, cy), mask=logo.split()[3])
+            except Exception as le:
+                print(f'[CoverGrid] Center logo paste failed: {le}', flush=True)
+                draw = ImageDraw.Draw(canvas)
+                draw.rectangle([cx, cy, cx + CELL - 1, cy + CELL - 1], fill=(30, 10, 40))
+                draw.text((cx + CELL // 2, cy + CELL // 2), 'ערב של\nאלבומים',
+                          fill=(200, 160, 255), anchor='mm')
+        else:
+            draw = ImageDraw.Draw(canvas)
+            draw.rectangle([cx, cy, cx + CELL - 1, cy + CELL - 1], fill=(30, 10, 40))
+            draw.text((cx + CELL // 2, cy + CELL // 2), 'ערב של\nאלבומים',
+                      fill=(200, 160, 255), anchor='mm')
+
+        # Save to disk and return
+        canvas.save(EREV_ALBUMIM_GRID_CACHE, format='PNG', optimize=True)
+
+        buf = io.BytesIO()
+        canvas.save(buf, format='PNG', optimize=True)
+        buf.seek(0)
+        return Response(buf.read(), mimetype='image/png',
+                        headers={'Content-Disposition': 'attachment; filename="erev_albumim_grid.png"'})
+
+    except ImportError:
+        return jsonify({'ok': False, 'error': 'Pillow not installed on server'}), 500
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
+
+@app.route('/api/erev-albumim/center-logo-exists', methods=['GET'])
+def api_erev_albumim_center_logo_exists():
+    return jsonify({'exists': os.path.exists(EREV_ALBUMIM_CENTER_LOGO)})
+
+
 if __name__ == '__main__':
     print("ZeRock Radio web interface starting on port 5000...")
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
