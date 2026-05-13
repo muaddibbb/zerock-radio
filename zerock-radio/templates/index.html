@@ -918,38 +918,41 @@
 
       <!-- Album name inputs -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px" id="albumNameInputs">
+        {% set album_placeholders = [
+          'Pink Floyd - The Wall',
+          'Led Zeppelin - IV',
+          'Nirvana - Nevermind',
+          'AC/DC - Back in Black',
+          'Queen - A Night at the Opera',
+          'The Beatles - Abbey Road',
+          'Metallica - Black Album',
+          'David Bowie - Ziggy Stardust'
+        ] %}
+        {% for i in range(8) %}
         <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 1</label>
-          <input type="text" class="album-name-input" placeholder="למשל: Pink Floyd The Wall" style="width:100%;box-sizing:border-box">
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום {{ i + 1 }}</label>
+          <input type="text" class="album-name-input" data-idx="{{ i }}"
+                 placeholder="{{ album_placeholders[i] }}"
+                 style="width:100%;box-sizing:border-box">
+          <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+            <label style="cursor:pointer;flex-shrink:0">
+              <input type="file" class="album-cover-file" data-idx="{{ i }}"
+                     accept="image/*" style="display:none"
+                     onchange="onAlbumFileChange(this, {{ i }})">
+              <span class="album-upload-btn"
+                    style="display:inline-block;padding:3px 9px;background:#3a2a5a;border-radius:4px;
+                           font-size:0.75em;color:#c0a0e0;white-space:nowrap">
+                📁 העלה עטיפה
+              </span>
+            </label>
+            <img class="album-cover-thumb" data-idx="{{ i }}" src=""
+                 style="display:none;width:38px;height:38px;border-radius:4px;object-fit:cover;border:1px solid #5a3a7a">
+            <span class="album-cover-clear" data-idx="{{ i }}"
+                  style="display:none;font-size:0.8em;color:#f88;cursor:pointer;flex-shrink:0"
+                  onclick="clearAlbumFile({{ i }})">✕</span>
+          </div>
         </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 2</label>
-          <input type="text" class="album-name-input" placeholder="למשל: Led Zeppelin IV" style="width:100%;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 3</label>
-          <input type="text" class="album-name-input" placeholder="למשל: Nirvana Nevermind" style="width:100%;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 4</label>
-          <input type="text" class="album-name-input" placeholder="למשל: AC/DC Back in Black" style="width:100%;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 5</label>
-          <input type="text" class="album-name-input" placeholder="למשל: Queen A Night at the Opera" style="width:100%;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 6</label>
-          <input type="text" class="album-name-input" placeholder="למשל: The Beatles Abbey Road" style="width:100%;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 7</label>
-          <input type="text" class="album-name-input" placeholder="למשל: Metallica Black Album" style="width:100%;box-sizing:border-box">
-        </div>
-        <div>
-          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 8</label>
-          <input type="text" class="album-name-input" placeholder="למשל: David Bowie Ziggy Stardust" style="width:100%;box-sizing:border-box">
-        </div>
+        {% endfor %}
       </div>
 
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
