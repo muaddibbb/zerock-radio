@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ערב של אלבומים — יצירת תמונת עטיפות</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414;
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .page-header .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+    .page-header .logo-row img {
+      width: 54px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .page-header h1 {
+      font-size: 1.7em;
+      color: #c084fc;
+      font-weight: 700;
+    }
+    .page-header p {
+      color: #888;
+      font-size: 0.92em;
+      margin-top: 6px;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1e1e1e;
+      border: 1px solid #3a2a5a;
+      border-radius: 14px;
+      padding: 28px 24px;
+      margin-bottom: 20px;
+    }
+
+    .card h2 {
+      font-size: 1.1em;
+      color: #c084fc;
+      margin-bottom: 16px;
+    }
+
+    /* Album grid */
+    .album-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 500px) {
+      .album-grid { grid-template-columns: 1fr; }
+    }
+
+    .album-slot { display: flex; flex-direction: column; gap: 5px; }
+
+    .slot-label {
+      font-size: 0.78em;
+      color: #888;
+      font-weight: 600;
+      letter-spacing: .03em;
+    }
+
+    .slot-body {
+      background: #161616;
+      border: 1px solid #3a2a5a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      transition: border-color .2s;
+    }
+    .slot-body:focus-within { border-color: #7c3aed; }
+
+    .slot-body input[type="text"] {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f0f0f0;
+      font-size: 0.9em;
+      width: 100%;
+    }
+    .slot-body input[type="text"]::placeholder { color: #555; }
+
+    .slot-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid #2a1a3a;
+      padding-top: 7px;
+    }
+
+    .upload-label {
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .upload-btn {
+      display: inline-block;
+      padding: 3px 10px;
+      background: #2a1a4a;
+      border: 1px solid #5a3a7a;
+      border-radius: 5px;
+      font-size: 0.75em;
+      color: #c084fc;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .upload-btn:hover { background: #3a2a5a; }
+
+    .thumb {
+      display: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 4px;
+      object-fit: cover;
+      border: 1px solid #5a3a7a;
+      flex-shrink: 0;
+    }
+    .clear-btn {
+      display: none;
+      font-size: 0.78em;
+      color: #f88;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* Actions row */
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-generate {
+      padding: 10px 26px;
+      background: linear-gradient(135deg, #5a3a7a, #7c3aed);
+      border: none;
+      border-radius: 8px;
+      color: #f0e0ff;
+      font-size: 1em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-generate:disabled { opacity: .5; cursor: default; }
+    .btn-generate:not(:disabled):hover { opacity: .88; }
+
+    #genStatus {
+      font-size: 0.88em;
+      color: #c084fc;
+    }
+
+    /* Result */
+    #resultSection {
+      display: none;
+      margin-top: 24px;
+    }
+    #resultSection h2 { margin-bottom: 12px; }
+    #previewImg {
+      max-width: 100%;
+      border-radius: 10px;
+      border: 2px solid #5a3a7a;
+      display: block;
+    }
+    .download-row {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-download {
+      padding: 8px 20px;
+      background: #1a4a1a;
+      border: 1px solid #3a7a3a;
+      border-radius: 7px;
+      color: #90d090;
+      font-size: 0.88em;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .btn-download:hover { background: #2a5a2a; }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2a2a2a;
+      color: #f0f0f0;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.9em;
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+      z-index: 999;
+      border: 1px solid #3a3a3a;
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok  { border-color: #3a7a3a; color: #90d090; }
+    #toast.err { border-color: #7a3a3a; color: #f08080; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="page-header">
+      <div class="logo-row">
+        <img src="/static/logo.png" alt="ZeRock Radio">
+        <h1>ערב של אלבומים</h1>
+      </div>
+      <p>הזן עד 8 שמות אלבומים — המערכת תמצא את העטיפות ותיצור תמונת 3×3.</p>
+      <p style="margin-top:4px;font-size:0.82em;color:#666">ניתן גם להעלות עטיפה ידנית לכל אלבום.</p>
+    </header>
+
+    <div class="card">
+      <h2>🎵 אלבומים</h2>
+
+      <div class="album-grid" id="albumGrid">
+        {% set placeholders = [
+          'Pink Floyd - The Wall',
+          'Led Zeppelin - IV',
+          'Nirvana - Nevermind',
+          'AC/DC - Back in Black',
+          'Queen - A Night at the Opera',
+          'The Beatles - Abbey Road',
+          'Metallica - Black Album',
+          'David Bowie - Ziggy Stardust'
+        ] %}
+        {% for i in range(8) %}
+        <div class="album-slot">
+          <div class="slot-label">אלבום {{ i + 1 }}</div>
+          <div class="slot-body">
+            <input type="text" class="album-name-input" data-idx="{{ i }}"
+                   placeholder="{{ placeholders[i] }}">
+            <div class="slot-foot">
+              <label class="upload-label">
+                <input type="file" class="album-cover-file" data-idx="{{ i }}"
+                       accept="image/*" style="display:none"
+                       onchange="onFileChange(this, {{ i }})">
+                <span class="upload-btn" data-idx="{{ i }}">📁 העלה עטיפה</span>
+              </label>
+              <img class="thumb" data-idx="{{ i }}" src="" alt="">
+              <span class="clear-btn" data-idx="{{ i }}" onclick="clearFile({{ i }})">✕ נקה</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="actions">
+        <button class="btn-generate" id="genBtn" onclick="generate()">🎨 צור תמונה</button>
+        <span id="genStatus"></span>
+      </div>
+
+      <div id="resultSection">
+        <h2>תצוגה מקדימה</h2>
+        <img id="previewImg" src="" alt="Album cover grid">
+        <div class="download-row">
+          <a id="downloadLink" href="#" download="erev_albumim_grid.png" class="btn-download">
+            ⬇ הורד תמונה
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    function onFileChange(input, idx) {
+      const file = input.files[0];
+      if (!file) return;
+      const thumb = document.querySelector(`.thumb[data-idx="${idx}"]`);
+      const clear = document.querySelector(`.clear-btn[data-idx="${idx}"]`);
+      const btn   = document.querySelector(`.upload-btn[data-idx="${idx}"]`);
+      thumb.src = URL.createObjectURL(file);
+      thumb.style.display = 'block';
+      clear.style.display = 'inline';
+      if (btn) { btn.textContent = '✓ עטיפה נבחרה'; btn.style.color = '#90d090'; }
+    }
+
+    function clearFile(idx) {
+      const fi    = document.querySelector(`.album-cover-file[data-idx="${idx}"]`);
+      const thumb = document.querySelector(`.thumb[data-idx="${idx}"]`);
+      const clear = document.querySelector(`.clear-btn[data-idx="${idx}"]`);
+      const btn   = document.querySelector(`.upload-btn[data-idx="${idx}"]`);
+      if (fi) fi.value = '';
+      if (thumb)  { thumb.src = ''; thumb.style.display = 'none'; }
+      if (clear)  { clear.style.display = 'none'; }
+      if (btn)    { btn.textContent = '📁 העלה עטיפה'; btn.style.color = '#c084fc'; }
+    }
+
+    async function generate() {
+      const nameInputs = document.querySelectorAll('.album-name-input');
+      const fileInputs = document.querySelectorAll('.album-cover-file');
+
+      let hasAny = false;
+      nameInputs.forEach((inp, i) => {
+        const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+        if (inp.value.trim() || file) hasAny = true;
+      });
+      if (!hasAny) { toast('הזן לפחות שם אלבום אחד', 'err'); return; }
+
+      const btn    = document.getElementById('genBtn');
+      const status = document.getElementById('genStatus');
+      btn.disabled = true;
+      btn.textContent = 'יוצר תמונה...';
+      status.textContent = 'מחפש עטיפות...';
+      status.style.color = '#c084fc';
+      document.getElementById('resultSection').style.display = 'none';
+
+      try {
+        const fd = new FormData();
+        nameInputs.forEach((inp, i) => {
+          fd.append(`album_${i}`, inp.value.trim());
+          const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+          if (file) fd.append(`cover_${i}`, file);
+        });
+
+        const r = await fetch('/api/erev-albumim/generate-grid', { method: 'POST', body: fd });
+        if (!r.ok) {
+          const j = await r.json().catch(() => ({}));
+          throw new Error(j.error || `HTTP ${r.status}`);
+        }
+        const blob = await r.blob();
+        const url  = URL.createObjectURL(blob);
+        document.getElementById('previewImg').src    = url;
+        document.getElementById('downloadLink').href = url;
+        document.getElementById('resultSection').style.display = '';
+        status.textContent = '✓ תמונה נוצרה בהצלחה';
+        status.style.color = '#4caf50';
+        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch(e) {
+        status.textContent = '✗ ' + e.message;
+        status.style.color = '#f44';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🎨 צור תמונה';
+      }
+    }
+
+    let _toastTimer;
+    function toast(msg, type = 'ok') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'show ' + type;
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { el.className = ''; }, 3000);
+    }
+  </script>
+</body>
+</html>
