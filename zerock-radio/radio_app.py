@@ -8398,28 +8398,74 @@ def api_erev_albumim_upload_center_logo():
 
 
 def _fetch_album_cover(query: str, size: int = 600) -> 'Image or None':
-    """Fetch an album cover image from the iTunes Search API."""
+    """
+    Fetch an album cover image. Tries Deezer first (more accurate for rock),
+    falls back to iTunes. Parses "Artist - Album" format for better matching.
+    """
     from PIL import Image
-    import io, urllib.parse
+    import io
+
+    # Parse "Artist - Album" format
+    if ' - ' in query:
+        parts = query.split(' - ', 1)
+        artist = parts[0].strip()
+        album  = parts[1].strip()
+    else:
+        artist = ''
+        album  = query.strip()
+
+    artwork_url = None
+
+    # ── Try 1: Deezer (better metadata for rock) ──────────────────────────────
     try:
-        url = 'https://itunes.apple.com/search?' + urllib.parse.urlencode({
-            'term': query, 'entity': 'album', 'limit': '1', 'media': 'music'
-        })
-        r = _requests.get(url, timeout=8)
-        data = r.json()
-        results = data.get('results', [])
-        if not results:
-            return None
-        artwork_url = results[0].get('artworkUrl100', '')
-        if not artwork_url:
-            return None
-        # Upscale: replace 100x100 with requested size
-        artwork_url = artwork_url.replace('100x100bb', f'{size}x{size}bb')
-        img_r = _requests.get(artwork_url, timeout=10)
+        deezer_q = f'artist:"{artist}" album:"{album}"' if artist else f'album:"{album}"'
+        dr = _requests.get('https://api.deezer.com/search/album',
+                           params={'q': deezer_q, 'limit': 10}, timeout=8)
+        ddata = dr.json().get('data', [])
+        if ddata:
+            al_lower = album.lower()
+            # Prefer exact album title match
+            best = next((d for d in ddata
+                         if al_lower in d.get('title', '').lower()), ddata[0])
+            artwork_url = (best.get('cover_xl') or best.get('cover_big')
+                           or best.get('cover_medium') or best.get('cover'))
+        print(f'[CoverGrid] Deezer {"found" if artwork_url else "no result"} for "{query}"', flush=True)
+    except Exception as e:
+        print(f'[CoverGrid] Deezer failed for "{query}": {e}', flush=True)
+
+    # ── Try 2: iTunes fallback ─────────────────────────────────────────────────
+    if not artwork_url:
+        try:
+            term = f'{artist} {album}'.strip() if artist else album
+            ir = _requests.get('https://itunes.apple.com/search', params={
+                'term': term, 'entity': 'album', 'limit': '25', 'media': 'music'
+            }, timeout=8)
+            results = ir.json().get('results', [])
+            if results:
+                al_lower = album.lower()
+                # Find first result whose collectionName contains our album title
+                best = next((r for r in results
+                             if al_lower in r.get('collectionName', '').lower()), results[0])
+                raw = best.get('artworkUrl100', '')
+                if raw:
+                    artwork_url = raw.replace('100x100bb', f'{size}x{size}bb')
+            print(f'[CoverGrid] iTunes {"found" if artwork_url else "no result"} for "{query}"', flush=True)
+        except Exception as e:
+            print(f'[CoverGrid] iTunes failed for "{query}": {e}', flush=True)
+
+    if not artwork_url:
+        print(f'[CoverGrid] No cover found for "{query}"', flush=True)
+        return None
+
+    # ── Download and return image ──────────────────────────────────────────────
+    try:
+        img_r = _requests.get(artwork_url, timeout=12)
         img = Image.open(io.BytesIO(img_r.content)).convert('RGB')
+        if img.size != (size, size):
+            img = img.resize((size, size), Image.LANCZOS)
         return img
     except Exception as e:
-        print(f'[CoverGrid] Failed to fetch cover for "{query}": {e}', flush=True)
+        print(f'[CoverGrid] Image download failed for "{query}": {e}', flush=True)
         return None
 
 
