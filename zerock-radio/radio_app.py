@@ -8378,6 +8378,11 @@ def api_new_releases_poll_now():
 EREV_ALBUMIM_CENTER_LOGO = f"{RADIO_DIR}/static/erev_albumim_center.png"
 EREV_ALBUMIM_GRID_CACHE  = f"{RADIO_DIR}/static/erev_albumim_grid.png"
 
+@app.route('/erev-albumim')
+def erev_albumim_page():
+    return render_template('erev_albumim.html')
+
+
 @app.route('/api/erev-albumim/upload-center-logo', methods=['POST'])
 def api_erev_albumim_upload_center_logo():
     """Save the center vinyl logo image used in the album cover grid."""
