@@ -5239,11 +5239,30 @@ def api_al_haroker_upload(token):
         'added_at':        datetime.now().isoformat(),
     }
 
-    # Add to schedule
+    # Add to schedule — first remove any existing queue_only placeholder for
+    # the same broadcaster + broadcast date so we don't create duplicates.
     with _schedule_lock:
         schedule = load_schedule()
-        schedule.append(show)
-        save_schedule(schedule)
+        removed = []
+        schedule_clean = []
+        for s in schedule:
+            is_placeholder = (
+                s.get('show_key') == 'al_harocker'
+                and s.get('mode') == 'queue_only'
+                and s.get('broadcaster') == booking['broadcaster']
+                and s.get('scheduled_time', '').startswith(booking['date'])
+                and not s.get('triggered')
+                and not s.get('upload_done')
+            )
+            if is_placeholder:
+                removed.append(s['id'])
+            else:
+                schedule_clean.append(s)
+        if removed:
+            print(f"[AlHaRoker] Removed {len(removed)} placeholder(s) for "
+                  f"{booking['broadcaster']} on {booking['date']}: {removed}", flush=True)
+        schedule_clean.append(show)
+        save_schedule(schedule_clean)
 
     # Mark booking as uploaded
     with _bookings_lock:
