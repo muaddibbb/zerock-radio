@@ -3195,7 +3195,7 @@ async function generateCoverGrid() {
     const url = URL.createObjectURL(blob);
     document.getElementById('gridPreviewImg').src = url;
     document.getElementById('gridDownloadLink').href = url;
-    document.getElementById('gridResultSection').style.display = '';
+    document.getElementById('gridResultSection').style.display = 'block';
     status.textContent = '✓ תמונה נוצרה בהצלחה';
     status.style.color = '#4caf50';
   } catch(e) {
