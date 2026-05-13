@@ -8472,46 +8472,61 @@ def _fetch_album_cover(query: str, size: int = 600) -> 'Image or None':
 @app.route('/api/erev-albumim/generate-grid', methods=['POST'])
 def api_erev_albumim_generate_grid():
     """
-    Accept up to 8 album queries, fetch covers from iTunes,
-    compose a 3×3 grid (center = vinyl logo), return PNG.
-    Body: { "albums": ["Artist Album", ...] }   (1–8 items)
+    Accept up to 8 album slots via multipart form data.
+    Per slot: album_N (text query) and/or cover_N (uploaded image file).
+    Uploaded cover takes priority over API lookup.
+    Composes a 3×3 grid (center = vinyl logo) and returns PNG.
     """
     try:
-        from PIL import Image, ImageDraw, ImageFont
-        import io
+        from PIL import Image, ImageDraw
+        import io, concurrent.futures
 
-        data = request.get_json(force=True) or {}
-        album_queries = [s.strip() for s in (data.get('albums') or []) if s and s.strip()]
-        if not album_queries:
-            return jsonify({'ok': False, 'error': 'No album names provided'}), 400
-        album_queries = album_queries[:8]   # cap at 8
+        CELL       = 600
+        GAP        = 6
+        COLS       = 3
+        SLOT_ORDER = [0, 1, 2, 3, 5, 6, 7, 8]   # linear indices, skip center (4)
 
-        CELL  = 600   # px per cell
-        GAP   = 6     # px between cells
-        COLS  = 3
-        ROWS  = 3
-        TOTAL = COLS * ROWS   # 9 cells; index 4 = center
+        # Collect up to 8 slots — a slot is active if it has a name OR an uploaded file
+        slots = []   # list of (query_str_or_empty, uploaded_file_or_None)
+        for i in range(8):
+            name = (request.form.get(f'album_{i}') or '').strip()
+            uploaded = request.files.get(f'cover_{i}')
+            if name or (uploaded and uploaded.filename):
+                slots.append((name, uploaded))
 
-        # Grid cell positions (row, col) for 8 surrounding slots (skip center=4)
-        SLOT_ORDER = [0, 1, 2, 3, 5, 6, 7, 8]   # linear indices excluding 4
+        if not slots:
+            return jsonify({'ok': False, 'error': 'No albums provided'}), 400
+        slots = slots[:8]
 
-        # Build background
+        # Build canvas
         w = COLS * CELL + (COLS - 1) * GAP
-        h = ROWS * CELL + (ROWS - 1) * GAP
+        h = COLS * CELL + (COLS - 1) * GAP
         canvas = Image.new('RGB', (w, h), (20, 20, 20))
 
-        # Fetch covers concurrently
-        covers = [None] * len(album_queries)
-        import concurrent.futures
-        def fetch_one(args):
-            idx, q = args
-            return idx, _fetch_album_cover(q, CELL)
+        # Resolve covers: uploaded file beats API lookup
+        def resolve_cover(args):
+            slot_pos, (query, uploaded_file) = args
+            # Uploaded file takes priority
+            if uploaded_file and uploaded_file.filename:
+                try:
+                    data = uploaded_file.read()
+                    img = Image.open(io.BytesIO(data)).convert('RGB')
+                    img = img.resize((CELL, CELL), Image.LANCZOS)
+                    print(f'[CoverGrid] Slot {slot_pos}: using uploaded file', flush=True)
+                    return slot_pos, img
+                except Exception as e:
+                    print(f'[CoverGrid] Slot {slot_pos}: uploaded file error: {e}', flush=True)
+            # Fall back to API search
+            if query:
+                return slot_pos, _fetch_album_cover(query, CELL)
+            return slot_pos, None
 
+        covers = [None] * len(slots)
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
-            for idx, img in ex.map(fetch_one, enumerate(album_queries)):
-                covers[idx] = img
+            for slot_pos, img in ex.map(resolve_cover, enumerate(slots)):
+                covers[slot_pos] = img
 
-        # Place covers into grid slots
+        # Place covers into grid
         for slot_pos, cover in enumerate(covers):
             linear_idx = SLOT_ORDER[slot_pos]
             row = linear_idx // COLS
@@ -8520,14 +8535,11 @@ def api_erev_albumim_generate_grid():
             y = row * (CELL + GAP)
 
             if cover:
-                # Resize to fill cell, crop to square
-                cover = cover.resize((CELL, CELL), Image.LANCZOS)
-                canvas.paste(cover, (x, y))
+                canvas.paste(cover.resize((CELL, CELL), Image.LANCZOS), (x, y))
             else:
-                # Placeholder: dark square with query text
                 draw = ImageDraw.Draw(canvas)
                 draw.rectangle([x, y, x + CELL - 1, y + CELL - 1], fill=(40, 40, 40))
-                q = album_queries[slot_pos] if slot_pos < len(album_queries) else ''
+                q = slots[slot_pos][0] if slot_pos < len(slots) else ''
                 draw.text((x + CELL // 2, y + CELL // 2), q or '?',
                           fill=(180, 180, 180), anchor='mm')
 
