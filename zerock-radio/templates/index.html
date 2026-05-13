@@ -906,6 +906,85 @@
     {% endif %}
     {% endif %}
 
+    <!-- ── ערב של אלבומים — Cover Grid Generator ─────────────────────────── -->
+    <div class="card" data-mgmt-section="album" id="coverGridCard" style="margin-bottom:20px;border-color:#5a3a7a">
+      <h2>🎨 יצירת תמונת אלבומים</h2>
+      <p style="color:var(--text-muted);margin:0 0 16px;font-size:0.9em">
+        הזן עד 8 שמות אלבומים (אמן + שם אלבום). המערכת תמצא את עטיפות האלבומים
+        ותיצור תמונת 3×3 עם הלוגו של "ערב של אלבומים" במרכז.
+      </p>
+
+      <!-- Center logo upload -->
+      <div id="centerLogoSection" style="margin-bottom:18px;padding:12px;background:rgba(90,58,122,0.18);border-radius:8px;border:1px dashed #7a5a9a">
+        <div style="font-size:0.85em;color:#b090d0;margin-bottom:8px">🖼 לוגו מרכזי — "ערב של אלבומים"</div>
+        <div id="centerLogoStatus" style="font-size:0.82em;color:#888;margin-bottom:8px">בודק...</div>
+        <label style="cursor:pointer;display:inline-block">
+          <input type="file" id="centerLogoFile" accept="image/*" style="display:none" onchange="uploadCenterLogo(this)">
+          <span style="padding:6px 14px;background:#5a3a7a;border-radius:5px;font-size:0.85em;color:#e0c0ff">
+            📤 העלה לוגו מרכזי
+          </span>
+        </label>
+        <span id="centerLogoUploadStatus" style="margin-right:10px;font-size:0.82em"></span>
+      </div>
+
+      <!-- Album name inputs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px" id="albumNameInputs">
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 1</label>
+          <input type="text" class="album-name-input" placeholder="למשל: Pink Floyd The Wall" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 2</label>
+          <input type="text" class="album-name-input" placeholder="למשל: Led Zeppelin IV" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 3</label>
+          <input type="text" class="album-name-input" placeholder="למשל: Nirvana Nevermind" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 4</label>
+          <input type="text" class="album-name-input" placeholder="למשל: AC/DC Back in Black" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 5</label>
+          <input type="text" class="album-name-input" placeholder="למשל: Queen A Night at the Opera" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 6</label>
+          <input type="text" class="album-name-input" placeholder="למשל: The Beatles Abbey Road" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 7</label>
+          <input type="text" class="album-name-input" placeholder="למשל: Metallica Black Album" style="width:100%;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום 8</label>
+          <input type="text" class="album-name-input" placeholder="למשל: David Bowie Ziggy Stardust" style="width:100%;box-sizing:border-box">
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button type="button" onclick="generateCoverGrid()" id="generateGridBtn"
+                style="padding:9px 20px;background:#5a3a7a;border:none;border-radius:6px;color:#e0c0ff;cursor:pointer;font-size:0.95em;font-weight:600">
+          🎨 צור תמונה
+        </button>
+        <span id="gridGenerateStatus" style="font-size:0.85em;color:#b090d0"></span>
+      </div>
+
+      <!-- Result preview -->
+      <div id="gridResultSection" style="display:none;margin-top:18px">
+        <div style="font-size:0.85em;color:#b090d0;margin-bottom:8px">תצוגה מקדימה:</div>
+        <img id="gridPreviewImg" src="" alt="Album cover grid preview"
+             style="max-width:100%;border-radius:8px;border:2px solid #5a3a7a;display:block">
+        <div style="margin-top:10px;display:flex;gap:10px">
+          <a id="gridDownloadLink" href="#" download="erev_albumim_grid.png"
+             style="padding:7px 16px;background:#3a7a3a;border-radius:5px;color:#90d090;font-size:0.85em;text-decoration:none">
+            ⬇ הורד תמונה
+          </a>
+        </div>
+      </div>
+    </div>
+
     <div class="card" data-mgmt-section="shows haroker album matzad">
       <h2 id="scheduleFormTitle">Schedule a Show</h2>
       <form id="scheduleForm" enctype="multipart/form-data">
