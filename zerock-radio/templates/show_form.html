@@ -715,7 +715,7 @@ async function generateCoverGrid() {
     const url  = URL.createObjectURL(blob);
     document.getElementById('coverPreviewImg').src    = url;
     document.getElementById('coverDownloadLink').href = url;
-    document.getElementById('coverResultSection').style.display = '';
+    document.getElementById('coverResultSection').style.display = 'block';
     status.textContent = '✓ תמונה נוצרה בהצלחה';
     status.style.color = '#4caf50';
     document.getElementById('coverResultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
