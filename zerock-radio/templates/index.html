@@ -3132,50 +3132,6 @@ document.getElementById('rescheduleOverlay').addEventListener('click', e => {
 });
 
 // ── ערב של אלבומים — Cover Grid ───────────────────────────────────────────
-(async function checkCenterLogo() {
-  try {
-    const r = await fetch('/api/erev-albumim/center-logo-exists');
-    const j = await r.json();
-    const el = document.getElementById('centerLogoStatus');
-    if (!el) return;
-    if (j.exists) {
-      el.textContent = '✓ לוגו מרכזי קיים';
-      el.style.color = '#4caf50';
-    } else {
-      el.textContent = '⚠ לוגו מרכזי לא הועלה עדיין — יופיע ריבוע בצבע ארגמן במרכז';
-      el.style.color = '#f0a500';
-    }
-  } catch(e) {
-    const el = document.getElementById('centerLogoStatus');
-    if (el) { el.textContent = ''; }
-  }
-})();
-
-async function uploadCenterLogo(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const status = document.getElementById('centerLogoUploadStatus');
-  status.textContent = 'מעלה...';
-  status.style.color = '#b090d0';
-  const fd = new FormData();
-  fd.append('logo', file);
-  try {
-    const r = await fetch('/api/erev-albumim/upload-center-logo', { method: 'POST', body: fd });
-    const j = await r.json();
-    if (j.ok) {
-      status.textContent = '✓ לוגו נשמר';
-      status.style.color = '#4caf50';
-      const el = document.getElementById('centerLogoStatus');
-      if (el) { el.textContent = '✓ לוגו מרכזי קיים'; el.style.color = '#4caf50'; }
-    } else {
-      status.textContent = '✗ ' + (j.error || 'שגיאה');
-      status.style.color = '#f44';
-    }
-  } catch(e) {
-    status.textContent = '✗ שגיאת רשת';
-    status.style.color = '#f44';
-  }
-}
 
 async function generateCoverGrid() {
   const inputs = document.querySelectorAll('.album-name-input');
