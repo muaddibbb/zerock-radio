@@ -482,6 +482,56 @@
   </div>
 </div>
 
+{% if show.key == 'erev_albumim' %}
+<div class="cover-card">
+  <h2>🎨 יצירת תמונת עטיפות</h2>
+  <p class="sub">
+    הזן שמות אלבומים (אמן — שם אלבום) והמערכת תמצא את העטיפות ותיצור תמונת 3×3
+    עם לוגו "ערב של אלבומים" במרכז. ניתן גם להעלות עטיפה ידנית לכל אלבום.
+  </p>
+
+  <div class="cover-album-grid">
+    {% set cover_placeholders = [
+      'Pink Floyd - The Wall',
+      'Led Zeppelin - IV',
+      'Nirvana - Nevermind',
+      'AC/DC - Back in Black',
+      'Queen - A Night at the Opera',
+      'The Beatles - Abbey Road',
+      'Metallica - Black Album',
+      'David Bowie - Ziggy Stardust'
+    ] %}
+    {% for i in range(8) %}
+    <div class="cover-slot">
+      <div class="cover-slot-label">אלבום {{ i + 1 }}</div>
+      <div class="cover-slot-body">
+        <input type="text" class="cover-name-input" data-idx="{{ i }}"
+               placeholder="{{ cover_placeholders[i] }}">
+        <div class="cover-slot-foot">
+          <label class="cover-upload-label">
+            <input type="file" class="cover-file-input" data-idx="{{ i }}"
+                   accept="image/*" style="display:none"
+                   onchange="onCoverFileChange(this, {{ i }})">
+            <span class="cover-upload-btn" data-idx="{{ i }}">📁 העלה עטיפה</span>
+          </label>
+          <img class="cover-thumb" data-idx="{{ i }}" src="" alt="">
+          <span class="cover-clear" data-idx="{{ i }}" onclick="clearCoverFile({{ i }})">✕</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button class="btn-generate-cover" id="coverGenBtn" onclick="generateCoverGrid()">🎨 צור תמונה</button>
+  <span id="coverGenStatus"></span>
+
+  <div id="coverResultSection">
+    <img id="coverPreviewImg" src="" alt="Album cover grid">
+    <a id="coverDownloadLink" href="#" download="erev_albumim_grid.png" class="btn-cover-download">⬇ הורד תמונה</a>
+  </div>
+</div>
+{% endif %}
+
 <div id="toast"></div>
 
 <script>
