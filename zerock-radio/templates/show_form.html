@@ -657,6 +657,77 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     }
   }
 });
+
+{% if show.key == 'erev_albumim' %}
+// ── Cover grid tool ────────────────────────────────────────────────────────
+function onCoverFileChange(input, idx) {
+  const file = input.files[0];
+  if (!file) return;
+  const thumb = document.querySelector(`.cover-thumb[data-idx="${idx}"]`);
+  const clear = document.querySelector(`.cover-clear[data-idx="${idx}"]`);
+  const btn   = document.querySelector(`.cover-upload-btn[data-idx="${idx}"]`);
+  thumb.src = URL.createObjectURL(file);
+  thumb.style.display = 'block';
+  clear.style.display = 'inline';
+  if (btn) { btn.textContent = '✓ עטיפה נבחרה'; btn.style.color = '#90d090'; }
+}
+
+function clearCoverFile(idx) {
+  const fi    = document.querySelector(`.cover-file-input[data-idx="${idx}"]`);
+  const thumb = document.querySelector(`.cover-thumb[data-idx="${idx}"]`);
+  const clear = document.querySelector(`.cover-clear[data-idx="${idx}"]`);
+  const btn   = document.querySelector(`.cover-upload-btn[data-idx="${idx}"]`);
+  if (fi)    fi.value = '';
+  if (thumb) { thumb.src = ''; thumb.style.display = 'none'; }
+  if (clear) { clear.style.display = 'none'; }
+  if (btn)   { btn.textContent = '📁 העלה עטיפה'; btn.style.color = '#c084fc'; }
+}
+
+async function generateCoverGrid() {
+  const nameInputs = document.querySelectorAll('.cover-name-input');
+  const fileInputs = document.querySelectorAll('.cover-file-input');
+  let hasAny = false;
+  nameInputs.forEach((inp, i) => {
+    if (inp.value.trim() || (fileInputs[i] && fileInputs[i].files[0])) hasAny = true;
+  });
+  if (!hasAny) { toast('הזן לפחות שם אלבום אחד', 'err'); return; }
+
+  const btn    = document.getElementById('coverGenBtn');
+  const status = document.getElementById('coverGenStatus');
+  btn.disabled = true;
+  btn.textContent = 'יוצר תמונה...';
+  status.textContent = 'מחפש עטיפות...';
+  document.getElementById('coverResultSection').style.display = 'none';
+
+  try {
+    const fd = new FormData();
+    nameInputs.forEach((inp, i) => {
+      fd.append(`album_${i}`, inp.value.trim());
+      const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+      if (file) fd.append(`cover_${i}`, file);
+    });
+    const r = await fetch('/api/erev-albumim/generate-grid', { method: 'POST', body: fd });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const url  = URL.createObjectURL(blob);
+    document.getElementById('coverPreviewImg').src    = url;
+    document.getElementById('coverDownloadLink').href = url;
+    document.getElementById('coverResultSection').style.display = '';
+    status.textContent = '✓ תמונה נוצרה בהצלחה';
+    status.style.color = '#4caf50';
+    document.getElementById('coverResultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(e) {
+    status.textContent = '✗ ' + e.message;
+    status.style.color = '#f87171';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🎨 צור תמונה';
+  }
+}
+{% endif %}
 </script>
 </body>
 </html>
