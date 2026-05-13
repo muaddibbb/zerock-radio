@@ -3135,27 +3135,58 @@ document.getElementById('rescheduleOverlay').addEventListener('click', e => {
 });
 
 // ── ערב של אלבומים — Cover Grid ───────────────────────────────────────────
+function onAlbumFileChange(input, idx) {
+  const file = input.files[0];
+  const thumb = document.querySelector(`.album-cover-thumb[data-idx="${idx}"]`);
+  const clear = document.querySelector(`.album-cover-clear[data-idx="${idx}"]`);
+  const btn   = input.closest('label').querySelector('.album-upload-btn');
+  if (!file) return;
+  thumb.src = URL.createObjectURL(file);
+  thumb.style.display = 'block';
+  clear.style.display = 'inline';
+  if (btn) { btn.textContent = '✓ עטיפה נבחרה'; btn.style.color = '#90d090'; }
+}
+
+function clearAlbumFile(idx) {
+  const fileInput = document.querySelector(`.album-cover-file[data-idx="${idx}"]`);
+  const thumb     = document.querySelector(`.album-cover-thumb[data-idx="${idx}"]`);
+  const clear     = document.querySelector(`.album-cover-clear[data-idx="${idx}"]`);
+  const btn       = fileInput ? fileInput.closest('label').querySelector('.album-upload-btn') : null;
+  if (fileInput) fileInput.value = '';
+  if (thumb)  { thumb.src = ''; thumb.style.display = 'none'; }
+  if (clear)  { clear.style.display = 'none'; }
+  if (btn)    { btn.textContent = '📁 העלה עטיפה'; btn.style.color = '#c0a0e0'; }
+}
 
 async function generateCoverGrid() {
-  const inputs = document.querySelectorAll('.album-name-input');
-  const albums = Array.from(inputs).map(i => i.value.trim()).filter(Boolean);
-  if (albums.length === 0) {
-    toast('הזן לפחות שם אלבום אחד', 'err');
-    return;
-  }
+  const nameInputs = document.querySelectorAll('.album-name-input');
+  const fileInputs = document.querySelectorAll('.album-cover-file');
+
+  let hasAny = false;
+  nameInputs.forEach((inp, i) => {
+    const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+    if (inp.value.trim() || file) hasAny = true;
+  });
+  if (!hasAny) { toast('הזן לפחות שם אלבום אחד', 'err'); return; }
+
   const btn = document.getElementById('generateGridBtn');
   const status = document.getElementById('gridGenerateStatus');
   btn.disabled = true;
   btn.textContent = 'יוצר תמונה...';
-  status.textContent = `מחפש עטיפות עבור ${albums.length} אלבומים...`;
+  status.textContent = 'מחפש עטיפות...';
   status.style.color = '#b090d0';
   document.getElementById('gridResultSection').style.display = 'none';
+
   try {
-    const r = await fetch('/api/erev-albumim/generate-grid', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ albums })
+    // Multipart: album names + optional cover image per slot
+    const fd = new FormData();
+    nameInputs.forEach((inp, i) => {
+      fd.append(`album_${i}`, inp.value.trim());
+      const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+      if (file) fd.append(`cover_${i}`, file);
     });
+
+    const r = await fetch('/api/erev-albumim/generate-grid', { method: 'POST', body: fd });
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
       throw new Error(j.error || `HTTP ${r.status}`);
