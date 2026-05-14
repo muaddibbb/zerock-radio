@@ -6061,6 +6061,13 @@ def _spotify_update_wp_links(top20_id, palash_id):
         print(f"[Spotify] WP link update error: {e}", flush=True)
 
 
+@app.route('/admin/spotify-sync-wp', methods=['POST'])
+def admin_spotify_sync_wp():
+    """Admin: manually push correct Spotify playlist IDs to WP rock-chart page."""
+    _spotify_update_wp_links(SPOTIFY_TOP20_PLAYLIST, SPOTIFY_PALASH_PLAYLIST)
+    return jsonify({'ok': True, 'top20': SPOTIFY_TOP20_PLAYLIST, 'palash': SPOTIFY_PALASH_PLAYLIST})
+
+
 # ── Palash artist welcome emails (sent on Thursday 15:00 with each new poll) ──
 
 def _find_release_email_for_palash(label):
