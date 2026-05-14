@@ -6589,6 +6589,27 @@ def api_poll_delete(poll_id):
     return jsonify({'ok': True})
 
 
+@app.route('/api/polls/<poll_id>/songs/<song_id>', methods=['PATCH'])
+def api_poll_song_update(poll_id, song_id):
+    """Admin: update a song's label, spotify_url, and/or youtube_url in a poll."""
+    body = request.get_json(force=True, silent=True) or {}
+    allowed = {'label', 'spotify_url', 'youtube_url'}
+    updates = {k: v for k, v in body.items() if k in allowed}
+    if not updates:
+        return jsonify({'error': 'no valid fields'}), 400
+    with _polls_lock:
+        polls = _load_polls()
+        poll  = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return jsonify({'error': 'poll not found'}), 404
+        song = next((s for s in poll.get('songs', []) if s['id'] == song_id), None)
+        if not song:
+            return jsonify({'error': 'song not found'}), 404
+        song.update(updates)
+        _save_polls(polls)
+    return jsonify({'ok': True, 'song': song})
+
+
 @app.route('/vote')
 @app.route('/poll/current')
 def poll_current_redirect():
