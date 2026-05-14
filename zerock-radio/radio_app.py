@@ -3308,49 +3308,66 @@ def api_stream_external_status():
 
 # ─── Listener count (Icecast stats) ───────────────────────────────────────────
 
-_listener_history = []   # list of {"ts": epoch_seconds, "count": int}
+_listener_history = []   # list of {"ts": float, "local": int|None, "ext": int|None}
 _listener_history_lock = threading.Lock()
 _LISTENER_HISTORY_MAX = 240   # ~1 hour of 15s readings
 
-def _fetch_icecast_stats():
-    """Return (listeners, peak, title) from local Icecast or (None, None, None)."""
+_ICECAST_LOCAL = 'http://localhost:8000/status-json.xsl'
+_ICECAST_EXT   = 'http://icecast.live:8001/status-json.xsl'
+
+def _parse_icecast_source(url, timeout=4):
+    """Fetch Icecast status-json.xsl and return dict with listeners/peak/title, or None."""
     try:
         import urllib.request as _urllib_req
-        r = _urllib_req.urlopen('http://localhost:8000/status-json.xsl', timeout=3)
+        r    = _urllib_req.urlopen(url, timeout=timeout)
         data = json.loads(r.read().decode('utf-8', errors='replace'))
-        src = data.get('icestats', {}).get('source', {})
-        # source can be a list (multiple mounts) or a dict (single mount)
+        src  = data.get('icestats', {}).get('source', {})
         if isinstance(src, list):
             src = src[0] if src else {}
-        return (
-            int(src.get('listeners', 0)),
-            int(src.get('listener_peak', 0)),
-            src.get('title', ''),
-        )
+        if not src:
+            return None
+        return {
+            'listeners': int(src.get('listeners', 0)),
+            'peak':      int(src.get('listener_peak', 0)),
+            'title':     src.get('title', ''),
+        }
     except Exception:
-        return None, None, None
+        return None
 
 @app.route('/api/listeners', methods=['GET'])
 def api_listeners():
-    listeners, peak, title = _fetch_icecast_stats()
+    import concurrent.futures as _cf
     now = time.time()
-    if listeners is not None:
+
+    # Fetch local + external in parallel
+    with _cf.ThreadPoolExecutor(max_workers=2) as pool:
+        f_local = pool.submit(_parse_icecast_source, _ICECAST_LOCAL, 4)
+        f_ext   = pool.submit(_parse_icecast_source, _ICECAST_EXT,   5)
+        local_stats = f_local.result()
+        ext_stats   = f_ext.result()
+
+    local_count = local_stats['listeners'] if local_stats else None
+    ext_count   = ext_stats['listeners']   if ext_stats   else None
+
+    # Record reading if at least one source responded
+    if local_count is not None or ext_count is not None:
         with _listener_history_lock:
-            _listener_history.append({'ts': now, 'count': listeners})
-            # Trim to max
+            _listener_history.append({
+                'ts':    now,
+                'local': local_count,
+                'ext':   ext_count,
+            })
             if len(_listener_history) > _LISTENER_HISTORY_MAX:
                 del _listener_history[:-_LISTENER_HISTORY_MAX]
-        with _listener_history_lock:
-            history = list(_listener_history)
-    else:
-        with _listener_history_lock:
-            history = list(_listener_history)
+
+    with _listener_history_lock:
+        history = list(_listener_history)
+
     return jsonify({
-        'listeners': listeners,
-        'peak': peak,
-        'title': title,
+        'local':   local_stats,
+        'ext':     ext_stats,
         'history': history,
-        'ok': listeners is not None,
+        'ok':      local_stats is not None or ext_stats is not None,
     })
 
 # ─── WordPress schedule board sync ────────────────────────────────────────────
