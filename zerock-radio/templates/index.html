@@ -551,30 +551,63 @@
     <!-- Listeners card -->
     <div class="card" data-mgmt-section="listeners" style="margin-bottom:20px">
       <h2>📻 Listeners</h2>
-      <div style="display:flex;align-items:flex-start;gap:28px;flex-wrap:wrap;margin-bottom:20px">
-        <div style="text-align:center;min-width:110px">
-          <div id="listenerCount" style="font-size:3.5em;font-weight:900;color:#c084fc;line-height:1">–</div>
-          <div style="font-size:0.8em;color:#888;margin-top:4px">current listeners</div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+
+        <!-- Local stream -->
+        <div style="background:#161616;border:1px solid #3a2a5a;border-radius:10px;padding:14px 16px">
+          <div style="font-size:0.7em;color:#888;font-weight:600;letter-spacing:.05em;margin-bottom:8px">🎙 LOCAL STREAM</div>
+          <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+            <div>
+              <div id="localListenerCount" style="font-size:3em;font-weight:900;color:#c084fc;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">listeners</div>
+            </div>
+            <div>
+              <div id="localListenerPeak" style="font-size:1.8em;font-weight:700;color:#8050b0;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">peak</div>
+            </div>
+          </div>
+          <div id="localListenerStatus" style="font-size:0.72em;color:#555;margin-top:6px">checking…</div>
         </div>
-        <div style="text-align:center;min-width:90px">
-          <div id="listenerPeak" style="font-size:2.2em;font-weight:700;color:#a060e0;line-height:1">–</div>
-          <div style="font-size:0.8em;color:#888;margin-top:4px">session peak</div>
+
+        <!-- External stream -->
+        <div style="background:#161616;border:1px solid #2a3a5a;border-radius:10px;padding:14px 16px">
+          <div style="font-size:0.7em;color:#888;font-weight:600;letter-spacing:.05em;margin-bottom:8px">📡 EXTERNAL STREAM</div>
+          <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+            <div>
+              <div id="extListenerCount" style="font-size:3em;font-weight:900;color:#60a0fc;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">listeners</div>
+            </div>
+            <div>
+              <div id="extListenerPeak" style="font-size:1.8em;font-weight:700;color:#4070b0;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">peak</div>
+            </div>
+          </div>
+          <div id="extListenerStatus" style="font-size:0.72em;color:#555;margin-top:6px">checking…</div>
         </div>
-        <div style="flex:1;min-width:180px">
-          <div style="font-size:0.75em;color:#666;margin-bottom:3px">NOW PLAYING</div>
-          <div id="listenerTrack" style="font-size:0.88em;color:#d0c0f0;word-break:break-word">–</div>
-          <div id="listenerError" style="font-size:0.8em;color:#f44;margin-top:6px;display:none"></div>
-        </div>
+
       </div>
-      <canvas id="listenersChart" height="120"
+
+      <!-- Now playing + error -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:0.72em;color:#555;margin-bottom:3px">NOW PLAYING</div>
+        <div id="listenerTrack" style="font-size:0.88em;color:#d0c0f0;word-break:break-word">–</div>
+        <div id="listenerError" style="font-size:0.8em;color:#f44;margin-top:6px;display:none"></div>
+      </div>
+
+      <!-- Chart -->
+      <canvas id="listenersChart" height="130"
               style="width:100%;border-radius:8px;background:#111;display:block"></canvas>
       <div style="display:flex;justify-content:space-between;font-size:0.7em;color:#555;margin-top:4px">
         <span id="listenerChartOldest"></span>
         <span>now</span>
       </div>
-      <div style="font-size:0.75em;color:#555;margin-top:10px;text-align:center" id="listenerRefreshNote">
-        Updates every 15 s
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:0.75em;color:#888">
+        <span><span style="display:inline-block;width:10px;height:3px;background:#c084fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>Local</span>
+        <span><span style="display:inline-block;width:10px;height:3px;background:#60a0fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>External</span>
       </div>
+      <div style="font-size:0.75em;color:#555;margin-top:8px;text-align:center">Updates every 15 s</div>
     </div>
 
     <!-- Streams card -->
