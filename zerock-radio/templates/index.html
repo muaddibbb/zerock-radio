@@ -1448,7 +1448,7 @@ async function toggleExternalStream(cb) {
 // Mark fields dirty when user edits them so pollStatus won't overwrite
 document.addEventListener('DOMContentLoaded', () => {
   ['holocaustFrom','holocaustUntil','memorialFrom','memorialUntil',
-   'yomKippurFrom','yomKippurUntil'].forEach(id => {
+   'yom_kippurFrom','yom_kippurUntil'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => { el._dirty = true; });
   });
