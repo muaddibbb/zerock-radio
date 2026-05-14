@@ -3306,6 +3306,52 @@ def api_stream_external_status():
     _, ext = get_stream_states()
     return jsonify({"ext_active": ext})
 
+# ─── Listener count (Icecast stats) ───────────────────────────────────────────
+
+_listener_history = []   # list of {"ts": epoch_seconds, "count": int}
+_listener_history_lock = threading.Lock()
+_LISTENER_HISTORY_MAX = 240   # ~1 hour of 15s readings
+
+def _fetch_icecast_stats():
+    """Return (listeners, peak, title) from local Icecast or (None, None, None)."""
+    try:
+        r = urllib.request.urlopen('http://localhost:8000/status-json.xsl', timeout=3)
+        data = json.loads(r.read().decode('utf-8', errors='replace'))
+        src = data.get('icestats', {}).get('source', {})
+        # source can be a list (multiple mounts) or a dict (single mount)
+        if isinstance(src, list):
+            src = src[0] if src else {}
+        return (
+            int(src.get('listeners', 0)),
+            int(src.get('listener_peak', 0)),
+            src.get('title', ''),
+        )
+    except Exception:
+        return None, None, None
+
+@app.route('/api/listeners', methods=['GET'])
+def api_listeners():
+    listeners, peak, title = _fetch_icecast_stats()
+    now = time.time()
+    if listeners is not None:
+        with _listener_history_lock:
+            _listener_history.append({'ts': now, 'count': listeners})
+            # Trim to max
+            if len(_listener_history) > _LISTENER_HISTORY_MAX:
+                del _listener_history[:-_LISTENER_HISTORY_MAX]
+        with _listener_history_lock:
+            history = list(_listener_history)
+    else:
+        with _listener_history_lock:
+            history = list(_listener_history)
+    return jsonify({
+        'listeners': listeners,
+        'peak': peak,
+        'title': title,
+        'history': history,
+        'ok': listeners is not None,
+    })
+
 # ─── WordPress schedule board sync ────────────────────────────────────────────
 
 WP_REST_BASE  = "https://zerockradio.com/wp-json"
