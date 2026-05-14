@@ -2440,6 +2440,8 @@ function switchMgmt(sub) {
   // Cards' .mgmt-active toggle happens once _shows loads (via applyMgmtSubsection),
   // but apply it now too for the static cards (which don't depend on _shows).
   applyMgmtSubsection();
+  // Auto-start listener polling if that tab was active on last visit
+  if (page === 'manage' && sub === 'listeners') _startListeners();
 })();
 
 function renderBroadcasterLinks() {
