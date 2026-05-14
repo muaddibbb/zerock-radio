@@ -3186,8 +3186,8 @@ def api_zikaron_get():
 def api_zikaron_post():
     data  = request.get_json() or {}
     ztype = data.get('type', 'memorial')
-    if ztype not in ('holocaust', 'memorial'):
-        return jsonify({'error': 'type must be holocaust or memorial'}), 400
+    if ztype not in ('holocaust', 'memorial', 'yom_kippur'):
+        return jsonify({'error': 'type must be holocaust, memorial, or yom_kippur'}), 400
 
     sched = load_zikaron_schedule()
 
