@@ -2348,14 +2348,15 @@ function _drawListenersChart(history) {
     return;
   }
 
-  const maxCount = Math.max(...history.map(h => h.count), 1);
-  const minTs    = history[0].ts;
-  const maxTs    = history[history.length - 1].ts;
-  const rangeTs  = maxTs - minTs || 1;
+  const allCounts = history.flatMap(h => [h.local ?? 0, h.ext ?? 0]);
+  const maxCount  = Math.max(...allCounts, 1);
+  const minTs     = history[0].ts;
+  const maxTs     = history[history.length - 1].ts;
+  const rangeTs   = maxTs - minTs || 1;
 
   const pad = { top: 12, right: 8, bottom: 8, left: 30 };
-  const cW   = W - pad.left - pad.right;
-  const cH   = H - pad.top  - pad.bottom;
+  const cW  = W - pad.left - pad.right;
+  const cH  = H - pad.top  - pad.bottom;
 
   // Grid lines
   const steps = 4;
@@ -2371,62 +2372,97 @@ function _drawListenersChart(history) {
     ctx.fillText(label, pad.left - 4, y + 3);
   }
 
-  // Filled area
-  ctx.beginPath();
-  history.forEach((pt, i) => {
-    const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
-    const y = pad.top  + cH - (pt.count / maxCount) * cH;
-    if (i === 0) ctx.moveTo(x, y);
-    else         ctx.lineTo(x, y);
-  });
-  const lastX = pad.left + cW;
-  ctx.lineTo(lastX, pad.top + cH);
-  ctx.lineTo(pad.left, pad.top + cH);
-  ctx.closePath();
-  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
-  grad.addColorStop(0,   'rgba(192,132,252,0.55)');
-  grad.addColorStop(1,   'rgba(192,132,252,0.05)');
-  ctx.fillStyle = grad;
-  ctx.fill();
+  // Draw filled area + line for one series
+  const drawSeries = (key, fillColor, lineColor) => {
+    const pts = history.filter(h => h[key] != null);
+    if (pts.length < 1) return;
 
-  // Line
-  ctx.beginPath();
-  history.forEach((pt, i) => {
-    const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
-    const y = pad.top  + cH - (pt.count / maxCount) * cH;
-    if (i === 0) ctx.moveTo(x, y);
-    else         ctx.lineTo(x, y);
-  });
-  ctx.strokeStyle = '#c084fc';
-  ctx.lineWidth = 2;
-  ctx.lineJoin = 'round';
-  ctx.stroke();
+    // Filled area
+    ctx.beginPath();
+    pts.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    const lastPt = pts[pts.length - 1];
+    ctx.lineTo(pad.left + ((lastPt.ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.lineTo(pad.left + ((pts[0].ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    pts.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth   = 2;
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+  };
+
+  const gradLocal = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+  gradLocal.addColorStop(0, 'rgba(192,132,252,0.40)');
+  gradLocal.addColorStop(1, 'rgba(192,132,252,0.03)');
+
+  const gradExt = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+  gradExt.addColorStop(0, 'rgba(96,160,252,0.35)');
+  gradExt.addColorStop(1, 'rgba(96,160,252,0.03)');
+
+  drawSeries('local', gradLocal, '#c084fc');
+  drawSeries('ext',   gradExt,   '#60a0fc');
 }
 
 async function refreshListeners() {
   try {
-    const r   = await fetch('/api/listeners', {cache: 'no-store'});
-    const d   = await r.json();
-    const countEl  = document.getElementById('listenerCount');
-    const peakEl   = document.getElementById('listenerPeak');
-    const trackEl  = document.getElementById('listenerTrack');
+    const r  = await fetch('/api/listeners', {cache: 'no-store'});
+    const d  = await r.json();
     const errEl    = document.getElementById('listenerError');
+    const trackEl  = document.getElementById('listenerTrack');
     const oldestEl = document.getElementById('listenerChartOldest');
 
     if (!d.ok) {
-      if (errEl) { errEl.textContent = 'Cannot reach Icecast'; errEl.style.display = ''; }
+      if (errEl) { errEl.textContent = 'Cannot reach Icecast'; errEl.style.display = 'block'; }
       return;
     }
     if (errEl) errEl.style.display = 'none';
-    if (countEl) countEl.textContent = d.listeners ?? '–';
-    if (peakEl)  peakEl.textContent  = d.peak ?? '–';
-    if (trackEl) trackEl.textContent = d.title || '–';
+
+    // Local stream
+    const lc = document.getElementById('localListenerCount');
+    const lp = document.getElementById('localListenerPeak');
+    const ls = document.getElementById('localListenerStatus');
+    if (d.local) {
+      if (lc) lc.textContent = d.local.listeners;
+      if (lp) lp.textContent = d.local.peak;
+      if (ls) ls.textContent = 'online';
+      if (trackEl) trackEl.textContent = d.local.title || '–';
+    } else {
+      if (lc) lc.textContent = '–';
+      if (lp) lp.textContent = '–';
+      if (ls) ls.style.color = '#f44', ls.textContent = 'offline';
+    }
+
+    // External stream
+    const ec = document.getElementById('extListenerCount');
+    const ep = document.getElementById('extListenerPeak');
+    const es = document.getElementById('extListenerStatus');
+    if (d.ext) {
+      if (ec) ec.textContent = d.ext.listeners;
+      if (ep) ep.textContent = d.ext.peak;
+      if (es) es.textContent = 'online';
+    } else {
+      if (ec) ec.textContent = '–';
+      if (ep) ep.textContent = '–';
+      if (es) es.style.color = '#f44', es.textContent = 'offline';
+    }
 
     _listenerHistory = d.history || [];
 
-    // Oldest timestamp label
     if (oldestEl && _listenerHistory.length > 0) {
-      const ageS = Math.round(Date.now() / 1000 - _listenerHistory[0].ts);
+      const ageS   = Math.round(Date.now() / 1000 - _listenerHistory[0].ts);
       const ageMin = Math.floor(ageS / 60);
       oldestEl.textContent = ageMin >= 1 ? ageMin + ' min ago' : 'just now';
     }
@@ -2434,7 +2470,7 @@ async function refreshListeners() {
     _drawListenersChart(_listenerHistory);
   } catch(e) {
     const errEl = document.getElementById('listenerError');
-    if (errEl) { errEl.textContent = 'Fetch error: ' + e.message; errEl.style.display = ''; }
+    if (errEl) { errEl.textContent = 'Fetch error: ' + e.message; errEl.style.display = 'block'; }
   }
 }
 
