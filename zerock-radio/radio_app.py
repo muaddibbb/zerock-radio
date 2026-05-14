@@ -5879,6 +5879,67 @@ def _spotify_get_user_token():
         return None
 
 
+_SPOTIFY_OAUTH_STATE = secrets.token_hex(16)   # CSRF state for OAuth flow
+
+@app.route('/admin/spotify-auth')
+def admin_spotify_auth():
+    """Step 1: redirect to Spotify authorization page."""
+    import urllib.parse as _up
+    params = _up.urlencode({
+        'client_id':     SPOTIFY_CLIENT_ID,
+        'response_type': 'code',
+        'redirect_uri':  f'{ZEROCK_PUBLIC_URL}/admin/spotify-callback',
+        'scope':         'playlist-modify-public playlist-modify-private',
+        'state':         _SPOTIFY_OAUTH_STATE,
+    })
+    return redirect(f'https://accounts.spotify.com/authorize?{params}')
+
+@app.route('/admin/spotify-callback')
+def admin_spotify_callback():
+    """Step 2: receive code from Spotify, exchange for refresh token, display it."""
+    import urllib.request, urllib.parse, base64 as _b64
+    error = request.args.get('error')
+    if error:
+        return f'<p style="color:red">Spotify auth error: {error}</p>', 400
+    state = request.args.get('state', '')
+    if state != _SPOTIFY_OAUTH_STATE:
+        return '<p style="color:red">Invalid state — possible CSRF</p>', 400
+    code = request.args.get('code', '')
+    if not code:
+        return '<p style="color:red">No code received</p>', 400
+    try:
+        creds = _b64.b64encode(f'{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}'.encode()).decode()
+        data  = urllib.parse.urlencode({
+            'grant_type':   'authorization_code',
+            'code':         code,
+            'redirect_uri': f'{ZEROCK_PUBLIC_URL}/admin/spotify-callback',
+        }).encode()
+        req = urllib.request.Request(
+            'https://accounts.spotify.com/api/token',
+            data=data,
+            headers={'Authorization': f'Basic {creds}',
+                     'Content-Type': 'application/x-www-form-urlencoded'},
+        )
+        with urllib.request.urlopen(req, timeout=10) as r:
+            payload = json.loads(r.read())
+        refresh_token = payload.get('refresh_token', '')
+        access_token  = payload.get('access_token', '')
+        # Immediately cache the access token so playlist update works right away
+        _spotify_user_token_cache['token']      = access_token
+        _spotify_user_token_cache['expires_at'] = time.time() + int(payload.get('expires_in', 3600))
+        return f'''<!doctype html><html><body style="font-family:monospace;background:#111;color:#eee;padding:30px">
+<h2 style="color:#1db954">✅ Spotify authorized!</h2>
+<p>Add this to <code>/etc/systemd/system/zerock-radio-web.service</code>:</p>
+<pre style="background:#1a1a1a;padding:16px;border-radius:8px;border:1px solid #333;
+            font-size:1.1em;color:#c084fc;word-break:break-all">Environment=SPOTIFY_REFRESH_TOKEN={refresh_token}</pre>
+<p style="color:#aaa">Then run:<br>
+<code>sudo systemctl daemon-reload &amp;&amp; sudo systemctl restart zerock-radio-web</code></p>
+<p style="color:#4caf50">The access token is already cached in memory — playlist updates will work until the server restarts.</p>
+</body></html>'''
+    except Exception as e:
+        return f'<p style="color:red">Token exchange error: {e}</p>', 500
+
+
 def _spotify_replace_playlist(playlist_id, uris):
     """Replace all tracks in a Spotify playlist with the given track URIs.
     Uses PUT /playlists/{id}/items (replaces entire playlist).
