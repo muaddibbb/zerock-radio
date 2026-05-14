@@ -3087,8 +3087,6 @@ def api_status():
         "zikaron_active":         zikaron_on,
         "zikaron_type":           zikaron_type,
         "zikaron_schedule":       zikaron_sched,
-        "yom_kippur_active":      is_yom_kippur_window(),
-        "yom_kippur_schedule":    load_yom_kippur_schedule(),
     })
 
 # ─── Read-only log access ─────────────────────────────────────────────────────
