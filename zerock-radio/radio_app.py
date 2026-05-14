@@ -2476,8 +2476,7 @@ def scheduler_loop():
             _restore_stream_states()
         _lq_was_running = lq_now
 
-        _sync_zikaron_to_lq()
-        _sync_yom_kippur_to_streams()
+        _sync_zikaron_to_lq()   # handles holocaust, memorial, yom_kippur
 
         # ── Periodic WP board sync (every 30 min) ─────────────────────────────
         # Ensures the schedule board self-corrects even when event-based syncs
