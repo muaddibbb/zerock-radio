@@ -1542,23 +1542,39 @@ def _publish_wp_post(show_id, wp_post_id=None, show_name=None, broadcast_date=No
 # ─── Zikaron (Memorial/Holocaust Day) mode ────────────────────────────────────
 
 def load_zikaron_schedule():
-    """Load zikaron schedule. Returns {holocaust: {from,until}, memorial: {from,until}}.
-    Migrates old single-window format {from, until} → memorial automatically."""
-    empty = {'holocaust': {'from': None, 'until': None},
-             'memorial':  {'from': None, 'until': None}}
+    """Load zikaron schedule.
+    Returns {holocaust: {from,until}, memorial: {from,until}, yom_kippur: {from,until}}.
+    Migrates old single-window format {from, until} → memorial automatically.
+    Also migrates yom_kippur_schedule.json → yom_kippur key on first run."""
+    empty = {'holocaust':  {'from': None, 'until': None},
+             'memorial':   {'from': None, 'until': None},
+             'yom_kippur': {'from': None, 'until': None}}
     try:
         if os.path.exists(ZIKARON_FILE):
             with open(ZIKARON_FILE) as f:
                 data = json.load(f)
             # Migrate old single-window format → memorial
             if 'from' in data or 'until' in data:
-                migrated = {'holocaust': {'from': None, 'until': None},
-                            'memorial':  {'from': data.get('from'), 'until': data.get('until')}}
+                migrated = {'holocaust':  {'from': None, 'until': None},
+                            'memorial':   {'from': data.get('from'), 'until': data.get('until')},
+                            'yom_kippur': {'from': None, 'until': None}}
                 save_zikaron_schedule(migrated)
                 return migrated
-            # Ensure both keys exist
-            data.setdefault('holocaust', {'from': None, 'until': None})
-            data.setdefault('memorial',  {'from': None, 'until': None})
+            # Ensure all keys exist
+            data.setdefault('holocaust',  {'from': None, 'until': None})
+            data.setdefault('memorial',   {'from': None, 'until': None})
+            data.setdefault('yom_kippur', {'from': None, 'until': None})
+            # One-time migration: absorb yom_kippur_schedule.json if yom_kippur slot still empty
+            if (not data['yom_kippur'].get('from') and os.path.exists(YOM_KIPPUR_FILE)):
+                try:
+                    with open(YOM_KIPPUR_FILE) as yf:
+                        yk = json.load(yf) or {}
+                    if yk.get('from'):
+                        data['yom_kippur'] = {'from': yk['from'], 'until': yk.get('until')}
+                        save_zikaron_schedule(data)
+                        print('[Zikaron] Migrated yom_kippur_schedule.json → zikaron_schedule.json', flush=True)
+                except Exception:
+                    pass
             return data
     except Exception:
         pass
