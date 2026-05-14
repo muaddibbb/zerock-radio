@@ -2416,7 +2416,6 @@ async function refreshListeners() {
     const r  = await fetch('/api/listeners', {cache: 'no-store'});
     const d  = await r.json();
     const errEl    = document.getElementById('listenerError');
-    const trackEl  = document.getElementById('listenerTrack');
     const oldestEl = document.getElementById('listenerChartOldest');
 
     if (!d.ok) {
