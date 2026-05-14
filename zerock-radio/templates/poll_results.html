@@ -485,6 +485,65 @@ setTimeout(function autoRefresh() {
   setTimeout(autoRefresh, 30000);
 }, 30000);
 {% endif %}
+
+// ── Inline song editor ────────────────────────────────────────────────────────
+function toggleEdit(pollId, songId, btn) {
+  const panel = document.getElementById('edit-' + songId);
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  // Close all open panels first
+  document.querySelectorAll('.edit-panel.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+
+function cancelEdit(songId) {
+  const panel = document.getElementById('edit-' + songId);
+  if (panel) panel.classList.remove('open');
+}
+
+async function saveSong(pollId, songId) {
+  const lbl = document.getElementById('lbl-' + songId);
+  const sp  = document.getElementById('sp-'  + songId);
+  const yt  = document.getElementById('yt-'  + songId);
+  const st  = document.getElementById('st-'  + songId);
+  if (!lbl) return;
+
+  const body = {
+    label:        lbl.value.trim(),
+    spotify_url:  sp  ? sp.value.trim()  || null : undefined,
+    youtube_url:  yt  ? yt.value.trim()  || null : undefined,
+  };
+  // Remove undefined keys
+  Object.keys(body).forEach(k => body[k] === undefined && delete body[k]);
+
+  if (st) st.textContent = 'שומר…';
+  try {
+    const r = await fetch('/api/polls/' + pollId + '/songs/' + songId, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+
+    // Update the visible label in the row
+    const labelEl = document.querySelector(
+      '.result-row[data-song-id="' + songId + '"] .song-label-text'
+    );
+    if (labelEl && body.label) labelEl.textContent = body.label;
+
+    // Update Spotify link
+    const spBtn = document.querySelector(
+      '.result-row[data-song-id="' + songId + '"] .listen-spotify, ' +
+      '.result-row[data-song-id="' + songId + '"] .listen-btn:first-of-type'
+    );
+
+    if (st) { st.textContent = '✓ נשמר'; setTimeout(() => { st.textContent = ''; cancelEdit(songId); }, 1200); }
+  } catch(e) {
+    if (st) st.textContent = '✗ ' + e.message;
+    if (st) st.style.color = '#f44';
+  }
+}
 </script>
 {% endif %}
 </body>
