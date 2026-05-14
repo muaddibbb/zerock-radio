@@ -1455,8 +1455,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function saveZikaron(type) {
-  const fromId  = type === 'holocaust' ? 'holocaustFrom'  : 'memorialFrom';
-  const untilId = type === 'holocaust' ? 'holocaustUntil' : 'memorialUntil';
+  const fromId  = type + 'From';
+  const untilId = type + 'Until';
   const from    = document.getElementById(fromId).value;
   const until   = document.getElementById(untilId).value;
   if (!from || !until) { toast('Please set both From and Until dates', 'err'); return; }
@@ -1469,8 +1469,9 @@ async function saveZikaron(type) {
     if (r.error) { toast(r.error, 'err'); return; }
     document.getElementById(fromId)._dirty  = false;
     document.getElementById(untilId)._dirty = false;
-    const label = type === 'holocaust' ? 'יום השואה' : 'יום הזיכרון';
-    toast(r.active ? `🕯 ${label} mode is now ACTIVE` : `🕯 ${label} scheduled`, 'ok');
+    const label = type === 'holocaust' ? 'יום השואה' : type === 'yom_kippur' ? 'יום כיפור' : 'יום הזיכרון';
+    const icon  = type === 'yom_kippur' ? '🕊' : '🕯';
+    toast(r.active ? `${icon} ${label} mode is now ACTIVE` : `${icon} ${label} scheduled`, 'ok');
     pollStatus();
   } catch { toast('Failed to save zikaron schedule', 'err'); }
 }
@@ -1482,13 +1483,11 @@ async function clearZikaron(type) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({type, clear: true})
     });
-    const fromId  = type === 'holocaust' ? 'holocaustFrom'  : 'memorialFrom';
-    const untilId = type === 'holocaust' ? 'holocaustUntil' : 'memorialUntil';
-    const fEl = document.getElementById(fromId);
-    const uEl = document.getElementById(untilId);
-    fEl.value = ''; fEl._dirty = false;
-    uEl.value = ''; uEl._dirty = false;
-    const label = type === 'holocaust' ? 'יום השואה' : 'יום הזיכרון';
+    const fEl = document.getElementById(type + 'From');
+    const uEl = document.getElementById(type + 'Until');
+    if (fEl) { fEl.value = ''; fEl._dirty = false; }
+    if (uEl) { uEl.value = ''; uEl._dirty = false; }
+    const label = type === 'holocaust' ? 'יום השואה' : type === 'yom_kippur' ? 'יום כיפור' : 'יום הזיכרון';
     toast(`${label} schedule cleared`, 'ok');
     pollStatus();
   } catch { toast('Failed to clear zikaron', 'err'); }
