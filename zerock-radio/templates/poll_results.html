@@ -161,6 +161,41 @@
     .footer-note a { color: #e63946; text-decoration: none; }
     .footer-note a:hover { text-decoration: underline; }
 
+    /* edit button */
+    .edit-btn {
+      flex-shrink: 0; background: none; border: none; cursor: pointer;
+      color: #444; font-size: 0.85em; padding: 4px; border-radius: 4px;
+      position: relative; z-index: 1; transition: color .15s;
+      line-height: 1;
+    }
+    .edit-btn:hover { color: #c084fc; }
+
+    /* inline edit panel */
+    .edit-panel {
+      display: none; background: #1a1a2a; border: 1px solid #5a3a7a;
+      border-radius: 8px; padding: 12px 14px; margin: 3px 0 6px;
+      flex-direction: column; gap: 8px;
+    }
+    .edit-panel.open { display: flex; }
+    .edit-panel label { font-size: 0.72em; color: #888; display: block; margin-bottom: 2px; }
+    .edit-panel input {
+      width: 100%; background: #111; border: 1px solid #3a3a3a;
+      border-radius: 6px; padding: 6px 10px; color: #f0f0f0;
+      font-size: 0.85em; outline: none; direction: ltr;
+    }
+    .edit-panel input:focus { border-color: #7c3aed; }
+    .edit-panel-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
+    .btn-save-song {
+      padding: 5px 16px; background: #5a3a7a; border: none; border-radius: 6px;
+      color: #f0e0ff; font-size: 0.82em; font-weight: 700; cursor: pointer;
+    }
+    .btn-save-song:hover { background: #7c3aed; }
+    .btn-cancel-song {
+      padding: 5px 12px; background: none; border: 1px solid #333; border-radius: 6px;
+      color: #888; font-size: 0.82em; cursor: pointer;
+    }
+    .save-status { font-size: 0.78em; color: #4caf50; align-self: center; }
+
 
     /* countdown */
     .countdown { color: #aaa; font-size: 0.82em; text-align: center; margin-bottom: 12px; }
