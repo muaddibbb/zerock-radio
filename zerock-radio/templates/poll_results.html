@@ -300,7 +300,7 @@
   {% for s in results %}
   {% set pct = ((s.votes / max_votes_any * 100) | int) if max_votes_any > 0 else 0 %}
   <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
-       data-pct="{{ pct }}">
+       data-pct="{{ pct }}" data-song-id="{{ s.id }}">
     <div class="fill-bar" style="width:{{ pct }}%"></div>
 
     <!-- rank -->
@@ -331,7 +331,7 @@
     <!-- song info -->
     <div class="song-info">
       <div class="song-name">
-        {{ s.label }}
+        <span class="song-label-text">{{ s.label }}</span>
         {% if s.id == badge_aliya_id %}<span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>{% endif %}
         {% if s.id == badge_yerida_id %}<span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>{% endif %}
         {% if s.id == badge_vatik_id %}<span class="special-badge badge-vatik">★ השיר הותיק</span>{% endif %}
@@ -339,6 +339,20 @@
       </div>
       <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
     </div>
+
+    <!-- Spotify / YouTube links -->
+    {% if s.spotify_url %}
+    <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
+       title="Spotify" rel="noopener">🎵</a>
+    {% else %}
+    <span class="listen-btn" style="opacity:0.15;cursor:default" title="No Spotify link">🎵</span>
+    {% endif %}
+    {% if s.youtube_url %}
+    <a class="listen-btn listen-youtube" href="{{ s.youtube_url }}" target="_blank"
+       title="YouTube" rel="noopener">▶</a>
+    {% else %}
+    <span class="listen-btn" style="opacity:0.15;cursor:default" title="No YouTube link">▶</span>
+    {% endif %}
 
     <!-- vote count -->
     <div class="vote-count">
@@ -354,7 +368,33 @@
     </div>
     {% endif %}
 
+    <!-- edit button -->
+    <button class="edit-btn" title="ערוך שיר"
+            onclick="toggleEdit('{{ poll.id }}','{{ s.id }}',this)">✏️</button>
+
   </div>
+
+  <!-- inline edit panel (outside the row, full width) -->
+  <div class="edit-panel" id="edit-{{ s.id }}">
+    <div>
+      <label>שם השיר</label>
+      <input type="text" id="lbl-{{ s.id }}" value="{{ s.label }}" dir="rtl">
+    </div>
+    <div>
+      <label>Spotify URL</label>
+      <input type="url" id="sp-{{ s.id }}" value="{{ s.spotify_url or '' }}" placeholder="https://open.spotify.com/track/…">
+    </div>
+    <div>
+      <label>YouTube URL</label>
+      <input type="url" id="yt-{{ s.id }}" value="{{ s.youtube_url or '' }}" placeholder="https://www.youtube.com/watch?v=…">
+    </div>
+    <div class="edit-panel-actions">
+      <span class="save-status" id="st-{{ s.id }}"></span>
+      <button class="btn-cancel-song" onclick="cancelEdit('{{ s.id }}')">ביטול</button>
+      <button class="btn-save-song" onclick="saveSong('{{ poll.id }}','{{ s.id }}')">שמור</button>
+    </div>
+  </div>
+
   {% if loop.index == 20 %}
   <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px">
     <div style="flex:1;height:1px;background:#3a3a3a"></div>
