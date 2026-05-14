@@ -2287,12 +2287,139 @@ function applyMgmtSubsection() {
   _populateShowSelect(allowed, /*autoSelect*/ sub !== 'shows');
 }
 
+// ─── Listener count chart ─────────────────────────────────────────────────────
+
+let _listenerTimer   = null;
+let _listenerHistory = [];   // [{ts, count}]
+
+function _drawListenersChart(history) {
+  const canvas = document.getElementById('listenersChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.clientWidth;
+  const H   = canvas.clientHeight;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!history || history.length < 2) {
+    ctx.fillStyle = '#444';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collecting data…', W / 2, H / 2);
+    return;
+  }
+
+  const maxCount = Math.max(...history.map(h => h.count), 1);
+  const minTs    = history[0].ts;
+  const maxTs    = history[history.length - 1].ts;
+  const rangeTs  = maxTs - minTs || 1;
+
+  const pad = { top: 12, right: 8, bottom: 8, left: 30 };
+  const cW   = W - pad.left - pad.right;
+  const cH   = H - pad.top  - pad.bottom;
+
+  // Grid lines
+  const steps = 4;
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= steps; i++) {
+    const y = pad.top + cH - (i / steps) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    const label = Math.round((i / steps) * maxCount);
+    ctx.fillStyle = '#555';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(label, pad.left - 4, y + 3);
+  }
+
+  // Filled area
+  ctx.beginPath();
+  history.forEach((pt, i) => {
+    const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+    const y = pad.top  + cH - (pt.count / maxCount) * cH;
+    if (i === 0) ctx.moveTo(x, y);
+    else         ctx.lineTo(x, y);
+  });
+  const lastX = pad.left + cW;
+  ctx.lineTo(lastX, pad.top + cH);
+  ctx.lineTo(pad.left, pad.top + cH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+  grad.addColorStop(0,   'rgba(192,132,252,0.55)');
+  grad.addColorStop(1,   'rgba(192,132,252,0.05)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  history.forEach((pt, i) => {
+    const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+    const y = pad.top  + cH - (pt.count / maxCount) * cH;
+    if (i === 0) ctx.moveTo(x, y);
+    else         ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = '#c084fc';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+}
+
+async function refreshListeners() {
+  try {
+    const r   = await fetch('/api/listeners', {cache: 'no-store'});
+    const d   = await r.json();
+    const countEl  = document.getElementById('listenerCount');
+    const peakEl   = document.getElementById('listenerPeak');
+    const trackEl  = document.getElementById('listenerTrack');
+    const errEl    = document.getElementById('listenerError');
+    const oldestEl = document.getElementById('listenerChartOldest');
+
+    if (!d.ok) {
+      if (errEl) { errEl.textContent = 'Cannot reach Icecast'; errEl.style.display = ''; }
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+    if (countEl) countEl.textContent = d.listeners ?? '–';
+    if (peakEl)  peakEl.textContent  = d.peak ?? '–';
+    if (trackEl) trackEl.textContent = d.title || '–';
+
+    _listenerHistory = d.history || [];
+
+    // Oldest timestamp label
+    if (oldestEl && _listenerHistory.length > 0) {
+      const ageS = Math.round(Date.now() / 1000 - _listenerHistory[0].ts);
+      const ageMin = Math.floor(ageS / 60);
+      oldestEl.textContent = ageMin >= 1 ? ageMin + ' min ago' : 'just now';
+    }
+
+    _drawListenersChart(_listenerHistory);
+  } catch(e) {
+    const errEl = document.getElementById('listenerError');
+    if (errEl) { errEl.textContent = 'Fetch error: ' + e.message; errEl.style.display = ''; }
+  }
+}
+
+function _startListeners() {
+  refreshListeners();
+  if (!_listenerTimer) _listenerTimer = setInterval(refreshListeners, 15000);
+}
+function _stopListeners() {
+  if (_listenerTimer) { clearInterval(_listenerTimer); _listenerTimer = null; }
+}
+
 function switchMgmt(sub) {
   document.querySelectorAll('.mgmt-subnav-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.mgmt === sub);
   });
   applyMgmtSubsection();
   try { localStorage.setItem('rocky.mgmt', sub); } catch(_) {}
+  if (sub === 'listeners') _startListeners(); else _stopListeners();
 }
 
 // ── Initial state on load ─────────────────────────────────────────────────────
