@@ -1585,11 +1585,11 @@ def save_zikaron_schedule(data):
         json.dump(data, f, ensure_ascii=False)
 
 def get_zikaron_type():
-    """Return 'holocaust', 'memorial', or None based on current time."""
+    """Return 'holocaust', 'memorial', 'yom_kippur', or None based on current time."""
     try:
         s = load_zikaron_schedule()
         now = datetime.now()
-        for ztype in ('holocaust', 'memorial'):
+        for ztype in ('holocaust', 'memorial', 'yom_kippur'):
             w = s.get(ztype, {})
             if w.get('from') and w.get('until'):
                 if datetime.fromisoformat(w['from']) <= now <= datetime.fromisoformat(w['until']):
