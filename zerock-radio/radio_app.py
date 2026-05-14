@@ -3215,19 +3215,21 @@ def api_zikaron_post():
 
 @app.route('/api/yom-kippur', methods=['GET'])
 def api_yom_kippur_get():
-    return jsonify({
-        'schedule': load_yom_kippur_schedule(),
-        'active':   is_yom_kippur_window(),
-    })
+    """Legacy endpoint — yom kippur is now a zikaron type."""
+    sched = load_zikaron_schedule()
+    yk = sched.get('yom_kippur', {})
+    return jsonify({'schedule': yk, 'active': get_zikaron_type() == 'yom_kippur'})
 
 @app.route('/api/yom-kippur', methods=['POST'])
 def api_yom_kippur_post():
+    """Legacy endpoint — forwards to the zikaron system as type=yom_kippur."""
     data = request.get_json() or {}
+    sched = load_zikaron_schedule()
     if data.get('clear'):
-        save_yom_kippur_schedule({'from': None, 'until': None})
-        _sync_yom_kippur_to_streams()
+        sched['yom_kippur'] = {'from': None, 'until': None}
+        save_zikaron_schedule(sched)
+        _sync_zikaron_to_lq()
         return jsonify({'ok': True})
-
     from_iso, until_iso = data.get('from'), data.get('until')
     if not from_iso or not until_iso:
         return jsonify({'error': 'from and until are required'}), 400
@@ -3238,10 +3240,10 @@ def api_yom_kippur_post():
         return jsonify({'error': 'Invalid datetime format'}), 400
     if dt_until <= dt_from:
         return jsonify({'error': 'until must be after from'}), 400
-
-    save_yom_kippur_schedule({'from': dt_from.isoformat(), 'until': dt_until.isoformat()})
-    _sync_yom_kippur_to_streams()
-    return jsonify({'ok': True, 'active': is_yom_kippur_window()})
+    sched['yom_kippur'] = {'from': dt_from.isoformat(), 'until': dt_until.isoformat()}
+    save_zikaron_schedule(sched)
+    _sync_zikaron_to_lq()
+    return jsonify({'ok': True, 'active': get_zikaron_type() == 'yom_kippur'})
 
 def _get_metadata_field(meta_str, field):
     """Extract a metadata field value from Liquidsoap request.metadata output."""
