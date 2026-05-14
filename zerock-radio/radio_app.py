@@ -3315,7 +3315,8 @@ _LISTENER_HISTORY_MAX = 240   # ~1 hour of 15s readings
 def _fetch_icecast_stats():
     """Return (listeners, peak, title) from local Icecast or (None, None, None)."""
     try:
-        r = urllib.request.urlopen('http://localhost:8000/status-json.xsl', timeout=3)
+        import urllib.request as _urllib_req
+        r = _urllib_req.urlopen('http://localhost:8000/status-json.xsl', timeout=3)
         data = json.loads(r.read().decode('utf-8', errors='replace'))
         src = data.get('icestats', {}).get('source', {})
         # source can be a list (multiple mounts) or a dict (single mount)
