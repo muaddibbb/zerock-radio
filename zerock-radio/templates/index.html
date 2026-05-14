@@ -1369,10 +1369,10 @@ async function pollStatus() {
       extStatus.className = 'stream-status ' + (d.external_stream_active ? 'on' : 'off');
     }
 
-    // Sync zikaron status (two separate cards: holocaust + memorial)
+    // Sync zikaron status (holocaust, memorial, yom_kippur)
     const sched    = d.zikaron_schedule || {};
     const zType    = d.zikaron_type || null;
-    ['holocaust', 'memorial'].forEach(type => {
+    ['holocaust', 'memorial', 'yom_kippur'].forEach(type => {
       const statusEl = document.getElementById(type + 'Status');
       if (!statusEl) return;
       const w        = (sched[type] || {});
@@ -1400,28 +1400,9 @@ async function pollStatus() {
     if (badge) {
       badge.style.display = d.zikaron_active ? '' : 'none';
       if (d.zikaron_active) {
-        badge.textContent = d.zikaron_type === 'holocaust' ? '🕯 יום השואה' : '🕯 יום הזיכרון';
-      }
-    }
-
-    // Sync Yom Kippur status
-    const ykStatus = document.getElementById('yomKippurStatus');
-    if (ykStatus) {
-      const yk = d.yom_kippur_schedule || {};
-      if (d.yom_kippur_active) {
-        const until = yk.until ? fmtDt(yk.until) : '';
-        ykStatus.textContent = `🔴 Active — both streams stopped until ${until}`;
-        ykStatus.style.color = 'var(--danger)';
-      } else if (yk.from) {
-        ykStatus.textContent = `Scheduled: ${fmtDt(yk.from)} → ${fmtDt(yk.until)}`;
-        ykStatus.style.color = 'var(--text-muted)';
-        const fEl = document.getElementById('yomKippurFrom');
-        const uEl = document.getElementById('yomKippurUntil');
-        if (fEl && !fEl._dirty) fEl.value = yk.from.slice(0,16);
-        if (uEl && !uEl._dirty) uEl.value = yk.until.slice(0,16);
-      } else {
-        ykStatus.textContent = 'Inactive — set a schedule below to stop streams automatically';
-        ykStatus.style.color = 'var(--text-muted)';
+        badge.textContent = d.zikaron_type === 'holocaust' ? '🕯 יום השואה'
+                          : d.zikaron_type === 'yom_kippur' ? '🕊 יום כיפור'
+                          : '🕯 יום הזיכרון';
       }
     }
   } catch {}
