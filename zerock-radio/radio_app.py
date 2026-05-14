@@ -4197,13 +4197,42 @@ def api_add_show():
     }
     with _schedule_lock:
         schedule = load_schedule()
+
+        # ── Dedup: remove any existing non-triggered primary for the same show+slot ──
+        # Handles re-uploads: the new episode replaces the old one in the schedule.
+        broadcast_iso = show['scheduled_time']
+        _removed_primary = [s for s in schedule
+                            if s.get('show_key') == show_key
+                            and s.get('scheduled_time') == broadcast_iso
+                            and not s.get('is_rerun')
+                            and not s.get('triggered')]
+        if _removed_primary:
+            _rids = {s['id'] for s in _removed_primary}
+            schedule = [s for s in schedule if s['id'] not in _rids]
+            print(f"[Schedule] Replaced {len(_removed_primary)} existing primary slot(s) for "
+                  f"'{show_key}' at {broadcast_iso}", flush=True)
+
         schedule.append(show)
+
         if not is_album:
             # Immediately schedule the rerun so it appears in upcoming shows
             rerun = _make_rerun_entry(show)
             if rerun:
+                rerun_iso = rerun['scheduled_time']
+                # Dedup: remove any existing non-triggered reruns for this show+rerun-slot
+                _removed_rerun = [s for s in schedule
+                                  if s.get('show_key') == show_key
+                                  and s.get('scheduled_time') == rerun_iso
+                                  and s.get('is_rerun')
+                                  and not s.get('triggered')]
+                if _removed_rerun:
+                    _rrids = {s['id'] for s in _removed_rerun}
+                    schedule = [s for s in schedule if s['id'] not in _rrids]
+                    print(f"[Schedule] Replaced {len(_removed_rerun)} existing rerun slot(s) for "
+                          f"'{show_key}' at {rerun_iso}", flush=True)
                 schedule.append(rerun)
                 show['rerun_scheduled'] = True
+
         save_schedule(schedule)
 
     # Sync WP board so the new show appears in the schedule immediately
