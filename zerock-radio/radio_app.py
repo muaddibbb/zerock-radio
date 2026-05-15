@@ -1012,10 +1012,13 @@ def _create_wp_post_direct(show) -> tuple:
         date_str   = broadcast_dt.strftime('%Y-%m-%d')   # YYYY-MM-DD
         d, m, y    = broadcast_dt.strftime('%d'), broadcast_dt.strftime('%m'), broadcast_dt.strftime('%Y')
         fmt_date   = f"{d}/{m}/{y[2:]}"                  # DD/MM/YY for title
-        episode_num = show.get('episode_num', '')
+        episode_num      = show.get('episode_num', '')
+        episode_subtitle = show.get('episode_subtitle', '')
         parts = [show_name]
         if episode_num:
             parts.append(episode_num)
+        if episode_subtitle:
+            parts.append(f"- {episode_subtitle}")
         parts.append(f"- {broadcaster} {fmt_date}")
         title = ' '.join(p for p in parts if p)
 
