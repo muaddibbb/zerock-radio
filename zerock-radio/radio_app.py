@@ -1423,10 +1423,13 @@ def _make_show_title(show, broadcast_dt=None):
         except Exception:
             broadcast_dt = datetime.now()
     fmt_date    = broadcast_dt.strftime('%d/%m/%y')   # DD/MM/YY
-    episode_num = show.get('episode_num', '')
+    episode_num      = show.get('episode_num', '')
+    episode_subtitle = show.get('episode_subtitle', '')
     parts = [show_name]
     if episode_num:
         parts.append(episode_num)
+    if episode_subtitle:
+        parts.append(f"- {episode_subtitle}")
     parts.append(f"- {broadcaster} {fmt_date}")
     return ' '.join(p for p in parts if p)
 
