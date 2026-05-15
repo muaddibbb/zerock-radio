@@ -395,6 +395,13 @@
       <input type="number" name="episode_num" placeholder="042" min="1" step="1" style="direction:ltr">
     </div>
 
+    {% if show.key == 'shabi' %}
+    <div class="form-group">
+      <label>תיאור התוכנית <span style="color:var(--text-muted);font-weight:normal;text-transform:none">(אופציונלי)</span></label>
+      <input type="text" name="episode_subtitle" placeholder="מהדורת הדומינו חלק א" style="direction:rtl">
+    </div>
+    {% endif %}
+
     <div class="form-group">
       <label>רשימת שירים / הערות <span style="color:var(--text-muted);font-weight:normal;text-transform:none">(אופציונלי)</span></label>
       <textarea name="description" rows="3" placeholder="רשימת שירים, הערות לתוכנית..."></textarea>
