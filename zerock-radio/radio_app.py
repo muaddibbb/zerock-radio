@@ -4085,6 +4085,7 @@ def api_add_show():
     if show_key == 'al_harocker':
         mode = 'queue_to_broadcast'
     episode_num           = request.form.get('episode_num', '').strip()
+    episode_subtitle      = request.form.get('episode_subtitle', '').strip()
     description           = request.form.get('description', '').strip()
     manual_schedule       = request.form.get('manual_schedule', '') == 'on'
     manual_broadcast_time = request.form.get('manual_broadcast_time', '').strip()
