@@ -4253,8 +4253,9 @@ def api_add_show():
                           else erev_albumim_broadcaster if show_key == 'erev_albumim' and erev_albumim_broadcaster
                           else (show_cfg['broadcaster'] if show_cfg else '')),
         'mode':           mode,
-        'episode_num':    episode_num,
-        'description':    description,
+        'episode_num':      episode_num,
+        'episode_subtitle': episode_subtitle,
+        'description':      description,
         'scheduled_time': broadcast_dt.isoformat(),
         'upload_time':    upload_dt.isoformat() if upload_dt else None,
         'rerun_time':     rerun_dt.isoformat()  if rerun_dt  else None,
