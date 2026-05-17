@@ -6967,7 +6967,9 @@ def poll_results_page(poll_id):
         return render_template('poll_results.html', invalid=True, poll=None)
     now  = datetime.now()
     poll = {**poll, 'open': _poll_is_open(poll, now)}
-    votes = [v for v in _load_poll_votes() if v['poll_id'] == poll_id]
+    all_votes     = [v for v in _load_poll_votes() if v['poll_id'] == poll_id]
+    votes         = [v for v in all_votes if v.get('status', 'confirmed') not in ('flagged', 'rejected')]
+    flagged_votes = [v for v in all_votes if v.get('status') == 'flagged']
     tally = {s['id']: 0 for s in poll['songs']}
     for v in votes:
         for sid in (v.get('song_ids') or []):
