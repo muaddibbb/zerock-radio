@@ -566,6 +566,31 @@ function cancelEdit(songId) {
   if (panel) panel.classList.remove('open');
 }
 
+// ── Flagged vote review ───────────────────────────────────────────────────────
+async function reviewVote(pollId, voteId, action, btn) {
+  const row = document.getElementById('fv-' + voteId);
+  if (btn) { btn.disabled = true; btn.textContent = action === 'approve' ? 'מאשר…' : 'דוחה…'; }
+  try {
+    const r = await fetch('/api/polls/' + pollId + '/votes/' + voteId + '/review', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action}),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    if (row) {
+      row.classList.add('resolved');
+      row.querySelector('.flagged-actions').innerHTML =
+        action === 'approve'
+          ? '<span style="color:#4caf50;font-size:0.8em;font-weight:700">✓ אושר</span>'
+          : '<span style="color:#e63946;font-size:0.8em;font-weight:700">✕ נדחה</span>';
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = action === 'approve' ? '✓ אשר' : '✕ דחה'; }
+    alert('שגיאה: ' + e.message);
+  }
+}
+
 async function saveSong(pollId, songId) {
   const lbl = document.getElementById('lbl-' + songId);
   const sp  = document.getElementById('sp-'  + songId);
