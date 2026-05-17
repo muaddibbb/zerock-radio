@@ -7661,6 +7661,8 @@ def api_poll_vote(poll_id):
 
     if not email or '@' not in email or '.' not in email.split('@')[-1]:
         return jsonify({'error': 'כתובת מייל לא תקינה'}), 400
+    if not _domain_has_mx(email):
+        return jsonify({'error': 'כתובת המייל אינה קיימת. נא להזין כתובת מייל תקינה.'}), 400
     if not voter_name:
         return jsonify({'error': 'שם נדרש'}), 400
 
