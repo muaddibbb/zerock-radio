@@ -7585,14 +7585,15 @@ def api_poll_verify_code(poll_id):
 
 @app.route('/api/poll/<poll_id>/vote', methods=['POST'])
 def api_poll_vote(poll_id):
-    """Public: submit a ballot of exactly 5 song_ids (requires email verification)."""
+    """Public: submit a ballot of exactly 5 song_ids.
+    No 2FA — vote recorded immediately; thank-you email sent in background;
+    bounces auto-flag the vote for admin review."""
     polls = _load_polls()
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return jsonify({'error': 'invalid poll'}), 404
     now = datetime.now()
     if not _poll_is_open(poll, now):
-        # Distinguish "not yet" vs "already closed" for clearer error text
         try:
             opens = datetime.fromisoformat(poll.get('opens_at') or '')
             if now < opens:
@@ -7601,33 +7602,15 @@ def api_poll_vote(poll_id):
             pass
         return jsonify({'error': 'ההצבעה סגורה'}), 403
 
-    data         = request.get_json(silent=True) or {}
-    song_ids     = data.get('song_ids') or []
-    email        = (data.get('email') or '').strip().lower()
-    verify_token = (data.get('verify_token') or '').strip()
-    voter_name   = (data.get('name') or '').strip()[:120]
+    data       = request.get_json(silent=True) or {}
+    song_ids   = data.get('song_ids') or []
+    email      = (data.get('email') or '').strip().lower()
+    voter_name = (data.get('name') or '').strip()[:120]
 
-    # ── Email verification required ───────────────────────────────────────────
-    if not email or not verify_token:
-        return jsonify({'error': 'אימות מייל נדרש לפני הצבעה'}), 403
-
-    now2 = datetime.now()
-    with _poll_codes_lock:
-        codes = _load_poll_codes()
-        code_entry = next((c for c in codes
-                           if c['poll_id'] == poll_id
-                           and c['email'] == email
-                           and c.get('verified')
-                           and c.get('token') == verify_token
-                           and not c.get('vote_submitted')), None)
-        if not code_entry:
-            return jsonify({'error': 'אימות לא תקין. אמת מחדש'}), 403
-        # Token expires 1 hour after verification
-        if datetime.fromisoformat(code_entry['verified_at']) < now2 - timedelta(hours=1):
-            return jsonify({'error': 'פג תוקף האימות. אמת מחדש'}), 403
-        # Claim token immediately to prevent double submission
-        code_entry['vote_submitted'] = True
-        _save_poll_codes(codes)
+    if not email or '@' not in email or '.' not in email.split('@')[-1]:
+        return jsonify({'error': 'כתובת מייל לא תקינה'}), 400
+    if not voter_name:
+        return jsonify({'error': 'שם נדרש'}), 400
 
     # ── Validate song selection ───────────────────────────────────────────────
     if not isinstance(song_ids, list):
@@ -7641,14 +7624,17 @@ def api_poll_vote(poll_id):
     if any(sid not in valid_ids for sid in song_ids):
         return jsonify({'error': 'מזהה שיר לא תקין'}), 400
 
-    # ── Dedup: email (primary) + cookie + IP (secondary) ─────────────────────
+    # ── Dedup: one vote per email per poll ────────────────────────────────────
     ip = (request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
           or request.remote_addr or '')
+    import secrets as _sec_vote
+    vote_id = _sec_vote.token_urlsafe(12)
     with _votes_lock:
         votes = _load_poll_votes()
         if any(v['poll_id'] == poll_id and v.get('email', '').lower() == email for v in votes):
-            return jsonify({'error': 'כבר הצבעת בסקר זה'}), 409
+            return jsonify({'error': 'כבר הצבעת בסקר זה עם כתובת מייל זו'}), 409
         votes.append({
+            'id':       vote_id,
             'poll_id':  poll_id,
             'email':    email,
             'name':     voter_name,
@@ -7656,12 +7642,20 @@ def api_poll_vote(poll_id):
             'ip':       ip,
             'ua':       (request.headers.get('User-Agent') or '')[:200],
             'voted_at': datetime.now().isoformat(),
+            'status':   'pending',
         })
         _save_poll_votes(votes)
 
+    # Send thank-you email in background (flags vote on sync bounce)
+    threading.Thread(
+        target=_send_vote_thankyou_email,
+        args=(vote_id, email, voter_name, poll.get('title', 'מצעד הרוק')),
+        daemon=True,
+    ).start()
+
     resp = jsonify({'ok': True})
     resp.set_cookie(f'voted_{poll_id}', '1', max_age=90*86400, samesite='Lax')
-    print(f"[Poll] Vote received for {poll_id} from {email} / {ip}", flush=True)
+    print(f"[Poll] Vote {vote_id} received for {poll_id} from {email} / {ip}", flush=True)
     return resp
 
 
