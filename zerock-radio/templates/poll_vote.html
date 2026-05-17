@@ -53,12 +53,8 @@
     }
     .listen-btn:hover { transform: scale(1.08); }
     .listen-btn:active { transform: scale(0.95); }
-    .listen-spotify {
-      background: #1db954; color: #000;
-    }
-    .listen-youtube {
-      background: #ff0000; color: #fff;
-    }
+    .listen-spotify { background: #1db954; color: #000; }
+    .listen-youtube { background: #ff0000; color: #fff; }
     .listen-btn:focus { outline: 2px solid #fff; outline-offset: 2px; }
 
     .footer-bar {
@@ -74,12 +70,8 @@
       padding: 8px 10px; border-radius: 7px;
       background: #2a2a2a; color: #ccc;
     }
-    .count-badge.full {
-      background: #1e3d2e; color: #4caf50;
-    }
-    .count-badge.too-many {
-      background: #3d1e1e; color: #e63946;
-    }
+    .count-badge.full { background: #1e3d2e; color: #4caf50; }
+    .count-badge.too-many { background: #3d1e1e; color: #e63946; }
     .btn-submit {
       flex: 1; background: #e63946; color: #fff; border: none; border-radius: 8px;
       padding: 12px; font-size: 1em; font-weight: bold; cursor: pointer;
@@ -107,43 +99,24 @@
     }
     .schedule-banner strong { color: #fff; }
 
-    /* Email verification steps */
-    .verify-step {
+    /* Voter identity section */
+    .voter-section {
       background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 10px;
       padding: 14px 16px; margin-bottom: 18px;
     }
-    .verify-label {
+    .voter-label {
       font-size: 0.9em; color: #bbb; margin-bottom: 10px; line-height: 1.5;
     }
-    .verify-row {
-      display: flex; gap: 8px; align-items: center;
+    .voter-fields {
+      display: flex; flex-direction: column; gap: 8px;
     }
-    .verify-row input[type=email],
-    .verify-row input[type=text] {
-      flex: 1; background: #111; color: #f0f0f0; border: 1px solid #444;
+    .voter-fields input[type=text],
+    .voter-fields input[type=email] {
+      background: #111; color: #f0f0f0; border: 1px solid #444;
       border-radius: 7px; padding: 9px 12px; font-size: 0.95em;
-      outline: none; transition: border-color 0.15s;
+      outline: none; transition: border-color 0.15s; width: 100%;
     }
-    .verify-row input:focus { border-color: #e63946; }
-    .btn-verify {
-      flex-shrink: 0; background: #e63946; color: #fff; border: none;
-      border-radius: 7px; padding: 9px 16px; font-size: 0.92em; font-weight: bold;
-      cursor: pointer; transition: background 0.15s;
-      white-space: nowrap;
-    }
-    .btn-verify:hover:not(:disabled) { background: #c1121f; }
-    .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; }
-    .verify-badge {
-      color: #4caf50; font-size: 0.92em; font-weight: bold;
-      text-align: center; padding: 4px 0;
-    }
-    .resend-link {
-      margin-top: 7px; font-size: 0.8em; color: #888; text-align: right;
-    }
-    .resend-link span {
-      cursor: pointer; text-decoration: underline; color: #aaa;
-    }
-    .resend-link span:hover { color: #fff; }
+    .voter-fields input:focus { border-color: #e63946; }
   </style>
 </head>
 <body>
@@ -183,50 +156,18 @@
 
   <form id="vote-form" onsubmit="submitVote(event)">
 
-    <!-- ── Email verification (only when poll is open) ── -->
     {% if poll.open %}
-    <div id="email-verify-section">
-
-      <!-- Step 1: name + email input -->
-      <div id="step-email" class="verify-step">
-        <div class="verify-label">כדי להצביע, יש למלא שם ולאמת כתובת אימייל</div>
-        <div class="verify-row" style="margin-bottom:8px">
-          <input type="text" id="voter-name" placeholder="שמך המלא"
-                 autocomplete="name" dir="rtl" style="flex:1">
-        </div>
-        <div class="verify-row">
-          <input type="email" id="voter-email" placeholder="your@email.com"
-                 autocomplete="email" dir="ltr" inputmode="email">
-          <button type="button" class="btn-verify" id="btn-send-code" onclick="sendCode()">שלח קוד</button>
-        </div>
-        <div class="msg" id="email-msg"></div>
+    <!-- ── Voter identity (name + email, no verification step) ── -->
+    <div class="voter-section">
+      <div class="voter-label">כדי להצביע, יש למלא שם ואימייל</div>
+      <div class="voter-fields">
+        <input type="text" id="voter-name" placeholder="שמך המלא"
+               autocomplete="name" dir="rtl" oninput="onIdentityChange()">
+        <input type="email" id="voter-email" placeholder="your@email.com"
+               autocomplete="email" dir="ltr" inputmode="email" oninput="onIdentityChange()">
       </div>
-
-      <!-- Step 2: 6-digit code (hidden) -->
-      <div id="step-code" class="verify-step" style="display:none">
-        <div class="verify-label">
-          קוד אימות נשלח ל-<strong id="sent-to-email"></strong><br>
-          <span style="font-size:0.85em;color:#888">הקוד תקף ל-10 דקות</span>
-        </div>
-        <div class="verify-row">
-          <input type="text" id="voter-code" placeholder="123456"
-                 maxlength="6" inputmode="numeric" dir="ltr" autocomplete="one-time-code">
-          <button type="button" class="btn-verify" id="btn-verify-code" onclick="verifyCode()">אמת</button>
-        </div>
-        <div class="msg" id="code-msg"></div>
-        <div class="resend-link">
-          <span onclick="backToEmail()">שלח קוד חדש</span>
-        </div>
-      </div>
-
-      <!-- Step 3: verified badge (hidden) -->
-      <div id="step-verified" class="verify-step" style="display:none">
-        <div class="verify-badge">✅ שלום <strong id="verified-name-display"></strong> — האימייל אומת! עכשיו בחר את השירים שלך 🎸</div>
-      </div>
-
     </div>
     {% endif %}
-    <!-- ── /Email verification ── -->
 
     {% for s in vote_songs %}
       {% set sp_url = s.spotify_url or ('https://open.spotify.com/search/' ~ (s.label | urlencode)) %}
@@ -257,7 +198,7 @@
 
 {% if poll and poll.opens_at and poll.closes_at %}
 <script>
-// ── Schedule banner (always runs, even when poll is closed/not-yet-open) ──
+// ── Schedule banner ──
 (function() {
   const banner = document.getElementById('schedBanner');
   if (!banner) return;
@@ -285,9 +226,8 @@
     } else if (now <= closesAt) {
       txt.innerHTML = '🟢 ההצבעה פתוחה — נסגרת ב<strong>' + heDate(closesAt) + '</strong> (בעוד ' + fmtRemaining(closesAt - now) + ')';
     } else {
-      // Poll closed — next opening is always Thursday 15:00 Israel time
       const nextOpens = new Date(now);
-      const day = nextOpens.getDay(); // 0=Sun … 4=Thu … 6=Sat
+      const day = nextOpens.getDay();
       const daysUntilThursday = (4 - day + 7) % 7;
       nextOpens.setDate(nextOpens.getDate() + daysUntilThursday);
       nextOpens.setHours(15, 0, 0, 0);
@@ -303,123 +243,28 @@
 {% if poll and poll.open and not already_voted %}
 <script>
 const MAX_VOTES = {{ poll.max_votes }};
-let _verifiedEmail = null;
-let _verifyToken   = null;
-let _voterName     = null;
 
 function getPollApiBase() {
-  // /poll/<id>  →  /api/poll/<id>
   return window.location.pathname.replace('/poll/', '/api/poll/');
 }
 
-// ── Email verification ──────────────────────────────────────────
+// ── Identity check — unlock checkboxes when name+email filled ──
 
-async function sendCode() {
-  const nameInput  = document.getElementById('voter-name');
-  const emailInput = document.getElementById('voter-email');
-  const name  = nameInput.value.trim();
-  const email = emailInput.value.trim();
-  const msg   = document.getElementById('email-msg');
-  const btn   = document.getElementById('btn-send-code');
-
-  if (!name) {
-    msg.innerHTML = '<span class="msg-err">יש להזין שם מלא</span>';
-    nameInput.focus();
-    return;
-  }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msg.innerHTML = '<span class="msg-err">יש להזין כתובת אימייל תקינה</span>';
-    return;
-  }
-  btn.disabled = true; btn.textContent = 'שולח…'; msg.innerHTML = '';
-
-  try {
-    const res = await fetch(getPollApiBase() + '/send-code', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email}),
-      credentials: 'same-origin',
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) {
-      msg.innerHTML = '<span class="msg-err">' + (data.error || 'שגיאה בשליחת הקוד') + '</span>';
-      btn.disabled = false; btn.textContent = 'שלח קוד';
-      return;
-    }
-    // → Step 2
-    document.getElementById('step-email').style.display = 'none';
-    document.getElementById('sent-to-email').textContent = email;
-    document.getElementById('step-code').style.display  = '';
-    document.getElementById('voter-code').focus();
-  } catch(err) {
-    msg.innerHTML = '<span class="msg-err">שגיאת תקשורת. נסה שוב.</span>';
-    btn.disabled = false; btn.textContent = 'שלח קוד';
-  }
+function isEmailValid(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
-function backToEmail() {
-  document.getElementById('step-code').style.display  = 'none';
-  document.getElementById('step-email').style.display = '';
-  const btn = document.getElementById('btn-send-code');
-  btn.disabled = false; btn.textContent = 'שלח קוד';
-  document.getElementById('voter-code').value  = '';
-  document.getElementById('code-msg').innerHTML = '';
+function onIdentityChange() {
+  const name  = (document.getElementById('voter-name')  || {}).value || '';
+  const email = (document.getElementById('voter-email') || {}).value || '';
+  const ready = name.trim().length > 0 && isEmailValid(email.trim());
+  document.querySelectorAll('input[name=song]').forEach(b => {
+    if (!b.checked) b.disabled = !ready;
+  });
+  updateCount();
 }
 
-async function verifyCode() {
-  const email = document.getElementById('voter-email').value.trim();
-  const code  = document.getElementById('voter-code').value.trim();
-  const msg   = document.getElementById('code-msg');
-  const btn   = document.getElementById('btn-verify-code');
-
-  if (!code || !/^\d{6}$/.test(code)) {
-    msg.innerHTML = '<span class="msg-err">יש להזין קוד בן 6 ספרות</span>';
-    return;
-  }
-  btn.disabled = true; btn.textContent = 'מאמת…'; msg.innerHTML = '';
-
-  try {
-    const res = await fetch(getPollApiBase() + '/verify-code', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email, code}),
-      credentials: 'same-origin',
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) {
-      msg.innerHTML = '<span class="msg-err">' + (data.error || 'קוד שגוי או שפג תוקפו') + '</span>';
-      btn.disabled = false; btn.textContent = 'אמת';
-      return;
-    }
-    // → Step 3: verified!
-    _verifiedEmail = email;
-    _verifyToken   = data.verify_token;
-    _voterName     = document.getElementById('voter-name').value.trim();
-    document.getElementById('step-code').style.display    = 'none';
-    document.getElementById('verified-name-display').textContent = _voterName;
-    document.getElementById('step-verified').style.display = '';
-    // Unlock checkboxes
-    document.querySelectorAll('input[name=song]').forEach(b => { b.disabled = false; });
-    updateCount();
-  } catch(err) {
-    msg.innerHTML = '<span class="msg-err">שגיאת תקשורת. נסה שוב.</span>';
-    btn.disabled = false; btn.textContent = 'אמת';
-  }
-}
-
-// Handle Enter key in code box
-document.addEventListener('DOMContentLoaded', () => {
-  const codeInput = document.getElementById('voter-code');
-  if (codeInput) {
-    codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); verifyCode(); } });
-  }
-  const emailInput = document.getElementById('voter-email');
-  if (emailInput) {
-    emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendCode(); } });
-  }
-});
-
-// ── Song picking & submission ─────────────────────────────────
+// ── Song picking ──
 
 function onPick(cb) {
   const item = cb.closest('.song-item');
@@ -433,39 +278,56 @@ function updateCount() {
   const badge = document.getElementById('count-badge');
   const btn   = document.getElementById('btn-submit');
   if (!badge) return;
+
+  const nameEl  = document.getElementById('voter-name');
+  const emailEl = document.getElementById('voter-email');
+  const name    = nameEl ? nameEl.value.trim() : '';
+  const email   = emailEl ? emailEl.value.trim() : '';
+  const identityOk = name.length > 0 && isEmailValid(email);
+
   badge.textContent = n + ' / ' + MAX_VOTES;
   badge.classList.toggle('full',     n === MAX_VOTES);
   badge.classList.toggle('too-many', n >  MAX_VOTES);
-  // Only enable submit when verified + exact count
-  btn.disabled = (!_verifyToken || n !== MAX_VOTES);
+
+  btn.disabled = !(identityOk && n === MAX_VOTES);
+
   // Disable unchecked boxes once max reached
   document.querySelectorAll('input[name=song]').forEach(box => {
-    if (!box.checked) box.disabled = (n >= MAX_VOTES);
+    if (!box.checked) box.disabled = (!identityOk || n >= MAX_VOTES);
   });
 }
+
+// ── Submission ──
 
 async function submitVote(e) {
   e.preventDefault();
   const checked = [...document.querySelectorAll('input[name=song]:checked')];
-  const ids = checked.map(b => b.value);
-  const msg = document.getElementById('msg');
-  const btn = document.getElementById('btn-submit');
+  const ids   = checked.map(b => b.value);
+  const msg   = document.getElementById('msg');
+  const btn   = document.getElementById('btn-submit');
+  const name  = document.getElementById('voter-name').value.trim();
+  const email = document.getElementById('voter-email').value.trim();
 
-  if (!_verifyToken || !_verifiedEmail) {
-    msg.innerHTML = '<span class="msg-err">יש לאמת את האימייל לפני ההצבעה</span>';
+  if (!name) {
+    msg.innerHTML = '<span class="msg-err">יש להזין שם מלא</span>';
+    return;
+  }
+  if (!isEmailValid(email)) {
+    msg.innerHTML = '<span class="msg-err">יש להזין כתובת אימייל תקינה</span>';
     return;
   }
   if (ids.length !== MAX_VOTES) {
     msg.innerHTML = '<span class="msg-err">יש לבחור בדיוק ' + MAX_VOTES + ' שירים</span>';
     return;
   }
+
   btn.disabled = true; btn.textContent = 'שולח…'; msg.innerHTML = '';
 
   try {
     const res = await fetch(getPollApiBase() + '/vote', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({song_ids: ids, email: _verifiedEmail, verify_token: _verifyToken, name: _voterName}),
+      body: JSON.stringify({song_ids: ids, email, name}),
       credentials: 'same-origin',
     });
     const data = await res.json().catch(() => ({}));
@@ -478,13 +340,17 @@ async function submitVote(e) {
       <div style="padding:24px 0">
         <div class="state-icon">🎉</div>
         <div class="state-title" style="color:#4caf50">תודה על ההצבעה!</div>
-        <div class="state-sub" style="margin-top:10px">קולך נספר. 🤘</div>
+        <div class="state-sub" style="margin-top:10px">
+          קולך נספר. שלחנו אישור לאימייל שלך. 🤘
+        </div>
       </div>`;
   } catch(err) {
     msg.innerHTML = '<span class="msg-err">שגיאת תקשורת. נסה שוב.</span>';
     btn.disabled = false; btn.textContent = 'שלח הצבעה 🚀';
   }
 }
+
+// Init
 updateCount();
 </script>
 {% endif %}
