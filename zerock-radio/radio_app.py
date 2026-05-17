@@ -7038,6 +7038,8 @@ def poll_results_page(poll_id):
         badge_yerida_id=badge_yerida_id,
         badge_vatik_id=badge_vatik_id,
         flagged_votes=flagged_votes,
+        invalidated_votes=invalidated_votes,
+        song_map={s['id']: s['label'] for s in poll['songs']},
     )
 
 
