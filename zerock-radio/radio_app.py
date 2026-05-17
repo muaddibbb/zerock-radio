@@ -5695,7 +5695,7 @@ def _save_poll_codes(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def _send_poll_verification_email(to_email, code, poll_title):
-    """Send a 6-digit email verification code to a poll voter."""
+    """Send a 6-digit email verification code to a poll voter. (Legacy — kept for reference)"""
     if not SMTP_USER or not SMTP_PASS:
         print(f"[Poll] SMTP not configured — verification code for {to_email}: {code}", flush=True)
         return
@@ -5717,12 +5717,183 @@ def _send_poll_verification_email(to_email, code, poll_title):
     msg['From']    = SMTP_FROM_ADDR
     msg['To']      = to_email
     msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
-    msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+    msg.attach(MIMEText(body_html, 'utf-8'))
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
         s.ehlo(); s.starttls()
         s.login(SMTP_USER, SMTP_PASS)
         s.sendmail(SMTP_FROM_ADDR, [to_email], msg.as_bytes())
     print(f"[Poll] Verification code sent → {to_email}", flush=True)
+
+
+def _send_vote_thankyou_email(vote_id, to_email, voter_name, poll_title):
+    """Send a thank-you email after a vote is recorded.
+    On synchronous SMTP rejection (bad address) flags the vote immediately.
+    Returns True if sent OK, False on delivery failure."""
+    if not SMTP_USER or not SMTP_PASS:
+        # No SMTP — mark confirmed anyway
+        _set_vote_status(vote_id, 'confirmed')
+        return True
+
+    body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.6">
+<p>שלום <strong>{voter_name}</strong>,</p>
+<p>תודה על השתתפותך ב<strong>{poll_title}</strong>!</p>
+<p>הקול שלך נרשם במערכת. 🤘</p>
+<hr style="border:none;border-top:1px solid #ddd;margin:24px 0">
+<p style="color:#888;font-size:13px">קיבלת הודעה זו כי השתתפת בהצבעה של ZeRock Radio.<br>
+אין צורך להשיב לאימייל זה.</p>
+<p><strong>צוות ZeRock Radio</strong><br>
+<a href="https://zerockradio.com" style="color:#e63946">zerockradio.com</a></p>
+</div>"""
+    body_text = f"שלום {voter_name},\nתודה על ההצבעה ב{poll_title}!\nהקול שלך נרשם. 🤘\n\nZeRock Radio"
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = f"ZeRock Radio — תודה על ההצבעה!"
+    msg['From']    = SMTP_FROM_ADDR
+    msg['To']      = to_email
+    msg['X-Vote-ID'] = vote_id          # used by async bounce checker
+    msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+    msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+            s.ehlo(); s.starttls()
+            s.login(SMTP_USER, SMTP_PASS)
+            refused = s.sendmail(SMTP_FROM_ADDR, [to_email], msg.as_bytes())
+            # sendmail() returns dict of refused recipients (non-empty = failure)
+            if refused:
+                print(f"[Poll] Vote thankyou refused for {to_email}: {refused}", flush=True)
+                _set_vote_status(vote_id, 'flagged', 'smtp_refused')
+                return False
+        _set_vote_status(vote_id, 'confirmed')
+        print(f"[Poll] Vote thankyou sent → {to_email} (vote_id={vote_id})", flush=True)
+        return True
+    except smtplib.SMTPRecipientsRefused as e:
+        print(f"[Poll] Vote thankyou SMTPRecipientsRefused for {to_email}: {e}", flush=True)
+        _set_vote_status(vote_id, 'flagged', 'smtp_refused')
+        return False
+    except Exception as e:
+        # Network/timeout errors — don't flag, keep as pending
+        print(f"[Poll] Vote thankyou send error for {to_email}: {e}", flush=True)
+        return False
+
+
+def _set_vote_status(vote_id, status, reason=None):
+    """Update a vote's status field in poll_votes.json."""
+    with _votes_lock:
+        votes = _load_poll_votes()
+        for v in votes:
+            if v.get('id') == vote_id:
+                v['status'] = status
+                if reason:
+                    v['flagged_reason'] = reason
+                break
+        _save_poll_votes(votes)
+    print(f"[Poll] Vote {vote_id} status → {status}" + (f" ({reason})" if reason else ""), flush=True)
+
+
+def _bounce_checker():
+    """Background thread: poll Gmail inbox + spam every 5 min for bounce emails.
+    When a mailer-daemon bounce is found, flags the matching vote."""
+    import imaplib, email as _email_lib, re as _re2
+
+    BOUNCE_SUBJECTS = ('delivery status notification', 'mail delivery failure',
+                       'undeliverable', 'failure notice', 'returned mail',
+                       'delivery failure', 'mailer-daemon', 'mail system error')
+
+    def _extract_failed_addr(raw_body):
+        """Try to pull the failed recipient email out of a DSN body."""
+        # DSN standard header
+        m = _re2.search(r'Final-Recipient:\s*rfc822;\s*([\w.+\-]+@[\w.\-]+)', raw_body, _re2.I)
+        if m:
+            return m.group(1).strip().lower()
+        # Gmail plain-text format
+        m = _re2.search(r'tried to reach[^\n]*\n\s+([\w.+\-]+@[\w.\-]+)', raw_body, _re2.I)
+        if m:
+            return m.group(1).strip().lower()
+        # Generic: first email-shaped string after "failed" / "failure"
+        m = _re2.search(r'fail[^\n]*\n\s*([\w.+\-]+@[\w.\-]+)', raw_body, _re2.I)
+        if m:
+            return m.group(1).strip().lower()
+        return None
+
+    def _extract_vote_id(raw_body):
+        """Pull X-Vote-ID from embedded original message headers."""
+        m = _re2.search(r'X-Vote-ID:\s*(\S+)', raw_body, _re2.I)
+        return m.group(1).strip() if m else None
+
+    def _check_folder(imap, folder):
+        try:
+            imap.select(folder, readonly=False)
+        except Exception:
+            return
+        # Only look at unseen messages from the last 2 days
+        _, data = imap.search(None, 'UNSEEN')
+        if not data or not data[0]:
+            return
+        msg_ids = data[0].split()
+        for mid in msg_ids[-50:]:   # max 50 per run
+            try:
+                _, raw = imap.fetch(mid, '(RFC822)')
+                raw_bytes = raw[0][1]
+                parsed = _email_lib.message_from_bytes(raw_bytes)
+                subj = (parsed.get('Subject') or '').lower()
+                sender = (parsed.get('From') or '').lower()
+                # Must look like a mailer-daemon bounce
+                if not any(kw in subj for kw in BOUNCE_SUBJECTS) and 'mailer-daemon' not in sender:
+                    continue
+                # Extract plain-text body
+                body = ''
+                for part in parsed.walk():
+                    if part.get_content_type() in ('text/plain', 'message/delivery-status'):
+                        try:
+                            body += part.get_payload(decode=True).decode('utf-8', errors='replace')
+                        except Exception:
+                            pass
+                failed_addr = _extract_failed_addr(body)
+                vote_id     = _extract_vote_id(body)
+                if not failed_addr and not vote_id:
+                    continue
+                # Mark message as seen so we don't re-process
+                imap.store(mid, '+FLAGS', '\\Seen')
+                # Find and flag matching vote
+                with _votes_lock:
+                    votes = _load_poll_votes()
+                    changed = False
+                    for v in votes:
+                        if v.get('status') in ('flagged', 'rejected', 'approved'):
+                            continue
+                        match = (vote_id and v.get('id') == vote_id) or \
+                                (failed_addr and v.get('email', '').lower() == failed_addr)
+                        if match:
+                            v['status']         = 'flagged'
+                            v['flagged_reason'] = 'bounce'
+                            changed = True
+                            print(f"[BounceCheck] Flagged vote {v.get('id')} ({v.get('email')}) — bounce", flush=True)
+                    if changed:
+                        _save_poll_votes(votes)
+            except Exception as e:
+                print(f"[BounceCheck] Error processing message {mid}: {e}", flush=True)
+
+    while True:
+        time.sleep(300)   # every 5 minutes
+        if not SMTP_USER or not SMTP_PASS:
+            continue
+        try:
+            import imaplib
+            imap = imaplib.IMAP4_SSL('imap.gmail.com', 993)
+            imap.login(SMTP_USER, SMTP_PASS)
+            for folder in ('INBOX', '[Gmail]/Spam', '[Gmail]/All Mail',
+                           '[Google Mail]/Spam'):
+                try:
+                    _check_folder(imap, folder)
+                except Exception:
+                    pass
+            imap.logout()
+        except Exception as e:
+            print(f"[BounceCheck] IMAP error: {e}", flush=True)
+
+
+threading.Thread(target=_bounce_checker, daemon=True).start()
 
 def _load_polls():
     try:
