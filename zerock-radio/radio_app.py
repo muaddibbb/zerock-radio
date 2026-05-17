@@ -7671,7 +7671,7 @@ def api_poll_vote(poll_id):
     with _votes_lock:
         votes = _load_poll_votes()
         if any(v['poll_id'] == poll_id and v.get('email', '').lower() == email for v in votes):
-            return jsonify({'error': 'כבר הצבעת בסקר זה עם כתובת מייל זו'}), 409
+            return jsonify({'error': 'התקבלה כבר הצבעה מכתובת מייל זו. ניתן להצביע רק פעם אחת מכל מייל. תודה.'}), 409
         votes.append({
             'id':       vote_id,
             'poll_id':  poll_id,
