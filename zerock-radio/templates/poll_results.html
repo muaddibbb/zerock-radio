@@ -224,6 +224,44 @@
       font-size: 0.74em; color: #666; margin-bottom: 16px;
     }
     .legend span { display: flex; align-items: center; gap: 4px; }
+
+    /* flagged votes admin section */
+    .flagged-section {
+      margin-top: 28px; border-top: 1px solid #3a2a1a; padding-top: 18px;
+    }
+    .flagged-header {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.9em; font-weight: 700; color: #e0a840;
+      margin-bottom: 12px;
+    }
+    .flagged-count {
+      background: #4a3010; color: #e0a840; border: 1px solid #7a5020;
+      border-radius: 12px; padding: 1px 8px; font-size: 0.85em;
+    }
+    .flagged-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: #1e1a14; border: 1px solid #4a3010; border-radius: 8px;
+      padding: 10px 12px; margin-bottom: 8px;
+    }
+    .flagged-row.resolved { opacity: 0.4; pointer-events: none; }
+    .flagged-info { flex: 1; min-width: 0; }
+    .flagged-name  { font-size: 0.92em; color: #f0f0f0; font-weight: 600; }
+    .flagged-email { font-size: 0.82em; color: #aaa; direction: ltr; text-align: right; }
+    .flagged-reason { font-size: 0.75em; color: #e0a840; margin-top: 3px; }
+    .flagged-songs  { font-size: 0.72em; color: #666; margin-top: 2px; direction: ltr; text-align: right; }
+    .flagged-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .btn-flag-approve {
+      padding: 5px 12px; background: #1a3a1a; border: 1px solid #2d5a2d;
+      border-radius: 6px; color: #4caf50; font-size: 0.8em; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn-flag-approve:hover { background: #1e4a1e; }
+    .btn-flag-reject {
+      padding: 5px 12px; background: #3a1a1a; border: 1px solid #5a2a2a;
+      border-radius: 6px; color: #e63946; font-size: 0.8em; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn-flag-reject:hover { background: #4a1a1a; }
   </style>
 </head>
 <body>
