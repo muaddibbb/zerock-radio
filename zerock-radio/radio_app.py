@@ -5777,6 +5777,19 @@ def _send_vote_thankyou_email(vote_id, to_email, voter_name, poll_title):
         return False
 
 
+def _domain_has_mx(email):
+    """Return True if the email's domain has at least one MX record. Uses dig via subprocess."""
+    try:
+        domain = email.split('@')[-1].strip().lower()
+        result = subprocess.run(
+            ['dig', '+short', '+time=3', '+tries=1', 'MX', domain],
+            capture_output=True, text=True, timeout=5
+        )
+        return bool(result.stdout.strip())
+    except Exception:
+        return True   # If dig fails, allow the vote (fail open)
+
+
 def _set_vote_status(vote_id, status, reason=None):
     """Update a vote's status field in poll_votes.json."""
     with _votes_lock:
