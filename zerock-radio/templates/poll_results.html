@@ -439,6 +439,33 @@
     {% endif %}
   </div>
 
+  {% if flagged_votes %}
+  <div class="flagged-section">
+    <div class="flagged-header">
+      ⚠️ הצבעות הממתינות לבדיקה
+      <span class="flagged-count">{{ flagged_votes | length }}</span>
+    </div>
+    {% for v in flagged_votes %}
+    <div class="flagged-row" id="fv-{{ v.vote_id }}">
+      <div class="flagged-info">
+        <div class="flagged-name">{{ v.name or '(ללא שם)' }}</div>
+        <div class="flagged-email">{{ v.email }}</div>
+        <div class="flagged-reason">סיבה: {{ v.flag_reason or 'לא ידוע' }}</div>
+        <div class="flagged-songs">
+          שירים: {{ v.song_ids | join(', ') if v.song_ids else '—' }}
+        </div>
+      </div>
+      <div class="flagged-actions">
+        <button class="btn-flag-approve"
+                onclick="reviewVote('{{ poll.id }}','{{ v.vote_id }}','approve',this)">✓ אשר</button>
+        <button class="btn-flag-reject"
+                onclick="reviewVote('{{ poll.id }}','{{ v.vote_id }}','reject',this)">✕ דחה</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
 {% endif %}
 </div>
 
