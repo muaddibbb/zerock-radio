@@ -484,23 +484,68 @@
       <span class="flagged-count">{{ flagged_votes | length }}</span>
     </div>
     {% for v in flagged_votes %}
-    <div class="flagged-row" id="fv-{{ v.vote_id }}">
+    <div class="flagged-row" id="fv-{{ v.id or v.vote_id }}">
       <div class="flagged-info">
         <div class="flagged-name">{{ v.name or '(ללא שם)' }}</div>
         <div class="flagged-email">{{ v.email }}</div>
         <div class="flagged-reason">סיבה: {{ v.flag_reason or 'לא ידוע' }}</div>
         <div class="flagged-songs">
-          שירים: {{ v.song_ids | join(', ') if v.song_ids else '—' }}
+          {% if v.song_ids %}
+            {% for sid in v.song_ids %}
+              <div>• {{ song_map.get(sid, sid) }}</div>
+            {% endfor %}
+          {% else %}—{% endif %}
         </div>
       </div>
       <div class="flagged-actions">
         <button class="btn-flag-approve"
-                onclick="reviewVote('{{ poll.id }}','{{ v.vote_id }}','approve',this)">✓ אשר</button>
+                onclick="reviewVote('{{ poll.id }}','{{ v.id or v.vote_id }}','approve',this)">✓ אשר</button>
         <button class="btn-flag-reject"
-                onclick="reviewVote('{{ poll.id }}','{{ v.vote_id }}','reject',this)">✕ דחה</button>
+                onclick="reviewVote('{{ poll.id }}','{{ v.id or v.vote_id }}','reject',this)">✕ דחה</button>
       </div>
     </div>
     {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if invalidated_votes %}
+  <div class="flagged-section" style="border-top-color:#3a1a1a">
+    <div class="flagged-header" style="color:#e08080">
+      🚫 הצבעות שנפסלו
+      <span class="flagged-count" style="background:#4a1010;color:#e08080;border-color:#7a2020">{{ invalidated_votes | length }}</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:0.82em">
+      <thead>
+        <tr style="color:#666;font-size:0.9em">
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">שם</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">מייל</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">סטטוס</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">הצביע על</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in invalidated_votes %}
+        <tr style="border-bottom:1px solid #1e1e1e">
+          <td style="padding:7px 8px;color:#ccc;vertical-align:top">{{ v.name or '—' }}</td>
+          <td style="padding:7px 8px;color:#aaa;direction:ltr;text-align:right;vertical-align:top">{{ v.email }}</td>
+          <td style="padding:7px 8px;vertical-align:top">
+            {% if v.status == 'rejected' %}
+              <span style="color:#e63946;font-weight:700">נדחה</span>
+            {% else %}
+              <span style="color:#e0a840;font-weight:700">ממתין</span>
+            {% endif %}
+          </td>
+          <td style="padding:7px 8px;vertical-align:top">
+            {% if v.song_ids %}
+              {% for sid in v.song_ids %}
+                <div style="color:#888">{{ song_map.get(sid, sid) }}</div>
+              {% endfor %}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
   {% endif %}
 
