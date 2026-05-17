@@ -7035,6 +7035,7 @@ def poll_results_page(poll_id):
         badge_aliya_id=badge_aliya_id,
         badge_yerida_id=badge_yerida_id,
         badge_vatik_id=badge_vatik_id,
+        flagged_votes=flagged_votes,
     )
 
 
