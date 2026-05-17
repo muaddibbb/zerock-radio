@@ -6836,6 +6836,38 @@ def api_poll_delete(poll_id):
     return jsonify({'ok': True})
 
 
+@app.route('/api/polls/<poll_id>/flagged-votes', methods=['GET'])
+def api_poll_flagged_votes(poll_id):
+    """Admin: list flagged votes for a poll (requires results_auth cookie)."""
+    if request.cookies.get('results_auth') != _RESULTS_AUTH_TOKEN:
+        return jsonify({'error': 'unauthorized'}), 401
+    votes = [v for v in _load_poll_votes()
+             if v.get('poll_id') == poll_id and v.get('status') == 'flagged']
+    return jsonify({'ok': True, 'votes': votes})
+
+
+@app.route('/api/polls/<poll_id>/votes/<vote_id>/review', methods=['POST'])
+def api_poll_vote_review(poll_id, vote_id):
+    """Admin: approve or reject a flagged vote (requires results_auth cookie).
+    Body: {"action": "approve" | "reject"}"""
+    if request.cookies.get('results_auth') != _RESULTS_AUTH_TOKEN:
+        return jsonify({'error': 'unauthorized'}), 401
+    data   = request.get_json(force=True, silent=True) or {}
+    action = data.get('action', '').strip()
+    if action not in ('approve', 'reject'):
+        return jsonify({'error': 'action must be approve or reject'}), 400
+    with _votes_lock:
+        votes = _load_poll_votes()
+        vote  = next((v for v in votes if v.get('id') == vote_id
+                      and v.get('poll_id') == poll_id), None)
+        if not vote:
+            return jsonify({'error': 'vote not found'}), 404
+        vote['status'] = 'approved' if action == 'approve' else 'rejected'
+        _save_poll_votes(votes)
+    print(f"[Poll] Vote {vote_id} {action}d by admin", flush=True)
+    return jsonify({'ok': True, 'status': vote['status']})
+
+
 @app.route('/api/polls/<poll_id>/songs/<song_id>', methods=['PATCH'])
 def api_poll_song_update(poll_id, song_id):
     """Admin: update a song's label, spotify_url, and/or youtube_url in a poll."""
