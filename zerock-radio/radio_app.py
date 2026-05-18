@@ -7335,6 +7335,7 @@ def api_polls_weekly_renew():
             'group':       'palash',
             'slot':        i + 1,
             'label':       label,
+            'email':       next_palash_emails[i] if i < len(next_palash_emails) else '',
             'spotify_url': None,
             'youtube_url': None,
         })
