@@ -2569,6 +2569,17 @@ def _weekly_poll_renew_loop():
             print(f"[WeeklyPoll] Renewal result: {r.status_code} {r.text[:200]}", flush=True)
             if r.status_code == 200:
                 _already_renewed_week[0] = iso_week
+                # Send chart-entry emails to palash artists who made the top-20
+                try:
+                    entered = r.json().get('palash_entered_top20') or []
+                    if entered:
+                        threading.Thread(
+                            target=_send_palash_chart_entry_emails,
+                            args=(entered,),
+                            daemon=True,
+                        ).start()
+                except Exception as _e:
+                    print(f"[WeeklyPoll] Chart-entry email parse error: {_e}", flush=True)
         except Exception as e:
             print(f"[WeeklyPoll] Renewal failed: {e}", flush=True)
 
