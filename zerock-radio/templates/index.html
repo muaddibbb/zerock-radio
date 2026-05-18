@@ -929,21 +929,31 @@
         <span style="color:#f0a500"> (נשמרים לסקר הבא שייפתח בחמישי)</span>
         {% endif %}
       </div>
-      <div id="palash-inputs" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div id="palash-inputs" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
         {% for i in range(5) %}
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-size:0.8em;color:#888;width:16px;text-align:center;flex-shrink:0">{{ i+1 }}</span>
-          <input type="text" id="palash-{{ i }}"
-                 value="{{ palash_poll.next_palash[i] if palash_poll.next_palash is defined and palash_poll.next_palash|length > i else '' }}"
-                 placeholder="מבצע — שם השיר"
-                 style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
-                        padding:7px 10px;color:var(--text);font-size:0.9em;font-family:inherit;
-                        direction:rtl;text-align:right">
-          <button onclick="document.getElementById('palash-{{ i }}').value=''"
-                  title="נקה שורה"
-                  style="background:transparent;border:1px solid #3a3a3a;color:#666;
-                         width:28px;height:28px;border-radius:5px;cursor:pointer;
-                         font-size:0.85em;flex-shrink:0;line-height:1;padding:0">✕</button>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:0.8em;color:#888;width:16px;text-align:center;flex-shrink:0">{{ i+1 }}</span>
+            <input type="text" id="palash-{{ i }}"
+                   value="{{ palash_poll.next_palash[i] if palash_poll.next_palash is defined and palash_poll.next_palash|length > i else '' }}"
+                   placeholder="מבצע — שם השיר"
+                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                          padding:7px 10px;color:var(--text);font-size:0.9em;font-family:inherit;
+                          direction:rtl;text-align:right">
+            <button onclick="document.getElementById('palash-{{ i }}').value='';document.getElementById('palash-email-{{ i }}').value=''"
+                    title="נקה שורה"
+                    style="background:transparent;border:1px solid #3a3a3a;color:#666;
+                           width:28px;height:28px;border-radius:5px;cursor:pointer;
+                           font-size:0.85em;flex-shrink:0;line-height:1;padding:0">✕</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-right:24px">
+            <input type="email" id="palash-email-{{ i }}"
+                   value="{{ palash_poll.next_palash_emails[i] if palash_poll.next_palash_emails is defined and palash_poll.next_palash_emails|length > i else '' }}"
+                   placeholder="מייל של האמן (לשליחת ברכת הפלאש)"
+                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                          padding:5px 10px;color:var(--text);font-size:0.82em;font-family:inherit;
+                          direction:ltr;text-align:left;color:#aaa">
+          </div>
         </div>
         {% endfor %}
       </div>
