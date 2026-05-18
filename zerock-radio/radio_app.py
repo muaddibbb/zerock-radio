@@ -6304,7 +6304,10 @@ def _send_palash_welcome_emails(palash_songs):
     seen_emails = set()   # deduplicate — one email per address regardless of how many songs match
     for song in palash_songs:
         label = song.get('label', '')
-        email, _ = _find_release_email_for_palash(label)
+        # Use the explicitly stored email; fall back to new-releases lookup
+        email = (song.get('email') or '').strip().lower()
+        if not email:
+            email, _ = _find_release_email_for_palash(label)
         if not email:
             print(f"[PalashEmail] No email found for: {label}", flush=True)
             not_found.append(label)
