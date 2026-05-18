@@ -6374,7 +6374,7 @@ def _send_palash_chart_entry_emails(entered_songs):
     if not SMTP_USER or not SMTP_PASS:
         print("[ChartEntry] SMTP not configured — skipping", flush=True)
         return
-    vote_url = "https://rocky.kupernet.com/vote"
+    vote_url = "https://linktr.ee/israelirockchart"
     for song in entered_songs:
         email    = (song.get('email') or '').strip().lower()
         label    = song.get('label', '')
