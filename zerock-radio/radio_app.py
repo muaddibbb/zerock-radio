@@ -6359,8 +6359,9 @@ def _send_palash_welcome_emails(palash_songs):
 
 # ── Weekly poll voter invite email ────────────────────────────────────────────
 
-def _send_weekly_vote_invites(old_poll, new_poll_id):
-    """Collect real email addresses from old poll votes and send Hebrew invite."""
+def _send_weekly_vote_invites(old_poll, new_poll_id, extra_emails=None):
+    """Collect real email addresses from old poll votes and send Hebrew invite.
+    extra_emails: optional list of additional addresses (e.g. palash artists)."""
     if not SMTP_USER or not SMTP_PASS:
         print("[WeeklyRenew] SMTP not configured — skipping invite emails", flush=True)
         return
@@ -6384,6 +6385,13 @@ def _send_weekly_vote_invites(old_poll, new_poll_id):
             continue
         emails_seen.add(email)
         recipients.append(email)
+
+    # Also include palash artists from the new poll
+    for email in (extra_emails or []):
+        email = (email or '').strip().lower()
+        if email and '@' in email and email not in emails_seen:
+            emails_seen.add(email)
+            recipients.append(email)
 
     # Also include all active subscribers from subscribers.json
     _subs_path = os.path.join(RADIO_DIR, 'subscribers.json')
