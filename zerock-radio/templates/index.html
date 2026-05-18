@@ -2550,23 +2550,28 @@ function copyText(text, btn) {
 
 async function clearPalash(pollId) {
   for (let i = 0; i < 5; i++) {
-    const el = document.getElementById('palash-' + i);
-    if (el) el.value = '';
+    const el  = document.getElementById('palash-' + i);
+    const eel = document.getElementById('palash-email-' + i);
+    if (el)  el.value  = '';
+    if (eel) eel.value = '';
   }
   await savePalash(pollId);
 }
 
 async function savePalash(pollId) {
-  const songs = [];
+  const songs  = [];
+  const emails = [];
   for (let i = 0; i < 5; i++) {
-    const el = document.getElementById('palash-' + i);
-    if (el) songs.push(el.value.trim());
+    const el  = document.getElementById('palash-' + i);
+    const eel = document.getElementById('palash-email-' + i);
+    if (el)  songs.push(el.value.trim());
+    if (eel) emails.push(eel.value.trim().toLowerCase());
   }
   try {
     const res = await fetch('/api/polls/' + pollId + '/next-palash', {
       method: 'PUT',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({songs})
+      body: JSON.stringify({songs, emails})
     });
     if (!res.ok) throw new Error(await res.text());
     const st = document.getElementById('palash-status');
