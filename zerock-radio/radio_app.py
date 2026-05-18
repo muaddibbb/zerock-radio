@@ -6357,6 +6357,53 @@ def _send_palash_welcome_emails(palash_songs):
     print(f"[PalashEmail] Done — sent: {sent}, not found: {not_found}", flush=True)
 
 
+def _send_palash_chart_entry_emails(entered_songs):
+    """Send 'your song entered the chart' email to palash artists who made the top 20.
+    entered_songs: list of dicts — {label, email, new_rank (1-20)}"""
+    if not SMTP_USER or not SMTP_PASS:
+        print("[ChartEntry] SMTP not configured — skipping", flush=True)
+        return
+    vote_url = "https://rocky.kupernet.com/vote"
+    for song in entered_songs:
+        email    = (song.get('email') or '').strip().lower()
+        label    = song.get('label', '')
+        new_rank = song.get('new_rank', '')
+        if not email:
+            print(f"[ChartEntry] No email for: {label}", flush=True)
+            continue
+        try:
+            body_text = (
+                f"היי, כאן צוות מצעד הרוק של ישראל.\n\n"
+                f"אנחנו שמחים לבשר שהשיר {label} נכנס למצעד הרוק של ישראל למקום ה {new_rank}\n"
+                f"מציעים להמשיך ולקדם את ההצבעות שלו במצעד כאן:\n"
+                f"{vote_url}\n\n"
+                f"בהצלחה,\n"
+                f"צוות המצעד."
+            )
+            body_html = (
+                '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.8">'
+                '<p>היי, כאן צוות מצעד הרוק של ישראל.</p>'
+                f'<p>אנחנו שמחים לבשר שהשיר <strong>{label}</strong> נכנס למצעד הרוק של ישראל למקום ה <strong>{new_rank}</strong></p>'
+                f'<p>מציעים להמשיך ולקדם את ההצבעות שלו במצעד כאן:<br>'
+                f'<a href="{vote_url}">{vote_url}</a></p>'
+                '<p>בהצלחה,<br><strong>צוות המצעד.</strong></p>'
+                '</div>'
+            )
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = 'כניסה למצעד הרוק של ישראל'
+            msg['From']    = SMTP_FROM_ADDR
+            msg['To']      = email
+            msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+            msg.attach(MIMEText(body_html, 'html',  'utf-8'))
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+                s.ehlo(); s.starttls()
+                s.login(SMTP_USER, SMTP_PASS)
+                s.sendmail(SMTP_FROM_ADDR, [email], msg.as_bytes())
+            print(f"[ChartEntry] ✓ Sent to {email} — {label} @ #{new_rank}", flush=True)
+        except Exception as e:
+            print(f"[ChartEntry] Error → {email} ({label}): {e}", flush=True)
+
+
 # ── Weekly poll voter invite email ────────────────────────────────────────────
 
 def _send_weekly_vote_invites(old_poll, new_poll_id, extra_emails=None):
