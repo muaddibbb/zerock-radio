@@ -7490,6 +7490,7 @@ def api_polls_weekly_renew():
                 'email':    s['email'],
                 'new_rank': rank_idx + 1,
             })
+    # (chart-entry emails are sent by the Thursday 15:00 scheduler, not here)
 
     # ── Send invite emails to previous voters + palash artists ───────────────
     _old_poll_snapshot = dict(old_poll)  # capture before anything mutates it
