@@ -7559,12 +7559,17 @@ def api_polls_weekly_renew():
     ).start()
 
     # Send chart-entry emails to palash artists that made the top-20 this week
-    if palash_entered_top20:
+    # — only on Thursday between 14:45 and 16:00 Israel time (UTC+3)
+    _israel_now = datetime.now(timezone(_td2(hours=3)))
+    _is_thursday_renew = (_israel_now.weekday() == 3 and 14 <= _israel_now.hour < 16)
+    if palash_entered_top20 and _is_thursday_renew:
         threading.Thread(
             target=_send_palash_chart_entry_emails,
             args=(palash_entered_top20,),
             daemon=True,
         ).start()
+    elif palash_entered_top20 and not _is_thursday_renew:
+        print(f"[ChartEntry] Skipped — not Thursday 15:00 (it is {_israel_now.strftime('%A %H:%M')} Israel time)", flush=True)
 
     return jsonify({
         'ok':           True,
