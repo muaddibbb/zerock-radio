@@ -7239,13 +7239,19 @@ def api_poll_set_next_palash(poll_id):
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return jsonify({'error': 'poll not found'}), 404
-    data  = request.get_json(silent=True) or {}
-    songs = data.get('songs') or []
+    data   = request.get_json(silent=True) or {}
+    songs  = data.get('songs') or []
+    emails = data.get('emails') or []
     # Keep up to 5, strip whitespace, drop empty strings
-    songs = [s.strip() for s in songs if isinstance(s, str) and s.strip()][:5]
-    poll['next_palash'] = songs
+    songs  = [s.strip() for s in songs  if isinstance(s, str) and s.strip()][:5]
+    emails = [(e.strip().lower() if isinstance(e, str) else '') for e in emails][:5]
+    # Pad emails to same length as songs
+    while len(emails) < len(songs):
+        emails.append('')
+    poll['next_palash']        = songs
+    poll['next_palash_emails'] = emails
     _save_polls(polls)
-    return jsonify({'ok': True, 'next_palash': songs})
+    return jsonify({'ok': True, 'next_palash': songs, 'next_palash_emails': emails})
 
 
 @app.route('/api/polls/weekly-renew', methods=['POST'])
