@@ -7295,6 +7295,9 @@ def api_polls_weekly_renew():
         s.strip() for s in (old_poll.get('next_palash') or [])
         if isinstance(s, str) and s.strip()
     ][:5]
+    next_palash_emails = (old_poll.get('next_palash_emails') or [])[:5]
+    while len(next_palash_emails) < len(next_palash_labels):
+        next_palash_emails.append('')
 
     # Old song_weeks and prev_positions references
     old_song_weeks = old_poll.get('song_weeks') or {}
