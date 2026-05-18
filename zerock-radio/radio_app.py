@@ -7481,11 +7481,23 @@ def api_polls_weekly_renew():
             print(f"[WeeklyRenew] WP snippet update failed: {e}", flush=True)
     threading.Thread(target=_update_wp_vote_snippet, args=(new_poll_id,), daemon=True).start()
 
-    # ── Send invite emails to previous voters ────────────────────────────────
+    # ── Palash songs that entered the top-20 this week ───────────────────────
+    palash_entered_top20 = []
+    for rank_idx, s in enumerate(ranked[:20]):
+        if s.get('group') == 'palash' and s.get('email'):
+            palash_entered_top20.append({
+                'label':    s['label'],
+                'email':    s['email'],
+                'new_rank': rank_idx + 1,
+            })
+
+    # ── Send invite emails to previous voters + palash artists ───────────────
     _old_poll_snapshot = dict(old_poll)  # capture before anything mutates it
+    _palash_invite_emails = [s['email'] for s in new_songs[20:] if s.get('email')]
     threading.Thread(
         target=_send_weekly_vote_invites,
         args=(_old_poll_snapshot, new_poll_id),
+        kwargs={'extra_emails': _palash_invite_emails},
         daemon=True,
     ).start()
 
