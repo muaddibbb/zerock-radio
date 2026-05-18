@@ -7551,12 +7551,20 @@ def api_polls_weekly_renew():
         daemon=True,
     ).start()
 
-    # Send welcome emails to Palash artists
+    # Send welcome emails to Palash artists (new entrants to the voting section)
     threading.Thread(
         target=_send_palash_welcome_emails,
         args=(new_songs[20:],),
         daemon=True,
     ).start()
+
+    # Send chart-entry emails to palash artists that made the top-20 this week
+    if palash_entered_top20:
+        threading.Thread(
+            target=_send_palash_chart_entry_emails,
+            args=(palash_entered_top20,),
+            daemon=True,
+        ).start()
 
     return jsonify({
         'ok':           True,
