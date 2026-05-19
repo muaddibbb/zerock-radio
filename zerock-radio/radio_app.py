@@ -7408,6 +7408,48 @@ def api_poll_set_next_palash(poll_id):
     return jsonify({'ok': True, 'next_palash': songs, 'next_palash_emails': emails})
 
 
+def _fetch_youtube_url(label):
+    """Use yt-dlp to find the first YouTube video ID for a song label. Returns full URL or None."""
+    try:
+        r = subprocess.run(
+            ['yt-dlp', '--flat-playlist', '--print', 'id', f'ytsearch1:{label}'],
+            capture_output=True, text=True, timeout=15,
+        )
+        vid_id = r.stdout.strip().split('\n')[0]
+        if vid_id and 5 <= len(vid_id) <= 12:
+            return f'https://www.youtube.com/watch?v={vid_id}'
+    except Exception as e:
+        print(f'[YT-Fetch] Error for "{label}": {e}', flush=True)
+    return None
+
+
+def _fill_missing_youtube_urls(poll_id):
+    """Background task: fetch YouTube URLs for any songs in the poll that are missing one."""
+    import time as _time
+    polls = _load_polls()
+    poll  = next((p for p in polls if p['id'] == poll_id), None)
+    if not poll:
+        return
+    updated = 0
+    for s in poll.get('songs', []):
+        if s.get('youtube_url'):
+            continue
+        url = _fetch_youtube_url(s['label'])
+        if url:
+            s['youtube_url'] = url
+            print(f'[YT-Fetch] {s["label"][:40]} -> {url}', flush=True)
+            updated += 1
+        _time.sleep(0.5)
+    if updated:
+        polls_all = _load_polls()
+        for p in polls_all:
+            if p['id'] == poll_id:
+                p['songs'] = poll['songs']
+                break
+        _save_polls(polls_all)
+        print(f'[YT-Fetch] Updated {updated} YouTube URLs for poll {poll_id}', flush=True)
+
+
 @app.route('/api/polls/weekly-renew', methods=['POST'])
 def api_polls_weekly_renew():
     """Admin: close current poll and open next week's poll (top-20 + next_palash)."""
