@@ -7499,6 +7499,13 @@ def api_polls_weekly_renew():
     old_song_weeks = old_poll.get('song_weeks') or {}
     # Track which old song IDs were palash — they get week=1 when entering matzad
     old_palash_ids = {s['id'] for s in old_poll.get('songs', []) if s.get('group') == 'palash'}
+    # Songs that were matzad but didn't make the new top-20 are "leaving the chart".
+    # They cannot return as palash; if mistakenly placed there, reset their weeks to 0.
+    new_matzad_old_ids = {s['id'] for s in new_matzad}
+    old_leaving_ids = {
+        s['id'] for s in old_poll.get('songs', [])
+        if s.get('group') == 'matzad' and s['id'] not in new_matzad_old_ids
+    }
 
     # Build rank map: old_id -> rank_in_current_week (1-based int for all songs)
     old_rank_map = {}
