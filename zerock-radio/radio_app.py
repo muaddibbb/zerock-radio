@@ -91,6 +91,7 @@ _WP_FEATURED_IMAGES = {
     'Beat-oN מקומי':          14326,
     'Black Parade':            375,
     'ON AIR':                  10872,
+    'On Air':                  10872,
     'On the Mend':             14312,
     'Oy Vavoy':                8064,
     'RockTrip':                14447,
