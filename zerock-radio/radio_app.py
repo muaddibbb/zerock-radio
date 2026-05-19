@@ -6462,7 +6462,7 @@ def _send_palash_chart_entry_emails(entered_songs):
 # ── Weekly poll voter invite email ────────────────────────────────────────────
 
 def _send_weekly_vote_invites(old_poll, new_poll_id, extra_emails=None):
-    """Collect real email addresses from old poll votes and send Hebrew invite.
+    """Collect real email addresses from all past poll votes and send Hebrew invite.
     extra_emails: optional list of additional addresses (e.g. palash artists)."""
     if not SMTP_USER or not SMTP_PASS:
         print("[WeeklyRenew] SMTP not configured — skipping invite emails", flush=True)
