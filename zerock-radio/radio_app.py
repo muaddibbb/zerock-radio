@@ -7497,6 +7497,8 @@ def api_polls_weekly_renew():
 
     # Old song_weeks and prev_positions references
     old_song_weeks = old_poll.get('song_weeks') or {}
+    # Track which old song IDs were palash — they get week=1 when entering matzad
+    old_palash_ids = {s['id'] for s in old_poll.get('songs', []) if s.get('group') == 'palash'}
 
     # Build rank map: old_id -> rank_in_current_week (1-based int for all songs)
     old_rank_map = {}
