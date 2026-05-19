@@ -1429,6 +1429,8 @@ def _upload_and_mark_done(show_id):
                         s['wp_post_missing'] = True
                         print(f"[Upload] ⚠ WP post missing for '{show.get('name')}' — flagged for retry", flush=True)
                     print(f"[Upload] Complete: '{show.get('name')}' wp_post_id={wp_post_id}", flush=True)
+                    threading.Thread(target=_notify_whatsapp_upload,
+                                     args=(show, podbean_url), daemon=True).start()
                 else:
                     attempts = s.get('upload_attempts', 0) + 1
                     s['upload_attempts'] = attempts
