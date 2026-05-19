@@ -7524,9 +7524,10 @@ def api_polls_weekly_renew():
         if prev_pos is not None:
             new_prev_positions[new_id] = prev_pos
         # If not in map: brand-new song (prev absent = 'new' on results page)
-        # New entries (including palash graduating to matzad) start at 0
-        if s['id'] in old_palash_ids or s['id'] not in old_song_weeks:
-            new_song_weeks[new_id] = 0
+        if s['id'] in old_palash_ids:
+            new_song_weeks[new_id] = 1          # palash graduate: 1 week on chart
+        elif s['id'] not in old_song_weeks:
+            new_song_weeks[new_id] = 0          # brand-new song: 0 weeks
         else:
             new_song_weeks[new_id] = old_song_weeks[s['id']] + 1
 
