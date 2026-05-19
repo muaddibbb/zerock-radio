@@ -7542,7 +7542,7 @@ def api_polls_weekly_renew():
             'youtube_url': None,
         })
         # Palash entries are new to the chart — no prev_position entry
-        new_song_weeks[new_id] = 1
+        new_song_weeks[new_id] = 0
 
     # Next Tuesday 19:00 Israel time (UTC+3)
     israel_tz = timezone(_td2(hours=3))
