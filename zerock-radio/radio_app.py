@@ -7658,6 +7658,12 @@ def api_polls_weekly_renew():
         daemon=True,
     ).start()
 
+    threading.Thread(
+        target=_fill_missing_youtube_urls,
+        args=(new_poll_id,),
+        daemon=True,
+    ).start()
+
     return jsonify({
         'ok':                  True,
         'old_poll_id':         old_poll['id'],
