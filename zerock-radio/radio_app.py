@@ -1359,23 +1359,40 @@ def _do_podbean_wp_upload(show):
 
 _WA_GROUP_SHOWS = '972547464415-1621406038@g.us'  # הודעות וקישורים זה רוק
 
-def _notify_whatsapp_upload(show, podbean_url):
-    """Fire-and-forget: send upload notification to WhatsApp group via local bridge."""
+def _notify_whatsapp_upload(show, wp_post_id):
+    """Fire-and-forget: send WP show link to WhatsApp group via local bridge."""
     try:
         name = show.get('name', 'שידור חדש')
         broadcaster = show.get('broadcaster', '')
+
+        wp_link = None
+        if wp_post_id and WP_USERNAME and WP_APP_PASS:
+            import base64 as _b64wa
+            _creds = _b64wa.b64encode(f"{WP_USERNAME}:{WP_APP_PASS}".encode()).decode()
+            try:
+                _r = _requests.get(
+                    f"{WP_URL}/wp-json/wp/v2/episodes/{wp_post_id}",
+                    headers={'Authorization': f'Basic {_creds}'},
+                    timeout=10,
+                )
+                if _r.ok:
+                    wp_link = _r.json().get('link')
+            except Exception:
+                pass
+
         line1 = f"🎙️ *{name}*"
         if broadcaster:
             line1 += f" עם {broadcaster}"
-        parts = [line1, "📻 *זה רוק רדיו* — שידור חדש הועלה!"]
-        if podbean_url:
-            parts.append(f"🔗 {podbean_url}")
+        parts = [line1]
+        if wp_link:
+            parts.append(wp_link)
         message = '\n'.join(parts)
         _requests.post(
             'http://127.0.0.1:7733/send',
             json={'to': _WA_GROUP_SHOWS, 'message': message},
             timeout=10,
         )
+        print(f"[WA-Notify] Sent for '{name}'", flush=True)
     except Exception as e:
         print(f"[WA-Notify] Failed: {e}", flush=True)
 
