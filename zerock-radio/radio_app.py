@@ -6468,15 +6468,12 @@ def _send_weekly_vote_invites(old_poll, new_poll_id, extra_emails=None):
         print("[WeeklyRenew] SMTP not configured — skipping invite emails", flush=True)
         return
     votes     = _load_poll_votes()
-    old_id    = old_poll['id']
     vote_url  = f"{ZEROCK_PUBLIC_URL}/poll/{new_poll_id}"
-    # Collect real (non-synthetic) emails for the old poll
+    # Collect real (non-synthetic) emails from all past polls
     fake_domains = {'forms-import.zerockradio.com', 'admin.zerockradio.com'}
     emails_seen  = set()
     recipients   = []
     for v in votes:
-        if v.get('poll_id') != old_id:
-            continue
         email = (v.get('email') or '').strip().lower()
         if not email or '@' not in email:
             continue
