@@ -2581,6 +2581,51 @@ threading.Thread(target=_nightly_rebuild_loop, daemon=True).start()
 
 
 # ── Weekly poll auto-renew (every Thursday 15:00) ─────────────────────────────
+_subscribers_lock = threading.Lock()
+
+def _sync_poll_voters_to_subscribers():
+    """Add any new voter emails (from all polls) to subscribers.json, skipping duplicates."""
+    fake_domains = {'forms-import.zerockradio.com', 'admin.zerockradio.com'}
+    _subs_path = os.path.join(RADIO_DIR, 'subscribers.json')
+    try:
+        with _subscribers_lock:
+            try:
+                with open(_subs_path) as f:
+                    subs = json.load(f)
+            except Exception:
+                subs = []
+            existing_emails = {s.get('email', '').strip().lower() for s in subs}
+            added = 0
+            for v in _load_poll_votes():
+                email = (v.get('email') or '').strip().lower()
+                name  = (v.get('name')  or '').strip()
+                if not email or '@' not in email:
+                    continue
+                if email.split('@')[-1] in fake_domains:
+                    continue
+                if email in existing_emails:
+                    continue
+                if _is_unsubscribed(email):
+                    continue
+                subs.append({
+                    'email':   email,
+                    'name':    name,
+                    'active':  True,
+                    'source':  'poll_vote',
+                    'added_at': datetime.now().isoformat(),
+                })
+                existing_emails.add(email)
+                added += 1
+            if added:
+                with open(_subs_path, 'w') as f:
+                    json.dump(subs, f, ensure_ascii=False, indent=2)
+                print(f"[WeeklyPoll] Added {added} new subscriber(s) from poll votes", flush=True)
+            else:
+                print("[WeeklyPoll] No new subscribers to add", flush=True)
+    except Exception as e:
+        print(f"[WeeklyPoll] Subscriber sync error: {e}", flush=True)
+
+
 def _weekly_poll_renew_loop():
     """Every Thursday at 15:00: snapshot old poll results → renew poll → update WP vote button."""
     _already_renewed_week = [None]   # track which ISO-week we last renewed
