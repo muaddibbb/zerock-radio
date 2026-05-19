@@ -117,6 +117,7 @@ _WP_SHOW_IDS = {
     'Beat-oN מקומי':          317,
     'Black Parade':            49,
     'ON AIR':                  305,
+    'On Air':                  305,
     'On the Mend':             316,
     'Oy Vavoy':                71,
     'RockTrip':                318,
