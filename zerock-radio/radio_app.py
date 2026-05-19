@@ -7524,11 +7524,11 @@ def api_polls_weekly_renew():
         if prev_pos is not None:
             new_prev_positions[new_id] = prev_pos
         # If not in map: brand-new song (prev absent = 'new' on results page)
-        # Palash songs entering the matzad start at week 1, not week 2
-        if s['id'] in old_palash_ids:
-            new_song_weeks[new_id] = 1
+        # New entries (including palash graduating to matzad) start at 0
+        if s['id'] in old_palash_ids or s['id'] not in old_song_weeks:
+            new_song_weeks[new_id] = 0
         else:
-            new_song_weeks[new_id] = (old_song_weeks.get(s['id']) or 0) + 1
+            new_song_weeks[new_id] = old_song_weeks[s['id']] + 1
 
     for i, label in enumerate(next_palash_labels):
         new_id = f's{21 + i:02d}'
