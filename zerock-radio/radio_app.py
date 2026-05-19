@@ -2658,6 +2658,8 @@ def _weekly_poll_renew_loop():
             print(f"[WeeklyPoll] Renewal result: {r.status_code} {r.text[:200]}", flush=True)
             if r.status_code == 200:
                 _already_renewed_week[0] = iso_week
+                # Sync all-time voters into subscribers.json
+                threading.Thread(target=_sync_poll_voters_to_subscribers, daemon=True).start()
                 # Send chart-entry emails to palash artists who made the top-20
                 try:
                     entered = r.json().get('palash_entered_top20') or []
