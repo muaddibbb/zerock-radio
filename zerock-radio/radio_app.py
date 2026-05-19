@@ -7551,8 +7551,10 @@ def api_polls_weekly_renew():
         })
         # Palash: carry over old week count if song was previously on the chart,
         # otherwise 0. Never increment — palash weeks don't count toward the total.
+        # Exception: if the song is found in old_leaving_ids (dropped out of the matzad
+        # this week), it cannot re-enter as palash — reset weeks to 0.
         _old_palash_song = next((s for s in old_poll.get('songs', []) if s.get('label') == label), None)
-        if _old_palash_song:
+        if _old_palash_song and _old_palash_song['id'] not in old_leaving_ids:
             new_song_weeks[new_id] = old_song_weeks.get(_old_palash_song['id']) or 0
         else:
             new_song_weeks[new_id] = 0
