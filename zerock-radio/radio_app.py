@@ -5330,7 +5330,7 @@ def _send_erev_albumim_confirmation_email(booking):
 <p>שלום <strong>{booking['name']}</strong>,</p>
 <p>נרשמת לתוכנית <em>ערב אלבומים</em> ב-<strong>ZeRock Radio</strong><br>
 בתאריך <strong>{date_heb}</strong>.</p>
-<p>ביום חמישי <strong>{thu_heb}</strong> בשעה 08:00 תשלח/י תזכורת עם הנחיות לבחירת האלבומים.</p>
+<p>ביום חמישי <strong>{thu_heb}</strong> בשעה 08:00 תישלח תזכורת עם הנחיות לבחירת האלבומים.</p>
 <hr style="border:none;border-top:1px solid #ddd;margin:20px 0">
 <p>שידור מוצלח! 🤘<br><strong>צוות ZeRock Radio</strong></p>
 </div>"""
@@ -5338,7 +5338,7 @@ def _send_erev_albumim_confirmation_email(booking):
         body_text = (
             f"שלום {booking['name']},\n\n"
             f"נרשמת לערב אלבומים ב-ZeRock Radio בתאריך {date_heb}.\n\n"
-            f"ביום חמישי {thu_heb} בשעה 08:00 תשלח/י תזכורת עם הנחיות לבחירת האלבומים.\n\n"
+            f"ביום חמישי {thu_heb} בשעה 08:00 תישלח תזכורת עם הנחיות לבחירת האלבומים.\n\n"
             f"שידור מוצלח!\nצוות ZeRock Radio"
         )
 
