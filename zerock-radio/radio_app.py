@@ -5295,6 +5295,147 @@ def _al_haroker_reminder_loop():
 threading.Thread(target=_al_haroker_reminder_loop, daemon=True).start()
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Erev Albumim — Friday registration system
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_ea_bookings_lock = threading.Lock()
+
+
+def _load_erev_albumim_bookings():
+    try:
+        with open(EREV_ALBUMIM_BOOKINGS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _save_erev_albumim_bookings(data):
+    with open(EREV_ALBUMIM_BOOKINGS_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _send_erev_albumim_confirmation_email(booking):
+    """Send a confirmation email immediately after registration."""
+    if not SMTP_USER or not SMTP_PASS:
+        print(f"[ErevAlbumim] SMTP not configured — skipping confirmation to {booking['email']}", flush=True)
+        return
+    try:
+        date_obj  = datetime.strptime(booking['date'], '%Y-%m-%d')
+        date_heb  = f"יום שישי {date_obj.strftime('%d/%m/%Y')}"
+        thu_obj   = date_obj - timedelta(days=1)
+        thu_heb   = thu_obj.strftime('%d/%m/%Y')
+
+        body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.7">
+<p>שלום <strong>{booking['name']}</strong>,</p>
+<p>נרשמת לתוכנית <em>ערב אלבומים</em> ב-<strong>ZeRock Radio</strong><br>
+בתאריך <strong>{date_heb}</strong>.</p>
+<p>ביום חמישי <strong>{thu_heb}</strong> בשעה 08:00 תשלח/י תזכורת עם הנחיות לבחירת האלבומים.</p>
+<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">
+<p>שידור מוצלח! 🤘<br><strong>צוות ZeRock Radio</strong></p>
+</div>"""
+
+        body_text = (
+            f"שלום {booking['name']},\n\n"
+            f"נרשמת לערב אלבומים ב-ZeRock Radio בתאריך {date_heb}.\n\n"
+            f"ביום חמישי {thu_heb} בשעה 08:00 תשלח/י תזכורת עם הנחיות לבחירת האלבומים.\n\n"
+            f"שידור מוצלח!\nצוות ZeRock Radio"
+        )
+
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"ערב אלבומים – אישור הרשמה ל-{date_obj.strftime('%d/%m/%Y')}"
+        msg['From']    = SMTP_FROM_ADDR
+        msg['To']      = booking['email']
+        msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+            s.ehlo(); s.starttls(); s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM_ADDR, [booking['email']], msg.as_bytes())
+        print(f"[ErevAlbumim] Confirmation sent → {booking['email']} for {booking['date']}", flush=True)
+    except Exception as e:
+        print(f"[ErevAlbumim] Confirmation email error: {e}", flush=True)
+
+
+def _send_erev_albumim_reminder_email(booking):
+    """Send Thursday 8:00 AM reminder asking the registrant to reply with 8 albums."""
+    if not SMTP_USER or not SMTP_PASS:
+        print(f"[ErevAlbumim] SMTP not configured — skipping reminder to {booking.get('email','')}", flush=True)
+        return False
+    email = booking.get('email', '')
+    if not email:
+        return False
+    try:
+        date_obj  = datetime.strptime(booking['date'], '%Y-%m-%d')
+        date_disp = date_obj.strftime('%d/%m/%Y')
+
+        body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.7">
+<p>שלום <strong>{booking['name']}</strong>,</p>
+<p>מחר, <strong>יום שישי {date_disp}</strong>, זה הערב שלך ב-<em>ערב אלבומים</em> ב-ZeRock Radio! 🎶</p>
+<p><strong>אנא השב/י על מייל זה עם 8 האלבומים שתרצה/י שנשמיע בתוכנית.</strong></p>
+<p style="color:#555;font-size:0.9em">כתוב/י את האלבומים בפורמט: אמן – שם האלבום<br>
+לדוגמה: Pink Floyd – The Wall</p>
+<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">
+<p>להתראות בשידור! 🤘<br><strong>צוות ZeRock Radio</strong></p>
+</div>"""
+
+        body_text = (
+            f"שלום {booking['name']},\n\n"
+            f"מחר, יום שישי {date_disp}, זה הערב שלך בערב אלבומים ב-ZeRock Radio!\n\n"
+            f"אנא השב/י על מייל זה עם 8 האלבומים שתרצה/י שנשמיע בתוכנית.\n"
+            f"פורמט: אמן – שם האלבום (לדוגמה: Pink Floyd – The Wall)\n\n"
+            f"להתראות בשידור!\nצוות ZeRock Radio"
+        )
+
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"ערב אלבומים מחר! שלח/י 8 אלבומים ✉️"
+        msg['From']    = SMTP_FROM_ADDR
+        msg['To']      = email
+        msg['Reply-To'] = SMTP_FROM_ADDR
+        msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+            s.ehlo(); s.starttls(); s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM_ADDR, [email], msg.as_bytes())
+        print(f"[ErevAlbumim] Reminder sent → {email} for {booking['date']}", flush=True)
+        return True
+    except Exception as e:
+        print(f"[ErevAlbumim] Reminder email error: {e}", flush=True)
+        return False
+
+
+def _erev_albumim_reminder_loop():
+    """Background thread: every 15 min, on Thursdays between 08:00–08:59,
+    send album reminders for all Friday bookings that haven't received one yet."""
+    time.sleep(25)
+    while True:
+        try:
+            now = datetime.now()
+            # Only act on Thursday (weekday=3) between 08:00 and 08:59
+            if now.weekday() == 3 and now.hour == 8:
+                tomorrow_str = (now + timedelta(days=1)).strftime('%Y-%m-%d')
+                with _ea_bookings_lock:
+                    bookings = _load_erev_albumim_bookings()
+                    changed  = False
+                    for b in bookings:
+                        if b.get('date') != tomorrow_str:
+                            continue
+                        if b.get('reminder_sent_at'):
+                            continue
+                        if _send_erev_albumim_reminder_email(b):
+                            b['reminder_sent_at'] = now.isoformat()
+                            changed = True
+                    if changed:
+                        _save_erev_albumim_bookings(bookings)
+        except Exception as e:
+            print(f"[ErevAlbumim] Reminder loop error: {e}", flush=True)
+        time.sleep(900)   # check every 15 minutes
+
+
+threading.Thread(target=_erev_albumim_reminder_loop, daemon=True).start()
+
+
 @app.route('/al-haroker-schedule')
 @app.route('/al-haroker-schedule/<int:year>/<int:month>')
 def al_haroker_schedule_page(year=None, month=None):
