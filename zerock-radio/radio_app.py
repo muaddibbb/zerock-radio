@@ -2654,6 +2654,14 @@ def _weekly_poll_renew_loop():
             time.sleep(600)
             continue
 
+        # Skip renew on specific dates (no Mitsad this week)
+        _skip_dates = {'2026-05-21'}
+        if datetime.now().strftime('%Y-%m-%d') in _skip_dates:
+            print("[WeeklyPoll] Skipping renew — no Mitsad this week", flush=True)
+            _already_renewed_week[0] = iso_week  # prevent retry
+            time.sleep(600)
+            continue
+
         print("[WeeklyPoll] Thursday 15:00 — auto-renewing poll…", flush=True)
         try:
             r = _requests.post(
