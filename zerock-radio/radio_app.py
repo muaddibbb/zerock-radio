@@ -169,6 +169,10 @@ AL_HAROKER_UPLOAD_HOUR      = 8                   # 08:00
 # Python weekday: Mon=0 Tue=1 Wed=2 Thu=3 Fri=4 Sat=5 Sun=6
 AL_HAROKER_AVAILABLE_WEEKDAYS = {6, 0, 1, 2, 3}   # Sun–Thu
 
+# ─── Erev Albumim self-service scheduling ─────────────────────────────────────
+EREV_ALBUMIM_BOOKINGS_FILE  = f"{RADIO_DIR}/erev_albumim_bookings.json"
+EREV_ALBUMIM_SCHEDULE_START = _date(2026, 6, 12)   # first bookable Friday
+
 # Email config — set on the Rocky server via environment variables:
 #   export ZEROCK_SMTP_HOST=smtp.gmail.com
 #   export ZEROCK_SMTP_PORT=587
