@@ -5828,6 +5828,19 @@ def api_erev_albumim_register():
         if any(b['date'] == date_str for b in bookings):
             return jsonify({'error': 'date_taken'}), 409
 
+        # Once every 4 months per email
+        email_lower = email.lower()
+        for b in bookings:
+            if b.get('email', '').lower() != email_lower:
+                continue
+            try:
+                existing_dt = datetime.strptime(b['date'], '%Y-%m-%d').date()
+            except Exception:
+                continue
+            diff_days = abs((date_obj - existing_dt).days)
+            if diff_days < 120:   # 4 months ≈ 120 days
+                return jsonify({'error': 'once_per_4_months'}), 409
+
         booking = {
             'date':           date_str,
             'name':           name,
