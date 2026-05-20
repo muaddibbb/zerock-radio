@@ -5759,6 +5759,95 @@ def api_al_haroker_subscribers():
     return jsonify(subs)
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Erev Albumim — routes
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/erev-albumim-schedule')
+@app.route('/erev-albumim-schedule/<int:year>/<int:month>')
+def erev_albumim_schedule_page(year=None, month=None):
+    import calendar as _calendar_ea
+    now = datetime.now()
+    if year is None or month is None:
+        if (now.year, now.month) < (EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month):
+            year, month = EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month
+        else:
+            year, month = now.year, now.month
+
+    if (year, month) < (EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month):
+        year, month = EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month
+
+    bookings = _load_erev_albumim_bookings()
+    booked   = {b['date']: b['name'] for b in bookings}
+
+    import calendar as _cal_ea2
+    cal   = _cal_ea2.Calendar(firstweekday=6)   # week starts Sunday
+    weeks = cal.monthdatescalendar(year, month)
+
+    prev_year,  prev_month  = (year, month - 1) if month > 1 else (year - 1, 12)
+    next_year,  next_month  = (year, month + 1) if month < 12 else (year + 1, 1)
+    show_prev = (prev_year, prev_month) >= (EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month)
+
+    return render_template(
+        'erev_albumim_schedule.html',
+        year=year, month=month,
+        month_name=_HEB_MONTHS[month],
+        weeks=weeks,
+        booked=booked,
+        today=now.date(),
+        start_date_limit=EREV_ALBUMIM_SCHEDULE_START,
+        prev_year=prev_year, prev_month=prev_month, show_prev=show_prev,
+        next_year=next_year, next_month=next_month,
+    )
+
+
+@app.route('/api/erev-albumim/register', methods=['POST'])
+def api_erev_albumim_register():
+    data     = request.get_json(force=True) or {}
+    date_str = data.get('date', '').strip()
+    name     = data.get('name', '').strip()
+    email    = data.get('email', '').strip()
+
+    if not date_str or not name or not email:
+        return jsonify({'error': 'date, name ו-email נדרשים'}), 400
+
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'error': 'תאריך לא תקין'}), 400
+
+    if date_obj < EREV_ALBUMIM_SCHEDULE_START:
+        return jsonify({'error': 'date_before_start'}), 400
+    if date_obj < datetime.now().date():
+        return jsonify({'error': 'date_past'}), 400
+    if date_obj.weekday() != 4:   # Friday only
+        return jsonify({'error': 'fridays_only'}), 400
+
+    with _ea_bookings_lock:
+        bookings = _load_erev_albumim_bookings()
+        if any(b['date'] == date_str for b in bookings):
+            return jsonify({'error': 'date_taken'}), 409
+
+        booking = {
+            'date':           date_str,
+            'name':           name,
+            'email':          email,
+            'registered_at':  datetime.now().isoformat(),
+            'reminder_sent_at': None,
+        }
+        bookings.append(booking)
+        _save_erev_albumim_bookings(bookings)
+
+    threading.Thread(target=_send_erev_albumim_confirmation_email, args=(booking,), daemon=True).start()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/erev-albumim/bookings')
+def api_erev_albumim_bookings():
+    """Admin: list all Erev Albumim bookings."""
+    return jsonify(_load_erev_albumim_bookings())
+
+
 # ─── One-Time Upload Links (admin-issued, single-use) ─────────────────────────
 
 _one_time_lock = threading.Lock()
