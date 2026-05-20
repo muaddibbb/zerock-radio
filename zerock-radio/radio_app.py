@@ -1380,9 +1380,14 @@ def _notify_whatsapp_upload(show, wp_post_id):
             except Exception:
                 pass
 
-        line1 = f"🎙️ *{name}*"
+        try:
+            from datetime import datetime as _dt
+            date_str = _dt.fromisoformat(show['scheduled_time']).strftime('%d/%m/%y')
+        except Exception:
+            date_str = ''
+        line1 = f"🎙️  {date_str} {name}"
         if broadcaster:
-            line1 += f" עם {broadcaster}"
+            line1 += f" — {broadcaster}"
         parts = [line1]
         if wp_link:
             parts.append(wp_link)
