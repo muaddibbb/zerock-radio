@@ -1207,11 +1207,39 @@ def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbe
             else:
                 issues.append('podbean_link MISSING (Podbean lookup failed)')
 
+        # ── 7. title — rebuild if episode_subtitle is set but missing from title ──
+        if episode_subtitle and broadcast_dt:
+            _bcast_str    = show_name  # start
+            _ep_broadcaster = broadcaster
+            _ep_num         = episode_num
+            _fmt_date       = broadcast_dt.strftime('%d/%m/%y')
+            _parts = [show_name]
+            if _ep_num:      _parts.append(_ep_num)
+            if episode_subtitle: _parts.append(f"- {episode_subtitle}")
+            if _ep_broadcaster:  _parts.append(f"- {_ep_broadcaster} {_fmt_date}")
+            else:                _parts.append(f"- {_fmt_date}")
+            _expected_title = ' '.join(p for p in _parts if p)
+            _current_title  = (post.get('title') or {}).get('raw', '')
+            if episode_subtitle not in _current_title:
+                fixes['title'] = _expected_title
+                issues.append(f'title updated with subtitle')
+
+        # ── 8. slug — set canonical prefix-DDMMYY if it looks wrong ─────────────
+        if broadcast_dt:
+            _slug_pfx = _WP_SHOW_SLUGS.get(show_name)
+            if _slug_pfx:
+                _d, _m, _y = broadcast_dt.strftime('%d'), broadcast_dt.strftime('%m'), broadcast_dt.strftime('%Y')
+                _expected_slug = f"{_slug_pfx}-{_d}{_m}{_y[2:]}"
+                _current_slug  = post.get('slug', '')
+                if _current_slug != _expected_slug:
+                    fixes['slug'] = _expected_slug
+                    issues.append(f'slug={_expected_slug}')
+
         if not fixes:
             print(f"[WP-Verify] Post {wp_post_id} ({show_name}): all fields OK ✓", flush=True)
             return True
 
-        # ── 7. Apply fixes in one PATCH ──────────────────────────────────────────
+        # ── 9. Apply fixes in one PATCH ──────────────────────────────────────────
         patch = _requests.post(f"{WP_URL}/wp-json/wp/v2/episodes/{wp_post_id}",
                                json=fixes, headers=_hdrs, timeout=20)
         if patch.status_code in (200, 201):
