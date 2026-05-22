@@ -1124,7 +1124,9 @@ def _create_wp_post_direct(show) -> tuple:
         return False, None
 
 
-def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbean_url: str = '') -> bool:
+def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbean_url: str = '',
+                             episode_subtitle: str = '', broadcaster: str = '',
+                             episode_num: str = '') -> bool:
     """Check a WP episode post for missing required fields and auto-fix what we can.
     Returns True if all fields OK (or fixed), False if anything remains broken."""
     import base64 as _b64_v
