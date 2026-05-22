@@ -72,7 +72,7 @@ _WP_SHOW_SLUGS = {
     'On the Mend':         'mend',
     'Oy Vavoy':            'oy-vavoy',
     'RockTrip':            'rocktrip',
-    'Shabi On The Rocks':  'sotr',
+    'Shabi on the Rocks':  'sotr',
     'Stage Dive':          'stage-dive',
     'The Breakdown':       'breakdown',
     'Time Warp':           'time-warp',
