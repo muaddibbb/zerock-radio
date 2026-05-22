@@ -1471,14 +1471,21 @@ def _upload_and_mark_done(show_id):
                         # Use canonical show name from SHOW_SCHEDULE (not schedule entry name
                         # which may include broadcaster suffix e.g. "פטרוק לילה — אלירן קטנוב")
                         _scfg_v = next((sc for sc in SHOW_SCHEDULE if sc['key'] == s.get('show_key')), None)
-                        _verify_show_name = _scfg_v['name'] if _scfg_v else s.get('name', '')
-                        _verify_podbean   = podbean_url or ''
-                        _verify_bcast     = _bcast_dt
-                        _verify_wp_id     = wp_post_id
+                        _verify_show_name    = _scfg_v['name'] if _scfg_v else s.get('name', '')
+                        _verify_podbean      = podbean_url or ''
+                        _verify_bcast        = _bcast_dt
+                        _verify_wp_id        = wp_post_id
+                        _verify_subtitle     = s.get('episode_subtitle', '')
+                        _verify_broadcaster  = s.get('broadcaster') or (_scfg_v.get('broadcaster', '') if _scfg_v else '')
+                        _verify_ep_num       = s.get('episode_num', '')
                         def _run_verify():
                             time.sleep(60)
-                            _verify_and_fix_wp_post(_verify_wp_id, _verify_show_name,
-                                                    _verify_bcast, _verify_podbean)
+                            _verify_and_fix_wp_post(
+                                _verify_wp_id, _verify_show_name, _verify_bcast, _verify_podbean,
+                                episode_subtitle=_verify_subtitle,
+                                broadcaster=_verify_broadcaster,
+                                episode_num=_verify_ep_num,
+                            )
                         threading.Thread(target=_run_verify, daemon=True).start()
                     else:
                         # Podbean OK but WP creation failed — flag for retry
