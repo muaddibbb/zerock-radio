@@ -5473,6 +5473,75 @@ def _erev_albumim_reminder_loop():
 threading.Thread(target=_erev_albumim_reminder_loop, daemon=True).start()
 
 
+_EA_WA_GROUP = '120363195863658188@g.us'   # "רדיו טכני (רק קופרמן טועה)"
+
+
+def _send_erev_albumim_wa(booking):
+    """Send Friday 12:00 WhatsApp with broadcaster name + album list."""
+    try:
+        name   = booking.get('name', '')
+        date_s = booking.get('date', '')
+        albums = booking.get('albums') or []
+
+        try:
+            date_disp = datetime.strptime(date_s, '%Y-%m-%d').strftime('%d/%m/%Y')
+        except Exception:
+            date_disp = date_s
+
+        lines = [f"🎶 ערב אלבומים — {name} — {date_disp}", ""]
+        if albums:
+            lines.append("האלבומים שנבחרו:")
+            for i, alb in enumerate(albums, 1):
+                lines.append(f"{i}. {alb}")
+        else:
+            lines.append("(אין רשימת אלבומים)")
+
+        message = '\n'.join(lines)
+        _requests.post(
+            'http://127.0.0.1:7733/send',
+            json={'to': _EA_WA_GROUP, 'message': message},
+            timeout=10,
+        )
+        print(f"[ErevAlbumim-WA] Sent to group for {name} ({date_s})", flush=True)
+        return True
+    except Exception as e:
+        print(f"[ErevAlbumim-WA] Error: {e}", flush=True)
+        return False
+
+
+def _erev_albumim_wa_loop():
+    """Background thread: on Fridays between 12:00–12:59, send WhatsApp for bookings
+    that have albums but haven't had the WA sent yet."""
+    time.sleep(35)
+    while True:
+        try:
+            now = datetime.now()
+            # Only act on Friday (weekday=4) between 12:00 and 12:59
+            if now.weekday() == 4 and now.hour == 12:
+                today_str = now.strftime('%Y-%m-%d')
+                with _ea_bookings_lock:
+                    bookings = _load_erev_albumim_bookings()
+                    changed  = False
+                    for b in bookings:
+                        if b.get('date') != today_str:
+                            continue
+                        if b.get('wa_sent_at'):
+                            continue
+                        if not b.get('albums'):
+                            continue
+                        if _send_erev_albumim_wa(b):
+                            b['wa_sent_at'] = now.isoformat()
+                            changed = True
+                    if changed:
+                        _save_erev_albumim_bookings(bookings)
+        except Exception as e:
+            print(f"[ErevAlbumim-WA] Loop error: {e}", flush=True)
+        time.sleep(900)   # check every 15 minutes
+
+
+threading.Thread(target=_erev_albumim_wa_loop, daemon=True).start()
+
+
 @app.route('/al-haroker-schedule')
 @app.route('/al-haroker-schedule/<int:year>/<int:month>')
 def al_haroker_schedule_page(year=None, month=None):
