@@ -5995,9 +5995,10 @@ def api_erev_albumim_set_albums(date):
 
     print(f"[ErevAlbumim] Albums saved for {date}: {albums}", flush=True)
 
-    # If today is already Friday 12:00+ send immediately in background
+    # If today IS the show date and already past 12:00 on Friday → send immediately
     now = datetime.now()
-    if now.weekday() == 4 and now.hour >= 12:
+    today_str = now.strftime('%Y-%m-%d')
+    if date == today_str and now.weekday() == 4 and now.hour >= 12:
         def _send_now():
             with _ea_bookings_lock:
                 bks = _load_erev_albumim_bookings()
