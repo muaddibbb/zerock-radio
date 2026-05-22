@@ -5967,6 +5967,50 @@ def api_erev_albumim_bookings():
     return jsonify(_load_erev_albumim_bookings())
 
 
+@app.route('/api/erev-albumim/<date>/albums', methods=['POST'])
+def api_erev_albumim_set_albums(date):
+    """n8n / admin: store album list for a booking.
+    Body JSON: {"albums": ["Artist – Album", ...]}
+    Also accepts {"albums": "line1\\nline2\\n..."} (plain text split by newlines).
+    """
+    payload  = request.get_json(force=True) or {}
+    raw      = payload.get('albums', [])
+
+    if isinstance(raw, str):
+        albums = [line.strip() for line in raw.splitlines() if line.strip()]
+    elif isinstance(raw, list):
+        albums = [str(a).strip() for a in raw if str(a).strip()]
+    else:
+        return jsonify({'error': 'albums must be a list or newline-separated string'}), 400
+
+    with _ea_bookings_lock:
+        bookings = _load_erev_albumim_bookings()
+        booking  = next((b for b in bookings if b.get('date') == date), None)
+        if booking is None:
+            return jsonify({'error': 'booking not found'}), 404
+        booking['albums'] = albums
+        # Reset wa_sent_at so the WA loop will re-send if albums were updated
+        booking['wa_sent_at'] = None
+        _save_erev_albumim_bookings(bookings)
+
+    print(f"[ErevAlbumim] Albums saved for {date}: {albums}", flush=True)
+
+    # If today is already Friday 12:00+ send immediately in background
+    now = datetime.now()
+    if now.weekday() == 4 and now.hour >= 12:
+        def _send_now():
+            with _ea_bookings_lock:
+                bks = _load_erev_albumim_bookings()
+                b   = next((x for x in bks if x.get('date') == date), None)
+                if b and not b.get('wa_sent_at'):
+                    if _send_erev_albumim_wa(b):
+                        b['wa_sent_at'] = datetime.now().isoformat()
+                        _save_erev_albumim_bookings(bks)
+        threading.Thread(target=_send_now, daemon=True).start()
+
+    return jsonify({'ok': True, 'albums': albums})
+
+
 # ─── One-Time Upload Links (admin-issued, single-use) ─────────────────────────
 
 _one_time_lock = threading.Lock()
