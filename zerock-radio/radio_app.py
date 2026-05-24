@@ -3149,6 +3149,53 @@ def api_nowplaying():
         np['on_air_jingle'] = bool(on_air.get('jingle'))
     return jsonify(np)
 
+
+@app.route('/api/live-show')
+def api_live_show():
+    """CORS-enabled: returns what show is actually streaming in Liquidsoap right now.
+    Used by zerockradio.com homepage JS to fix 'now playing' when a show plays
+    outside its normal weekly slot (reruns, manual play-now, etc.)."""
+    with _queue_cache_lock:
+        on_air = dict(_queue_cache.get('on_air') or {})
+
+    result = {'on_air': False}
+
+    if on_air.get('show'):
+        # Artist tag format: "SHOW_NAME - BROADCASTER - episode title"
+        artist = (on_air.get('artist') or '').strip()
+        parts  = [p.strip() for p in artist.split(' - ', 2)]
+        show_name   = parts[0] if parts else ''
+        broadcaster = parts[1] if len(parts) > 1 else ''
+
+        # Find show config by name → derive time range
+        time_str = ''
+        for s in SHOW_SCHEDULE:
+            if s.get('name') == show_name:
+                t   = s.get('time', '')          # e.g. "07:00"
+                dur = _SHOW_DURATIONS_H.get(s['key'], 1)
+                if t:
+                    try:
+                        h, m = map(int, t.split(':'))
+                        eh = (h + int(dur)) % 24
+                        time_str = f"{h:02d}:{m:02d} - {eh:02d}:{m:02d}"
+                    except Exception:
+                        pass
+                break
+
+        result = {
+            'on_air':      True,
+            'show_name':   show_name,
+            'broadcaster': broadcaster,
+            'time':        time_str,
+        }
+
+    from flask import make_response as _mkr
+    resp = _mkr(jsonify(result))
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Cache-Control'] = 'no-store'
+    return resp
+
+
 @app.route('/api/history')
 def api_history():
     return jsonify(list(reversed(get_history_24h())))
