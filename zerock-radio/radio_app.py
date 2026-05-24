@@ -4200,9 +4200,11 @@ def _sync_wp_board(force=False):
                 # Combined JS fix — single <script> block (WAF strips 2nd block).
                 # 1. Spotify playlist link fix for /rock-chart/ page.
                 # 2. Homepage now-playing fix: patches .hp-live-now / .hp-next-show
-                #    broadcaster text using the public /zr/v1/np REST endpoint.
-                _sp_top20  = SPOTIFY_TOP20_PLAYLIST
-                _sp_palash = SPOTIFY_PALASH_PLAYLIST
+                #    (a) schedule-based text from /wp-json/zr/v1/np
+                #    (b) live override from Rocky /api/live-show (chained after, wins on conflict)
+                _sp_top20    = SPOTIFY_TOP20_PLAYLIST
+                _sp_palash   = SPOTIFY_PALASH_PLAYLIST
+                _rocky_pub   = ZEROCK_PUBLIC_URL
                 combined_fix = (
                     '\n<script id="zerock-fix">'
                     '(function(){'
@@ -4216,7 +4218,7 @@ def _sync_wp_board(force=False):
                     '});}'
                     'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",sf);else sf();'
                     '}'
-                    # Homepage fix — patches ACF-hardcoded broadcaster with live data
+                    # Homepage fix — (a) schedule patch, then (b) live override
                     'var _hp=window.location.pathname;'
                     'if(_hp==="/"||_hp===""||_hp==="/index.php"){'
                     'function hf(){'
@@ -4227,6 +4229,18 @@ def _sync_wp_board(force=False):
                     'function p(s){var a=d.querySelector(s),b=document.querySelector(s);if(a&&b)b.textContent=a.textContent.trim();}'
                     'p(".hp-live-now .hp-show-name");p(".hp-live-now .hp-show-text");p(".hp-live-now .hp-show-time");'
                     'p(".hp-next-show .hp-show-name");p(".hp-next-show .hp-show-text");p(".hp-next-show .hp-show-time");'
+                    # chain live-show fetch so it always overrides the schedule text
+                    f'return fetch("{_rocky_pub}/api/live-show");'
+                    '})'
+                    '.then(function(r){return r&&r.ok?r.json():null;})'
+                    '.then(function(live){'
+                    'if(!live||!live.on_air)return;'
+                    'var n=document.querySelector(".hp-live-now .hp-show-name");'
+                    'var bt=document.querySelector(".hp-live-now .hp-show-text");'
+                    'var tm=document.querySelector(".hp-live-now .hp-show-time");'
+                    'if(n&&live.show_name)n.textContent=live.show_name;'
+                    'if(bt&&live.broadcaster)bt.textContent=live.broadcaster;'
+                    'if(tm&&live.time)tm.textContent=live.time;'
                     '})'
                     '.catch(function(){});}'
                     'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",hf);else hf();'
