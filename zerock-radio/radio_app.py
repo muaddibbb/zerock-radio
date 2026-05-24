@@ -6012,8 +6012,8 @@ def api_erev_albumim_register():
             except Exception:
                 continue
             diff_days = abs((date_obj - existing_dt).days)
-            if diff_days < 120:   # 4 months ≈ 120 days
-                return jsonify({'error': 'once_per_4_months'}), 409
+            if diff_days < 60:   # 2 months ≈ 60 days
+                return jsonify({'error': 'once_per_2_months'}), 409
 
         booking = {
             'date':           date_str,
