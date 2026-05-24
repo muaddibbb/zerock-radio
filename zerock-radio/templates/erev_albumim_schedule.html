@@ -426,8 +426,8 @@ async function submitReg() {
     } else if (data.error === 'date_taken') {
       msg.innerHTML = '<div class="msg-err">היום הזה כבר נתפס. בחר יום אחר.</div>';
       btn.disabled = false; btn.textContent = 'אשר הרשמה 📧';
-    } else if (data.error === 'once_per_4_months') {
-      msg.innerHTML = '<div class="msg-err">כבר נרשמת לתאריך קרוב. ניתן להירשם פעם אחת בכל 4 חודשים.</div>';
+    } else if (data.error === 'once_per_2_months') {
+      msg.innerHTML = '<div class="msg-err">כבר נרשמת לתאריך קרוב. ניתן להירשם פעם אחת בכל 2 חודשים.</div>';
       btn.disabled = false; btn.textContent = 'אשר הרשמה 📧';
     } else {
       msg.innerHTML = '<div class="msg-err">' + (data.error || 'שגיאה. נסה שוב.') + '</div>';
