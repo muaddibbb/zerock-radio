@@ -6002,7 +6002,7 @@ def api_erev_albumim_register():
         if any(b['date'] == date_str for b in bookings):
             return jsonify({'error': 'date_taken'}), 409
 
-        # Once every 4 months per email
+        # Once every 2 months per email
         email_lower = email.lower()
         for b in bookings:
             if b.get('email', '').lower() != email_lower:
