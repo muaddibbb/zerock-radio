@@ -974,6 +974,27 @@
     {% endif %}
     {% endif %}
 
+    <!-- ── ערב של אלבומים — Registration calendar link ─────────────────── -->
+    <div class="card" data-mgmt-section="album" style="margin-bottom:20px;border-color:#5a3a7a">
+      <h2 style="color:#c084fc">💿 ערב של אלבומים – הרשמות</h2>
+      <div style="margin-bottom:4px">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">לינק הרשמה חודשי</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a href="{{ ea_calendar_url }}" target="_blank"
+             style="font-size:0.8rem;color:#c084fc;word-break:break-all;flex:1;
+                    background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;
+                    padding:7px 10px;text-decoration:none;display:block">
+            {{ ea_calendar_url }}
+          </a>
+          <button onclick="copyText('{{ ea_calendar_url }}', this)"
+                  style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;
+                         padding:7px 10px;cursor:pointer;font-size:0.78rem;white-space:nowrap">
+            העתק
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ── ערב של אלבומים — Cover Grid Generator ─────────────────────────── -->
     <div class="card" data-mgmt-section="album" id="coverGridCard" style="margin-bottom:20px;border-color:#5a3a7a">
       <h2>🎨 יצירת תמונת אלבומים</h2>
