@@ -3096,6 +3096,12 @@ def index():
     ah_calendar_url = f"{ZEROCK_PUBLIC_URL}/al-haroker-schedule/{cal_year}/{cal_month}"
     ah_upload_base  = ZEROCK_PUBLIC_URL
 
+    # Erev Albumim calendar link — same month logic, clamped to schedule start
+    ea_cal_year, ea_cal_month = cal_year, cal_month
+    if (ea_cal_year, ea_cal_month) < (EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month):
+        ea_cal_year, ea_cal_month = EREV_ALBUMIM_SCHEDULE_START.year, EREV_ALBUMIM_SCHEDULE_START.month
+    ea_calendar_url = f"{ZEROCK_PUBLIC_URL}/erev-albumim-schedule/{ea_cal_year}/{ea_cal_month}"
+
     # Polls for matzad admin panel
     all_polls   = _load_polls()
     active_polls = sorted(
