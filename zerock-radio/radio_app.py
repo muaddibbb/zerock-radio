@@ -3122,6 +3122,7 @@ def index():
         heb_days=_HEB_DAYS,
         active_polls=active_polls,
         zerock_public_url=ZEROCK_PUBLIC_URL,
+        ea_calendar_url=ea_calendar_url,
     ))
     resp.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
     resp.headers['Pragma'] = 'no-cache'
