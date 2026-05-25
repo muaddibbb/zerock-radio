@@ -68,7 +68,7 @@ WP_APP_PASS = os.environ.get('WP_APP_PASSWORD', '')
 _WP_SHOW_SLUGS = {
     'Beat-oN מקומי':      'beat-on',
     'Black Parade':        'black-parade',
-    'ON AIR':              'on-air',
+    'On Air':              'on-air',
     'On the Mend':         'mend',
     'Oy Vavoy':            'oy-vavoy',
     'RockTrip':            'rocktrip',
