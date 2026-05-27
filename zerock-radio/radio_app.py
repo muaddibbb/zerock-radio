@@ -1478,6 +1478,7 @@ def _upload_and_mark_done(show_id):
                         _verify_subtitle     = s.get('episode_subtitle', '')
                         _verify_broadcaster  = s.get('broadcaster') or (_scfg_v.get('broadcaster', '') if _scfg_v else '')
                         _verify_ep_num       = s.get('episode_num', '')
+                        _wa_show = show
                         def _run_verify():
                             time.sleep(60)
                             _verify_and_fix_wp_post(
@@ -1486,14 +1487,14 @@ def _upload_and_mark_done(show_id):
                                 broadcaster=_verify_broadcaster,
                                 episode_num=_verify_ep_num,
                             )
+                            # Send WA notification AFTER slug is fixed so the link is correct
+                            _notify_whatsapp_upload(_wa_show, _verify_wp_id)
                         threading.Thread(target=_run_verify, daemon=True).start()
                     else:
                         # Podbean OK but WP creation failed — flag for retry
                         s['wp_post_missing'] = True
                         print(f"[Upload] ⚠ WP post missing for '{show.get('name')}' — flagged for retry", flush=True)
                     print(f"[Upload] Complete: '{show.get('name')}' wp_post_id={wp_post_id}", flush=True)
-                    threading.Thread(target=_notify_whatsapp_upload,
-                                     args=(show, wp_post_id), daemon=True).start()
                 else:
                     attempts = s.get('upload_attempts', 0) + 1
                     s['upload_attempts'] = attempts
