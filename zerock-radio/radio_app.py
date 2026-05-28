@@ -6906,8 +6906,8 @@ def _send_palash_welcome_emails(palash_songs):
                 '<p>שלום</p>'
                 '<p>ברוכים הבאים לפינה לשיפוטכם במצעד הרוק של ישראל!<br>'
                 'מוזמנים לשתף לעוקבים שלכם קישור להצבעה ← '
-                '<a href="https://linktr.ee/israelirockchart">'
-                'https://linktr.ee/israelirockchart</a></p>'
+                '<a href="https://linktr.ee/rockzerock">'
+                'https://linktr.ee/rockzerock</a></p>'
                 '<p>שימו לב ניתן להצביע עד יום שלישי בשעה 19:00</p>'
                 '<p>ובנוסף יעלה פוסט עליכם במהלך השבוע</p>'
                 '<hr style="border:none;border-top:1px solid #ddd;margin:20px 0">'
@@ -6918,7 +6918,7 @@ def _send_palash_welcome_emails(palash_songs):
                 'שלום\n\n'
                 'ברוכים הבאים לפינה לשיפוטכם במצעד הרוק של ישראל!\n'
                 'מוזמנים לשתף לעוקבים שלכם קישור להצבעה --> '
-                'https://linktr.ee/israelirockchart\n'
+                'https://linktr.ee/rockzerock\n'
                 'שימו לב ניתן להצביע עד יום שלישי בשעה 19:00\n'
                 'ובנוסף יעלה פוסט עליכם במהלך השבוע\n\n'
                 'צוות ZeRock Radio 🤘'
@@ -6946,7 +6946,7 @@ def _send_palash_chart_entry_emails(entered_songs):
     if not SMTP_USER or not SMTP_PASS:
         print("[ChartEntry] SMTP not configured — skipping", flush=True)
         return
-    vote_url = "https://linktr.ee/israelirockchart"
+    vote_url = "https://linktr.ee/rockzerock"
     for song in entered_songs:
         email    = (song.get('email') or '').strip().lower()
         label    = song.get('label', '')
