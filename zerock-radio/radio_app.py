@@ -1293,6 +1293,7 @@ def _do_podbean_wp_upload(show):
         'breakdown':    'עדן גולן',
         'singles':      'יובל ביטון',
         'rocktrip':     'אלעד אביגן',
+        'matzad_harok': 'ערן הר-פז',
     }
     broadcaster = (show.get('broadcaster')
                    or show_cfg.get('broadcaster', '')
