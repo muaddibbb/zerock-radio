@@ -399,9 +399,13 @@
     </div>
 
     <!-- weeks on chart -->
-    {% if s.weeks is defined and s.weeks %}
+    <!-- Positions 21-25 (leaving the chart / palash zone) show ONE WEEK LESS:
+         the count excludes the current (leaving) week, i.e. how many weeks the
+         song was actually IN the chart. Positions 1-20 show the full count. -->
+    {% set disp_weeks = (s.weeks - 1) if (loop.index > 20 and s.weeks) else s.weeks %}
+    {% if disp_weeks and disp_weeks > 0 %}
     <div class="weeks-badge">
-      <div class="weeks-num">{{ s.weeks }}</div>
+      <div class="weeks-num">{{ disp_weeks }}</div>
       <div class="weeks-label">שבועות</div>
     </div>
     {% endif %}
