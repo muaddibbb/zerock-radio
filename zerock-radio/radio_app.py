@@ -4181,11 +4181,9 @@ def _sync_wp_board(force=False):
                 # Combined JS fix — single <script> block (WAF strips 2nd block).
                 # 1. Spotify playlist link fix for /rock-chart/ page.
                 # 2. Homepage now-playing fix: patches .hp-live-now / .hp-next-show
-                #    (a) schedule-based text from /wp-json/zr/v1/np
-                #    (b) live override from Rocky /api/live-show (chained after, wins on conflict)
+                #    from the weekly board only (/wp-json/zr/v1/np). No live-stream override.
                 _sp_top20    = SPOTIFY_TOP20_PLAYLIST
                 _sp_palash   = SPOTIFY_PALASH_PLAYLIST
-                _rocky_pub   = ZEROCK_PUBLIC_URL
                 combined_fix = (
                     '\n<script id="zerock-fix">'
                     '(function(){'
