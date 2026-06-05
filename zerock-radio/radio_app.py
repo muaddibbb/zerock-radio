@@ -2577,29 +2577,17 @@ def scheduler_loop():
 
         _sync_zikaron_to_lq()   # handles holocaust, memorial, yom_kippur
 
-        # ── Periodic WP board sync (every 30 min) ─────────────────────────────
-        # Ensures the schedule board self-corrects even when event-based syncs
-        # are missed (e.g. after a restart, or when shows age out of the 7-day
-        # window without triggering any other sync event).
-        global _last_board_sync
-        _now_ts = time.time()
-        if _now_ts - _last_board_sync >= 1800:   # 30-minute interval
-            _last_board_sync = _now_ts
-            threading.Thread(target=_sync_wp_board, daemon=True).start()
+        # NOTE: periodic 30-min board sync REMOVED (2026-06). The weekly board is a
+        # weekly snapshot — it refreshes only at Saturday midnight (new broadcast
+        # week) and when Al Haroker / Erev Albumim episodes are uploaded.
 
         time.sleep(15)
 
 threading.Thread(target=scheduler_loop, daemon=True).start()
 
-# Sync WP board on startup so service restarts don't leave a stale schedule
-def _startup_sync():
-    time.sleep(10)   # give Flask/LQ a moment to initialise
-    print("[Startup] Syncing WP schedule board…", flush=True)
-    try:
-        _sync_wp_board()
-    except Exception as e:
-        print(f"[Startup] WP board sync failed: {e}", flush=True)
-threading.Thread(target=_startup_sync, daemon=True).start()
+# NOTE: startup board sync REMOVED (2026-06). The board lives in WP and persists
+# across restarts; re-syncing on startup would overwrite the weekly snapshot
+# mid-week. It refreshes only Saturday midnight + on Al Haroker/Erev upload.
 
 # ── Nightly playlist rebuild (midnight) ───────────────────────────────────────
 def _nightly_rebuild_loop():
