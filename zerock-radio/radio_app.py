@@ -6206,7 +6206,9 @@ def api_one_time_upload(token):
                 break
         save_schedule(schedule)
     threading.Thread(target=_upload_and_mark_done, args=(show_id,), daemon=True).start()
-    threading.Thread(target=_sync_wp_board, daemon=True).start()
+    # Board sync only for the queue-only board shows (Al Haroker / Erev Albumim).
+    if entry.get('show_key') in QUEUE_ONLY_BOARD_SHOWS:
+        threading.Thread(target=_sync_wp_board, daemon=True).start()
 
     print(f"[OneTimeLink] Used by {entry.get('broadcaster','?')} for {show_cfg['name']} → broadcast {broadcast_dt.isoformat()}", flush=True)
     return jsonify({'ok': True, 'broadcast_time': broadcast_dt.isoformat()})
