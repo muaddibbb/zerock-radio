@@ -2702,6 +2702,18 @@ def _weekly_poll_renew_loop():
         if datetime.now().strftime('%Y-%m-%d') in _skip_dates:
             print("[WeeklyPoll] Skipping renew — no Mitsad this week", flush=True)
             _already_renewed_week[0] = iso_week  # prevent retry
+            # Flag the poll that would have aired this week as 'skipped' so its
+            # chart number is NOT consumed — the next renewal reuses it (numbering
+            # stays continuous with what actually aired).
+            try:
+                _sp = _load_polls()
+                if _sp:
+                    _latest_sp = max(_sp, key=lambda p: p.get('closes_at', '') or '')
+                    _latest_sp['skipped'] = True
+                    _save_polls(_sp)
+                    print(f"[WeeklyPoll] Marked poll '{_latest_sp.get('id')}' as skipped (number freed)", flush=True)
+            except Exception as _se:
+                print(f"[WeeklyPoll] Could not mark skipped poll: {_se}", flush=True)
             time.sleep(600)
             continue
 
