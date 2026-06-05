@@ -4759,14 +4759,17 @@ def api_delete_show(show_id):
     save_schedule(schedule)
 
     # If this was a primary (non-rerun) episode for a fixed-day show,
-    # mark that show as cancelled on the board for this week.
+    # mark that show as cancelled on the board for this week (applied at the next
+    # Saturday-midnight rebuild — the board is a weekly snapshot).
+    _del_sk = to_delete.get('show_key', '') if to_delete else ''
     if to_delete and not to_delete.get('is_rerun') and not to_delete.get('triggered'):
-        sk = to_delete.get('show_key', '')
-        if sk:
-            cfg = next((s for s in SHOW_SCHEDULE if s['key'] == sk), None)
-            if cfg and cfg.get('day') is not None and sk not in QUEUE_ONLY_BOARD_SHOWS:
-                _cancel_show_on_board(sk)
-    _sync_wp_board()
+        if _del_sk:
+            cfg = next((s for s in SHOW_SCHEDULE if s['key'] == _del_sk), None)
+            if cfg and cfg.get('day') is not None and _del_sk not in QUEUE_ONLY_BOARD_SHOWS:
+                _cancel_show_on_board(_del_sk)
+    # Board sync only for the queue-only board shows (Al Haroker / Erev Albumim).
+    if _del_sk in QUEUE_ONLY_BOARD_SHOWS:
+        threading.Thread(target=_sync_wp_board, daemon=True).start()
 
     return jsonify({'success': True})
 
