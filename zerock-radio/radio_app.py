@@ -8631,7 +8631,8 @@ def api_matzad_chart_create_from_poll():
             show['rerun_scheduled'] = True
         save_schedule(sched)
 
-    threading.Thread(target=_sync_wp_board, daemon=True).start()
+    # No board sync: matzad is a fixed-day show already on the static weekly grid;
+    # the board is a weekly snapshot (refreshed Saturday midnight).
     print(f"[NextChart] Auto-created matzad episode {show_id} from poll {poll_id} for {bcast_iso}", flush=True)
     return jsonify({'ok': True, 'show': show, 'chart': chart})
 
