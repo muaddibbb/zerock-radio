@@ -6956,20 +6956,24 @@ def _send_palash_chart_entry_emails(entered_songs):
             continue
         try:
             body_text = (
-                f"היי, כאן צוות מצעד הרוק של ישראל.\n\n"
-                f"אנחנו שמחים לבשר שהשיר {label} נכנס למצעד הרוק של ישראל למקום ה {new_rank}\n"
-                f"מציעים להמשיך ולקדם את ההצבעות שלו במצעד כאן:\n"
+                f"היי כאן צוות מצעד הרוק של ישראל.\n"
+                f"שמחים לבשר לכם שהשיר \n"
+                f"{label}\n"
+                f"נכנס למצעד הרוק של ישראל והוא במקום ה {new_rank}\n\n"
+                f"מצרפים לכם את הלינק להצבעה כאן:\n"
                 f"{vote_url}\n\n"
-                f"בהצלחה,\n"
-                f"צוות המצעד."
+                f"אתם רוק!\n"
+                f"צוות מצעד הרוק של ישראל"
             )
             body_html = (
                 '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.8">'
-                '<p>היי, כאן צוות מצעד הרוק של ישראל.</p>'
-                f'<p>אנחנו שמחים לבשר שהשיר <strong>{label}</strong> נכנס למצעד הרוק של ישראל למקום ה <strong>{new_rank}</strong></p>'
-                f'<p>מציעים להמשיך ולקדם את ההצבעות שלו במצעד כאן:<br>'
+                '<p>היי כאן צוות מצעד הרוק של ישראל.<br>'
+                'שמחים לבשר לכם שהשיר<br>'
+                f'<strong>{label}</strong><br>'
+                f'נכנס למצעד הרוק של ישראל והוא במקום ה <strong>{new_rank}</strong></p>'
+                f'<p>מצרפים לכם את הלינק להצבעה כאן:<br>'
                 f'<a href="{vote_url}">{vote_url}</a></p>'
-                '<p>בהצלחה,<br><strong>צוות המצעד.</strong></p>'
+                '<p>אתם רוק!<br><strong>צוות מצעד הרוק של ישראל</strong></p>'
                 '</div>'
             )
             msg = MIMEMultipart('alternative')
