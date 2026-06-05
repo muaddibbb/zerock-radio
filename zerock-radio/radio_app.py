@@ -8059,11 +8059,24 @@ def api_polls_weekly_renew():
     old_poll['open']      = False
     old_poll['closed_at'] = opens_at_str
 
-    # Create new poll — increment the chart number in the title and update the date
+    # Create new poll — chart number = highest NON-SKIPPED chart number + 1.
+    # Using max() over all real (non-skipped) polls instead of old_num+1 makes the
+    # numbering skip-safe: a skipped week (poll flagged 'skipped') never consumes a
+    # chart number, so the sequence stays continuous with what actually aired.
     import re as _re
     old_title   = old_poll.get('title', 'מצעד הרוק הישראלי השבועי של רדיו זה רוק 306')
-    old_num_m   = _re.search(r'(\d{3,})', old_title)
-    new_num     = (int(old_num_m.group(1)) + 1) if old_num_m else ''
+    _chart_nums = []
+    for _p in polls:
+        if _p.get('skipped'):
+            continue
+        _m = _re.search(r'(\d{3,})', _p.get('title', ''))
+        if _m:
+            _chart_nums.append(int(_m.group(1)))
+    if _chart_nums:
+        new_num = max(_chart_nums) + 1
+    else:
+        old_num_m = _re.search(r'(\d{3,})', old_title)
+        new_num   = (int(old_num_m.group(1)) + 1) if old_num_m else ''
     # Date = next Thursday (the broadcast date for this new poll)
     next_thursday = now_israel + _td2(days=7)
     new_date    = next_thursday.strftime('%d/%m/%Y')
