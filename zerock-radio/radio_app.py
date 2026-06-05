@@ -2320,8 +2320,9 @@ def scheduler_loop():
                             # Reload jingle source after show trigger — rotate() can lose
                             # the pre-fetched jingle track when shows queue interrupts.
                             threading.Timer(10.0, _reload_jingle_source, args=('after show trigger',)).start()
-                            # Sync WP schedule board so it reflects the new "now playing" show
-                            threading.Thread(target=_sync_wp_board, daemon=True).start()
+                            # NOTE: board is NOT synced on track change. The weekly board is a
+                            # weekly snapshot (refreshed Saturday midnight + on Al Haroker/Erev
+                            # Albumim upload). WP "now playing" derives from that board only.
 
                             # Publish WP post at air time — don't rely on wp-cron.
                             # Skip for queue_only shows, shows with no_podbean flag,
