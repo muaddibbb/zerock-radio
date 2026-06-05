@@ -8145,55 +8145,12 @@ def api_polls_weekly_renew():
         daemon=True,
     ).start()
 
-    # ── Update Spotify playlists ──────────────────────────────────────────────
-    import re as _re2
-    _chart_num_m = _re2.search(r'(\d{3,})', new_title)
-    _chart_num   = _chart_num_m.group(1) if _chart_num_m else ''
-    _chart_date  = now_israel.strftime('%d/%m/%Y')
-
-    def _update_spotify_playlists(matzad_songs, palash_songs, chart_num, chart_date):
-        """Replace Palash playlist and Top-20 playlist tracks and descriptions on Spotify."""
-        try:
-            description = f'מצעד הרוק של ישראל מספר {chart_num} מעודכן לתאריך {chart_date}'
-
-            # Resolve Spotify URLs for songs that don't already have them
-            def _ensure_uris(songs):
-                uris = []
-                for s in songs:
-                    url = s.get('spotify_url')
-                    if not url and SPOTIFY_CLIENT_ID:
-                        url = _spotify_search_track(s['label'])
-                    uri = _spotify_track_uri_from_url(url)
-                    if uri:
-                        uris.append(uri)
-                return uris
-
-            palash_uris = _ensure_uris(palash_songs)
-            top20_uris  = _ensure_uris(matzad_songs)
-
-            if palash_uris:
-                _spotify_replace_playlist(SPOTIFY_PALASH_PLAYLIST, palash_uris)
-            else:
-                print("[WeeklyRenew] No Palash Spotify URIs — skipping palash playlist update", flush=True)
-            _spotify_update_playlist_description(SPOTIFY_PALASH_PLAYLIST, description)
-
-            if top20_uris:
-                _spotify_replace_playlist(SPOTIFY_TOP20_PLAYLIST, top20_uris)
-            else:
-                print("[WeeklyRenew] No Top-20 Spotify URIs — skipping top-20 playlist update", flush=True)
-            _spotify_update_playlist_description(SPOTIFY_TOP20_PLAYLIST, description)
-
-            # Update WP rock-chart page Spotify links
-            _spotify_update_wp_links(SPOTIFY_TOP20_PLAYLIST, SPOTIFY_PALASH_PLAYLIST)
-
-        except Exception as e:
-            print(f"[WeeklyRenew] Spotify playlist update error: {e}", flush=True)
-
-    threading.Thread(
-        target=_update_spotify_playlists,
-        args=(new_songs[:20], new_songs[20:], _chart_num, _chart_date),
-        daemon=True,
-    ).start()
+    # ── Spotify playlist auto-update DISABLED (2026-06) ───────────────────────
+    # Spotify gated the add/remove/replace-playlist-items endpoint behind
+    # Extended Quota Mode (org-only, 250k+ MAU), so the API returns 403 for
+    # this app. Playlists are now maintained MANUALLY. Do not re-enable without
+    # a working write path (e.g. sp_dc web-player token).
+    print("[WeeklyRenew] Spotify playlist auto-update is disabled — update playlists manually", flush=True)
 
     # Send welcome emails to Palash artists (new entrants to the voting section)
     threading.Thread(
