@@ -150,8 +150,8 @@ SPOTIFY_CLIENT_SECRET = os.environ.get('SPOTIFY_CLIENT_SECRET', '7099b2bcbb3e44e
 # Spotify OAuth refresh token — needed for playlist modification (user scope)
 SPOTIFY_REFRESH_TOKEN = os.environ.get('SPOTIFY_REFRESH_TOKEN', '')
 # Weekly poll Spotify playlist IDs to update on renewal (owned by Roy Kuperman)
-SPOTIFY_PALASH_PLAYLIST  = '5pzM2G3wfgBAoU4V7uwrai'
-SPOTIFY_TOP20_PLAYLIST   = '5C6daDPpvGaaqNF2CkfCxf'
+SPOTIFY_PALASH_PLAYLIST  = '5NMCfgaWkLrFpusbgrMhU4'
+SPOTIFY_TOP20_PLAYLIST   = '1ifvWserGDqUQUH6Ows5oA'
 
 # ─── Al HaRoker self-service scheduling ───────────────────────────────────────
 AL_HAROKER_BOOKINGS_FILE    = f"{RADIO_DIR}/al_haroker_bookings.json"
