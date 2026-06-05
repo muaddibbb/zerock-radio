@@ -4496,8 +4496,11 @@ def api_add_show():
 
         save_schedule(schedule)
 
-    # Sync WP board so the new show appears in the schedule immediately
-    threading.Thread(target=_sync_wp_board, daemon=True).start()
+    # Board sync ONLY for the queue-only board shows (Al Haroker / Erev Albumim).
+    # Regular shows are part of the static weekly grid and do not touch the board
+    # mid-week — the board is a weekly snapshot (refreshed Saturday midnight).
+    if show_key in QUEUE_ONLY_BOARD_SHOWS:
+        threading.Thread(target=_sync_wp_board, daemon=True).start()
 
     if not is_album and not is_playlist:
         threading.Thread(target=_move_to_nas, args=(show_id, local_path, nas_path), daemon=True).start()
