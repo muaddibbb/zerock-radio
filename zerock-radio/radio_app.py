@@ -7972,11 +7972,10 @@ def api_polls_weekly_renew():
         # If not in map: brand-new song (prev absent = 'new' on results page)
         if s['id'] in old_palash_ids:
             # Palash graduate. The OLD poll is its *graduation chart* — the chart on
-            # which it won the palash vote and first appeared at a top-20 rank. That
-            # chart counts as WEEK 1, so this new chart is WEEK 2.
-            # Exception: if the old poll was a SKIPPED week (never aired), it doesn't
-            # count, so the graduate starts at week 1 on this (first real) chart.
-            new_song_weeks[new_id] = 1 if old_poll.get('skipped') else 2
+            # which it won the palash vote — and that counts as WEEK 1 (even if that
+            # week was skipped/never aired). So this, its first chart as a member, is
+            # WEEK 2. Subsequent weeks increment normally (2→3→4…).
+            new_song_weeks[new_id] = 2
         elif s['id'] not in old_song_weeks:
             new_song_weeks[new_id] = 0          # brand-new song: 0 weeks
         else:
