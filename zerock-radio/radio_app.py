@@ -5002,12 +5002,10 @@ def api_wp_sync():
     return jsonify({'ok': True, 'message': 'WP board sync triggered (background)'})
 
 # ── Startup tasks ─────────────────────────────────────────────────────────────
-# Push the current weekly schedule to the WP board on every server restart.
-# This keeps the WP board current whenever SHOW_SCHEDULE is updated in code.
-threading.Thread(target=lambda: (
-    __import__('time').sleep(5),   # wait for Flask to be fully up first
-    _sync_wp_board()
-), daemon=True).start()
+# NOTE: startup board sync REMOVED (2026-06). The board is a weekly snapshot that
+# persists in WP across restarts; it refreshes only at Saturday midnight (new
+# broadcast week) and on Al Haroker / Erev Albumim upload. If SHOW_SCHEDULE
+# changes in code, trigger a manual refresh via POST /api/wp-sync.
 
 def _start_weekly_board_refresh():
     """Background thread: at Sunday midnight clears board cancellations and refreshes WP board."""
