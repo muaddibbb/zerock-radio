@@ -1510,14 +1510,29 @@ def _upload_and_mark_done(show_id):
                         _wa_show = show
                         def _run_verify():
                             time.sleep(60)
-                            _verify_and_fix_wp_post(
-                                _verify_wp_id, _verify_show_name, _verify_bcast, _verify_podbean,
-                                episode_subtitle=_verify_subtitle,
-                                broadcaster=_verify_broadcaster,
-                                episode_num=_verify_ep_num,
-                            )
-                            # Send WA notification AFTER slug is fixed so the link is correct
-                            _notify_whatsapp_upload(_wa_show, _verify_wp_id)
+                            # Verify (and auto-fix) the WP post. Retry a few times so a slow
+                            # Podbean-link propagation doesn't permanently block the WhatsApp.
+                            # _verify_and_fix_wp_post returns False if the post is wrong, the
+                            # PATCH failed, or the podbean_link is still missing.
+                            _verified = False
+                            for _attempt in range(3):
+                                _verified = _verify_and_fix_wp_post(
+                                    _verify_wp_id, _verify_show_name, _verify_bcast, _verify_podbean,
+                                    episode_subtitle=_verify_subtitle,
+                                    broadcaster=_verify_broadcaster,
+                                    episode_num=_verify_ep_num,
+                                )
+                                if _verified:
+                                    break
+                                time.sleep(60)
+                            # WhatsApp fires ONLY after verification confirms the episode is on
+                            # Podbean + WP correctly. This is tied to the UPLOAD event (this
+                            # thread runs right after _do_podbean_wp_upload), never to air time.
+                            if _verified:
+                                _notify_whatsapp_upload(_wa_show, _verify_wp_id)
+                            else:
+                                print(f"[WA-Notify] Skipped for '{_wa_show.get('name')}' — "
+                                      f"Podbean/WP verification did not pass after retries", flush=True)
                         threading.Thread(target=_run_verify, daemon=True).start()
                     elif show.get('show_key') == 'matzad_harok':
                         # מצעד is Podbean-only (no_wp) — no WP post is expected.
