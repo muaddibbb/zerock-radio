@@ -1392,7 +1392,35 @@ def _do_podbean_wp_upload(show):
             except Exception:
                 pass
 
-_WA_GROUP_SHOWS = '972547464415-1621406038@g.us'  # הודעות וקישורים זה רוק
+_WA_GROUP_SHOWS  = '972547464415-1621406038@g.us'  # הודעות וקישורים זה רוק
+_WA_GROUP_MATZAD = '972523434878-1563868107@g.us'  # מצעד שבועי
+
+def _notify_whatsapp_matzad(show, podbean_url):
+    """Fire-and-forget: after the מצעד episode is uploaded to Podbean, post the
+    Podbean episode link to the 'מצעד שבועי' WhatsApp group. Podbean-only — the
+    מצעד has no WP post, so this is the link that gets shared."""
+    try:
+        if not podbean_url:
+            print("[WA-Matzad] No podbean_url — skipping", flush=True)
+            return
+        try:
+            date_str = datetime.fromisoformat(show['scheduled_time']).strftime('%d/%m/%y')
+        except Exception:
+            date_str = ''
+        ep = (show.get('episode_num') or '').strip()
+        title = 'מצעד הרוק של ישראל'
+        if ep:
+            title += f' {ep}'
+        header = f"🎶 {title} {date_str}".strip()
+        message = f"{header}\n{podbean_url}"
+        _requests.post(
+            'http://127.0.0.1:7733/send',
+            json={'to': _WA_GROUP_MATZAD, 'message': message},
+            timeout=10,
+        )
+        print(f"[WA-Matzad] Sent Podbean link to מצעד שבועי group ({podbean_url})", flush=True)
+    except Exception as e:
+        print(f"[WA-Matzad] Failed: {e}", flush=True)
 
 def _notify_whatsapp_upload(show, wp_post_id):
     """Fire-and-forget: send WP show link to WhatsApp group via local bridge."""
