@@ -6931,7 +6931,7 @@ def _send_palash_welcome_emails(palash_songs):
                 'צוות ZeRock Radio 🤘'
             )
             msg = MIMEMultipart('alternative')
-            msg['Subject'] = 'כניסה למצעד הרוק של ישראל'
+            msg['Subject'] = 'כניסה לפינה לשיפוטכם'
             msg['From']    = SMTP_FROM_ADDR
             msg['To']      = email
             msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
