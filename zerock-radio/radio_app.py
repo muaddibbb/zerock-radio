@@ -6910,6 +6910,7 @@ def _send_palash_welcome_emails(palash_songs):
                 'color:#222;line-height:1.8">'
                 '<p>שלום</p>'
                 '<p>ברוכים הבאים לפינה לשיפוטכם במצעד הרוק של ישראל!<br>'
+                f'השיר שלכם: <strong>{label}</strong><br>'
                 'מוזמנים לשתף לעוקבים שלכם קישור להצבעה ← '
                 '<a href="https://linktr.ee/rockzerock">'
                 'https://linktr.ee/rockzerock</a></p>'
