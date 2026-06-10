@@ -6923,6 +6923,7 @@ def _send_palash_welcome_emails(palash_songs):
             body_text = (
                 'שלום\n\n'
                 'ברוכים הבאים לפינה לשיפוטכם במצעד הרוק של ישראל!\n'
+                f'השיר שלכם: {label}\n'
                 'מוזמנים לשתף לעוקבים שלכם קישור להצבעה --> '
                 'https://linktr.ee/rockzerock\n'
                 'שימו לב ניתן להצביע עד יום שלישי בשעה 19:00\n'
