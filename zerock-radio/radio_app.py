@@ -9070,6 +9070,15 @@ def _nr_process_message(M, msg_uid):
     if typ != 'OK' or not msg_data or not msg_data[0]:
         return None
     raw = msg_data[0][1]
+    # ── Leave the email UNREAD ────────────────────────────────────────────────
+    # We fetch with BODY.PEEK[] (which does not set \Seen), but we ALSO explicitly
+    # clear \Seen on every message we touch so reading a submission here never
+    # changes its unread state in the team inbox. Requires the mailbox to be
+    # selected read-write (it is). Runs once per new UID, so it's bounded.
+    try:
+        M.uid('STORE', msg_uid, '-FLAGS', '(\\Seen)')
+    except Exception as _seen_e:
+        print(f"[NewReleases] could not restore UNREAD for uid={msg_uid}: {_seen_e}", flush=True)
     msg = _email_mod.message_from_bytes(raw)
 
     subject   = _nr_decode_header(msg.get('Subject', ''))
