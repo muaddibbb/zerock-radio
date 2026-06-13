@@ -5561,13 +5561,13 @@ def _send_erev_albumim_wa(booking):
         except Exception:
             date_disp = date_s
 
-        lines = [f"🎶 ערב אלבומים — {name} — {date_disp}", ""]
+        lines = [f"🎶 ערב אלבומים — {name} — {date_disp}"]
         if albums:
+            lines.append("")
             lines.append("האלבומים שנבחרו:")
             for i, alb in enumerate(albums, 1):
                 lines.append(f"{i}. {alb}")
-        else:
-            lines.append("(אין רשימת אלבומים)")
+        # No albums → send just the broadcaster + date header (per requirement).
 
         message = '\n'.join(lines)
         _requests.post(
