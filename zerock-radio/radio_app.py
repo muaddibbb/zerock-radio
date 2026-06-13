@@ -1410,12 +1410,14 @@ def _notify_whatsapp_matzad(show, podbean_url=''):
         if ep:
             title += f' {ep}'
         message = f"🎶 {title} {date_str}\nבהגשת: {broadcaster}".strip()
+        if podbean_url:
+            message += f"\n{podbean_url}"
         _requests.post(
             'http://127.0.0.1:7733/send',
             json={'to': _WA_GROUP_MATZAD, 'message': message},
             timeout=10,
         )
-        print(f"[WA-Matzad] Sent broadcaster notification to מצעד שבועי group ({broadcaster})", flush=True)
+        print(f"[WA-Matzad] Sent to מצעד שבועי group ({broadcaster}{' + link' if podbean_url else ''})", flush=True)
     except Exception as e:
         print(f"[WA-Matzad] Failed: {e}", flush=True)
 
