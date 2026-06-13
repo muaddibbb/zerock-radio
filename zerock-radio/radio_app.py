@@ -1534,10 +1534,12 @@ def _upload_and_mark_done(show_id):
                                       f"Podbean/WP verification did not pass after retries", flush=True)
                         threading.Thread(target=_run_verify, daemon=True).start()
                     elif show.get('show_key') == 'matzad_harok':
-                        # מצעד is Podbean-only (no_wp) — no WP post is expected, and the
-                        # 'מצעד שבועי' WhatsApp broadcaster notification fires at QUEUE time
-                        # (see api_add_show), not here. Nothing to do on upload completion.
-                        pass
+                        # מצעד is Podbean-only (no_wp). Notify the 'מצעד שבועי' group with
+                        # the broadcaster + the Podbean link, now that the upload is done.
+                        _ms_pb = podbean_url or s.get('podbean_url') or ''
+                        _ms_show = show
+                        threading.Thread(target=_notify_whatsapp_matzad,
+                                         args=(_ms_show, _ms_pb), daemon=True).start()
                     else:
                         # Podbean OK but WP creation failed — flag for retry
                         s['wp_post_missing'] = True
