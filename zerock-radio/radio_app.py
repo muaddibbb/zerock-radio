@@ -5600,8 +5600,8 @@ def _erev_albumim_wa_loop():
                             continue
                         if b.get('wa_sent_at'):
                             continue
-                        if not b.get('albums'):
-                            continue
+                        # Send on Friday regardless of whether albums were provided —
+                        # with albums if available, otherwise just broadcaster + date.
                         if _send_erev_albumim_wa(b):
                             b['wa_sent_at'] = now.isoformat()
                             changed = True
