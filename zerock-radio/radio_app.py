@@ -2339,6 +2339,10 @@ def scheduler_loop():
             for show in schedule:
                 # ── Trigger first broadcast ────────────────────────────────────
                 if not show.get('triggered'):
+                    # Erev Albumim registration placeholder: board-display only, has no
+                    # audio — never attempt to play it (a real upload supersedes it).
+                    if show.get('ea_registration') and not show.get('nas_ready'):
+                        continue
                     try:
                         show_time = datetime.fromisoformat(show['scheduled_time'])
                     except Exception as e:
