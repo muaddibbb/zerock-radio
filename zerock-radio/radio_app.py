@@ -6031,6 +6031,38 @@ def api_erev_albumim_register():
         bookings.append(booking)
         _save_erev_albumim_bookings(bookings)
 
+    # Populate the WP weekly schedule: create a board placeholder for this Friday so
+    # the registered slot shows on the weekly board (the board reads schedule.json
+    # for queue-only shows like ערב של אלבומים). Flagged ea_registration so the
+    # scheduler never tries to *play* it (no audio yet) — it's display-only. When the
+    # broadcaster later uploads the real audio, api_add_show's duplicate guard
+    # replaces this placeholder with the real entry.
+    try:
+        _ea_dt = datetime.strptime(date_str, '%Y-%m-%d').replace(hour=17, minute=0, second=0, microsecond=0)
+        with _schedule_lock:
+            _sched = load_schedule()
+            _exists = any(s.get('show_key') == 'erev_albumim'
+                          and (s.get('scheduled_time', '')[:10] == date_str)
+                          for s in _sched)
+            if not _exists:
+                _sched.append({
+                    'id':             str(int(time.time() * 1000)),
+                    'name':           'ערב של אלבומים',
+                    'show_key':       'erev_albumim',
+                    'broadcaster':    name,
+                    'mode':           'queue_only',
+                    'scheduled_time': _ea_dt.isoformat(),
+                    'nas_ready':      False,
+                    'triggered':      False,
+                    'is_rerun':       False,
+                    'ea_registration': True,   # board-only placeholder (no audio yet)
+                    'added_at':       datetime.now().isoformat(),
+                })
+                save_schedule(_sched)
+        threading.Thread(target=_sync_wp_board, daemon=True).start()
+    except Exception as _ea_e:
+        print(f"[ErevAlbumim] schedule placeholder creation error: {_ea_e}", flush=True)
+
     threading.Thread(target=_send_erev_albumim_confirmation_email, args=(booking,), daemon=True).start()
     return jsonify({'ok': True})
 
