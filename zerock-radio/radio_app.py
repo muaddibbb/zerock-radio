@@ -4360,6 +4360,11 @@ def api_add_show():
         podbean_skip_wp = True   # Podbean yes, WP no
     elif show_cfg and show_cfg.get('no_podbean'):
         mode = 'queue_only'
+    # מצעד is Podbean-only by design — ALWAYS upload to Podbean so the archive exists
+    # and the 'מצעד שבועי' WhatsApp (broadcaster + link) reliably fires. Never queue_only.
+    if show_key == 'matzad_harok' and mode != 'queue_to_broadcast':
+        print(f"[Schedule] Forcing 'matzad_harok' mode {mode!r} → 'queue_to_broadcast' (Podbean-only show)", flush=True)
+        mode = 'queue_to_broadcast'
     if not show_cfg:
         # Legacy: support free-form name + manual scheduled_time
         name           = request.form.get('name', '').strip()
