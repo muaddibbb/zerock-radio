@@ -4555,12 +4555,9 @@ def api_add_show():
     if show_key in QUEUE_ONLY_BOARD_SHOWS:
         threading.Thread(target=_sync_wp_board, daemon=True).start()
 
-    # Mitzad: notify the 'מצעד שבועי' WhatsApp group who is presenting this week —
-    # fires when the מצעד is queued, independent of any Podbean upload (so it sends
-    # even for queue_only episodes).
-    if show_key == 'matzad_harok':
-        _mz_show = show
-        threading.Thread(target=_notify_whatsapp_matzad, args=(_mz_show,), daemon=True).start()
+    # Mitzad: the 'מצעד שבועי' WhatsApp (broadcaster + Podbean link) fires AFTER the
+    # Podbean upload completes (see _upload_and_mark_done), so the message can include
+    # the link. Requires the מצעד to be uploaded as queue_to_broadcast.
 
     if not is_album and not is_playlist:
         threading.Thread(target=_move_to_nas, args=(show_id, local_path, nas_path), daemon=True).start()
