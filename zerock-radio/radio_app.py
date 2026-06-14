@@ -220,6 +220,7 @@ SHOW_SCHEDULE = [
     {'key': 'san_patrock_itamar',   'name': 'סן פטרוק',            'broadcaster': 'איתמר עדן',    'day': 0,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 5,    'rerun_time': '11:00','wp_show_id': ''},
     {'key': 'san_patrock_roi',      'name': 'סן פטרוק',            'broadcaster': 'רועי כנפו',    'day': 3,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 2,    'rerun_time': '14:00','wp_show_id': ''},
     {'key': 'san_patrock_roni',     'name': 'סן פטרוק',            'broadcaster': 'רוני אורן',    'day': 3,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 2,    'rerun_time': '15:00','wp_show_id': ''},
+    {'key': 'san_patrock_rivka',    'name': 'סן פטרוק',            'broadcaster': 'רבקה סיגל',    'day': 1,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 4,    'rerun_time': '16:00','wp_show_id': ''},
     {'key': 'time_warp',            'name': 'Time Warp',           'broadcaster': 'רועי קופרמן',  'day': 1,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '18:00','wp_show_id': ''},
     {'key': 'breakdown',            'name': 'The Breakdown',       'broadcaster': 'עדן גולן',     'day': 1,    'time': '10:00', 'upload_time': '11:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': ''},
     {'key': 'singles',              'name': 'סינגלס',              'broadcaster': 'יובל ביטון',   'day': 1,    'time': '12:00', 'upload_time': '13:00', 'rerun_days_offset': 2,    'rerun_time': '11:00','wp_show_id': ''},
