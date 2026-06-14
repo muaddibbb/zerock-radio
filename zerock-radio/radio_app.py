@@ -3648,7 +3648,7 @@ _SHOW_DURATIONS_H = {
     'pascal': 2, 'patrock_laila_eyal': 1, 'patrock_laila_eliran': 1,
     'patrock_laila_meir': 1, 'hashulter': 1, 'on_air': 1, 'oy_vavoy': 2,
     'san_patrock_assaf': 1, 'san_patrock_itamar': 1, 'san_patrock_roi': 1,
-    'san_patrock_roni': 1, 'time_warp': 1, 'breakdown': 1, 'singles': 1,
+    'san_patrock_roni': 1, 'san_patrock_rivka': 1, 'time_warp': 1, 'breakdown': 1, 'singles': 1,
     'haachot': 1, 'ze_prog': 1, 'on_the_mend': 1, 'shabi': 1, 'forte': 1,
     'beat_on': 1, 'stage_dive': 1, 'erev_albumim': 7, 'matzad_harok': 2,
 }
