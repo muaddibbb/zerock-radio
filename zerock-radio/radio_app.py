@@ -3806,6 +3806,46 @@ def _build_wp_schedule_slots():
     except Exception:
         pass
 
+    # ── Erev Albumim: populate the board from the self-scheduling bookings ──────
+    # The weekly board reflects registered ערב של אלבומים Friday slots directly from
+    # erev_albumim_bookings.json (even before any audio is uploaded). Deduped against
+    # any real schedule entry already captured above (uploaded audio wins).
+    try:
+        _ea_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == 'erev_albumim'), None)
+        _ea_start_h = 17.0
+        if _ea_cfg and _ea_cfg.get('time'):
+            _eh, _em = map(int, _ea_cfg['time'].split(':'))
+            _ea_start_h = _eh + _em / 60.0
+        _ea_pfx = _WP_BROADCASTER_PREFIX.get('erev_albumim', '')
+        _dss = (now.weekday() + 1) % 7
+        _bwe = (now + timedelta(days=(6 - _dss))).replace(
+            hour=23, minute=59, second=59, microsecond=999999)
+        if now.weekday() == 5 and now.hour >= 18:
+            _bwe += timedelta(days=7)
+        for _b in (_load_erev_albumim_bookings() or []):
+            try:
+                _bt = datetime.strptime(_b.get('date', ''), '%Y-%m-%d').replace(
+                    hour=int(_ea_start_h), minute=0)
+            except Exception:
+                continue
+            if _bt < now - timedelta(hours=2) or _bt > now + timedelta(days=14):
+                continue
+            if _bt > _bwe:
+                continue
+            _ea_day = DAY_MAP[_bt.weekday()]
+            _dk = ('erev_albumim', _ea_day)
+            if _dk in _queue_only_day_seen:
+                continue   # a real (uploaded) schedule entry already covers this day
+            _queue_only_day_seen[_dk] = _bt
+            _ea_bc = (_b.get('name', '') or '').strip()
+            queue_only_entries.setdefault('erev_albumim', []).append({
+                'wp_day':      _ea_day,
+                'start_h':     _ea_start_h,
+                'broadcaster': (_ea_pfx + _ea_bc) if _ea_bc else '',
+            })
+    except Exception as _eae:
+        print(f"[Board] Erev Albumim bookings inject error: {_eae}", flush=True)
+
     # ── Regular fixed-schedule shows ───────────────────────────────────────────
     for show in SHOW_SCHEDULE:
         if show['day'] is None:
