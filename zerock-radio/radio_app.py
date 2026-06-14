@@ -3846,6 +3846,46 @@ def _build_wp_schedule_slots():
     except Exception as _eae:
         print(f"[Board] Erev Albumim bookings inject error: {_eae}", flush=True)
 
+    # ── Al Haroker: populate the board from the self-scheduling bookings ────────
+    # The weekly board reflects registered על הרוקר slots directly from
+    # al_haroker_bookings.json (even before any audio is uploaded). על הרוקר can be
+    # booked on any weekday. Deduped against real (uploaded) schedule entries.
+    try:
+        _ah_cfg = next((s for s in SHOW_SCHEDULE if s['key'] == 'al_harocker'), None)
+        _ah_start_h = 7.0
+        if _ah_cfg and _ah_cfg.get('time'):
+            _ah_h, _ah_m = map(int, _ah_cfg['time'].split(':'))
+            _ah_start_h = _ah_h + _ah_m / 60.0
+        _ah_pfx = _WP_BROADCASTER_PREFIX.get('al_harocker', '')
+        _ah_dss = (now.weekday() + 1) % 7
+        _ah_bwe = (now + timedelta(days=(6 - _ah_dss))).replace(
+            hour=23, minute=59, second=59, microsecond=999999)
+        if now.weekday() == 5 and now.hour >= 18:
+            _ah_bwe += timedelta(days=7)
+        for _b in (_load_al_haroker_bookings() or []):
+            try:
+                _bt = datetime.strptime(_b.get('date', ''), '%Y-%m-%d').replace(
+                    hour=int(_ah_start_h), minute=0)
+            except Exception:
+                continue
+            if _bt < now - timedelta(hours=2) or _bt > now + timedelta(days=14):
+                continue
+            if _bt > _ah_bwe:
+                continue
+            _ah_day = DAY_MAP[_bt.weekday()]
+            _dk = ('al_harocker', _ah_day)
+            if _dk in _queue_only_day_seen:
+                continue   # a real (uploaded) schedule entry already covers this day
+            _queue_only_day_seen[_dk] = _bt
+            _ah_bc = (_b.get('broadcaster', '') or '').strip()
+            queue_only_entries.setdefault('al_harocker', []).append({
+                'wp_day':      _ah_day,
+                'start_h':     _ah_start_h,
+                'broadcaster': (_ah_pfx + _ah_bc) if _ah_bc else '',
+            })
+    except Exception as _ahe:
+        print(f"[Board] Al Haroker bookings inject error: {_ahe}", flush=True)
+
     # ── Regular fixed-schedule shows ───────────────────────────────────────────
     for show in SHOW_SCHEDULE:
         if show['day'] is None:
