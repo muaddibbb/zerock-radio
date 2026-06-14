@@ -3627,6 +3627,7 @@ _WP_SLUGS = {
     'san_patrock_itamar':   'st-patrock',
     'san_patrock_roi':      'st-patrock',
     'san_patrock_roni':     'st-patrock',
+    'san_patrock_rivka':    'st-patrock',
     'time_warp':            'timewarp',
     'breakdown':            'breakdown',
     'singles':              'singles',
