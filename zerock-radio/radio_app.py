@@ -200,6 +200,26 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True   # pick up template changes without 
 os.makedirs(LOCAL_TEMP, exist_ok=True)
 os.makedirs(NAS_TEMP, exist_ok=True)
 
+
+@app.after_request
+def _inject_kupernet_footer(resp):
+    """Append a 'נוצר ע״י Kupernet Systems' credit to the bottom of every HTML page."""
+    try:
+        if (not resp.direct_passthrough
+                and 'text/html' in (resp.headers.get('Content-Type') or '')):
+            body = resp.get_data(as_text=True)
+            if '</body>' in body and 'kupernet-credit' not in body:
+                footer = (
+                    '<div class="kupernet-credit" dir="rtl" '
+                    'style="text-align:center;padding:16px 8px;margin-top:24px;'
+                    'font-size:12px;color:#888;font-family:Arial,sans-serif;'
+                    'opacity:.7">נוצר ע״י Kupernet Systems</div>'
+                )
+                resp.set_data(body.replace('</body>', footer + '</body>', 1))
+    except Exception:
+        pass
+    return resp
+
 # ─── Show broadcast schedule ──────────────────────────────────────────────────
 # day: 0=Mon 1=Tue 2=Wed 3=Thu 4=Fri 5=Sat 6=Sun  None=manual date
 # rerun_days_offset: days after first broadcast (0=same day, None=no rerun)
