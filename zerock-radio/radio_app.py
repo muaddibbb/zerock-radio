@@ -6154,8 +6154,50 @@ def api_erev_albumim_register():
 
 @app.route('/api/erev-albumim/bookings')
 def api_erev_albumim_bookings():
-    """Admin: list all Erev Albumim bookings."""
-    return jsonify(_load_erev_albumim_bookings())
+    """Admin: list all Erev Albumim bookings (with the album-choice link each)."""
+    bookings = _load_erev_albumim_bookings()
+    for b in bookings:
+        if b.get('token'):
+            b['choose_url'] = f"{ZEROCK_PUBLIC_URL}/erev-albumim/choose/{b['token']}"
+    return jsonify(bookings)
+
+
+@app.route('/erev-albumim/choose/<token>')
+def erev_albumim_choose_page(token):
+    """Public per-broadcaster page to choose the albums for their Erev Albumim night."""
+    b = next((x for x in _load_erev_albumim_bookings() if x.get('token') == token), None)
+    if not b:
+        return "הזמנה לא נמצאה", 404
+    try:
+        date_disp = datetime.strptime(b['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
+    except Exception:
+        date_disp = b.get('date', '')
+    return render_template('erev_albumim_choose.html',
+        token=token, name=b.get('name', ''), date_disp=date_disp,
+        albums='\n'.join(b.get('albums') or []))
+
+
+@app.route('/api/erev-albumim/choose/<token>', methods=['POST'])
+def api_erev_albumim_choose(token):
+    """Save the album list chosen by a broadcaster via their personal link."""
+    payload = request.get_json(force=True) or {}
+    raw     = payload.get('albums', [])
+    if isinstance(raw, str):
+        albums = [l.strip() for l in raw.splitlines() if l.strip()]
+    elif isinstance(raw, list):
+        albums = [str(a).strip() for a in raw if str(a).strip()]
+    else:
+        return jsonify({'error': 'albums must be a list or newline-separated string'}), 400
+    with _ea_bookings_lock:
+        bookings = _load_erev_albumim_bookings()
+        b = next((x for x in bookings if x.get('token') == token), None)
+        if not b:
+            return jsonify({'error': 'booking not found'}), 404
+        b['albums'] = albums
+        b['wa_sent_at'] = None   # let the Friday WA loop (re)send with the new list
+        _save_erev_albumim_bookings(bookings)
+    print(f"[ErevAlbumim] Albums chosen via link for {b.get('date')} ({b.get('name')}): {len(albums)}", flush=True)
+    return jsonify({'ok': True, 'count': len(albums)})
 
 
 @app.route('/api/erev-albumim/<date>/albums', methods=['POST'])
