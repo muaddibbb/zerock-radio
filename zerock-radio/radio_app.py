@@ -5591,13 +5591,17 @@ def _send_erev_albumim_reminder_email(booking):
     try:
         date_obj  = datetime.strptime(booking['date'], '%Y-%m-%d')
         date_disp = date_obj.strftime('%d/%m/%Y')
+        choose_url = f"{ZEROCK_PUBLIC_URL}/erev-albumim/choose/{booking.get('token','')}"
 
         body_html = f"""<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.7">
 <p>שלום <strong>{booking['name']}</strong>,</p>
 <p>מחר, <strong>יום שישי {date_disp}</strong>, זה הערב שלך ב-<em>ערב אלבומים</em> ב-ZeRock Radio! 🎶</p>
-<p><strong>אנא השב/י על מייל זה עם 8 האלבומים שתרצה/י שנשמיע בתוכנית.</strong></p>
-<p style="color:#555;font-size:0.9em">כתוב/י את האלבומים בפורמט: אמן – שם האלבום<br>
-לדוגמה: Pink Floyd – The Wall</p>
+<p><strong>בחר/י את 8 האלבומים שתרצה/י שנשמיע בתוכנית בקישור הבא:</strong></p>
+<p style="text-align:center;margin:18px 0">
+  <a href="{choose_url}" style="background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;
+     text-decoration:none;font-weight:bold;font-size:17px">לבחירת האלבומים 🎶</a>
+</p>
+<p style="color:#555;font-size:0.9em">פורמט: אמן – שם האלבום (לדוגמה: Pink Floyd – The Wall)</p>
 <hr style="border:none;border-top:1px solid #ddd;margin:20px 0">
 <p>להתראות בשידור! 🤘<br><strong>צוות ZeRock Radio</strong></p>
 </div>"""
@@ -5605,7 +5609,8 @@ def _send_erev_albumim_reminder_email(booking):
         body_text = (
             f"שלום {booking['name']},\n\n"
             f"מחר, יום שישי {date_disp}, זה הערב שלך בערב אלבומים ב-ZeRock Radio!\n\n"
-            f"אנא השב/י על מייל זה עם 8 האלבומים שתרצה/י שנשמיע בתוכנית.\n"
+            f"בחר/י את 8 האלבומים שתרצה/י שנשמיע בתוכנית בקישור:\n"
+            f"{choose_url}\n"
             f"פורמט: אמן – שם האלבום (לדוגמה: Pink Floyd – The Wall)\n\n"
             f"להתראות בשידור!\nצוות ZeRock Radio"
         )
