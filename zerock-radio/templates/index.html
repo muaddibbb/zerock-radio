@@ -1006,16 +1006,26 @@
         if(!el) return;
         fetch('/api/erev-albumim/bookings').then(function(r){return r.json();}).then(function(list){
           var today=new Date().toISOString().slice(0,10);
-          list=(list||[]).filter(function(b){return b.token && b.date>=today;})
+          list=(list||[]).filter(function(b){return b.token;})
                          .sort(function(a,b){return a.date<b.date?-1:1;});
-          if(!list.length){el.innerHTML='<div style="color:var(--text-muted)">אין הרשמות עתידיות</div>';return;}
+          if(!list.length){el.innerHTML='<div style="color:var(--text-muted)">אין הרשמות</div>';return;}
+          function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
           el.innerHTML=list.map(function(b){
             var p=b.date.split('-'), disp=p[2]+'/'+p[1]+'/'+p[0];
-            var alb=(b.albums&&b.albums.length)?('✓ '+b.albums.length+' אלבומים'):'— טרם נבחרו אלבומים';
-            return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px">'
+            var past=b.date<today;
+            var hasAlb=b.albums&&b.albums.length;
+            var albBlock;
+            if(hasAlb){
+              var items=b.albums.map(function(a){return '<li>'+esc(a)+'</li>';}).join('');
+              albBlock='<details style="margin:3px 0"><summary style="cursor:pointer;color:#4ade80;font-size:0.72rem">✓ '+b.albums.length+' אלבומים — לחצו להצגה</summary>'
+                +'<ol style="margin:6px 18px 2px 0;color:#ddd;font-size:0.75rem;line-height:1.8">'+items+'</ol></details>';
+            } else {
+              albBlock='<div style="font-size:0.72rem;color:var(--text-muted)">— טרם נבחרו אלבומים</div>';
+            }
+            return '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px;opacity:'+(past?'0.62':'1')+'">'
               +'<div style="flex:1;min-width:0">'
-              +'<div style="color:#f0f0f0"><strong>'+disp+'</strong> — '+b.name+'</div>'
-              +'<div style="font-size:0.72rem;color:'+(b.albums&&b.albums.length?'#4ade80':'var(--text-muted)')+'">'+alb+'</div>'
+              +'<div style="color:#f0f0f0"><strong>'+disp+'</strong> — '+esc(b.name)+(past?' <span style="font-size:0.68rem;color:var(--text-muted)">(עבר)</span>':'')+'</div>'
+              +albBlock
               +'<a href="'+b.choose_url+'" target="_blank" style="font-size:0.72rem;color:#c084fc;word-break:break-all">'+b.choose_url+'</a>'
               +'</div>'
               +'<button onclick="copyText(\''+b.choose_url+'\', this)" style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:0.74rem;white-space:nowrap">העתק</button>'
