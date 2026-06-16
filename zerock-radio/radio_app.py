@@ -6139,6 +6139,7 @@ def api_erev_albumim_register():
             'email':          email,
             'registered_at':  datetime.now().isoformat(),
             'reminder_sent_at': None,
+            'token':          __import__('secrets').token_urlsafe(16),
         }
         bookings.append(booking)
         _save_erev_albumim_bookings(bookings)
