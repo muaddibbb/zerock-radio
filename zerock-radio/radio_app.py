@@ -5667,6 +5667,49 @@ threading.Thread(target=_erev_albumim_reminder_loop, daemon=True).start()
 _EA_WA_GROUP = '120363195863658188@g.us'   # "רדיו טכני (רק קופרמן טועה)"
 
 
+def _send_erev_albumim_albums_email(booking):
+    """Email the chosen album list to the station inbox (rockzerock@gmail.com)
+    whenever a broadcaster submits/updates their Erev Albumim selection."""
+    if not SMTP_USER or not SMTP_PASS:
+        print("[ErevAlbumim] SMTP not configured — skipping albums email", flush=True)
+        return False
+    try:
+        name   = booking.get('name', '')
+        albums = booking.get('albums') or []
+        try:
+            date_disp = datetime.strptime(booking['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
+        except Exception:
+            date_disp = booking.get('date', '')
+        items_html = ''.join(f'<li>{a}</li>' for a in albums) or '<li>(ריק)</li>'
+        body_html = (
+            '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;color:#222;line-height:1.7">'
+            '<p>🎶 <strong>ערב של אלבומים — רשימת אלבומים</strong></p>'
+            f'<p>מגיש/ה: <strong>{name}</strong><br>תאריך: <strong>{date_disp}</strong></p>'
+            f'<p>האלבומים שנבחרו ({len(albums)}):</p>'
+            f'<ol>{items_html}</ol></div>'
+        )
+        body_text = (
+            f"ערב של אלבומים — רשימת אלבומים\n"
+            f"מגיש/ה: {name}\nתאריך: {date_disp}\n\n"
+            f"האלבומים שנבחרו ({len(albums)}):\n"
+            + '\n'.join(f"{i}. {a}" for i, a in enumerate(albums, 1))
+        )
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"ערב אלבומים — {name} {date_disp} — רשימת אלבומים"
+        msg['From']    = SMTP_FROM_ADDR
+        msg['To']      = 'rockzerock@gmail.com'
+        msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+            s.ehlo(); s.starttls(); s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM_ADDR, ['rockzerock@gmail.com'], msg.as_bytes())
+        print(f"[ErevAlbumim] Albums email → rockzerock@gmail.com for {name} ({booking.get('date')}) — {len(albums)} albums", flush=True)
+        return True
+    except Exception as e:
+        print(f"[ErevAlbumim] Albums email error: {e}", flush=True)
+        return False
+
+
 def _send_erev_albumim_wa(booking):
     """Send Friday 12:00 WhatsApp with broadcaster name + album list."""
     try:
