@@ -993,7 +993,39 @@
           </button>
         </div>
       </div>
+      <!-- ── registered broadcasters + personal album-choice links ── -->
+      <div style="margin-top:18px;border-top:1px solid #3a2a4a;padding-top:14px">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px">נרשמים — לינק אישי לבחירת אלבומים</div>
+        <div id="eaRegistrations" style="font-size:0.8rem;color:var(--text-muted)">טוען…</div>
+      </div>
     </div>
+    <script>
+    (function(){
+      function loadEaRegs(){
+        var el=document.getElementById('eaRegistrations');
+        if(!el) return;
+        fetch('/api/erev-albumim/bookings').then(function(r){return r.json();}).then(function(list){
+          var today=new Date().toISOString().slice(0,10);
+          list=(list||[]).filter(function(b){return b.token && b.date>=today;})
+                         .sort(function(a,b){return a.date<b.date?-1:1;});
+          if(!list.length){el.innerHTML='<div style="color:var(--text-muted)">אין הרשמות עתידיות</div>';return;}
+          el.innerHTML=list.map(function(b){
+            var p=b.date.split('-'), disp=p[2]+'/'+p[1]+'/'+p[0];
+            var alb=(b.albums&&b.albums.length)?('✓ '+b.albums.length+' אלבומים'):'— טרם נבחרו אלבומים';
+            return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px">'
+              +'<div style="flex:1;min-width:0">'
+              +'<div style="color:#f0f0f0"><strong>'+disp+'</strong> — '+b.name+'</div>'
+              +'<div style="font-size:0.72rem;color:'+(b.albums&&b.albums.length?'#4ade80':'var(--text-muted)')+'">'+alb+'</div>'
+              +'<a href="'+b.choose_url+'" target="_blank" style="font-size:0.72rem;color:#c084fc;word-break:break-all">'+b.choose_url+'</a>'
+              +'</div>'
+              +'<button onclick="copyText(\''+b.choose_url+'\', this)" style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:0.74rem;white-space:nowrap">העתק</button>'
+              +'</div>';
+          }).join('');
+        }).catch(function(){el.innerHTML='<div style="color:#f87171">שגיאה בטעינת ההרשמות</div>';});
+      }
+      loadEaRegs();
+    })();
+    </script>
 
     <!-- ── ערב של אלבומים — Cover Grid Generator ─────────────────────────── -->
     <div class="card" data-mgmt-section="album" id="coverGridCard" style="margin-bottom:20px;border-color:#5a3a7a">
