@@ -6244,7 +6244,10 @@ def api_erev_albumim_choose(token):
         b['albums'] = albums
         b['wa_sent_at'] = None   # let the Friday WA loop (re)send with the new list
         _save_erev_albumim_bookings(bookings)
+        _b_copy = dict(b)
     print(f"[ErevAlbumim] Albums chosen via link for {b.get('date')} ({b.get('name')}): {len(albums)}", flush=True)
+    # Email the chosen list to the station inbox
+    threading.Thread(target=_send_erev_albumim_albums_email, args=(_b_copy,), daemon=True).start()
     return jsonify({'ok': True, 'count': len(albums)})
 
 
