@@ -6276,8 +6276,11 @@ def api_erev_albumim_set_albums(date):
         # Reset wa_sent_at so the WA loop will re-send if albums were updated
         booking['wa_sent_at'] = None
         _save_erev_albumim_bookings(bookings)
+        _b_copy = dict(booking)
 
     print(f"[ErevAlbumim] Albums saved for {date}: {albums}", flush=True)
+    # Email the chosen list to the station inbox
+    threading.Thread(target=_send_erev_albumim_albums_email, args=(_b_copy,), daemon=True).start()
 
     # If today IS the show date and already past 12:00 on Friday → send immediately
     now = datetime.now()
