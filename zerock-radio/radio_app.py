@@ -6648,7 +6648,10 @@ def _bounce_checker():
         msg_ids = data[0].split()
         for mid in msg_ids[-50:]:   # max 50 per run
             try:
-                _, raw = imap.fetch(mid, '(RFC822)')
+                # BODY.PEEK[] reads the message WITHOUT setting \Seen — so non-bounce
+                # emails (e.g. new-release song submissions) are left UNREAD. Only
+                # actual bounces get marked \Seen below (so they aren't re-processed).
+                _, raw = imap.fetch(mid, '(BODY.PEEK[])')
                 raw_bytes = raw[0][1]
                 parsed = _email_lib.message_from_bytes(raw_bytes)
                 subj = (parsed.get('Subject') or '').lower()
