@@ -1006,13 +1006,12 @@
         if(!el) return;
         fetch('/api/erev-albumim/bookings').then(function(r){return r.json();}).then(function(list){
           var today=new Date().toISOString().slice(0,10);
-          list=(list||[]).filter(function(b){return b.token;})
+          list=(list||[]).filter(function(b){return b.token && b.date>=today;})
                          .sort(function(a,b){return a.date<b.date?-1:1;});
-          if(!list.length){el.innerHTML='<div style="color:var(--text-muted)">אין הרשמות</div>';return;}
+          if(!list.length){el.innerHTML='<div style="color:var(--text-muted)">אין הרשמות עתידיות</div>';return;}
           function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
           el.innerHTML=list.map(function(b){
             var p=b.date.split('-'), disp=p[2]+'/'+p[1]+'/'+p[0];
-            var past=b.date<today;
             var hasAlb=b.albums&&b.albums.length;
             var albBlock;
             if(hasAlb){
@@ -1022,9 +1021,9 @@
             } else {
               albBlock='<div style="font-size:0.72rem;color:var(--text-muted)">— טרם נבחרו אלבומים</div>';
             }
-            return '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px;opacity:'+(past?'0.62':'1')+'">'
+            return '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px">'
               +'<div style="flex:1;min-width:0">'
-              +'<div style="color:#f0f0f0"><strong>'+disp+'</strong> — '+esc(b.name)+(past?' <span style="font-size:0.68rem;color:var(--text-muted)">(עבר)</span>':'')+'</div>'
+              +'<div style="color:#f0f0f0"><strong>'+disp+'</strong> — '+esc(b.name)+'</div>'
               +albBlock
               +'<a href="'+b.choose_url+'" target="_blank" style="font-size:0.72rem;color:#c084fc;word-break:break-all">'+b.choose_url+'</a>'
               +'</div>'
