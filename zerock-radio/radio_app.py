@@ -1430,15 +1430,25 @@ def _notify_whatsapp_matzad(show, podbean_url=''):
         title = 'מצעד הרוק של ישראל'
         if ep:
             title += f' {ep}'
+        # Resolve the episode permalink to the DIRECT MCDN MP3 URL (the group wants
+        # the raw .mp3 file link, not the episode page).
+        mp3 = podbean_url
+        if podbean_url and 'mcdn.podbean.com' not in podbean_url:
+            try:
+                resolved = _get_podbean_media_url(podbean_url)
+                if resolved:
+                    mp3 = resolved
+            except Exception as _re:
+                print(f"[WA-Matzad] media-url resolve failed: {_re}", flush=True)
         message = f"🎶 {title} {date_str}\nבהגשת: {broadcaster}".strip()
-        if podbean_url:
-            message += f"\n{podbean_url}"
+        if mp3:
+            message += f"\n{mp3}"
         _requests.post(
             'http://127.0.0.1:7733/send',
             json={'to': _WA_GROUP_MATZAD, 'message': message},
             timeout=10,
         )
-        print(f"[WA-Matzad] Sent to מצעד שבועי group ({broadcaster}{' + link' if podbean_url else ''})", flush=True)
+        print(f"[WA-Matzad] Sent to מצעד שבועי group ({broadcaster}{' + MP3' if mp3 else ''})", flush=True)
     except Exception as e:
         print(f"[WA-Matzad] Failed: {e}", flush=True)
 
