@@ -2853,6 +2853,47 @@ def _poll_close_watcher():
         time.sleep(60)
 
 
+def _notify_whatsapp_poll_results(poll_id):
+    """Send 2 WA messages to מצעד שבועי when voting closes:
+    1. Total voter count  2. First-place song label."""
+    try:
+        polls = _load_polls()
+        poll  = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return
+        votes = [v for v in _load_poll_votes() if v['poll_id'] == poll_id]
+        total = len(votes)
+        tally = {s['id']: 0 for s in poll.get('songs', [])}
+        for v in votes:
+            for sid in (v.get('song_ids') or []):
+                if sid in tally:
+                    tally[sid] += 1
+        ranked = sorted(
+            poll.get('songs', []),
+            key=lambda x: (-tally.get(x['id'], 0),
+                           -((x.get('slot') or 0) if x.get('group') == 'matzad' else 0))
+        )
+        _requests.post(
+            'http://127.0.0.1:7733/send',
+            json={'to': _WA_GROUP_MATZAD,
+                  'message': f"🗳️ השבוע הצביעו {total} מצביעים במצעד הרוק של ישראל"},
+            timeout=10,
+        )
+        if ranked:
+            winner = ranked[0]
+            label  = winner.get('label', '').strip()
+            _requests.post(
+                'http://127.0.0.1:7733/send',
+                json={'to': _WA_GROUP_MATZAD,
+                      'message': f"🥇 מקום ראשון: {label}"},
+                timeout=10,
+            )
+        winner_label = ranked[0].get('label', '?') if ranked else '?'
+        print(f'[PollWatcher] WA results sent — {total} voters, winner: {winner_label}', flush=True)
+    except Exception as e:
+        print(f'[PollWatcher] WA results error: {e}', flush=True)
+
+
 def _update_wp_vote_snippet_closed(poll_id):
     """Update WP snippet #55 to show 'voting closed' state."""
     if not WP_USERNAME or not WP_APP_PASS:
