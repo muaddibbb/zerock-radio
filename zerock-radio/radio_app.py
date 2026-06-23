@@ -2848,6 +2848,8 @@ def _poll_close_watcher():
                     _already_closed.add(pid)
                     # Update WP snippet to show closed state
                     threading.Thread(target=_update_wp_vote_snippet_closed, args=(pid,), daemon=True).start()
+                    # Notify מצעד שבועי WA group with vote count + first place
+                    threading.Thread(target=_notify_whatsapp_poll_results, args=(pid,), daemon=True).start()
         except Exception as e:
             print(f'[PollWatcher] Error: {e}', flush=True)
         time.sleep(60)
