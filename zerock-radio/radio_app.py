@@ -3706,11 +3706,15 @@ def _listener_stats_collector():
                 local_s = f_local.result()
                 ext_s   = f_ext.result()
 
+            with _queue_cache_lock:
+                _on_air = _queue_cache.get('on_air') or {}
+            show_name = (_on_air.get('label') or 'Rocky') if _on_air.get('show') else 'Rocky'
             record = {
                 'ts':    datetime.now().strftime('%Y-%m-%dT%H:%M'),
                 'local': local_s['listeners'] if local_s else None,
                 'ext':   ext_s['listeners']   if ext_s   else None,
                 'title': (local_s or ext_s or {}).get('title', ''),
+                'show':  show_name,
             }
             with _listener_stats_lock:
                 records = _load_listener_stats()
