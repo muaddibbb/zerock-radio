@@ -2679,6 +2679,121 @@ function _updateRatingsSummary(records) {
     <div style="color:#666;font-size:0.78em;align-self:center">${records.length} דגימות</div>`;
 }
 
+// ── Per-show listener rankings ────────────────────────────────────────────────
+let _showStatsTimer = null;
+
+async function loadShowStats() {
+  const days   = (document.getElementById('showStatsDays')   || {}).value || 90;
+  const metric = (document.getElementById('showStatsMetric') || {}).value || 'peak';
+  try {
+    const r = await fetch(`/api/listener-stats/by-show?days=${days}`, {cache: 'no-store'});
+    const d = await r.json();
+    _drawShowStatsChart(d.shows || [], metric);
+    const el = document.getElementById('showStatsUpdated');
+    if (el) el.textContent = 'עודכן ' + new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { console.error('showStats error', e); }
+}
+
+function _drawShowStatsChart(shows, metric) {
+  const canvas = document.getElementById('showStatsChart');
+  if (!canvas) return;
+
+  const ROW_H  = 38;
+  const BAR_H  = 11;
+  const BAR_GAP = 4;
+  const PAD_L  = 140;
+  const PAD_R  = 44;
+  const PAD_T  = 10;
+  const PAD_B  = 10;
+
+  const N = shows.length;
+  const totalH = PAD_T + N * ROW_H + PAD_B;
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.clientWidth || 500;
+
+  canvas.style.height = totalH + 'px';
+  canvas.width  = W   * dpr;
+  canvas.height = totalH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, totalH);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, totalH);
+
+  if (!shows.length) {
+    ctx.fillStyle = '#444'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('אין נתונים עדיין — ייאסף בשידורים הבאים', W / 2, totalH / 2);
+    return;
+  }
+
+  const lKey = metric === 'avg' ? 'avg_local' : 'peak_local';
+  const eKey = metric === 'avg' ? 'avg_ext'   : 'peak_ext';
+  const maxVal = Math.max(...shows.flatMap(s => [s[lKey], s[eKey]]), 1);
+  const barW   = W - PAD_L - PAD_R;
+
+  // Vertical grid lines
+  const ticks = 4;
+  for (let i = 1; i <= ticks; i++) {
+    const x = PAD_L + (i / ticks) * barW;
+    ctx.strokeStyle = '#1e1e1e'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, PAD_T); ctx.lineTo(x, PAD_T + N * ROW_H); ctx.stroke();
+    ctx.fillStyle = '#444'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round((i / ticks) * maxVal), x, PAD_T + N * ROW_H + 12);
+  }
+
+  shows.forEach((s, i) => {
+    const rowY   = PAD_T + i * ROW_H;
+    const midY   = rowY + ROW_H / 2;
+    const localW = (s[lKey] / maxVal) * barW;
+    const extW   = (s[eKey] / maxVal) * barW;
+
+    // Zebra background
+    if (i % 2 === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      ctx.fillRect(0, rowY, W, ROW_H);
+    }
+
+    // Local bar
+    const localY = midY - BAR_GAP / 2 - BAR_H;
+    ctx.fillStyle = '#7c3aed';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(PAD_L, localY, localW, BAR_H, 3)
+                  : ctx.rect(PAD_L, localY, localW, BAR_H);
+    ctx.fill();
+
+    // Ext bar
+    const extY = midY + BAR_GAP / 2;
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(PAD_L, extY, extW, BAR_H, 3)
+                  : ctx.rect(PAD_L, extY, extW, BAR_H);
+    ctx.fill();
+
+    // Values
+    ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    if (s[lKey] > 0) ctx.fillText(s[lKey], PAD_L + localW + 4, localY + BAR_H - 2);
+    if (s[eKey] > 0) ctx.fillText(s[eKey], PAD_L + extW   + 4, extY   + BAR_H - 2);
+
+    // Show label
+    const label = s.show || '';
+    ctx.fillStyle = i === 0 ? '#e2c4ff' : '#ccc';
+    ctx.font      = i === 0 ? 'bold 11px sans-serif' : '11px sans-serif';
+    ctx.textAlign = 'right';
+    // Truncate to fit PAD_L - 8
+    let txt = label;
+    while (txt.length > 2 && ctx.measureText(txt).width > PAD_L - 8) txt = txt.slice(0, -1);
+    if (txt !== label) txt = txt.slice(0, -1) + '…';
+    ctx.fillText(txt, PAD_L - 6, midY + 4);
+
+    // Rank badge for top 3
+    if (i < 3) {
+      const badge = ['🥇','🥈','🥉'][i];
+      ctx.font = '13px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(badge, PAD_L - 6 - ctx.measureText(txt).width - 2, midY + 4);
+    }
+  });
+}
+
 async function refreshListeners() {
   try {
     const r  = await fetch('/api/listeners', {cache: 'no-store'});
