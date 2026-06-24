@@ -2721,7 +2721,8 @@ function switchMgmt(sub) {
   });
   applyMgmtSubsection();
   try { localStorage.setItem('rocky.mgmt', sub); } catch(_) {}
-  if (sub === 'listeners') _startListeners(); else _stopListeners();
+  if (sub === 'listeners') { _startListeners(); initRatingsControls(); loadRatingsHistory(); }
+  else _stopListeners();
 }
 
 // ── Initial state on load ─────────────────────────────────────────────────────
