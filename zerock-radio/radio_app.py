@@ -3716,7 +3716,8 @@ def _listener_stats_collector():
                 show_name = None
                 for _sc in SHOW_SCHEDULE:
                     if _sc['key'].lower() in _bn:
-                        show_name = _sc['name']
+                        _bc = (_sc.get('broadcaster') or '').strip()
+                        show_name = f"{_sc['name']} — {_bc}" if _bc else _sc['name']
                         break
                 if not show_name:
                     show_name = (_on_air.get('label') or 'Show').strip() or 'Show'
