@@ -2744,7 +2744,11 @@ function switchMgmt(sub) {
   // but apply it now too for the static cards (which don't depend on _shows).
   applyMgmtSubsection();
   // Auto-start listener polling if that tab was active on last visit
-  if (page === 'manage' && sub === 'listeners') _startListeners();
+  if (page === 'manage' && sub === 'listeners') {
+    _startListeners();
+    initRatingsControls();
+    loadRatingsHistory();
+  }
 })();
 
 function renderBroadcasterLinks() {
