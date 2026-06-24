@@ -603,6 +603,32 @@
         <span><span style="display:inline-block;width:10px;height:3px;background:#60a0fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>External</span>
       </div>
       <div style="font-size:0.75em;color:#555;margin-top:8px;text-align:center">Updates every 15 s</div>
+
+      <!-- ── Ratings History ──────────────────────────────────────────────── -->
+      <hr style="border:none;border-top:1px solid #2a2a2a;margin:22px 0 16px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:0.92em;color:#aaa;font-weight:600">📊 Ratings History</span>
+        <input type="date" id="ratingsDate"
+               style="background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:6px;padding:5px 10px;font-size:0.83em;color-scheme:dark">
+        <select id="ratingsHour"
+                style="background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:6px;padding:5px 10px;font-size:0.83em">
+          <option value="">כל היום</option>
+        </select>
+        <button onclick="loadRatingsHistory()"
+                style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.83em;cursor:pointer;font-weight:600">טען</button>
+      </div>
+      <div id="ratingsSummary" style="display:none;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <canvas id="ratingsChart" height="130"
+              style="width:100%;border-radius:8px;background:#111;display:block"></canvas>
+      <div style="display:flex;justify-content:space-between;font-size:0.7em;color:#555;margin-top:4px">
+        <span id="ratingsChartStart"></span>
+        <span id="ratingsChartEnd"></span>
+      </div>
+      <div id="ratingsNoData" style="display:none;text-align:center;color:#555;font-size:0.85em;padding:14px">אין נתונים לתקופה הנבחרת</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:0.75em;color:#888">
+        <span><span style="display:inline-block;width:10px;height:3px;background:#c084fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>Local</span>
+        <span><span style="display:inline-block;width:10px;height:3px;background:#60a0fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>External</span>
+      </div>
     </div>
 
     <!-- Streams card -->
