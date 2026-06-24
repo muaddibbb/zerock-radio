@@ -3619,6 +3619,19 @@ _listener_history = []   # list of {"ts": float, "local": int|None, "ext": int|N
 _listener_history_lock = threading.Lock()
 _LISTENER_HISTORY_MAX = 240   # ~1 hour of 15s readings
 
+_listener_stats_lock = threading.Lock()
+
+def _load_listener_stats():
+    try:
+        with open(LISTENER_STATS_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_listener_stats_locked(records):
+    with open(LISTENER_STATS_FILE, 'w') as f:
+        json.dump(records, f, separators=(',', ':'))
+
 _ICECAST_LOCAL = 'http://localhost:8000/status-json.xsl'
 _ICECAST_EXT   = 'http://icecast.live:8001/status-json.xsl'
 
