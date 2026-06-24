@@ -3741,6 +3741,43 @@ def api_listener_stats_history():
     return jsonify({'records': records})
 
 
+@app.route('/api/listener-stats/by-show')
+def api_listener_stats_by_show():
+    """Aggregate peak/avg listeners per show name over the last N days."""
+    try:
+        days = max(1, int(request.args.get('days', 90)))
+    except Exception:
+        days = 90
+    cutoff = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%dT%H:%M')
+    with _listener_stats_lock:
+        records = _load_listener_stats()
+    records = [r for r in records if r.get('ts', '') >= cutoff]
+
+    agg = {}
+    for r in records:
+        show = (r.get('show') or 'Rocky').strip() or 'Rocky'
+        if show not in agg:
+            agg[show] = {'local': [], 'ext': []}
+        if r.get('local') is not None:
+            agg[show]['local'].append(r['local'])
+        if r.get('ext') is not None:
+            agg[show]['ext'].append(r['ext'])
+
+    result = []
+    for show, data in agg.items():
+        lv, ev = data['local'], data['ext']
+        result.append({
+            'show':       show,
+            'peak_local': max(lv) if lv else 0,
+            'peak_ext':   max(ev) if ev else 0,
+            'avg_local':  round(sum(lv) / len(lv)) if lv else 0,
+            'avg_ext':    round(sum(ev) / len(ev)) if ev else 0,
+            'samples':    max(len(lv), len(ev)),
+        })
+    result.sort(key=lambda x: -(x['peak_local'] + x['peak_ext']))
+    return jsonify({'shows': result, 'days': days})
+
+
 # ─── WordPress schedule board sync ────────────────────────────────────────────
 
 WP_REST_BASE  = "https://zerockradio.com/wp-json"
