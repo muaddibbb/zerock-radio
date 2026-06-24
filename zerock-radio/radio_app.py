@@ -3690,6 +3690,53 @@ def api_listeners():
         'ok':      local_stats is not None or ext_stats is not None,
     })
 
+def _listener_stats_collector():
+    """Background thread: sample listener counts every 15 min, persist to disk."""
+    while True:
+        try:
+            now = datetime.now()
+            minutes_to_next = 15 - (now.minute % 15)
+            seconds_to_next = minutes_to_next * 60 - now.second
+            time.sleep(max(1, seconds_to_next))
+
+            import concurrent.futures as _cf2
+            with _cf2.ThreadPoolExecutor(max_workers=2) as pool:
+                f_local = pool.submit(_parse_icecast_source, _ICECAST_LOCAL, 4)
+                f_ext   = pool.submit(_parse_icecast_source, _ICECAST_EXT,   5)
+                local_s = f_local.result()
+                ext_s   = f_ext.result()
+
+            record = {
+                'ts':    datetime.now().strftime('%Y-%m-%dT%H:%M'),
+                'local': local_s['listeners'] if local_s else None,
+                'ext':   ext_s['listeners']   if ext_s   else None,
+                'title': (local_s or ext_s or {}).get('title', ''),
+            }
+            with _listener_stats_lock:
+                records = _load_listener_stats()
+                records.append(record)
+                cutoff  = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%dT%H:%M')
+                records = [r for r in records if r.get('ts', '') >= cutoff]
+                _save_listener_stats_locked(records)
+            print(f"[ListenerStats] {record['ts']} local={record['local']} ext={record['ext']}", flush=True)
+        except Exception as e:
+            print(f'[ListenerStats] Error: {e}', flush=True)
+
+threading.Thread(target=_listener_stats_collector, daemon=True).start()
+
+
+@app.route('/api/listener-stats/history')
+def api_listener_stats_history():
+    date_str = (request.args.get('date') or '').strip()   # YYYY-MM-DD
+    hour_str = (request.args.get('hour') or '').strip()   # 0-23 or ''
+    with _listener_stats_lock:
+        records = _load_listener_stats()
+    if date_str:
+        prefix = f"{date_str}T{int(hour_str):02d}" if hour_str != '' else date_str
+        records = [r for r in records if r.get('ts', '').startswith(prefix)]
+    return jsonify({'records': records})
+
+
 # ─── WordPress schedule board sync ────────────────────────────────────────────
 
 WP_REST_BASE  = "https://zerockradio.com/wp-json"
