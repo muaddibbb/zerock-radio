@@ -3708,7 +3708,20 @@ def _listener_stats_collector():
 
             with _queue_cache_lock:
                 _on_air = _queue_cache.get('on_air') or {}
-            show_name = (_on_air.get('label') or 'Rocky') if _on_air.get('show') else 'Rocky'
+            if _on_air.get('show'):
+                # Derive show name from URI by matching show keys — reliable regardless of
+                # whether the schedule triggered_at lookup succeeded.
+                _uri = _on_air.get('uri', '')
+                _bn  = os.path.splitext(os.path.basename(_uri))[0].lower() if _uri else ''
+                show_name = None
+                for _sc in SHOW_SCHEDULE:
+                    if _sc['key'].lower() in _bn:
+                        show_name = _sc['name']
+                        break
+                if not show_name:
+                    show_name = (_on_air.get('label') or 'Show').strip() or 'Show'
+            else:
+                show_name = 'Rocky'
             record = {
                 'ts':    datetime.now().strftime('%Y-%m-%dT%H:%M'),
                 'local': local_s['listeners'] if local_s else None,
