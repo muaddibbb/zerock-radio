@@ -2853,9 +2853,12 @@ async function refreshListeners() {
 function _startListeners() {
   refreshListeners();
   if (!_listenerTimer) _listenerTimer = setInterval(refreshListeners, 15000);
+  loadShowStats();
+  if (!_showStatsTimer) _showStatsTimer = setInterval(loadShowStats, 60000);
 }
 function _stopListeners() {
-  if (_listenerTimer) { clearInterval(_listenerTimer); _listenerTimer = null; }
+  if (_listenerTimer)   { clearInterval(_listenerTimer);   _listenerTimer   = null; }
+  if (_showStatsTimer)  { clearInterval(_showStatsTimer);  _showStatsTimer  = null; }
 }
 
 function switchMgmt(sub) {
