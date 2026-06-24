@@ -2509,6 +2509,148 @@ function _drawListenersChart(history) {
   drawSeries('ext',   gradExt,   '#60a0fc');
 }
 
+// ── Ratings History ──────────────────────────────────────────────────────────
+function initRatingsControls() {
+  const today = new Date().toISOString().slice(0, 10);
+  const dateEl = document.getElementById('ratingsDate');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const hourSel = document.getElementById('ratingsHour');
+  if (hourSel && hourSel.options.length === 1) {
+    for (let h = 0; h < 24; h++) {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = String(h).padStart(2, '0') + ':00';
+      hourSel.appendChild(opt);
+    }
+  }
+}
+
+async function loadRatingsHistory() {
+  const date = (document.getElementById('ratingsDate') || {}).value || '';
+  const hour = (document.getElementById('ratingsHour') || {}).value;
+  if (!date) return;
+  let url = `/api/listener-stats/history?date=${date}`;
+  if (hour !== '') url += `&hour=${hour}`;
+  try {
+    const r = await fetch(url, {cache: 'no-store'});
+    const d = await r.json();
+    const records = d.records || [];
+    _drawRatingsChart(records);
+    _updateRatingsSummary(records);
+    document.getElementById('ratingsNoData').style.display = records.length ? 'none' : 'block';
+  } catch(e) { console.error('Ratings fetch error', e); }
+}
+
+function _drawRatingsChart(records) {
+  const canvas = document.getElementById('ratingsChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.clientWidth;
+  const H   = canvas.clientHeight;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!records || records.length < 1) {
+    ctx.fillStyle = '#444'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('אין נתונים', W / 2, H / 2); return;
+  }
+
+  const pts = records.map(r => ({
+    ts: new Date(r.ts).getTime(), local: r.local, ext: r.ext
+  }));
+  const minTs    = pts[0].ts;
+  const maxTs    = pts[pts.length - 1].ts;
+  const rangeTs  = maxTs - minTs || 1;
+  const allVals  = pts.flatMap(p => [p.local ?? 0, p.ext ?? 0]);
+  const maxCount = Math.max(...allVals, 1);
+  const pad = { top: 12, right: 8, bottom: 8, left: 30 };
+  const cW  = W - pad.left - pad.right;
+  const cH  = H - pad.top  - pad.bottom;
+
+  const steps = 4;
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+  for (let i = 0; i <= steps; i++) {
+    const y = pad.top + cH - (i / steps) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round((i / steps) * maxCount), pad.left - 4, y + 3);
+  }
+
+  const drawSeries = (key, fill0, fill1, line) => {
+    const valid = pts.filter(p => p[key] != null);
+    if (valid.length < 1) return;
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, fill0); grad.addColorStop(1, fill1);
+    ctx.beginPath();
+    valid.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    const last = valid[valid.length - 1];
+    ctx.lineTo(pad.left + ((last.ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.lineTo(pad.left + ((valid[0].ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    valid.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = line; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  };
+  drawSeries('local', 'rgba(192,132,252,0.40)', 'rgba(192,132,252,0.03)', '#c084fc');
+  drawSeries('ext',   'rgba(96,160,252,0.35)',  'rgba(96,160,252,0.03)',  '#60a0fc');
+
+  // Time labels on X axis (up to 6 ticks)
+  const tickCount = Math.min(6, pts.length);
+  ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  for (let i = 0; i < tickCount; i++) {
+    const idx = Math.round(i * (pts.length - 1) / Math.max(tickCount - 1, 1));
+    const x   = pad.left + ((pts[idx].ts - minTs) / rangeTs) * cW;
+    const lbl = records[idx].ts.slice(11, 16);
+    ctx.fillText(lbl, x, pad.top + cH - 2);
+  }
+
+  document.getElementById('ratingsChartStart').textContent = records[0].ts.slice(11, 16);
+  document.getElementById('ratingsChartEnd').textContent   = records[records.length - 1].ts.slice(11, 16);
+}
+
+function _updateRatingsSummary(records) {
+  const el = document.getElementById('ratingsSummary');
+  if (!records.length) { el.style.display = 'none'; return; }
+  const locals = records.map(r => r.local).filter(v => v != null);
+  const exts   = records.map(r => r.ext).filter(v => v != null);
+  const peakL  = locals.length ? Math.max(...locals) : '–';
+  const peakE  = exts.length   ? Math.max(...exts)   : '–';
+  const avgL   = locals.length ? Math.round(locals.reduce((a, b) => a + b, 0) / locals.length) : '–';
+  const avgE   = exts.length   ? Math.round(exts.reduce((a, b) => a + b, 0) / exts.length)     : '–';
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div style="background:#1a1a1a;border:1px solid #3a2a5a;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🟣 Local Peak</div>
+      <div style="color:#c084fc;font-size:1.5em;font-weight:700;line-height:1.2">${peakL}</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #2a3a5a;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🔵 Ext Peak</div>
+      <div style="color:#60a0fc;font-size:1.5em;font-weight:700;line-height:1.2">${peakE}</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🟣 Local Avg</div>
+      <div style="color:#c084fc;font-size:1.2em;font-weight:600;line-height:1.2">${avgL}</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🔵 Ext Avg</div>
+      <div style="color:#60a0fc;font-size:1.2em;font-weight:600;line-height:1.2">${avgE}</div>
+    </div>
+    <div style="color:#666;font-size:0.78em;align-self:center">${records.length} דגימות</div>`;
+}
+
 async function refreshListeners() {
   try {
     const r  = await fetch('/api/listeners', {cache: 'no-store'});
