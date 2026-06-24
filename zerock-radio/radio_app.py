@@ -3709,8 +3709,7 @@ def _listener_stats_collector():
             with _queue_cache_lock:
                 _on_air = _queue_cache.get('on_air') or {}
             if _on_air.get('show'):
-                # Derive show name from URI by matching show keys — reliable regardless of
-                # whether the schedule triggered_at lookup succeeded.
+                # 1. URI key matching — works for autorerun_* and uploaded show files
                 _uri = _on_air.get('uri', '')
                 _bn  = os.path.splitext(os.path.basename(_uri))[0].lower() if _uri else ''
                 show_name = None
@@ -3719,8 +3718,29 @@ def _listener_stats_collector():
                         _bc = (_sc.get('broadcaster') or '').strip()
                         show_name = f"{_sc['name']} — {_bc}" if _bc else _sc['name']
                         break
+                # 2. Fallback: find the most recently triggered schedule entry (covers
+                #    ערב של אלבומים and other shows whose track files lack the show key)
                 if not show_name:
-                    show_name = (_on_air.get('label') or 'Show').strip() or 'Show'
+                    try:
+                        _now_fb  = datetime.now()
+                        _cut_fb  = _now_fb - timedelta(hours=6)
+                        _best_fb = None
+                        for _s in load_schedule():
+                            _ta = _s.get('triggered_at')
+                            if not _ta:
+                                continue
+                            _ta_dt = datetime.fromisoformat(_ta)
+                            if _cut_fb <= _ta_dt <= _now_fb:
+                                if _best_fb is None or _ta_dt > datetime.fromisoformat(_best_fb['triggered_at']):
+                                    _best_fb = _s
+                        if _best_fb:
+                            _nm = (_best_fb.get('name') or '').strip()
+                            _bc = (_best_fb.get('broadcaster') or '').strip()
+                            show_name = f"{_nm} — {_bc}" if (_nm and _bc) else (_nm or None)
+                    except Exception:
+                        pass
+                if not show_name:
+                    show_name = 'Show'
             else:
                 show_name = 'Rocky'
             record = {
