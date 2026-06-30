@@ -708,14 +708,27 @@ def rebuild_playlists():
     except Exception:
         excluded_set = set()
 
+    # Artists currently on cooldown (from recent play history)
+    with _rocky_meta_lock:
+        cache_ready = len(_rocky_meta_cache) >= 10
+    cooldown_artists = frozenset(_rocky_recent_artists().keys()) if cache_ready else frozenset()
+
     def scan_dir(root):
         tracks = []
         for dirpath, _, filenames in os.walk(root):
             for fn in filenames:
                 if os.path.splitext(fn)[1].lower() in AUDIO_EXTS:
                     full = os.path.join(dirpath, fn)
-                    if full not in excluded_set:
-                        tracks.append(full)
+                    if full in excluded_set:
+                        continue
+                    if cooldown_artists:
+                        with _rocky_meta_lock:
+                            cached = _rocky_meta_cache.get(full)
+                        if cached:
+                            a = (cached.get('artist') or '').strip().lower()
+                            if a and a in cooldown_artists:
+                                continue
+                    tracks.append(full)
         tracks.sort()
         return tracks
 
