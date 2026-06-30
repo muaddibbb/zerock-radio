@@ -738,6 +738,212 @@ def rebuild_playlists():
             print(f"[rebuild_playlists] {name} failed: {e}", flush=True)
     return results
 
+# ─── Rocky rules enforcement ─────────────────────────────────────────────────
+# Caches mutagen artist tags so we don't re-read on every rebuild.
+_rocky_meta_cache  = {}   # {path: {'artist': str, 'title': str, 'duration': float}}
+_rocky_meta_lock   = threading.Lock()
+_rocky_audit_lock  = threading.Lock()
+_rocky_audit_state = {'state': 'idle', 'progress': 0, 'total': 0, 'started': None}
+
+def _rocky_track_meta(path):
+    """Return {'artist','title','duration'} for a path, using in-memory cache."""
+    with _rocky_meta_lock:
+        if path in _rocky_meta_cache:
+            return _rocky_meta_cache[path]
+    try:
+        from mutagen import File as MFile
+        audio = MFile(path, easy=True)
+        if audio is None:
+            raise ValueError('unreadable')
+        artist = ''
+        title  = ''
+        if hasattr(audio, 'tags') and audio.tags:
+            artist = str((audio.tags.get('artist') or [''])[0]).strip()
+            title  = str((audio.tags.get('title')  or [''])[0]).strip()
+        dur = float(audio.info.length) if hasattr(audio, 'info') and hasattr(audio.info, 'length') else 0.0
+    except Exception:
+        artist, title, dur = '', '', 0.0
+    if not artist:
+        # Derive from filesystem path: "Artist/Album/Track.mp3" → "Artist"
+        parts = path.replace('\\', '/').split('/')
+        # Look for the part just after the music root dir name
+        for i, p in enumerate(parts):
+            if p in ('English', 'Hebrew') and i + 1 < len(parts):
+                artist = parts[i + 1]
+                break
+    meta = {'artist': artist, 'title': title, 'duration': dur}
+    with _rocky_meta_lock:
+        _rocky_meta_cache[path] = meta
+    return meta
+
+
+def _rocky_recent_artists(hours=ROCKY_ARTIST_GAP_H):
+    """Return {artist_lower: last_played_iso} for Rocky tracks in the last N hours."""
+    cutoff = (datetime.now() - timedelta(hours=hours)).isoformat()
+    recent = {}
+    with _history_lock:
+        try:
+            with open(HISTORY_FILE) as f:
+                history = json.load(f)
+        except Exception:
+            history = []
+    for e in history:
+        if e.get('played_at', '') < cutoff:
+            continue
+        if e.get('type') != 'rocky':
+            continue
+        artist = (e.get('artist') or '').strip().lower()
+        if artist:
+            ts = e.get('played_at', '')
+            if artist not in recent or ts > recent[artist]:
+                recent[artist] = ts
+    return recent
+
+
+def _run_rocky_audit():
+    """Background: scan all Rocky playlist tracks for duration violations.
+    Populates _rocky_meta_cache and saves violations to rocky_audit.json."""
+    global _rocky_audit_state
+    with _rocky_audit_lock:
+        _rocky_audit_state = {'state': 'running', 'progress': 0, 'total': 0,
+                               'started': datetime.now().isoformat()}
+    try:
+        tracks = []
+        for playlist in (ENGLISH_PLAYLIST, HEBREW_PLAYLIST):
+            try:
+                with open(playlist) as f:
+                    for line in f:
+                        p = line.strip()
+                        if p and not p.startswith('#') and os.path.isfile(p):
+                            tracks.append(p)
+            except Exception:
+                pass
+
+        total = len(tracks)
+        with _rocky_audit_lock:
+            _rocky_audit_state['total'] = total
+
+        violations = []
+        for i, path in enumerate(tracks):
+            try:
+                meta = _rocky_track_meta(path)
+                dur  = meta['duration']
+                if dur == 0.0:
+                    dur = get_audio_duration(path)
+                    with _rocky_meta_lock:
+                        _rocky_meta_cache[path]['duration'] = dur
+
+                if 0 < dur < ROCKY_MIN_SEC:
+                    violations.append({'path': path, 'duration': round(dur, 1),
+                                       'type': 'too_short',
+                                       'artist': meta['artist'], 'title': meta['title']})
+                elif dur > ROCKY_MAX_SEC:
+                    violations.append({'path': path, 'duration': round(dur, 1),
+                                       'type': 'too_long',
+                                       'artist': meta['artist'], 'title': meta['title']})
+            except Exception:
+                pass
+            if i % 50 == 0:
+                with _rocky_audit_lock:
+                    _rocky_audit_state['progress'] = i
+
+        audit_data = {
+            'scanned_at': datetime.now().isoformat(),
+            'total_tracks': total,
+            'violations': violations,
+        }
+        with open(ROCKY_AUDIT_FILE, 'w') as f:
+            json.dump(audit_data, f, ensure_ascii=False, indent=2)
+
+        with _rocky_audit_lock:
+            _rocky_audit_state = {'state': 'done', 'progress': total, 'total': total,
+                                   'started': _rocky_audit_state['started']}
+        print(f'[RockyAudit] Done: {len(violations)} violations in {total} tracks', flush=True)
+    except Exception as e:
+        with _rocky_audit_lock:
+            _rocky_audit_state['state'] = 'error'
+        print(f'[RockyAudit] Error: {e}', flush=True)
+
+
+def _rocky_enforcer():
+    """Background thread: every 5 min, if recently-played artists changed,
+    rebuild playlists to enforce the 3-hour artist gap."""
+    _prev_recent = frozenset()
+    while True:
+        time.sleep(300)
+        try:
+            recent = frozenset(_rocky_recent_artists().keys())
+            if recent == _prev_recent:
+                continue
+            _prev_recent = recent
+            # Rebuild only if meta cache is populated (scan has run at least once)
+            with _rocky_meta_lock:
+                cache_size = len(_rocky_meta_cache)
+            if cache_size < 10:
+                continue
+            # Rebuild with artist filter applied inside rebuild_playlists
+            rebuild_playlists()
+            print(f'[RockyEnforcer] Rebuilt playlists, {len(recent)} artists on cooldown', flush=True)
+        except Exception as e:
+            print(f'[RockyEnforcer] Error: {e}', flush=True)
+
+threading.Thread(target=_rocky_enforcer, daemon=True).start()
+
+
+@app.route('/api/rocky/audit')
+def api_rocky_audit():
+    """Return current audit results + artist cooldown status."""
+    with _rocky_audit_lock:
+        state = dict(_rocky_audit_state)
+    try:
+        with open(ROCKY_AUDIT_FILE) as f:
+            audit = json.load(f)
+    except Exception:
+        audit = {'scanned_at': None, 'total_tracks': 0, 'violations': []}
+    recent_artists = _rocky_recent_artists()
+    return jsonify({
+        'scan_state':    state,
+        'audit':         audit,
+        'recent_artists': [
+            {'artist': a, 'last_played': ts,
+             'cooldown_remaining_min': max(0, round(
+                 (ROCKY_ARTIST_GAP_H * 3600 -
+                  (datetime.now() - datetime.fromisoformat(ts)).total_seconds()) / 60
+             ))}
+            for a, ts in sorted(recent_artists.items(), key=lambda x: -
+                (datetime.now() - datetime.fromisoformat(x[1])).total_seconds())
+        ],
+    })
+
+
+@app.route('/api/rocky/audit/start', methods=['POST'])
+def api_rocky_audit_start():
+    with _rocky_audit_lock:
+        if _rocky_audit_state.get('state') == 'running':
+            return jsonify({'ok': False, 'error': 'scan already running'})
+    threading.Thread(target=_run_rocky_audit, daemon=True).start()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/rocky/exclude-violation', methods=['POST'])
+def api_rocky_exclude_violation():
+    """Exclude a track path from playlists (duration violation)."""
+    data = request.get_json(silent=True) or {}
+    path = (data.get('path') or '').strip()
+    if not path:
+        return jsonify({'error': 'path required'}), 400
+    try:
+        with open(EXCLUDED_FILE) as f:
+            excluded = json.load(f)
+    except Exception:
+        excluded = []
+    if path not in excluded:
+        excluded.append(path)
+        with open(EXCLUDED_FILE, 'w') as f:
+            json.dump(excluded, f, ensure_ascii=False)
+    return jsonify({'ok': True})
+
+
 # ─── Show triggering ──────────────────────────────────────────────────────────
 
 def get_random_jingle(min_duration=10.0):
