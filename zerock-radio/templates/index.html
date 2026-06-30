@@ -3031,6 +3031,7 @@ function switchMgmt(sub) {
   try { localStorage.setItem('rocky.mgmt', sub); } catch(_) {}
   if (sub === 'listeners') { _startListeners(); initRatingsControls(); loadRatingsHistory(); }
   else _stopListeners();
+  if (sub === 'rocky') loadRockyAudit();
 }
 
 // ── Initial state on load ─────────────────────────────────────────────────────
