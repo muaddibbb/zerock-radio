@@ -660,6 +660,59 @@
       </div>
     </div>
 
+    <!-- Rocky Rules card -->
+    <div class="card" data-mgmt-section="rocky" style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+        <h2 style="margin:0">🎸 Rocky Rules</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="rockyAuditStatus" style="font-size:0.8em;color:#666"></span>
+          <button onclick="startRockyAudit()"
+                  style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:0.85em;font-weight:600;cursor:pointer">
+            🔍 Scan Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Rules summary -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;font-size:0.82em">
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px">
+          <span style="color:#888">Min duration</span> <strong style="color:#4ade80">2:00</strong>
+        </div>
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px">
+          <span style="color:#888">Max duration</span> <strong style="color:#4ade80">10:00</strong>
+        </div>
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px">
+          <span style="color:#888">Artist cooldown</span> <strong style="color:#4ade80">3 hours</strong>
+        </div>
+      </div>
+
+      <!-- Progress bar (scan) -->
+      <div id="rockyProgressWrap" style="display:none;margin-bottom:16px">
+        <div style="font-size:0.82em;color:#888;margin-bottom:6px">Scanning tracks…
+          <span id="rockyProgressText"></span>
+        </div>
+        <div style="background:#222;border-radius:4px;height:6px">
+          <div id="rockyProgressBar" style="background:#7c3aed;height:6px;border-radius:4px;width:0%;transition:width .3s"></div>
+        </div>
+      </div>
+
+      <!-- Duration violations -->
+      <div id="rockyViolationsWrap">
+        <h3 style="font-size:0.9em;color:#aaa;margin:0 0 10px">⏱ Duration Violations</h3>
+        <div id="rockyViolationsList" style="font-size:0.83em;color:#666;padding:8px 0">
+          Run a scan to check tracks.
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #2a2a2a;margin:18px 0">
+
+      <!-- Artist cooldown -->
+      <div>
+        <h3 style="font-size:0.9em;color:#aaa;margin:0 0 10px">🎤 Artist Cooldown (last 3 h)</h3>
+        <div id="rockyCooldownList" style="font-size:0.83em;color:#666">Loading…</div>
+      </div>
+    </div>
+
     <!-- Streams card -->
     <div class="card" data-mgmt-section="streams" style="margin-bottom:20px">
       <h2>Streams</h2>
