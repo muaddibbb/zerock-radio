@@ -2591,6 +2591,114 @@ function _drawListenersChart(history) {
   drawSeries('ext',   gradExt,   '#60a0fc');
 }
 
+// ── Rocky Rules ──────────────────────────────────────────────────────────────
+let _rockyAuditTimer = null;
+
+async function loadRockyAudit() {
+  try {
+    const r = await fetch('/api/rocky/audit', {cache: 'no-store'});
+    const d = await r.json();
+    _renderRockyViolations(d.audit || {});
+    _renderRockyCooldown(d.recent_artists || []);
+    _renderRockyScanState(d.scan_state || {});
+  } catch(e) { console.error('rocky audit error', e); }
+}
+
+async function startRockyAudit() {
+  await fetch('/api/rocky/audit/start', {method: 'POST'});
+  document.getElementById('rockyAuditStatus').textContent = 'Scan started…';
+  if (!_rockyAuditTimer) _rockyAuditTimer = setInterval(loadRockyAudit, 3000);
+}
+
+function _renderRockyScanState(state) {
+  const statusEl   = document.getElementById('rockyAuditStatus');
+  const progressWr = document.getElementById('rockyProgressWrap');
+  const progressBr = document.getElementById('rockyProgressBar');
+  const progressTx = document.getElementById('rockyProgressText');
+  if (state.state === 'running') {
+    progressWr.style.display = 'block';
+    const pct = state.total > 0 ? Math.round(state.progress / state.total * 100) : 0;
+    progressBr.style.width = pct + '%';
+    progressTx.textContent = `${state.progress} / ${state.total}`;
+    statusEl.textContent = 'Scanning…';
+  } else {
+    progressWr.style.display = 'none';
+    if (state.state === 'done') {
+      statusEl.textContent = `Last scan: ${(state.started || '').slice(0,16).replace('T',' ')}`;
+      if (_rockyAuditTimer) { clearInterval(_rockyAuditTimer); _rockyAuditTimer = null; }
+    }
+  }
+}
+
+function _renderRockyViolations(audit) {
+  const el = document.getElementById('rockyViolationsList');
+  const vs = audit.violations || [];
+  if (!audit.scanned_at) { el.innerHTML = '<span style="color:#555">Run a scan to check tracks.</span>'; return; }
+  if (!vs.length) { el.innerHTML = '<span style="color:#4ade80">✓ No violations found</span>'; return; }
+
+  const tooLong  = vs.filter(v => v.type === 'too_long');
+  const tooShort = vs.filter(v => v.type === 'too_short');
+
+  let html = '';
+  if (tooLong.length) {
+    html += `<div style="color:#f97316;font-weight:600;margin-bottom:6px">⬆ Too long (&gt;10 min) — ${tooLong.length} tracks</div>`;
+    html += tooLong.map(v => _rockyViolationRow(v)).join('');
+  }
+  if (tooShort.length) {
+    html += `<div style="color:#facc15;font-weight:600;margin:10px 0 6px">⬇ Too short (&lt;2 min) — ${tooShort.length} tracks</div>`;
+    html += tooShort.map(v => _rockyViolationRow(v)).join('');
+  }
+  el.innerHTML = html;
+}
+
+function _rockyViolationRow(v) {
+  const mins = Math.floor(v.duration / 60);
+  const secs = Math.round(v.duration % 60);
+  const durStr = `${mins}:${String(secs).padStart(2,'0')}`;
+  const label = v.title ? `${v.artist || '?'} — ${v.title}` : (v.path.split('/').pop() || v.path);
+  return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #1a1a1a">
+    <span style="color:#ccc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+    <span style="color:#888;min-width:38px;text-align:right">${durStr}</span>
+    <button onclick="rockyExclude('${v.path.replace(/'/g,"\\'")}', this)"
+            style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 10px;font-size:0.8em;cursor:pointer;white-space:nowrap">
+      Exclude
+    </button>
+  </div>`;
+}
+
+async function rockyExclude(path, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const r = await fetch('/api/rocky/exclude-violation', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({path})
+    });
+    const d = await r.json();
+    if (d.ok) btn.closest('div').style.opacity = '0.3';
+    else { btn.disabled = false; btn.textContent = 'Exclude'; }
+  } catch(e) { btn.disabled = false; btn.textContent = 'Exclude'; }
+}
+
+function _renderRockyCooldown(artists) {
+  const el = document.getElementById('rockyCooldownList');
+  if (!artists.length) {
+    el.innerHTML = '<span style="color:#555">No artists on cooldown right now.</span>';
+    return;
+  }
+  el.innerHTML = artists.map(a => {
+    const mins = a.cooldown_remaining_min;
+    const bar  = Math.round((1 - mins / (3 * 60)) * 100);
+    const lastDt = a.last_played ? a.last_played.slice(11,16) : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #1a1a1a">
+      <span style="color:#ccc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.artist}</span>
+      <span style="color:#888;font-size:0.85em">played ${lastDt}</span>
+      <span style="color:${mins > 0 ? '#f97316' : '#4ade80'};min-width:55px;text-align:right;font-size:0.85em">
+        ${mins > 0 ? mins + ' min left' : '✓ clear'}
+      </span>
+    </div>`;
+  }).join('');
+}
+
 // ── Ratings History ──────────────────────────────────────────────────────────
 function initRatingsControls() {
   const today = new Date().toISOString().slice(0, 10);
