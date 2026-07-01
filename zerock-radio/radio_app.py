@@ -232,7 +232,7 @@ def _inject_kupernet_footer(resp):
 SHOW_SCHEDULE = [
     {'key': 'al_harocker',          'name': 'על הרוקר',           'broadcaster': '',              'day': None, 'time': '07:00', 'upload_time': '08:00', 'rerun_days_offset': None, 'rerun_time': None,  'wp_show_id': ''},
     {'key': 'rocktrip',             'name': 'RockTrip',            'broadcaster': 'אלעד אביגן',   'day': 3,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '08:00','wp_show_id': ''},
-    {'key': 'zifim',                'name': 'נגד כיוון הזיפים',   'broadcaster': 'אחיעד לוק',    'day': 6,    'time': '09:00', 'upload_time': '11:00', 'rerun_days_offset': 2,    'rerun_time': '13:00','wp_show_id': ''},
+    {'key': 'zifim',                'name': 'נגד כיוון הזיפים',   'broadcaster': 'אחיעד לוק',    'day': 6,    'time': '09:00', 'upload_time': '11:00', 'rerun_days_offset': 2,    'rerun_time': '11:00','wp_show_id': ''},
     {'key': 'black_parade',         'name': 'Black Parade',        'broadcaster': 'מתן בכור',     'day': 6,    'time': '13:00', 'upload_time': '14:00', 'rerun_days_offset': 3,    'rerun_time': '09:00','wp_show_id': ''},
     {'key': 'pascal',               'name': 'אני לא בפסקול',      'broadcaster': 'שיר אסולין',   'day': 6,    'time': '17:00', 'upload_time': '19:00', 'rerun_days_offset': 3,    'rerun_time': '14:00','wp_show_id': ''},
     {'key': 'patrock_laila_eyal',   'name': 'פטרוק לילה',         'broadcaster': 'איל אורטל',    'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 6,    'rerun_time': '09:00','wp_show_id': ''},
