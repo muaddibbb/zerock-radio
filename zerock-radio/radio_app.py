@@ -1639,6 +1639,8 @@ def _do_podbean_wp_upload(show):
 
 _WA_GROUP_SHOWS  = '972547464415-1621406038@g.us'  # הודעות וקישורים זה רוק
 _WA_GROUP_MATZAD = '972523434878-1563868107@g.us'  # מצעד שבועי
+_WA_GROUP_LISTENERS_DJS = '972523434878-1572274826@g.us'  # מאזיני ושדרני רדיו זה רוק
+_WA_GROUP_MIFGASHIM     = '972558817101-1602873938@g.us'  # מפגשים
 
 def _notify_whatsapp_matzad(show, podbean_url=''):
     """Fire-and-forget: notify the 'מצעד שבועי' WhatsApp group who is presenting
