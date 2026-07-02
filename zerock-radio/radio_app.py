@@ -9464,6 +9464,78 @@ def _start_monthly_invite_sender():
 _start_monthly_invite_sender()
 
 
+# ── Monthly Al Haroker registration link → WhatsApp groups (1st of month) ─────
+def _send_al_haroker_wa_monthly(year, month):
+    """Send this month's Al Haroker registration link to the listener/DJ and
+    Mifgashim WhatsApp groups via the local bridge. Fire-and-forget per group."""
+    url = f"{ZEROCK_PUBLIC_URL}/al-haroker-schedule/{year}/{month}"
+    message = f"מוזמנות ומוזמנים להירשם לעריכת על הרוקר בתחנה\n{url}"
+    for jid, gname in ((_WA_GROUP_LISTENERS_DJS, 'מאזיני ושדרני רדיו זה רוק'),
+                       (_WA_GROUP_MIFGASHIM,     'מפגשים')):
+        try:
+            _requests.post('http://127.0.0.1:7733/send',
+                           json={'to': jid, 'message': message}, timeout=10)
+            print(f"[AlHaRoker-WA] Sent {year}/{month} link to {gname}", flush=True)
+        except Exception as e:
+            print(f"[AlHaRoker-WA] Failed to send to {gname}: {e}", flush=True)
+        time.sleep(1)
+
+
+def _start_al_haroker_wa_monthly_sender():
+    """Background daemon: on the 1st of each month, post this month's Al Haroker
+    registration link to the WhatsApp groups. Idempotent (once per calendar month
+    via AL_HAROKER_WA_SENT_FILE), re-checks daily at ~10:00."""
+    def _run():
+        while True:
+            try:
+                now = datetime.now()
+                if now.day == 1:
+                    sent_key = f"{now.year}-{now.month:02d}"
+                    try:
+                        with open(AL_HAROKER_WA_SENT_FILE) as f:
+                            sent_data = json.load(f)
+                    except Exception:
+                        sent_data = {}
+                    if sent_data.get('last_sent_key') != sent_key:
+                        print(f"[AlHaRoker-WA] Monthly link send triggered for "
+                              f"{now.year}/{now.month}", flush=True)
+                        _send_al_haroker_wa_monthly(now.year, now.month)
+                        try:
+                            with open(AL_HAROKER_WA_SENT_FILE, 'w') as f:
+                                json.dump({'last_sent_key': sent_key,
+                                           'sent_at':       now.isoformat(),
+                                           'sent_for':      sent_key}, f)
+                        except Exception:
+                            pass
+            except Exception as e:
+                print(f"[AlHaRoker-WA] Monthly WA thread error: {e}", flush=True)
+
+            now2 = datetime.now()
+            tomorrow_10 = (now2 + timedelta(days=1)).replace(
+                hour=10, minute=0, second=0, microsecond=0)
+            time.sleep(max((tomorrow_10 - now2).total_seconds(), 3600))
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
+_start_al_haroker_wa_monthly_sender()
+
+
+@app.route('/api/al-haroker-wa-send', methods=['POST'])
+def api_al_haroker_wa_send():
+    """Admin: manually post this month's (or a given) Al Haroker registration link
+    to the WhatsApp groups. Body (JSON, optional): {"year": 2026, "month": 7}.
+    Does not touch the once-per-month guard file (safe for testing)."""
+    data  = request.get_json(force=True) or {}
+    now   = datetime.now()
+    year  = int(data.get('year')  or now.year)
+    month = int(data.get('month') or now.month)
+    threading.Thread(target=_send_al_haroker_wa_monthly,
+                     args=(year, month), daemon=True).start()
+    return jsonify({'ok': True,
+                    'message': f'Al Haroker WA link send triggered for {year}/{month}'})
+
+
 @app.route('/api/al-haroker-send-invites', methods=['POST'])
 def api_al_haroker_send_invites():
     """Admin: manually trigger the monthly invite send for a given next month.
