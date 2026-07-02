@@ -166,6 +166,7 @@ ROCKY_MAX_SEC               = 600    # 10 min
 ROCKY_ARTIST_GAP_H          = 3
 POLL_CODES_FILE             = f"{RADIO_DIR}/poll_codes.json"
 AL_HAROKER_MONTHLY_SENT_FILE= f"{RADIO_DIR}/al_haroker_monthly_sent.json"
+AL_HAROKER_WA_SENT_FILE     = f"{RADIO_DIR}/al_haroker_wa_monthly_sent.json"
 UNSUBSCRIBE_TOKENS_FILE     = f"{RADIO_DIR}/unsubscribe_tokens.json"
 UNSUBSCRIBED_EMAILS_FILE    = f"{RADIO_DIR}/unsubscribed_emails.json"
 AL_HAROKER_SCHEDULE_START   = _date(2026, 5, 1)   # first bookable date
