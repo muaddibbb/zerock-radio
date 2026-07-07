@@ -8483,9 +8483,9 @@ def _take_public_snapshot(poll_id=None):
         'poll_title':      poll.get('title', ''),
         'total_voters':    len(votes),
         'results':         results_out,
-        'badge_aliya_id':  badge_aliya_id,
-        'badge_yerida_id': badge_yerida_id,
-        'badge_vatik_id':  badge_vatik_id,
+        'badge_aliya_ids':  badge_aliya_ids,
+        'badge_yerida_ids': badge_yerida_ids,
+        'badge_vatik_ids':  badge_vatik_ids,
     }
     poll['public_snapshot'] = snapshot
     _save_polls(polls)
