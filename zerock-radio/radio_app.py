@@ -8296,9 +8296,10 @@ def poll_results_page(poll_id):
                 song['movement'] = '0'
         song['weeks'] = song_weeks.get(sid)
     # Compute special badges
-    badge_aliya_id  = None  # העלייה הגבוהה — biggest rise
-    badge_yerida_id = None  # הירידה הגבוהה — biggest drop
-    badge_vatik_id  = None  # השיר הותיק   — most weeks on chart
+    # Lists (not single ids) so tied songs all get the badge.
+    badge_aliya_ids  = []  # העלייה הגבוהה — biggest rise
+    badge_yerida_ids = []  # הירידה הגבוהה — biggest drop
+    badge_vatik_ids  = []  # השיר הותיק   — most weeks on chart
     max_rise = 0; max_drop = 0; max_weeks = 0
     for song in results[:20]:
         mv    = song.get('movement', '')
@@ -8307,13 +8308,19 @@ def poll_results_page(poll_id):
             if mv.startswith('+'):
                 rise = int(mv[1:])
                 if rise > max_rise:
-                    max_rise = rise; badge_aliya_id = song['id']
+                    max_rise = rise; badge_aliya_ids = [song['id']]
+                elif rise == max_rise and max_rise > 0:
+                    badge_aliya_ids.append(song['id'])
             elif mv.startswith('-'):
                 drop = int(mv[1:])
                 if drop > max_drop:
-                    max_drop = drop; badge_yerida_id = song['id']
+                    max_drop = drop; badge_yerida_ids = [song['id']]
+                elif drop == max_drop and max_drop > 0:
+                    badge_yerida_ids.append(song['id'])
         if weeks > max_weeks:
-            max_weeks = weeks; badge_vatik_id = song['id']
+            max_weeks = weeks; badge_vatik_ids = [song['id']]
+        elif weeks == max_weeks and max_weeks > 0:
+            badge_vatik_ids.append(song['id'])
     max_votes_any  = max((r['votes'] for r in results), default=0)
     any_votes      = max_votes_any > 0
     vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
