@@ -370,9 +370,12 @@
     <div class="song-info">
       <div class="song-name">
         <span class="song-label-text">{{ s.label }}</span>
-        {% if s.id == badge_aliya_id %}<span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>{% endif %}
-        {% if s.id == badge_yerida_id %}<span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>{% endif %}
-        {% if s.id == badge_vatik_id %}<span class="special-badge badge-vatik">★ השיר הותיק</span>{% endif %}
+        {% set aliya_ids  = badge_aliya_ids  if badge_aliya_ids  is defined else ([badge_aliya_id]  if badge_aliya_id  else []) %}
+        {% set yerida_ids = badge_yerida_ids if badge_yerida_ids is defined else ([badge_yerida_id] if badge_yerida_id else []) %}
+        {% set vatik_ids  = badge_vatik_ids  if badge_vatik_ids  is defined else ([badge_vatik_id]  if badge_vatik_id  else []) %}
+        {% if s.id in aliya_ids %}<span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>{% endif %}
+        {% if s.id in yerida_ids %}<span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>{% endif %}
+        {% if s.id in vatik_ids %}<span class="special-badge badge-vatik">★ השיר הותיק</span>{% endif %}
         {% if loop.index > 20 and not s.weeks %}<span class="special-badge badge-lo-nicnas">לא נכנס למצעד</span>{% endif %}
       </div>
       <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
