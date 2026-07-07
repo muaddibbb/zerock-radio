@@ -8461,14 +8461,20 @@ def _take_public_snapshot(poll_id=None):
                 if movement.startswith('+'):
                     rise = int(movement[1:])
                     if rise > max_rise:
-                        max_rise = rise; badge_aliya_id = sid
+                        max_rise = rise; badge_aliya_ids = [sid]
+                    elif rise == max_rise and max_rise > 0:
+                        badge_aliya_ids.append(sid)
                 elif movement.startswith('-'):
                     drop = abs(int(movement))
                     if drop > max_drop:
-                        max_drop = drop; badge_yerida_id = sid
+                        max_drop = drop; badge_yerida_ids = [sid]
+                    elif drop == max_drop and max_drop > 0:
+                        badge_yerida_ids.append(sid)
         wk = weeks or 0
         if wk > max_weeks:
-            max_weeks = wk; badge_vatik_id = sid
+            max_weeks = wk; badge_vatik_ids = [sid]
+        elif wk == max_weeks and max_weeks > 0:
+            badge_vatik_ids.append(sid)
         results_out.append(entry)
 
     snapshot = {
