@@ -256,11 +256,14 @@
 
       <div class="song-info">
         <div class="song-name">
-          {% if song.id == snapshot.badge_aliya_id %}
+          {% set aliya_ids  = snapshot.badge_aliya_ids  or ([snapshot.badge_aliya_id]  if snapshot.badge_aliya_id  else []) %}
+          {% set yerida_ids = snapshot.badge_yerida_ids or ([snapshot.badge_yerida_id] if snapshot.badge_yerida_id else []) %}
+          {% set vatik_ids  = snapshot.badge_vatik_ids  or ([snapshot.badge_vatik_id]  if snapshot.badge_vatik_id  else []) %}
+          {% if song.id in aliya_ids %}
             <span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>
-          {% elif song.id == snapshot.badge_yerida_id %}
+          {% elif song.id in yerida_ids %}
             <span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>
-          {% elif song.id == snapshot.badge_vatik_id %}
+          {% elif song.id in vatik_ids %}
             <span class="special-badge badge-vatik">⭐ השיר הותיק</span>
           {% endif %}
           {{ song.label }}
