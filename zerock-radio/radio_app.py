@@ -8427,9 +8427,10 @@ def _take_public_snapshot(poll_id=None):
     prev_pos   = poll.get('prev_positions') or {}
     song_weeks = poll.get('song_weeks') or {}
     results_out = []
-    badge_aliya_id  = None
-    badge_yerida_id = None
-    badge_vatik_id  = None
+    # Lists (not single ids) so tied songs all get the badge.
+    badge_aliya_ids  = []
+    badge_yerida_ids = []
+    badge_vatik_ids  = []
     max_rise = 0; max_drop = 0; max_weeks = 0
 
     for curr_rank, song in enumerate(results_raw, start=1):
