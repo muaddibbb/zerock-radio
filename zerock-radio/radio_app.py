@@ -1613,7 +1613,7 @@ def _do_podbean_wp_upload(show):
                 'playlist':        show.get('description', ''),
                 'publishTimestamp': publish_ts,
                 'wpShowId':        str(_WP_SHOW_IDS.get(show_cfg['name'], '')) or show_cfg.get('wp_show_id', ''),
-                'wpBroadcasterId': '',
+                'wpBroadcasterId': str(_WP_BROADCASTER_IDS.get((broadcaster or '').strip(), '') or ''),
                 'scheduleToSam':   '0',
                 'samOnly':         '0',
                 'skipWP':          '1' if (show.get('skip_wp') or show_cfg.get('no_wp')) else '0',
