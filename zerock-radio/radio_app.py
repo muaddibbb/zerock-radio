@@ -1343,6 +1343,11 @@ def _create_wp_post_direct(show) -> tuple:
         if show_tax_id:
             body['shows'] = [show_tax_id]
 
+        # Broadcasters taxonomy
+        bc_tax_id = _WP_BROADCASTER_IDS.get((broadcaster or '').strip())
+        if bc_tax_id:
+            body['broadcasters'] = [bc_tax_id]
+
         # podbean_link must be the direct CDN audio URL (not the episode page URL)
         # so the WP theme can embed the audio player.
         podbean_permalink = show.get('podbean_url', '')
