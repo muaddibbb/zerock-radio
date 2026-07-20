@@ -140,6 +140,36 @@ _WP_SHOW_IDS = {
     'פטרוק לילה':              50,
 }
 
+# WP 'broadcasters' taxonomy term IDs (from /wp-json/wp/v2/broadcasters).
+# Broadcasters without a WP term (e.g. the פטרוק לילה / סן פטרוק hosts) are
+# simply absent — lookups fall back to '' and the taxonomy is left unset.
+_WP_BROADCASTER_IDS = {
+    'יובל יוספסון':            37,
+    'ירון חכם':                39,
+    'ערן הר-פז':               63,
+    'ליאת בלו':                65,
+    'רועי ויינברג':            67,
+    'ירון הורינג':             72,
+    'יותם "דפיילר" אבני':     75,
+    'אלעד אביגן':              76,
+    'גלית קורני':              77,
+    'דוד שאבי':                78,
+    'טל סיון ובר קציר':        79,
+    'אחיעד לוק':               83,
+    'שיר אסולין':              84,
+    'יובל ביטון':              85,
+    'מתן בכור':                87,
+    'עופר פרוינד':             168,
+    "ג'קי שרגא":               187,
+    'עדן גולן':                255,
+    'סיון פישמן':              262,
+    'טל אופיר':                263,
+    'רועי קופרמן':             304,
+    'נופר נירן':               310,
+    'דורית אורן':              312,
+    'אפרת קוטגרו':             315,
+}
+
 # Podbean API credentials (for fetching CDN media_url when WP post needs to be created)
 PODBEAN_CLIENT_ID     = os.environ.get('PODBEAN_CLIENT_ID', '')
 PODBEAN_CLIENT_SECRET = os.environ.get('PODBEAN_CLIENT_SECRET', '')
