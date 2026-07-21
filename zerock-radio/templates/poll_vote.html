@@ -416,6 +416,10 @@ async function submitVote(e) {
     msg.innerHTML = '<span class="msg-err">יש להזין כתובת אימייל תקינה</span>';
     return;
   }
+  if (!isVerified()) {
+    msg.innerHTML = '<span class="msg-err">יש לאמת את כתובת המייל לפני ההצבעה</span>';
+    return;
+  }
   if (ids.length !== MAX_VOTES) {
     msg.innerHTML = '<span class="msg-err">יש לבחור בדיוק ' + MAX_VOTES + ' שירים</span>';
     return;
@@ -427,7 +431,7 @@ async function submitVote(e) {
     const res = await fetch(getPollApiBase() + '/vote', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({song_ids: ids, email, name}),
+      body: JSON.stringify({song_ids: ids, email, name, verify_token: verifyToken}),
       credentials: 'same-origin',
     });
     const data = await res.json().catch(() => ({}));
