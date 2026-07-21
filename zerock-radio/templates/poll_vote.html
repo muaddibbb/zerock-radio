@@ -383,7 +383,7 @@ function updateCount() {
   const emailEl = document.getElementById('voter-email');
   const name    = nameEl ? nameEl.value.trim() : '';
   const email   = emailEl ? emailEl.value.trim() : '';
-  const identityOk = name.length > 0 && isEmailValid(email);
+  const identityOk = name.length > 0 && isEmailValid(email) && isVerified();
 
   badge.textContent = n + ' / ' + MAX_VOTES;
   badge.classList.toggle('full',     n === MAX_VOTES);
