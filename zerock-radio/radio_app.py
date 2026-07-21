@@ -8958,6 +8958,10 @@ def api_poll_send_code(poll_id):
     email = (data.get('email') or '').strip().lower()
     if not email or '@' not in email or '.' not in email.split('@')[-1]:
         return jsonify({'error': 'כתובת מייל לא תקינה'}), 400
+    if _is_unsubscribed(email):
+        return jsonify({'error': 'כתובת מייל זו אינה רשאית להצביע'}), 403
+    if not _domain_has_mx(email):
+        return jsonify({'error': 'כתובת המייל אינה קיימת. נא להזין כתובת מייל תקינה.'}), 400
 
     # Reject if already voted with this email
     votes = _load_poll_votes()
