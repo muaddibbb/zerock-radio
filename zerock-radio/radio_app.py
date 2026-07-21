@@ -9119,6 +9119,15 @@ def api_poll_vote(poll_id):
         })
         _save_poll_votes(votes)
 
+    # Consume the verification token (single-use)
+    with _poll_codes_lock:
+        _codes = _load_poll_codes()
+        for c in _codes:
+            if (c['poll_id'] == poll_id and c['email'] == email
+                    and c.get('token') == verify_token):
+                c['vote_submitted'] = True
+        _save_poll_codes(_codes)
+
     # Send thank-you email in background (flags vote on sync bounce)
     threading.Thread(
         target=_send_vote_thankyou_email,
