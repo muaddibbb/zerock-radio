@@ -157,17 +157,33 @@
   <form id="vote-form" onsubmit="submitVote(event)">
 
     {% if poll.open %}
-    <!-- ── Voter identity (name + email, no verification step) ── -->
+    <!-- ── Voter identity (name + email + 6-digit code verification) ── -->
     <div class="voter-section">
-      <div class="voter-label">כדי להצביע, יש למלא שם ואימייל</div>
+      <div class="voter-label">כדי להצביע, יש למלא שם ואימייל ולאמת את הכתובת</div>
       <div class="voter-fields">
         <input type="text" id="voter-name" placeholder="שמך המלא"
                autocomplete="name" dir="rtl" oninput="onIdentityChange()">
         <input type="email" id="voter-email" placeholder="your@email.com"
                autocomplete="email" dir="ltr" inputmode="email" oninput="onIdentityChange()">
       </div>
+      <div id="verify-row" style="margin-top:10px;direction:rtl">
+        <button type="button" id="btn-send-code" onclick="sendCode()" disabled
+                style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:0.9em;cursor:pointer">
+          שלח קוד אימות למייל 📧
+        </button>
+        <div id="code-entry" style="display:none;margin-top:10px">
+          <input type="text" id="code-input" placeholder="קוד בן 6 ספרות" maxlength="6"
+                 inputmode="numeric" pattern="[0-9]*" dir="ltr"
+                 style="width:140px;text-align:center;letter-spacing:4px;font-size:1.1em;padding:8px;border-radius:8px;border:1px solid #444;background:#1a1a1a;color:#eee">
+          <button type="button" id="btn-verify-code" onclick="verifyCode()"
+                  style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:0.9em;cursor:pointer;margin-right:8px">
+            אמת קוד ✓
+          </button>
+        </div>
+        <div id="verify-msg" style="margin-top:8px;font-size:0.85em"></div>
+      </div>
       <p style="margin-top:10px;font-size:0.78em;color:#666;line-height:1.6;direction:rtl">
-        ניתן להצביע פעם אחת מכל כתובת מייל. הצבעות מכתובות מייל מזוייפות יפסלו (אנחנו בודקים). נא להמנע מאי נעימויות. תודה.
+        ניתן להצביע פעם אחת מכל כתובת מייל. נשלח אליך קוד אימות בן 6 ספרות — ההצבעה תיפתח רק לאחר אימות הכתובת. תודה.
       </p>
     </div>
     {% endif %}
