@@ -6969,7 +6969,7 @@ def _send_poll_verification_email(to_email, code, poll_title):
     msg['From']    = SMTP_FROM_ADDR
     msg['To']      = to_email
     msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
-    msg.attach(MIMEText(body_html, 'utf-8'))
+    msg.attach(MIMEText(body_html, 'html', 'utf-8'))
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
         s.ehlo(); s.starttls()
         s.login(SMTP_USER, SMTP_PASS)
