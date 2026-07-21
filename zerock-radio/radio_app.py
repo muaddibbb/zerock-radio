@@ -6947,7 +6947,7 @@ def _save_poll_codes(data):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def _send_poll_verification_email(to_email, code, poll_title):
-    """Send a 6-digit email verification code to a poll voter. (Legacy — kept for reference)"""
+    """Send a 6-digit email verification code to a poll voter."""
     if not SMTP_USER or not SMTP_PASS:
         print(f"[Poll] SMTP not configured — verification code for {to_email}: {code}", flush=True)
         return
