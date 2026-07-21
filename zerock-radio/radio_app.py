@@ -9067,6 +9067,24 @@ def api_poll_vote(poll_id):
     if not voter_name:
         return jsonify({'error': 'שם נדרש'}), 400
 
+    # ── Email verification (6-digit code 2FA) ─────────────────────────────────
+    verify_token = (data.get('verify_token') or '').strip()
+    if not verify_token:
+        return jsonify({'error': 'נדרש אימות מייל — שלח קוד ואמת אותו לפני שליחת ההצבעה'}), 403
+    with _poll_codes_lock:
+        _codes = _load_poll_codes()
+        _code_entry = next((c for c in _codes
+                            if c['poll_id'] == poll_id and c['email'] == email
+                            and c.get('verified') and c.get('token') == verify_token
+                            and not c.get('vote_submitted')), None)
+        if not _code_entry:
+            return jsonify({'error': 'אימות המייל נכשל או שפג תוקפו. שלח קוד חדש'}), 403
+        try:
+            if datetime.fromisoformat(_code_entry.get('verified_at', '')) < now - timedelta(minutes=30):
+                return jsonify({'error': 'פג תוקף האימות. שלח קוד חדש'}), 403
+        except (ValueError, TypeError):
+            return jsonify({'error': 'אימות המייל נכשל. שלח קוד חדש'}), 403
+
     # ── Validate song selection ───────────────────────────────────────────────
     if not isinstance(song_ids, list):
         return jsonify({'error': 'song_ids must be a list'}), 400
