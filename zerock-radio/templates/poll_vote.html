@@ -267,20 +267,101 @@ function getPollApiBase() {
   return window.location.pathname.replace('/poll/', '/api/poll/');
 }
 
-// ── Identity check — unlock checkboxes when name+email filled ──
+// ── Identity check — unlock checkboxes when name+email filled AND verified ──
 
 function isEmailValid(e) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 }
 
+// Email verification state (6-digit code 2FA)
+let verifyToken = null;
+let verifiedEmail = null;
+
+function isVerified() {
+  const email = ((document.getElementById('voter-email') || {}).value || '').trim().toLowerCase();
+  return !!verifyToken && email === verifiedEmail;
+}
+
 function onIdentityChange() {
   const name  = (document.getElementById('voter-name')  || {}).value || '';
-  const email = (document.getElementById('voter-email') || {}).value || '';
-  const ready = name.trim().length > 0 && isEmailValid(email.trim());
+  const email = ((document.getElementById('voter-email') || {}).value || '').trim();
+  const vmsg  = document.getElementById('verify-msg');
+  // Changing the email invalidates a previous verification
+  if (verifyToken && email.toLowerCase() !== verifiedEmail) {
+    verifyToken = null; verifiedEmail = null;
+    document.getElementById('code-entry').style.display = 'none';
+    if (vmsg) vmsg.innerHTML = '<span style="color:#f59e0b">כתובת המייל השתנתה — יש לאמת מחדש</span>';
+  }
+  const sendBtn = document.getElementById('btn-send-code');
+  if (sendBtn) sendBtn.disabled = !isEmailValid(email) || isVerified();
+  const ready = name.trim().length > 0 && isEmailValid(email) && isVerified();
   document.querySelectorAll('input[name=song]').forEach(b => {
     if (!b.checked) b.disabled = !ready;
   });
   updateCount();
+}
+
+async function sendCode() {
+  const email = ((document.getElementById('voter-email') || {}).value || '').trim();
+  const btn   = document.getElementById('btn-send-code');
+  const vmsg  = document.getElementById('verify-msg');
+  if (!isEmailValid(email)) return;
+  btn.disabled = true; btn.textContent = 'שולח…';
+  try {
+    const res = await fetch(getPollApiBase() + '/send-code', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      vmsg.innerHTML = '<span style="color:#e63946">' + (data.error || 'שגיאה בשליחת הקוד') + '</span>';
+      btn.disabled = false; btn.textContent = 'שלח קוד אימות למייל 📧';
+      return;
+    }
+    document.getElementById('code-entry').style.display = 'block';
+    vmsg.innerHTML = '<span style="color:#4caf50">קוד נשלח ל-' + email + ' — בדקו גם בספאם. הקוד תקף ל-10 דקות</span>';
+    btn.textContent = 'שלח קוד חדש 📧';
+    btn.disabled = false;
+    document.getElementById('code-input').focus();
+  } catch (err) {
+    vmsg.innerHTML = '<span style="color:#e63946">שגיאת תקשורת. נסה שוב</span>';
+    btn.disabled = false; btn.textContent = 'שלח קוד אימות למייל 📧';
+  }
+}
+
+async function verifyCode() {
+  const email = ((document.getElementById('voter-email') || {}).value || '').trim();
+  const code  = ((document.getElementById('code-input') || {}).value || '').trim();
+  const vmsg  = document.getElementById('verify-msg');
+  const vbtn  = document.getElementById('btn-verify-code');
+  if (!/^\d{6}$/.test(code)) {
+    vmsg.innerHTML = '<span style="color:#e63946">יש להזין קוד בן 6 ספרות</span>';
+    return;
+  }
+  vbtn.disabled = true; vbtn.textContent = 'מאמת…';
+  try {
+    const res = await fetch(getPollApiBase() + '/verify-code', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, code}),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok || !data.verify_token) {
+      vmsg.innerHTML = '<span style="color:#e63946">' + (data.error || 'קוד שגוי') + '</span>';
+      vbtn.disabled = false; vbtn.textContent = 'אמת קוד ✓';
+      return;
+    }
+    verifyToken   = data.verify_token;
+    verifiedEmail = email.toLowerCase();
+    document.getElementById('code-entry').style.display = 'none';
+    document.getElementById('btn-send-code').style.display = 'none';
+    vmsg.innerHTML = '<span style="color:#4caf50">✓ המייל אומת — אפשר לבחור שירים ולהצביע</span>';
+    onIdentityChange();
+  } catch (err) {
+    vmsg.innerHTML = '<span style="color:#e63946">שגיאת תקשורת. נסה שוב</span>';
+    vbtn.disabled = false; vbtn.textContent = 'אמת קוד ✓';
+  }
 }
 
 // ── Song picking ──
