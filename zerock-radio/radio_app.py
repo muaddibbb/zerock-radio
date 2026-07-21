@@ -9037,8 +9037,8 @@ def api_poll_verify_code(poll_id):
 @app.route('/api/poll/<poll_id>/vote', methods=['POST'])
 def api_poll_vote(poll_id):
     """Public: submit a ballot of exactly 5 song_ids.
-    No 2FA — vote recorded immediately; thank-you email sent in background;
-    bounces auto-flag the vote for admin review."""
+    Requires a verify_token obtained via send-code → verify-code (6-digit email
+    2FA). Thank-you email still sent in background; bounces auto-flag the vote."""
     polls = _load_polls()
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
