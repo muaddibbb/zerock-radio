@@ -8505,11 +8505,13 @@ def _take_public_snapshot(poll_id=None):
                         max_drop = drop; badge_yerida_ids = [sid]
                     elif drop == max_drop and max_drop > 0:
                         badge_yerida_ids.append(sid)
-        wk = weeks or 0
-        if wk > max_weeks:
-            max_weeks = wk; badge_vatik_ids = [sid]
-        elif wk == max_weeks and max_weeks > 0:
-            badge_vatik_ids.append(sid)
+            # Vatik badge only for chart songs (top-20, non-palash) — matches the
+            # admin results page; below-20 courtesy entries must not steal it.
+            wk = weeks or 0
+            if wk > max_weeks:
+                max_weeks = wk; badge_vatik_ids = [sid]
+            elif wk == max_weeks and max_weeks > 0:
+                badge_vatik_ids.append(sid)
         results_out.append(entry)
 
     snapshot = {
