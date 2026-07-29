@@ -1062,6 +1062,16 @@
                           padding:5px 10px;color:var(--text);font-size:0.82em;font-family:inherit;
                           direction:ltr;text-align:left;color:#aaa">
           </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-right:24px">
+            <img id="palash-img-preview-{{ i }}"
+                 src="/api/polls/{{ palash_poll.id }}/next-palash/{{ i }}/image"
+                 onerror="this.style.display='none'"
+                 style="height:42px;width:42px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">
+            <input type="file" id="palash-img-{{ i }}" accept="image/jpeg,image/png,image/webp"
+                   onchange="uploadPalashImage('{{ palash_poll.id }}', {{ i }}, this)"
+                   style="flex:1;font-size:0.76em;color:#aaa">
+            <span id="palash-img-status-{{ i }}" style="font-size:0.74em;color:#888;flex-shrink:0"></span>
+          </div>
         </div>
         {% endfor %}
       </div>
