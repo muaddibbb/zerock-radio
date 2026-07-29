@@ -1114,9 +1114,16 @@ def trigger_show(show):
         if is_matzad:
             # ── מצעד: iterate slots 20→1, insert פל"ש at defined positions ──
             pina_file    = os.path.join(MITZAD_DIR, "הפינה לשיפוטכם.mp3")
+            jingle_file  = os.path.join(MITZAD_DIR, MATZAD_OPENING_JINGLE)
             slot_to_file = {slot: f for slot, f in pl_pairs}
             badges_list  = show.get('playlist_badges') or []
+            # Opening jingle (מצעד שבועי)
+            if os.path.exists(jingle_file):
+                cmds.append(f"shows.push {jingle_file}")
             for slot_num in range(20, 0, -1):
+                # Replay the מצעד שבועי jingle before מקום 10
+                if slot_num == 10 and os.path.exists(jingle_file):
+                    cmds.append(f"shows.push {jingle_file}")
                 f = slot_to_file.get(slot_num)
                 if f:
                     makaom = get_makaom_file(slot_num)
