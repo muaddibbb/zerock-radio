@@ -3132,43 +3132,26 @@ def _notify_whatsapp_poll_results(poll_id):
             for sid in (v.get('song_ids') or []):
                 if sid in tally:
                     tally[sid] += 1
-        _tb    = poll.get('tiebreak_order') or {}
-        ranked = sorted(poll.get('songs', []),
-                        key=lambda x: (-tally.get(x['id'], 0), _tb.get(x['id'], 0.5)))
+        ranked = sorted(
+            poll.get('songs', []),
+            key=lambda x: (-tally.get(x['id'], 0),
+                           -((x.get('slot') or 0) if x.get('group') == 'matzad' else 0))
+        )
         _requests.post(
             'http://127.0.0.1:7733/send',
             json={'to': _WA_GROUP_MATZAD,
                   'message': f"🗳️ השבוע הצביעו {total} מצביעים במצעד הרוק של ישראל"},
             timeout=10,
         )
-        # ── First place: send the composed promo image if a picture exists, ──
-        #    otherwise the plain text (per spec: skip the image when no picture).
         if ranked:
             winner = ranked[0]
             label  = winner.get('label', '').strip()
-            img    = _palash_img_find(label)
-            sent_image = False
-            if img:
-                try:
-                    artist, song = _split_label(label)
-                    date_str = _upcoming_thursday_str()
-                    out = os.path.join(PALASH_IMAGES_DIR, f"_promo_{poll_id}.jpg")
-                    _compose_first_place_image(img, artist, song, date_str, out)
-                    sent_image = _send_whatsapp_image(
-                        _WA_GROUP_MATZAD, out, caption=f"🥇 מקום ראשון: {label}")
-                except Exception as e:
-                    print(f'[PollWatcher] promo image failed: {e}', flush=True)
-            if not sent_image:
-                _requests.post(
-                    'http://127.0.0.1:7733/send',
-                    json={'to': _WA_GROUP_MATZAD, 'message': f"🥇 מקום ראשון: {label}"},
-                    timeout=10,
-                )
-        # ── Delete pictures of songs that finished outside the top-20 ──
-        #    (pictures travel with a song only while it's on the chart).
-        for i, s in enumerate(ranked):
-            if i >= 20:
-                _palash_img_delete(s.get('label', ''))
+            _requests.post(
+                'http://127.0.0.1:7733/send',
+                json={'to': _WA_GROUP_MATZAD,
+                      'message': f"🥇 מקום ראשון: {label}"},
+                timeout=10,
+            )
         winner_label = ranked[0].get('label', '?') if ranked else '?'
         print(f'[PollWatcher] WA results sent — {total} voters, winner: {winner_label}', flush=True)
     except Exception as e:
