@@ -1062,16 +1062,6 @@
                           padding:5px 10px;color:var(--text);font-size:0.82em;font-family:inherit;
                           direction:ltr;text-align:left;color:#aaa">
           </div>
-          <div style="display:flex;align-items:center;gap:8px;padding-right:24px">
-            <img id="palash-img-preview-{{ i }}"
-                 src="/api/polls/{{ palash_poll.id }}/next-palash/{{ i }}/image"
-                 onerror="this.style.display='none'"
-                 style="height:42px;width:42px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">
-            <input type="file" id="palash-img-{{ i }}" accept="image/jpeg,image/png,image/webp"
-                   onchange="uploadPalashImage('{{ palash_poll.id }}', {{ i }}, this)"
-                   style="flex:1;font-size:0.76em;color:#aaa">
-            <span id="palash-img-status-{{ i }}" style="font-size:0.74em;color:#888;flex-shrink:0"></span>
-          </div>
         </div>
         {% endfor %}
       </div>
@@ -3131,32 +3121,6 @@ async function savePalash(pollId) {
     const st = document.getElementById('palash-status');
     if (st) { st.style.display = 'inline'; setTimeout(() => st.style.display = 'none', 2500); }
   } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
-}
-
-async function uploadPalashImage(pollId, i, input) {
-  const file = input.files && input.files[0];
-  if (!file) return;
-  const songEl = document.getElementById('palash-' + i);
-  if (!songEl || !songEl.value.trim()) {
-    alert('יש למלא את שם השיר בשורה זו לפני העלאת תמונה');
-    input.value = ''; return;
-  }
-  const st = document.getElementById('palash-img-status-' + i);
-  if (st) st.textContent = 'מעלה…';
-  try {
-    await savePalash(pollId);            // persist labels so the server keys the image by label
-    const fd = new FormData(); fd.append('image', file);
-    const res = await fetch('/api/polls/' + pollId + '/next-palash/' + i + '/image',
-                            { method: 'POST', body: fd });
-    const d = await res.json().catch(() => ({}));
-    if (!res.ok || !d.ok) throw new Error(d.error || 'שגיאה');
-    const pv = document.getElementById('palash-img-preview-' + i);
-    if (pv) { pv.src = '/api/polls/' + pollId + '/next-palash/' + i + '/image?cb=' + Date.now(); pv.style.display = ''; }
-    if (st) st.textContent = '✓';
-  } catch(e) {
-    if (st) st.textContent = '';
-    alert('שגיאה בהעלאת תמונה: ' + e.message);
-  } finally { input.value = ''; }
 }
 
 // ── Al HaRoker booking management ──────────────────────────────────────────
