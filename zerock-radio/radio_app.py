@@ -3301,7 +3301,6 @@ def _compose_first_place_image(photo_path, artist, song, date_str, out_path):
         zw = 150; zr = zr.resize((zw, int(zw * zr.height / zr.width)))
         base.alpha_composite(zr, (W - zw - 42, 40))
     except Exception as e: print(f"[Promo] zerock logo: {e}", flush=True)
-    d.rectangle([W // 2 - 300, 792, W // 2 + 300, 800], fill=(58, 160, 255, 255))
     cx = W // 2
     def _t(y, s, sz, fill):
         if not s: return
