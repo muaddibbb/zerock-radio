@@ -3299,6 +3299,7 @@ def _compose_first_place_image(photo_path, artist, song, date_str, out_path):
 
 def _send_whatsapp_image(to, image_path, caption=''):
     """Send an image to a WhatsApp chat via the bridge's /send-image endpoint."""
+    import base64
     try:
         with open(image_path, 'rb') as f:
             b64 = base64.b64encode(f.read()).decode()
