@@ -5002,6 +5002,7 @@ def api_add_show():
             if request.form.get(f'pl_{i}_yerida'):    slot_badges.append('yerida')
             if request.form.get(f'pl_{i}_knisa'):     slot_badges.append('knisa')
             if request.form.get(f'pl_{i}_knisa_new'): slot_badges.append('knisa_new')
+            if request.form.get(f'pl_{i}_vatik'):     slot_badges.append('vatik')
             playlist_badges.append(slot_badges)
 
             pf = request.files.get(f'playlist_{i}')
