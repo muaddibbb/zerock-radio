@@ -55,6 +55,7 @@ MATZAD_BADGE_FILES = {
     'yerida':    'הירידה הגדולה.mp3',
     'knisa':     'הכניסה הגבוהה.mp3',
     'knisa_new': 'כניסה חדשה.mp3',
+    'vatik':     'השיר הותיק.mp3',
 }
 
 UPLOADER_URL      = "http://192.168.1.114:3001/api/upload"
