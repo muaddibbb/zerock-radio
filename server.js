@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
-const AUTH_TOKEN = require('crypto').createHash('sha256').update('YudaKaka2026!').digest('hex');
+const AUTH_TOKEN = require('crypto').createHash('sha256').update(process.env.APP_PASSWORD || '').digest('hex');
 
 function parseCookies(req) {
   const cookies = {};
