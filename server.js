@@ -35,7 +35,7 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  if (req.body.password === 'YudaKaka2026!') {
+  if (req.body.password === process.env.APP_PASSWORD) {
     res.setHeader('Set-Cookie', `auth=${AUTH_TOKEN}; HttpOnly; Path=/; Max-Age=2592000`);
     return res.redirect('/');
   }
