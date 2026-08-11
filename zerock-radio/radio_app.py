@@ -114,6 +114,36 @@ _WP_FEATURED_IMAGES = {
     'על הרוקר':                769,
     'פטרוק לילה':              388,
 }
+# Show name → homepage artwork URL (resolved from _WP_FEATURED_IMAGES media IDs).
+# Used by the "Now Broadcasting" homepage widget: the baked .hp-live-now <img> is a
+# static 2021 image (neged43.png), and the live JS patch only rewrites the TEXT — so
+# the picture never changed. The injected script now also swaps the image from this map.
+_WP_SHOW_ART_URLS = {
+    'Beat-oN מקומי':      'https://zerockradio.com/wp-content/uploads/2025/11/WhatsApp-Image-2025-11-26-at-17.45.41_ce0ca9bf.jpg',
+    'Black Parade':       'https://zerockradio.com/wp-content/uploads/2021/01/d8ad-9104-497f-beab-6a17d86c5b5e.png',
+    'ON AIR':             'https://zerockradio.com/wp-content/uploads/2023/12/סופי.png',
+    'On Air':             'https://zerockradio.com/wp-content/uploads/2023/12/סופי.png',
+    'On the Mend':        'https://zerockradio.com/wp-content/uploads/2025/11/587946253_18533853658002294_8507185344894509609_n.jpg',
+    'Oy Vavoy':           'https://zerockradio.com/wp-content/uploads/2022/12/Untitled-3-03.png',
+    'RockTrip':           'https://zerockradio.com/wp-content/uploads/2026/01/Rocktrip-logo-with-bg.png',
+    'Shabi On The Rocks': 'https://zerockradio.com/wp-content/uploads/2021/01/shabi3.png',
+    'Shabi on the Rocks': 'https://zerockradio.com/wp-content/uploads/2021/01/shabi3.png',
+    'Stage Dive':         'https://zerockradio.com/wp-content/uploads/2024/12/1-1-FINAL.png',
+    'The Breakdown':      'https://zerockradio.com/wp-content/uploads/2022/12/Untitled-3-01.png',
+    'Time Warp':          'https://zerockradio.com/wp-content/uploads/2024/08/WhatsApp-Image-2024-08-03-at-19.39.50_6d61c758.jpg',
+    'אני לא בפסקול':      'https://zerockradio.com/wp-content/uploads/2021/01/ani-lo.png',
+    'האחות':              'https://zerockradio.com/wp-content/uploads/2024/12/האחות.jpg',
+    'השאלטר':             'https://zerockradio.com/wp-content/uploads/2023/12/סופי-scaled.jpg',
+    'זה פרוג':            'https://zerockradio.com/wp-content/uploads/2021/06/ze-prog.png',
+    'זה רוק פורטה':       'https://zerockradio.com/wp-content/uploads/2022/01/Forte-new-lineup-2022.gif',
+    'מצעד הרוק של ישראל': 'https://zerockradio.com/wp-content/uploads/2021/01/San-Patrock-clean.png',
+    'נגד כיוון הזיפים':   'https://zerockradio.com/wp-content/uploads/2021/01/neged43.png',
+    'סינגלס':             'https://zerockradio.com/wp-content/uploads/2021/01/8718-2c2d-43c5-a2a0-184992764b9f.png',
+    'סן פטרוק':           'https://zerockradio.com/wp-content/uploads/2021/01/San-Patrock-clean.png',
+    'על הרוקר':           'https://zerockradio.com/wp-content/uploads/2021/02/Al-Ha-rocker4.gif',
+    'פטרוק לילה':         'https://zerockradio.com/wp-content/uploads/2021/01/Night-Patrock-v2.png',
+}
+_WP_SHOW_ART_DEFAULT = 'https://zerockradio.com/wp-content/uploads/2020/11/logo.png'
 # WP shows taxonomy term IDs (from /wp-json/wp/v2/shows)
 _WP_SHOW_IDS = {
     'Beat-oN מקומי':          317,
