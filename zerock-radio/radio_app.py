@@ -4850,6 +4850,14 @@ def _sync_wp_board(force=False):
                     'function p(s){var a=d.querySelector(s),b=document.querySelector(s);if(a&&b)b.textContent=a.textContent.trim();}'
                     'p(".hp-live-now .hp-show-name");p(".hp-live-now .hp-show-text");p(".hp-live-now .hp-show-time");'
                     'p(".hp-next-show .hp-show-name");p(".hp-next-show .hp-show-text");p(".hp-next-show .hp-show-time");'
+                    # Swap the show artwork too — the baked .hp-live-now <img> is static (2021
+                    # neged43.png), and the text-only patch left it stale on every show.
+                    f'var ART={json.dumps(_WP_SHOW_ART_URLS, ensure_ascii=False)},ADEF="{_WP_SHOW_ART_DEFAULT}";'
+                    'function _art(nm){nm=(nm||"").trim();if(ART[nm])return ART[nm];'
+                    'var b=nm.split(/\\s[\\u2014\\u2013-]\\s/)[0].trim();return ART[b]||ADEF;}'
+                    'function pi(sel){var a=d.querySelector(sel+" .hp-show-name"),img=document.querySelector(sel+" img");'
+                    'if(a&&img){img.src=_art(a.textContent);}}'
+                    'pi(".hp-live-now");pi(".hp-next-show");'
                     # now-playing comes ONLY from the weekly board (zr/v1/np); no live-stream override.
                     '})'
                     '.catch(function(){});}'
