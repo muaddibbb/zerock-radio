@@ -9657,7 +9657,12 @@ def _start_al_haroker_wa_monthly_sender():
     threading.Thread(target=_run, daemon=True).start()
 
 
-_start_al_haroker_wa_monthly_sender()
+# Disabled 2026-08-13: the Al Haroker monthly WhatsApp invite is now owned by the
+# n8n workflow "Al Harocker — Monthly Registration Invite (24th)" (fires the 24th
+# with NEXT month's link to 3 groups). Leaving this in-process 1st-of-month sender
+# on would double-message the listener/DJ + Mifgashim groups. Manual endpoint
+# /api/al-haroker-wa-send below still works if ever needed.
+# _start_al_haroker_wa_monthly_sender()
 
 
 @app.route('/api/al-haroker-wa-send', methods=['POST'])
