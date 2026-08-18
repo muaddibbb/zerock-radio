@@ -1176,6 +1176,11 @@ def trigger_show(show):
                     if os.path.exists(pina_file):
                         cmds.append(f"shows.push {pina_file}")
                     cmds.append(f"shows.push {pa_existing[palash_idx]}")
+            # Closing random jingle — marks the Mitsad's end before Rocky resumes
+            # (the other show types already end with one)
+            j_end = get_random_jingle()
+            if j_end and os.path.exists(j_end):
+                cmds.append(f"shows.push {j_end}")
             all_tracks = list(slot_to_file.values()) + pa_existing
         else:
             # ── Regular playlist show ─────────────────────────────────────────
