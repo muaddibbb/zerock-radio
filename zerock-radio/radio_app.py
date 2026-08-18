@@ -469,17 +469,27 @@ def _lq_connect_send(commands, timeout=5):
     results = []
     for cmd in commands:
         s.sendall((cmd + "\n").encode())
-        time.sleep(0.3)  # wait for response to arrive
+        # Read until the END terminator Liquidsoap appends to every response.
+        # The previous sleep(0.3)+0.5s-timeout reader dropped trailing commands
+        # whenever Liquidsoap responded slowly (typical during the source-switch
+        # transition right after a push): the loop finished early, sent `quit`
+        # and closed the socket while later commands were still unprocessed —
+        # silently losing e.g. the closing-jingle push of every show.
         raw = b""
-        s.settimeout(0.5)  # short timeout for reading
-        try:
-            while True:
+        s.settimeout(0.5)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
                 chunk = s.recv(4096)
                 if not chunk:
                     break
                 raw += chunk
-        except Exception:
-            pass
+                if b"\nEND" in raw or b"\rEND" in raw or raw.startswith(b"END"):
+                    break
+            except socket.timeout:
+                continue
+            except Exception:
+                break
         s.settimeout(timeout)
         results.append(raw.decode(errors='replace'))
     try:
