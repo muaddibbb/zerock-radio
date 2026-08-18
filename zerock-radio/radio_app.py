@@ -3884,6 +3884,22 @@ def _get_metadata_field(meta_str, field):
             return _fix_encoding(line.split('=', 1)[1].strip().strip('"'))
     return ''
 
+@app.route('/api/on-air')
+def api_on_air():
+    """Real on-air check. NOTE: this route did not exist before 2026-08-18 —
+    /api/on-air fell through to the '/<path:slug>' catch-all, which returns
+    'Show not found' 404 for ANY unknown path. Every restart-guard that curled
+    it therefore always saw 'Show not found' and treated live shows as safe.
+    Guards should check: show_playing == false (or legacy: 'Show not found')."""
+    with _queue_cache_lock:
+        on_air = (_queue_cache.get('on_air') or {}).copy()
+    show_playing = bool(on_air.get('show'))
+    if not show_playing:
+        # Legacy-compatible body: old guards grep for 'Show not found'
+        return jsonify({'show_playing': False, 'note': 'Show not found', 'on_air': on_air})
+    return jsonify({'show_playing': True, 'on_air': on_air})
+
+
 @app.route('/api/queue-status')
 def api_queue_status():
     """Return shows queue items + next buffered Rocky track (from background cache)."""
