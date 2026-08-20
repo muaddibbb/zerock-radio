@@ -3125,20 +3125,23 @@ def _weekly_poll_renew_loop():
             print(f"[WeeklyPoll] Renewal result: {r.status_code} {r.text[:200]}", flush=True)
             if r.status_code == 200:
                 _already_renewed_week[0] = iso_week
-                # WA vote invitation → הודעות וקישורים זה רוק (added 2026-08-20)
+                # WA vote invitation → הודעות וקישורים + מאזיני ושדרני (added 2026-08-20)
                 def _send_vote_invite_wa():
-                    try:
-                        _requests.post(
-                            'http://127.0.0.1:7733/send',
-                            json={'to': _WA_GROUP_SHOWS,
-                                  'message': 'ההצבעה למצעד הרוק של ישראל פתוחה.\n'
-                                             'מוזמנות ומוזמנים להצביע ולהשפיע\n'
-                                             'https://linktr.ee/rockzerock'},
-                            timeout=15,
-                        )
-                        print('[WeeklyPoll] WA vote invite sent to הודעות וקישורים', flush=True)
-                    except Exception as _we:
-                        print(f'[WeeklyPoll] WA vote invite failed: {_we}', flush=True)
+                    for _jid, _gname in ((_WA_GROUP_SHOWS, 'הודעות וקישורים'),
+                                         (_WA_GROUP_LISTENERS_DJS, 'מאזיני ושדרני')):
+                        try:
+                            _requests.post(
+                                'http://127.0.0.1:7733/send',
+                                json={'to': _jid,
+                                      'message': 'ההצבעה למצעד הרוק של ישראל פתוחה.\n'
+                                                 'מוזמנות ומוזמנים להצביע ולהשפיע\n'
+                                                 'https://linktr.ee/rockzerock'},
+                                timeout=15,
+                            )
+                            print(f'[WeeklyPoll] WA vote invite sent to {_gname}', flush=True)
+                        except Exception as _we:
+                            print(f'[WeeklyPoll] WA vote invite to {_gname} failed: {_we}', flush=True)
+                        time.sleep(1)
                 threading.Thread(target=_send_vote_invite_wa, daemon=True).start()
                 # Sync all-time voters into subscribers.json
                 threading.Thread(target=_sync_poll_voters_to_subscribers, daemon=True).start()
