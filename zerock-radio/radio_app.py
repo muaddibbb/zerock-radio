@@ -839,6 +839,16 @@ def rebuild_playlists():
                 print(f"[rebuild_playlists] {name}: scan stuck >{_PLAYLIST_SCAN_TIMEOUT}s "
                       f"(NAS hang / dead file?) — leaving {dest_file} unchanged", flush=True)
                 continue
+            # A silently-vanished/unmounted NAS share makes os.walk() return cleanly
+            # empty (no exception at all) rather than erroring — so an empty scan
+            # result is NOT proof the folder is actually empty. Refuse to clobber an
+            # existing non-empty playlist with zero tracks; only write empty when
+            # there's no prior playlist to protect (e.g. first run for a new root).
+            if not tracks and os.path.exists(dest_file) and os.path.getsize(dest_file) > 0:
+                results[name] = 'EMPTY: scan found 0 tracks — kept previous playlist (mount likely down)'
+                print(f"[rebuild_playlists] {name}: scan returned 0 tracks for {src_dir} "
+                      f"(mount down/unmounted?) — leaving {dest_file} unchanged", flush=True)
+                continue
             os.makedirs(os.path.dirname(dest_file), exist_ok=True)
             with open(dest_file, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(tracks) + '\n')
