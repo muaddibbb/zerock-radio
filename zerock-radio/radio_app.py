@@ -5,6 +5,7 @@ Runs on port 5000. Communicates with Liquidsoap via telnet on port 1234.
 """
 
 import os, glob, json, random, re, socket, threading, time, shutil, hashlib, secrets, calendar as _calendar, subprocess
+import concurrent.futures
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -3959,6 +3960,45 @@ def api_stream_external_stop():
     resp = lq_send(["var.set ext_active = false"])
     _update_stream_state('ext_active', False)
     return jsonify({"success": True, "response": resp.strip()[:200]})
+
+
+@app.route('/api/playlists/rebuild', methods=['POST'])
+def api_playlists_rebuild():
+    """Rescan NAS folders, rewrite M3U playlists, and tell Liquidsoap to reload them."""
+    try:
+        counts = rebuild_playlists()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    reload_cmds = [
+        "src_e1.reload", "src_e2.reload", "src_e3.reload",
+        "src_h1.reload", "src_h2.reload", "src_j.reload",
+        "src_zikaron.reload",
+    ]
+    lq_resp = lq_send(reload_cmds)
+    errors = {k: v for k, v in counts.items() if isinstance(v, str)}
+    if errors:
+        return jsonify({"error": "Rebuild incomplete", "counts": counts, "liquidsoap": lq_resp[:300]}), 500
+    return jsonify({"success": True, "counts": counts, "liquidsoap": lq_resp[:300]})
+
+
+@app.route('/api/liquidsoap/restart', methods=['POST'])
+def api_liquidsoap_restart():
+    """Restart the Liquidsoap systemd unit. Brief stream drop is expected."""
+    try:
+        r = subprocess.run(
+            ['sudo', '-n', 'systemctl', 'restart', 'zerock-liquidsoap'],
+            capture_output=True, text=True, timeout=45,
+        )
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": "Restart timed out"}), 504
+    if r.returncode != 0:
+        err = (r.stderr or r.stdout or "restart failed").strip()
+        return jsonify({"error": err[:400]}), 500
+    st = subprocess.run(
+        ['sudo', '-n', 'systemctl', 'is-active', 'zerock-liquidsoap'],
+        capture_output=True, text=True, timeout=10,
+    )
+    return jsonify({"success": True, "status": (st.stdout or "").strip() or "restarted"})
 
 @app.route('/live')
 def live_stream_page():

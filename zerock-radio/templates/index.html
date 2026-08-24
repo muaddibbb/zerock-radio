@@ -738,6 +738,20 @@
           <span class="toggle-slider-track"></span>
         </label>
       </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div class="stream-label">🎵 Playlists</div>
+        <div class="stream-url">Rescan NAS music folders and rewrite the M3U files Liquidsoap uses</div>
+        <div class="stream-status off" id="playlistRebuildStatus" style="margin-bottom:10px"></div>
+        <button type="button" class="btn" id="btnRebuildPlaylists" onclick="rebuildPlaylists()"
+          style="width:auto;padding:8px 16px;margin-top:4px">Rebuild playlists</button>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div class="stream-label">⚙ Liquidsoap</div>
+        <div class="stream-url">Restart the encoder. The stream will drop for a few seconds.</div>
+        <div class="stream-status off" id="liquidsoapRestartStatus" style="margin-bottom:10px"></div>
+        <button type="button" class="btn" id="btnRestartLiquidsoap" onclick="restartLiquidsoap()"
+          style="width:auto;padding:8px 16px;margin-top:4px;background:var(--danger-dim);color:var(--danger)">Restart Liquidsoap</button>
+      </div>
     </div>
 
     <!-- Holocaust Day card -->
@@ -1662,6 +1676,60 @@ async function toggleLocalStream(cb) {
   }
   cb._busy = false;
   pollStatus();
+}
+
+async function restartLiquidsoap() {
+  if (!confirm('Restart Liquidsoap? The stream will drop for a few seconds.')) return;
+  const btn = document.getElementById('btnRestartLiquidsoap');
+  const status = document.getElementById('liquidsoapRestartStatus');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = 'Restarting…';
+  status.textContent = 'Restarting encoder…';
+  status.className = 'stream-status off';
+  try {
+    const r = await fetch('/api/liquidsoap/restart', { method: 'POST' }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); status.textContent = r.error; return; }
+    status.textContent = r.status || 'Running';
+    status.className = 'stream-status on';
+    toast('Liquidsoap restarted', 'ok');
+    pollStatus();
+  } catch {
+    toast('Failed to restart Liquidsoap', 'err');
+    status.textContent = 'Restart failed';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+}
+
+async function rebuildPlaylists() {
+  const btn = document.getElementById('btnRebuildPlaylists');
+  const status = document.getElementById('playlistRebuildStatus');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = 'Rebuilding…';
+  status.textContent = 'Scanning NAS… this can take a minute';
+  status.className = 'stream-status off';
+  try {
+    const r = await fetch('/api/playlists/rebuild', { method: 'POST' }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); status.textContent = r.error; return; }
+    const c = r.counts || {};
+    const parts = ['english', 'hebrew', 'jingles', 'zikaron']
+      .filter(k => c[k] !== undefined)
+      .map(k => `${k}: ${c[k]}`);
+    status.textContent = parts.length ? parts.join(' · ') : 'Done';
+    status.className = 'stream-status on';
+    toast('Playlists rebuilt', 'ok');
+  } catch {
+    toast('Failed to rebuild playlists', 'err');
+    status.textContent = 'Rebuild failed';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
 }
 
 async function toggleExternalStream(cb) {
