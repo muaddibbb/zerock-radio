@@ -1336,14 +1336,24 @@ def _get_podbean_media_url(podbean_permalink: str) -> str:
     return None
 
 
-def _get_latest_podbean_episode_for_show(show_name: str) -> tuple:
-    """Search Podbean for the most recent episode whose title contains show_name.
+def _get_latest_podbean_episode_for_show(show_name: str, random_choice: bool = False) -> tuple:
+    """Search Podbean for episode(s) whose title contains show_name.
     Searches up to 300 episodes with NO recency filter — so old episodes are found too.
-    Returns (media_url, episode_title) or (None, None) if not found."""
+
+    By default returns the single most recent match (media_url, episode_title) —
+    used when we need a SPECIFIC/correct episode (e.g. backfilling a missing WP
+    podbean_link for an episode that actually aired).
+
+    If random_choice=True, collects every match across the full search instead of
+    stopping at the first, then returns one picked uniformly at random — used for
+    auto-rerun, so a missed upload doesn't always replay the same latest episode.
+
+    Returns (None, None) if nothing matched."""
     token = _get_podbean_access_token()
     if not token:
         return None, None
     name_lower = show_name.strip().lower()
+    matches = []
     try:
         for offset in range(0, 300, 20):
             resp = _requests.get(
@@ -1359,10 +1369,18 @@ def _get_latest_podbean_episode_for_show(show_name: str) -> tuple:
                 if name_lower in title.lower():
                     media_url = ep.get('media_url')
                     if media_url:
-                        print(f"[Podbean] Found episode for '{show_name}': {title}", flush=True)
-                        return media_url, title
+                        if not random_choice:
+                            print(f"[Podbean] Found episode for '{show_name}': {title}", flush=True)
+                            return media_url, title
+                        matches.append((media_url, title))
     except Exception as e:
         print(f"[Podbean] episode lookup error for '{show_name}': {e}", flush=True)
+        return None, None
+    if random_choice and matches:
+        media_url, title = random.choice(matches)
+        print(f"[Podbean] Randomly picked 1 of {len(matches)} past episodes for "
+              f"'{show_name}': {title}", flush=True)
+        return media_url, title
     return None, None
 
 
