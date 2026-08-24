@@ -768,10 +768,24 @@ def liquidsoap_running():
 
 # ─── Playlist rebuild ────────────────────────────────────────────────────────
 
+# Dedicated pool for playlist scans. A single stuck/corrupted file on the NAS can
+# make os.walk() block forever inside an uninterruptible kernel I/O wait (no Python
+# exception ever fires — nothing to catch). Running each root's scan in its own
+# worker with a hard timeout means a hang there just leaks one thread instead of
+# freezing the nightly loop, the 5-min RockyEnforcer, and the manual rebuild button
+# (all three call rebuild_playlists() directly) for anyone else on the same host.
+_PLAYLIST_SCAN_POOL    = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix='pl-scan')
+_PLAYLIST_SCAN_TIMEOUT = 90  # seconds per root — generous vs. a normal ~20k-file NAS walk
+
 def rebuild_playlists():
     """Rescan NAS music folders and rewrite the M3U playlist files.
     Respects the excluded_tracks list. Safe to call while Liquidsoap is playing —
-    it re-reads the file on its next poll cycle (≤1 hour), no restart needed."""
+    it re-reads the file on its next poll cycle (≤1 hour), no restart needed.
+
+    Each root is scanned with a wall-clock timeout (see _PLAYLIST_SCAN_TIMEOUT). If a
+    root's scan doesn't finish in time — e.g. a dead/corrupted file wedges the NAS
+    walk — that root's existing M3U is left untouched (Liquidsoap keeps the last
+    good playlist) rather than being overwritten with an empty or partial list."""
     AUDIO_EXTS = {'.mp3', '.flac', '.ogg', '.wav', '.aac', '.m4a'}
     try:
         excluded = []
