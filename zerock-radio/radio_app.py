@@ -2308,9 +2308,10 @@ def _fetch_and_schedule_auto_rerun(show_cfg, broadcast_dt, placeholder_id):
     broadcaster = _resolve_broadcaster(show_cfg)
 
     try:
-        # Search Podbean directly for the latest episode of this show.
-        # No recency filter — searches up to 300 episodes so even older episodes are found.
-        media_url, ep_title = _get_latest_podbean_episode_for_show(show_name)
+        # Search Podbean directly for a past episode of this show. random_choice=True
+        # picks uniformly among ALL matches (not just the latest) so a missed upload
+        # doesn't always replay the same episode — searches up to 300 episodes total.
+        media_url, ep_title = _get_latest_podbean_episode_for_show(show_name, random_choice=True)
         if not media_url:
             raise Exception(f"No Podbean episodes found for '{show_name}'")
         ep_title = ep_title or show_name
