@@ -3514,16 +3514,21 @@ def _queue_updater():
                         _best_ts   = ts
                         title_oa   = _get_metadata_field(meta_raw, 'title')
                         artist_oa  = _get_metadata_field(meta_raw, 'artist')
-                        is_show    = bool(uri) and (LOCAL_TEMP in uri or NAS_TEMP in uri)
+                        is_show_path = bool(uri) and (LOCAL_TEMP in uri or NAS_TEMP in uri)
                         raw_label  = label or (os.path.splitext(os.path.basename(uri))[0] if uri else '')
-                        # For show files, always pull the display name from the schedule
-                        # (which has the correct broadcaster per episode), never from ID3 tags
-                        # which may carry stale metadata from a previous episode's file.
-                        if is_show:
+                        # A path under LOCAL_TEMP/NAS_TEMP is NOT on its own proof a show is
+                        # airing — e.g. a leftover auto-rerun download can linger there as a
+                        # stale/orphaned Liquidsoap request (esp. one with no on_air_timestamp,
+                        # which skips the staleness filter above entirely). Require corroboration
+                        # from an actually-triggered schedule entry before trusting is_show=True —
+                        # this flag gates restart safety, so a false positive here is cheap
+                        # (blocks a safe restart) but a false negative is not (allows one during
+                        # a real show).
+                        _best_show = None
+                        if is_show_path:
                             try:
                                 _now_for_seek = datetime.now()
                                 _cutoff_seek  = _now_for_seek - timedelta(hours=6)
-                                _best_show    = None
                                 for _s in _schedule:
                                     _ta = _s.get('triggered_at')
                                     if not _ta:
@@ -3539,6 +3544,7 @@ def _queue_updater():
                                     raw_label = _best_show.get('name') or _best_show.get('show_name') or raw_label
                             except Exception:
                                 pass
+                        is_show = is_show_path and _best_show is not None
                         on_air_info = {
                             'label':  raw_label,
                             'title':  title_oa,
