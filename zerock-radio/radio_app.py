@@ -828,7 +828,17 @@ def rebuild_playlists():
         ('zikaron', ZIKARON_DIR,       ZIKARON_PLAYLIST),
     ]:
         try:
-            tracks = scan_dir(src_dir)
+            future = _PLAYLIST_SCAN_POOL.submit(scan_dir, src_dir)
+            try:
+                tracks = future.result(timeout=_PLAYLIST_SCAN_TIMEOUT)
+            except concurrent.futures.TimeoutError:
+                # Scan is stuck (likely a dead file wedging the NAS walk) — leave the
+                # worker thread running in the background (harmless leak) and keep
+                # whatever playlist Liquidsoap already has instead of truncating it.
+                results[name] = 'TIMEOUT: scan exceeded %ds — kept previous playlist' % _PLAYLIST_SCAN_TIMEOUT
+                print(f"[rebuild_playlists] {name}: scan stuck >{_PLAYLIST_SCAN_TIMEOUT}s "
+                      f"(NAS hang / dead file?) — leaving {dest_file} unchanged", flush=True)
+                continue
             os.makedirs(os.path.dirname(dest_file), exist_ok=True)
             with open(dest_file, 'w', encoding='utf-8') as f:
                 f.write('\n'.join(tracks) + '\n')
