@@ -805,6 +805,12 @@ def rebuild_playlists():
         tracks = []
         for dirpath, _, filenames in os.walk(root):
             for fn in filenames:
+                # Skip dotfiles — macOS Finder drops "._<name>.mp3" AppleDouble
+                # metadata sidecars (not real audio) onto any SMB share it writes
+                # to; they pass the extension check and, once in the m3u, make
+                # Liquidsoap try to decode a garbage/tiny file as a real track.
+                if fn.startswith('.'):
+                    continue
                 if os.path.splitext(fn)[1].lower() in AUDIO_EXTS:
                     full = os.path.join(dirpath, fn)
                     if full in excluded_set:
