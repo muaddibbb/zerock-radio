@@ -4225,6 +4225,64 @@ def _listener_stats_collector():
 
 threading.Thread(target=_listener_stats_collector, daemon=True).start()
 
+# ── WhatsApp bridge watchdog (added 2026-08-26) ───────────────────────────────
+# The bridge can silently lose its session (e.g. a reboot corrupting creds.json
+# mid-write — happened 2026-08-23, went unnoticed for 3 days until a scheduled
+# WA send failed) with no other visible symptom. Alerts by EMAIL, since "the
+# bridge is down" is exactly the condition that rules out alerting via WhatsApp.
+_WA_ALERT_EMAIL   = 'kuperoy@gmail.com'
+_wa_watchdog_state = {'down_since': None, 'last_alert': None}
+
+def _wa_bridge_watchdog():
+    ALERT_AFTER_MIN = 20   # how long down before the first alert
+    RE_ALERT_HOURS  = 4    # re-alert cadence while still down
+    while True:
+        time.sleep(300)   # check every 5 min
+        try:
+            r = _requests.get('http://127.0.0.1:7733/status', timeout=8)
+            ready = bool(r.json().get('ready'))
+        except Exception:
+            ready = False
+        now = datetime.now()
+        if ready:
+            if _wa_watchdog_state['down_since']:
+                print('[WA-Watchdog] Bridge recovered', flush=True)
+            _wa_watchdog_state['down_since'] = None
+            _wa_watchdog_state['last_alert'] = None
+            continue
+        if _wa_watchdog_state['down_since'] is None:
+            _wa_watchdog_state['down_since'] = now
+        down_for_min = (now - _wa_watchdog_state['down_since']).total_seconds() / 60
+        if down_for_min < ALERT_AFTER_MIN:
+            continue
+        last_alert = _wa_watchdog_state['last_alert']
+        if last_alert and (now - last_alert).total_seconds() < RE_ALERT_HOURS * 3600:
+            continue
+        try:
+            body = (
+                f"WhatsApp bridge has been disconnected for {int(down_for_min)} minutes "
+                f"(down since {_wa_watchdog_state['down_since'].strftime('%Y-%m-%d %H:%M')}).\n\n"
+                f"It likely needs a fresh QR scan — open http://192.168.1.166:7734/ "
+                f"from a device on the LAN and re-link it in WhatsApp (Settings → "
+                f"Linked Devices → Link a Device).\n\n"
+                f"Recent scheduled WhatsApp sends (poll results, vote invites, "
+                f"show notifications) will silently fail until this is fixed."
+            )
+            msg = MIMEText(body, 'plain', 'utf-8')
+            msg['Subject'] = '⚠️ ZeRock WhatsApp bridge is down'
+            msg['From']    = SMTP_FROM_ADDR
+            msg['To']      = _WA_ALERT_EMAIL
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+                s.ehlo(); s.starttls()
+                s.login(SMTP_USER, SMTP_PASS)
+                s.sendmail(SMTP_FROM_ADDR, [_WA_ALERT_EMAIL], msg.as_bytes())
+            _wa_watchdog_state['last_alert'] = now
+            print(f'[WA-Watchdog] Alert email sent (down {int(down_for_min)} min)', flush=True)
+        except Exception as e:
+            print(f'[WA-Watchdog] Alert email failed: {e}', flush=True)
+
+threading.Thread(target=_wa_bridge_watchdog, daemon=True).start()
+
 
 @app.route('/api/listener-stats/history')
 def api_listener_stats_history():
