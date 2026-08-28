@@ -4357,7 +4357,7 @@ def _local_temp_watchdog():
                 lines = [f"• {fn[:55]} ({age_h/24:.1f} ימים) — {reason}"
                          for fn, age_h, reason in stale[:8]]
                 more = f"\n...ועוד {len(stale) - 8} קבצים" if len(stale) > 8 else ""
-                issues.append(f"⚠️ {len(stale)} קבצים תקועים ב-shows/ המקומית (24 ימים+):\n"
+                issues.append(f"⚠️ {len(stale)} קבצים תקועים ב-shows/ המקומית (יומיים+):\n"
                               + "\n".join(lines) + more)
 
             if not issues:
