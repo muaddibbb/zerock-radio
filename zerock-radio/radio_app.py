@@ -8690,6 +8690,13 @@ def poll_results_page(poll_id):
     max_votes_any  = max((r['votes'] for r in results), default=0)
     any_votes      = max_votes_any > 0
     vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
+    _palash_candidates = _load_palash_candidates()
+    next_palash_info = [
+        {'label': label,
+         'candidate': next((c for c in _palash_candidates
+                             if c.get('poll_id') == poll_id and c.get('slot_index') == i), None)}
+        for i, label in enumerate(poll.get('next_palash') or [])
+    ]
     return render_template('poll_results.html',
         invalid=False,
         poll=poll,
@@ -8699,7 +8706,7 @@ def poll_results_page(poll_id):
         max_votes_any=max_votes_any,
         any_votes=any_votes,
         vote_url=vote_url,
-        next_palash=poll.get('next_palash') or [],
+        next_palash_info=next_palash_info,
         next_palash_comments=poll.get('next_palash_comments') or [],
         badge_aliya_ids=badge_aliya_ids,
         badge_yerida_ids=badge_yerida_ids,
