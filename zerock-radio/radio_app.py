@@ -4348,7 +4348,6 @@ _WP_SLUGS = {
     'zifim':                'zifim',
     'black_parade':         'black-parade',
     'pascal':               'lo-bapaskol',
-    'patrock_laila_eyal':   'patrock-laila',
     'patrock_laila_eliran': 'patrock-laila',
     'patrock_laila_meir':   'patrock-laila',
     'hashulter':            'theshulter',
