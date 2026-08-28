@@ -4375,7 +4375,7 @@ _WP_SLUGS = {
 # Show durations in hours (used to calculate slot height + end time)
 _SHOW_DURATIONS_H = {
     'al_harocker': 1, 'rocktrip': 1, 'zifim': 2, 'black_parade': 1,
-    'pascal': 2, 'patrock_laila_eyal': 1, 'patrock_laila_eliran': 1,
+    'pascal': 2, 'patrock_laila_eliran': 1,
     'patrock_laila_meir': 1, 'hashulter': 1, 'on_air': 1, 'oy_vavoy': 2,
     'san_patrock_assaf': 1, 'san_patrock_itamar': 1, 'san_patrock_roi': 1,
     'san_patrock_roni': 1, 'san_patrock_rivka': 1, 'time_warp': 1, 'breakdown': 1, 'singles': 1,
