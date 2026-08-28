@@ -4387,7 +4387,6 @@ _SHOW_DURATIONS_H = {
 _WP_BROADCASTER_PREFIX = {
     'al_harocker':          'בעריכת ',
     'erev_albumim':         'בעריכת ',
-    'patrock_laila_eyal':   'בעריכת ',
     'patrock_laila_eliran': 'בעריכת ',
     'patrock_laila_meir':   'בעריכת ',
     'san_patrock_assaf':    'בעריכת ',
