@@ -3487,6 +3487,7 @@ def _queue_updater():
             # Stale RIDs (on_air_timestamp > 4h ago) are skipped unless they're the only option.
             _zikaron_on = _zikaron_lq_state  # bool — is zikaron currently active in LQ
             _SRC_PRIORITY = {'shows': 0, 'src_zikaron': 1 if _zikaron_on else 99}
+            _schedule     = load_schedule()   # for is_show corroboration + name lookup below
             _now_ts       = time.time()
             _STALE_SECS   = 4 * 3600   # 4 hours
             on_air_info   = None
