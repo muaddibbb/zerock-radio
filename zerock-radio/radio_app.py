@@ -8920,7 +8920,11 @@ def api_poll_set_next_palash(poll_id):
     # re-saving the same list on every edit must not spam the same person.
     candidates = _load_palash_candidates()
     to_email = []  # (email, token) pairs to notify after saving
-    for i, new_email in enumerate(emails):
+    # Iterate over the longer of the two lists — a shortened list (e.g. saving
+    # fewer slots than before) must still clean up the slots that fell off the
+    # end, not just the ones present in the new array.
+    for i in range(max(len(old_emails), len(emails))):
+        new_email = emails[i] if i < len(emails) else ''
         old_email = old_emails[i] if i < len(old_emails) else ''
         if new_email == old_email:
             continue
