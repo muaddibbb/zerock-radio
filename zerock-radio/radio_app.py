@@ -4285,6 +4285,97 @@ def _wa_bridge_watchdog():
 
 threading.Thread(target=_wa_bridge_watchdog, daemon=True).start()
 
+# ── Stale local-temp file watchdog (added 2026-08-28) ─────────────────────────
+# LOCAL_TEMP is meant to be a short-lived upload landing pad, but album/playlist
+# uploads (Erev Albumim, Mitsad) are never moved off it, and a stuck Podbean-retry
+# can also pin a regular show's local copy indefinitely (seen 2026-08-28: one
+# entry retried 4,438 times over 4 weeks). Both silently eat local disk until it
+# fills and uploads start failing with ENOSPC (the incident that prompted this).
+# Alerts by WhatsApp so it's caught in days, not weeks.
+_ROY_WA_NUMBER = '972546787932@s.whatsapp.net'
+_temp_watchdog_state = {'last_alert': None}
+
+def _local_temp_watchdog():
+    CHECK_EVERY_SEC  = 1800   # 30 min
+    STALE_AGE_HOURS  = 48     # a local-temp file older than this deserves a look
+    LOW_DISK_FREE_GB = 3.0
+    RE_ALERT_HOURS   = 12
+    while True:
+        time.sleep(CHECK_EVERY_SEC)
+        try:
+            now = datetime.now()
+            issues = []
+
+            # 1. Low disk space on the app's own filesystem — the direct cause
+            # of the 2026-08-28 crash (uploads fail with "No space left on device").
+            try:
+                free_gb = shutil.disk_usage(RADIO_DIR).free / (1024 ** 3)
+                if free_gb < LOW_DISK_FREE_GB:
+                    issues.append(f"⚠️ מקום פנוי בדיסק נמוך: {free_gb:.1f}GB בלבד")
+            except Exception as e:
+                print(f"[TempWatchdog] disk_usage error: {e}", flush=True)
+
+            # 2. Files stuck in LOCAL_TEMP — cross-reference against schedule.json
+            # to explain WHY each one is still there (helps diagnose without SSH).
+            sched = load_schedule()
+            referenced = {}
+            for e in sched:
+                for k in ('file_path', 'nas_path'):
+                    if e.get(k):
+                        referenced.setdefault(e[k], e)
+                for f in (e.get('files') or []):
+                    if f: referenced.setdefault(f, e)
+                for f in (e.get('playlist_files') or []) + (e.get('palash_files') or []):
+                    if f: referenced.setdefault(f, e)
+                for album in (e.get('albums') or []):
+                    for f in album:
+                        if f: referenced.setdefault(f, e)
+
+            stale = []
+            try:
+                for fn in os.listdir(LOCAL_TEMP):
+                    fpath = os.path.join(LOCAL_TEMP, fn)
+                    if not os.path.isfile(fpath):
+                        continue
+                    age_h = (now.timestamp() - os.path.getmtime(fpath)) / 3600
+                    if age_h < STALE_AGE_HOURS:
+                        continue
+                    e = referenced.get(fpath)
+                    if not e:
+                        reason = 'קובץ יתום — אין הפניה בלוח השידורים'
+                    elif e.get('albums') or e.get('playlist_files'):
+                        reason = f"{e.get('name', '?')} — שידור אלבומים/פלייליסט שלא זז לשרת (מגבלה ידועה)"
+                    elif e.get('upload_failed'):
+                        reason = f"{e.get('name', '?')} — תקוע בניסיון העלאה חוזר ({e.get('upload_attempts', 0)} ניסיונות)"
+                    else:
+                        reason = f"{e.get('name', '?')} — ישן מהצפוי, כדאי לבדוק"
+                    stale.append((fn, age_h, reason))
+            except Exception as e:
+                print(f"[TempWatchdog] scan error: {e}", flush=True)
+
+            if stale:
+                lines = [f"• {fn[:55]} ({age_h/24:.1f} ימים) — {reason}"
+                         for fn, age_h, reason in stale[:8]]
+                more = f"\n...ועוד {len(stale) - 8} קבצים" if len(stale) > 8 else ""
+                issues.append(f"⚠️ {len(stale)} קבצים תקועים ב-shows/ המקומית (24 ימים+):\n"
+                              + "\n".join(lines) + more)
+
+            if not issues:
+                continue
+            last_alert = _temp_watchdog_state['last_alert']
+            if last_alert and (now - last_alert).total_seconds() < RE_ALERT_HOURS * 3600:
+                continue
+
+            msg = "🗄️ ZeRock — בדיקת דיסק ותיקיית שידורים זמנית\n\n" + "\n\n".join(issues)
+            _requests.post('http://127.0.0.1:7733/send',
+                            json={'to': _ROY_WA_NUMBER, 'message': msg}, timeout=10)
+            _temp_watchdog_state['last_alert'] = now
+            print(f"[TempWatchdog] Alert sent — {len(stale)} stale file(s)", flush=True)
+        except Exception as e:
+            print(f"[TempWatchdog] Error: {e}", flush=True)
+
+threading.Thread(target=_local_temp_watchdog, daemon=True).start()
+
 
 @app.route('/api/listener-stats/history')
 def api_listener_stats_history():
