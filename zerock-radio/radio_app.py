@@ -8908,10 +8908,54 @@ def api_poll_set_next_palash(poll_id):
     # Pad emails to same length as songs
     while len(emails) < len(songs):
         emails.append('')
+
+    old_emails = poll.get('next_palash_emails') or []
+
+    # Diff against the previous emails per slot — only a genuinely NEW or
+    # CHANGED email should create a fresh candidate form + send the invite;
+    # re-saving the same list on every edit must not spam the same person.
+    candidates = _load_palash_candidates()
+    to_email = []  # (email, token) pairs to notify after saving
+    for i, new_email in enumerate(emails):
+        old_email = old_emails[i] if i < len(old_emails) else ''
+        if new_email == old_email:
+            continue
+        # Slot's email changed (including cleared to '') — drop any existing
+        # candidate record for this slot; it belonged to the previous value.
+        candidates = [c for c in candidates
+                      if not (c.get('poll_id') == poll_id and c.get('slot_index') == i)]
+        if new_email:
+            artist_name, song_name = _split_artist_song(songs[i] if i < len(songs) else '')
+            token = secrets.token_urlsafe(16)
+            candidates.append({
+                'token':           token,
+                'poll_id':         poll_id,
+                'slot_index':      i,
+                'label':           songs[i] if i < len(songs) else '',
+                'email':           new_email,
+                'artist_name':     artist_name,
+                'song_name':       song_name,
+                'image_path':      None,
+                'communique_path': None,
+                'instagram':       '',
+                'facebook':        '',
+                'tiktok':          '',
+                'submitted':       False,
+                'created_at':      datetime.now().isoformat(),
+                'submitted_at':    None,
+            })
+            to_email.append((new_email, token))
+    _save_palash_candidates(candidates)
+
     poll['next_palash']        = songs
     poll['next_palash_emails'] = emails
     _save_polls(polls)
-    return jsonify({'ok': True, 'next_palash': songs, 'next_palash_emails': emails})
+
+    for email, token in to_email:
+        threading.Thread(target=_send_palash_form_email, args=(email, token), daemon=True).start()
+
+    return jsonify({'ok': True, 'next_palash': songs, 'next_palash_emails': emails,
+                    'forms_sent': len(to_email)})
 
 
 def _fetch_youtube_url(label):
