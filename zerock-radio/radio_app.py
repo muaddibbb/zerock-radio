@@ -7445,6 +7445,66 @@ def _save_polls(data):
     with open(POLLS_FILE, 'w') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+def _load_palash_candidates():
+    try:
+        with open(PALASH_CANDIDATES_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def _save_palash_candidates(data):
+    with open(PALASH_CANDIDATES_FILE, 'w') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+def _split_artist_song(label):
+    """Split a 'Artist - Song' label into (artist, song) for form pre-fill.
+    Falls back to (empty, whole label) if no separator is found — the
+    candidate can correct either field themselves."""
+    label = (label or '').strip()
+    for sep in (' - ', ' – ', '-', '–'):
+        if sep in label:
+            artist, song = label.split(sep, 1)
+            if artist.strip() and song.strip():
+                return artist.strip(), song.strip()
+    return '', label
+
+def _send_palash_form_email(email, token):
+    """Send the 'fill in your details' email with the candidate's personal form link."""
+    try:
+        form_url = f"{ZEROCK_PUBLIC_URL}/palash-form/{token}"
+        body_text = (
+            "שלום.\n\n"
+            "אנחנו שוקלים להעמיד את השיר שלכם להצבעת הקהל במצעד. לצורך כך, אנחנו "
+            "מבקשים שתיכנסו לטופס המצורף פה למטה  להשלים כמה פרטים קטנים:\n\n"
+            f"{form_url}\n\n"
+            "תודה,\n"
+            "צוות מצעד הרוק של ישראל\n"
+            "רדיו זה רוק"
+        )
+        body_html = (
+            '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;'
+            'color:#222;line-height:1.8">'
+            '<p>שלום.</p>'
+            '<p>אנחנו שוקלים להעמיד את השיר שלכם להצבעת הקהל במצעד. לצורך כך, אנחנו '
+            'מבקשים שתיכנסו לטופס המצורף פה למטה  להשלים כמה פרטים קטנים:</p>'
+            f'<p><a href="{form_url}">{form_url}</a></p>'
+            '<p>תודה,<br>צוות מצעד הרוק של ישראל<br>רדיו זה רוק</p>'
+            '</div>'
+        )
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'טופס לפינה לשיפוטכם — מצעד הרוק של ישראל'
+        msg['From']    = SMTP_FROM_ADDR
+        msg['To']      = email
+        msg.attach(MIMEText(body_text, 'plain', 'utf-8'))
+        msg.attach(MIMEText(body_html, 'html',  'utf-8'))
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+            s.ehlo(); s.starttls()
+            s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(SMTP_FROM_ADDR, [email], msg.as_bytes())
+        print(f"[PalashForm] Sent form email to {email} (token={token})", flush=True)
+    except Exception as e:
+        print(f"[PalashForm] Failed to send form email to {email}: {e}", flush=True)
+
 def _load_poll_votes():
     try:
         with open(POLL_VOTES_FILE) as f:
