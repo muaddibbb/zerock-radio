@@ -8958,6 +8958,75 @@ def api_poll_set_next_palash(poll_id):
                     'forms_sent': len(to_email)})
 
 
+ALLOWED_PALASH_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp'}
+ALLOWED_PALASH_DOC_EXTS   = {'.pdf', '.doc', '.docx'}
+
+
+@app.route('/palash-form/<token>')
+def palash_form_page(token):
+    """Public: personal form for a הפינה לשיפוטכם candidate — artist/song name,
+    photo, press release (קומוניקט), and optional social links. Editable any
+    time the token is valid (re-submission just updates the same record)."""
+    candidates = _load_palash_candidates()
+    cand = next((c for c in candidates if c['token'] == token), None)
+    return render_template('palash_form.html', invalid=(cand is None), cand=cand)
+
+
+@app.route('/api/palash-form/<token>', methods=['POST'])
+def api_palash_form_submit(token):
+    """Save a candidate's form submission. Shared by the public form page AND
+    the inline editor on the admin results page (same token-scoped record)."""
+    candidates = _load_palash_candidates()
+    cand = next((c for c in candidates if c['token'] == token), None)
+    if not cand:
+        return jsonify({'ok': False, 'error': 'טופס לא נמצא או שפג תוקפו'}), 404
+
+    artist_name = (request.form.get('artist_name') or '').strip()
+    song_name   = (request.form.get('song_name')   or '').strip()
+    instagram   = (request.form.get('instagram')   or '').strip()
+    facebook    = (request.form.get('facebook')    or '').strip()
+    tiktok      = (request.form.get('tiktok')      or '').strip()
+    if not artist_name or not song_name:
+        return jsonify({'ok': False, 'error': 'שם האמן ושם השיר הם שדות חובה'}), 400
+
+    image_file      = request.files.get('image')
+    communique_file = request.files.get('communique')
+
+    if image_file and image_file.filename:
+        ext = os.path.splitext(image_file.filename)[1].lower()
+        if ext not in ALLOWED_PALASH_IMAGE_EXTS:
+            return jsonify({'ok': False, 'error': 'תמונה חייבת להיות JPG/PNG/WEBP'}), 400
+        os.makedirs(os.path.join(PALASH_UPLOAD_DIR, token), exist_ok=True)
+        image_file.save(os.path.join(PALASH_UPLOAD_DIR, token, f'image{ext}'))
+        cand['image_path'] = f'palash_candidates/{token}/image{ext}'
+
+    if communique_file and communique_file.filename:
+        ext = os.path.splitext(communique_file.filename)[1].lower()
+        if ext not in ALLOWED_PALASH_DOC_EXTS:
+            return jsonify({'ok': False, 'error': 'קומוניקט חייב להיות PDF/DOC/DOCX'}), 400
+        os.makedirs(os.path.join(PALASH_UPLOAD_DIR, token), exist_ok=True)
+        communique_file.save(os.path.join(PALASH_UPLOAD_DIR, token, f'communique{ext}'))
+        cand['communique_path'] = f'palash_candidates/{token}/communique{ext}'
+
+    cand['artist_name'] = artist_name
+    cand['song_name']   = song_name
+    cand['instagram']   = instagram
+    cand['facebook']    = facebook
+    cand['tiktok']      = tiktok
+
+    missing = []
+    if not cand.get('image_path'):      missing.append('תמונה')
+    if not cand.get('communique_path'): missing.append('קומוניקט')
+    if missing:
+        _save_palash_candidates(candidates)   # keep whatever progress was made
+        return jsonify({'ok': False, 'error': f'חסר: {", ".join(missing)}'}), 400
+
+    cand['submitted']    = True
+    cand['submitted_at'] = datetime.now().isoformat()
+    _save_palash_candidates(candidates)
+    return jsonify({'ok': True})
+
+
 def _fetch_youtube_url(label):
     """Use yt-dlp to find the first YouTube video ID for a song label. Returns full URL or None."""
     try:
