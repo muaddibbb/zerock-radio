@@ -5454,14 +5454,33 @@ def api_add_show():
     if show_cfg and broadcast_dt:
         existing = load_schedule()
         bcast_iso = broadcast_dt.isoformat()
+        # NOTE: 'not e.get('triggered')' is required here — without it, this guard
+        # silently drops the schedule entry for an ALREADY-AIRED episode the moment
+        # anyone uploads a new file for that same slot (e.g. a correction weeks/months
+        # later), with no check and no file cleanup. That was the root cause of the
+        # 2026-08-29 incident (136 orphaned NAS files, 11.6GB, up to 4 months old —
+        # all confirmed separately safe on Podbean, but the local/NAS copies leaked
+        # silently for months). A pre-air duplicate (not yet triggered) is still
+        # safe to drop — that's the intended "fix a bad upload before it airs" case.
         replaced = [e for e in existing
                     if e.get('show_key') == show_key
                     and e.get('scheduled_time') == bcast_iso
-                    and not e.get('is_rerun')]
+                    and not e.get('is_rerun')
+                    and not e.get('triggered')]
         if replaced:
-            new_existing = [e for e in existing if e not in replaced]
-            save_schedule(new_existing)
-            print(f"[Schedule] Replaced existing entry: {show_key} @ {bcast_iso}", flush=True)
+            with _schedule_lock:
+                existing2 = load_schedule()
+                new_existing = [e for e in existing2 if e['id'] not in {r['id'] for r in replaced}]
+                save_schedule(new_existing)
+            for r in replaced:
+                for fk in ('file_path', 'nas_path'):
+                    fp = r.get(fk)
+                    if fp and os.path.exists(fp):
+                        try:
+                            os.remove(fp)
+                        except Exception as _fe:
+                            print(f"[Schedule] Could not remove replaced file {fp}: {_fe}", flush=True)
+            print(f"[Schedule] Replaced existing (pre-air) entry: {show_key} @ {bcast_iso}", flush=True)
 
     # ── Save file(s) ───────────────────────────────────────────────────────────
     show_id = str(int(time.time() * 1000))
