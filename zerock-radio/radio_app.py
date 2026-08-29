@@ -3224,6 +3224,115 @@ def _weekly_poll_renew_loop():
 
 threading.Thread(target=_weekly_poll_renew_loop, daemon=True).start()
 
+# ── Weekly Hebrew-library sync from Google Drive (added 2026-08-29) ───────────
+# Every Thursday 15:00: pull .mp3 files from the פל"ש submissions Drive folder
+# into Rocky's Hebrew/allsorts collection, then rebuild playlists so new tracks
+# enter rotation immediately. Idempotent by filename — a file already synced
+# (or one that happens to already exist in allsorts) is never re-copied.
+DRIVE_SYNC_FOLDER_URL  = 'https://drive.google.com/drive/folders/1WBQ70opLUxMru9_v_5kMxMBz0uE32t-Z'
+DRIVE_SYNC_GDOWN_BIN   = '/home/roy/drive_sync_venv/bin/gdown'
+DRIVE_SYNC_STAGING_DIR = f"{RADIO_DIR}/drive_sync_staging"
+DRIVE_SYNC_STATE_FILE  = f"{RADIO_DIR}/drive_hebrew_sync_state.json"
+
+def _load_drive_sync_state():
+    try:
+        with open(DRIVE_SYNC_STATE_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {'synced_files': []}
+
+def _save_drive_sync_state(state):
+    with open(DRIVE_SYNC_STATE_FILE, 'w') as f:
+        json.dump(state, f, ensure_ascii=False, indent=2)
+
+def _sync_drive_hebrew_folder():
+    """Download the Drive folder, copy any new .mp3 files into HEBREW_MUSIC_DIR
+    (allsorts), then rebuild playlists + reload liquidsoap. Returns a summary."""
+    shutil.rmtree(DRIVE_SYNC_STAGING_DIR, ignore_errors=True)
+    os.makedirs(DRIVE_SYNC_STAGING_DIR, exist_ok=True)
+    try:
+        result = subprocess.run(
+            [DRIVE_SYNC_GDOWN_BIN, '--folder', DRIVE_SYNC_FOLDER_URL,
+             '-O', DRIVE_SYNC_STAGING_DIR + '/'],
+            capture_output=True, text=True, timeout=900,
+        )
+        if result.returncode != 0:
+            print(f"[DriveSync] gdown failed: {result.stderr[-500:]}", flush=True)
+            return {'ok': False, 'error': result.stderr[-500:]}
+    except Exception as e:
+        print(f"[DriveSync] gdown error: {e}", flush=True)
+        return {'ok': False, 'error': str(e)}
+
+    state  = _load_drive_sync_state()
+    synced = set(state.get('synced_files', []))
+    mp3_files = glob.glob(os.path.join(DRIVE_SYNC_STAGING_DIR, '**', '*.mp3'), recursive=True)
+    added = []
+    for src in mp3_files:
+        fname = os.path.basename(src)
+        dest  = os.path.join(HEBREW_MUSIC_DIR, fname)
+        if fname in synced or os.path.exists(dest):
+            synced.add(fname)   # already present either way — don't retry it
+            continue
+        try:
+            shutil.copy2(src, dest)
+            synced.add(fname)
+            added.append(fname)
+            print(f"[DriveSync] Added: {fname}", flush=True)
+        except Exception as e:
+            print(f"[DriveSync] Copy failed for {fname}: {e}", flush=True)
+
+    state['synced_files'] = sorted(synced)
+    state['last_run']     = datetime.now().isoformat()
+    _save_drive_sync_state(state)
+    shutil.rmtree(DRIVE_SYNC_STAGING_DIR, ignore_errors=True)
+
+    if added:
+        try:
+            counts = rebuild_playlists()
+            lq_send(["src_h1.reload", "src_h2.reload"])
+            print(f"[DriveSync] Rebuilt playlists after adding {len(added)} track(s): {counts}", flush=True)
+        except Exception as e:
+            print(f"[DriveSync] Playlist rebuild error: {e}", flush=True)
+    else:
+        print("[DriveSync] No new .mp3 files this week", flush=True)
+    return {'ok': True, 'added': added, 'total_mp3_in_folder': len(mp3_files)}
+
+
+def _drive_hebrew_sync_loop():
+    _already_synced_week = [None]
+    while True:
+        now = datetime.now()
+        days_until_thu = (3 - now.weekday()) % 7
+        next_thu = (now + timedelta(days=days_until_thu)).replace(
+            hour=15, minute=0, second=0, microsecond=0)
+        if next_thu <= now:
+            next_thu += timedelta(weeks=1)
+        sleep_secs = (next_thu - now).total_seconds()
+        print(f"[DriveSync] Next sync: {next_thu.strftime('%A %Y-%m-%d %H:%M')} "
+              f"(in {sleep_secs/3600:.1f}h)", flush=True)
+        time.sleep(sleep_secs)
+
+        iso_week = datetime.now().isocalendar()[1]
+        if _already_synced_week[0] == iso_week:
+            print("[DriveSync] Already synced this week — skipping", flush=True)
+            time.sleep(600)
+            continue
+
+        print("[DriveSync] Thursday 15:00 — syncing Hebrew library from Drive…", flush=True)
+        _sync_drive_hebrew_folder()
+        _already_synced_week[0] = iso_week
+        time.sleep(600)   # prevent double-fire within the same hour
+
+threading.Thread(target=_drive_hebrew_sync_loop, daemon=True).start()
+
+
+@app.route('/api/drive-sync/hebrew', methods=['POST'])
+def api_drive_sync_hebrew():
+    """Admin: manually trigger the Drive → Hebrew/allsorts sync on demand
+    (same logic the Thursday 15:00 job runs)."""
+    result = _sync_drive_hebrew_folder()
+    return jsonify(result)
+
 
 def _poll_close_watcher():
     """Background thread: watches for polls whose closes_at has passed and
