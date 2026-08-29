@@ -4426,27 +4426,36 @@ _ROY_WA_NUMBER = '972546787932@s.whatsapp.net'
 _temp_watchdog_state = {'last_alert': None}
 
 def _local_temp_watchdog():
-    CHECK_EVERY_SEC  = 1800   # 30 min
-    STALE_AGE_HOURS  = 48     # a local-temp file older than this deserves a look
-    LOW_DISK_FREE_GB = 3.0
-    RE_ALERT_HOURS   = 12
+    CHECK_EVERY_SEC     = 1800   # 30 min
+    ORPHAN_AGE_HOURS    = 48     # zero schedule reference — NEVER legitimate, flag fast
+    REFERENCED_AGE_DAYS = 14     # still referenced but this old — reruns can legitimately
+                                 # need a file for ~a week, so give real breathing room
+                                 # before treating "old but referenced" as suspicious
+                                 # (see the 2026-08-29 incident: 136 NAS files, 11.6GB,
+                                 # orphaned ~4 months by a schedule.json data-loss bug —
+                                 # this watchdog exists so a repeat is caught in days).
+    LOW_DISK_FREE_GB    = 3.0
+    RE_ALERT_HOURS      = 12
     while True:
         time.sleep(CHECK_EVERY_SEC)
         try:
             now = datetime.now()
             issues = []
 
-            # 1. Low disk space on the app's own filesystem — the direct cause
-            # of the 2026-08-28 crash (uploads fail with "No space left on device").
-            try:
-                free_gb = shutil.disk_usage(RADIO_DIR).free / (1024 ** 3)
-                if free_gb < LOW_DISK_FREE_GB:
-                    issues.append(f"⚠️ מקום פנוי בדיסק נמוך: {free_gb:.1f}GB בלבד")
-            except Exception as e:
-                print(f"[TempWatchdog] disk_usage error: {e}", flush=True)
+            # 1. Low disk space — on BOTH the app's own filesystem (direct cause of
+            # the 2026-08-28 crash) and the NAS mount (2026-08-29: 11.6GB of orphans
+            # found there — not urgent that day only because the NAS had headroom).
+            for label, path, threshold in (('דיסק מקומי', RADIO_DIR, LOW_DISK_FREE_GB),
+                                            ('דיסק NAS', '/mnt/nas', 50.0)):
+                try:
+                    free_gb = shutil.disk_usage(path).free / (1024 ** 3)
+                    if free_gb < threshold:
+                        issues.append(f"⚠️ מקום פנוי נמוך ב{label}: {free_gb:.1f}GB בלבד")
+                except Exception as e:
+                    print(f"[TempWatchdog] disk_usage error ({path}): {e}", flush=True)
 
-            # 2. Files stuck in LOCAL_TEMP — cross-reference against schedule.json
-            # to explain WHY each one is still there (helps diagnose without SSH).
+            # 2. Files stuck in LOCAL_TEMP or NAS_TEMP — cross-reference against
+            # schedule.json to explain WHY each one is still there.
             sched = load_schedule()
             referenced = {}
             for e in sched:
@@ -4462,32 +4471,38 @@ def _local_temp_watchdog():
                         if f: referenced.setdefault(f, e)
 
             stale = []
-            try:
-                for fn in os.listdir(LOCAL_TEMP):
-                    fpath = os.path.join(LOCAL_TEMP, fn)
-                    if not os.path.isfile(fpath):
-                        continue
-                    age_h = (now.timestamp() - os.path.getmtime(fpath)) / 3600
-                    if age_h < STALE_AGE_HOURS:
-                        continue
-                    e = referenced.get(fpath)
-                    if not e:
-                        reason = 'קובץ יתום — אין הפניה בלוח השידורים'
-                    elif e.get('albums') or e.get('playlist_files'):
-                        reason = f"{e.get('name', '?')} — שידור אלבומים/פלייליסט שלא זז לשרת (מגבלה ידועה)"
-                    elif e.get('upload_failed'):
-                        reason = f"{e.get('name', '?')} — תקוע בניסיון העלאה חוזר ({e.get('upload_attempts', 0)} ניסיונות)"
-                    else:
-                        reason = f"{e.get('name', '?')} — ישן מהצפוי, כדאי לבדוק"
-                    stale.append((fn, age_h, reason))
-            except Exception as e:
-                print(f"[TempWatchdog] scan error: {e}", flush=True)
+            for temp_dir, dir_label in ((LOCAL_TEMP, 'shows/ המקומית'), (NAS_TEMP, 'NAS ZeRock_Temp')):
+                try:
+                    for fn in os.listdir(temp_dir):
+                        fpath = os.path.join(temp_dir, fn)
+                        if not os.path.isfile(fpath):
+                            continue
+                        age_h = (now.timestamp() - os.path.getmtime(fpath)) / 3600
+                        e = referenced.get(fpath)
+                        if not e:
+                            # Orphan — no legitimate reason to exist regardless of age,
+                            # but still apply a short grace period for in-flight uploads.
+                            if age_h < ORPHAN_AGE_HOURS:
+                                continue
+                            reason = 'קובץ יתום — אין הפניה בלוח השידורים'
+                        else:
+                            if age_h < REFERENCED_AGE_DAYS * 24:
+                                continue
+                            if e.get('albums') or e.get('playlist_files'):
+                                reason = f"{e.get('name', '?')} — שידור אלבומים/פלייליסט שלא זז לשרת (מגבלה ידועה)"
+                            elif e.get('upload_failed'):
+                                reason = f"{e.get('name', '?')} — תקוע בניסיון העלאה חוזר ({e.get('upload_attempts', 0)} ניסיונות)"
+                            else:
+                                reason = f"{e.get('name', '?')} — מוזכר בלוח אך ישן מ-{REFERENCED_AGE_DAYS} ימים, כדאי לבדוק"
+                        stale.append((f"[{dir_label}] {fn}", age_h, reason))
+                except Exception as e:
+                    print(f"[TempWatchdog] scan error ({temp_dir}): {e}", flush=True)
 
             if stale:
-                lines = [f"• {fn[:55]} ({age_h/24:.1f} ימים) — {reason}"
+                lines = [f"• {fn[:60]} ({age_h/24:.1f} ימים) — {reason}"
                          for fn, age_h, reason in stale[:8]]
                 more = f"\n...ועוד {len(stale) - 8} קבצים" if len(stale) > 8 else ""
-                issues.append(f"⚠️ {len(stale)} קבצים תקועים ב-shows/ המקומית (יומיים+):\n"
+                issues.append(f"⚠️ {len(stale)} קבצים תקועים בתיקיות זמניות:\n"
                               + "\n".join(lines) + more)
 
             if not issues:
