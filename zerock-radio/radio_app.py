@@ -4830,6 +4830,9 @@ def _build_wp_schedule_slots():
             _ah_start_h = _ah_h + _ah_m / 60.0
         _ah_pfx = _WP_BROADCASTER_PREFIX.get('al_harocker', '')
         _ah_dss = (now.weekday() + 1) % 7
+        # Same rationale as Erev Albumim above — stay visible for the rest of the
+        # displayed week instead of vanishing 2h after air time.
+        _ah_bws = (now - timedelta(days=_ah_dss)).replace(hour=0, minute=0, second=0, microsecond=0)
         _ah_bwe = (now + timedelta(days=(6 - _ah_dss))).replace(
             hour=23, minute=59, second=59, microsecond=999999)
         if now.weekday() == 5 and now.hour >= 18:
@@ -4840,7 +4843,7 @@ def _build_wp_schedule_slots():
                     hour=int(_ah_start_h), minute=0)
             except Exception:
                 continue
-            if _bt < now - timedelta(hours=2) or _bt > now + timedelta(days=14):
+            if _bt < _ah_bws or _bt > now + timedelta(days=14):
                 continue
             if _bt > _ah_bwe:
                 continue
