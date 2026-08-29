@@ -4786,6 +4786,10 @@ def _build_wp_schedule_slots():
             _ea_start_h = _eh + _em / 60.0
         _ea_pfx = _WP_BROADCASTER_PREFIX.get('erev_albumim', '')
         _dss = (now.weekday() + 1) % 7
+        # Board week start (Sunday 00:00) — a booking stays visible for the rest
+        # of its displayed week even after it airs, same as fixed-day shows,
+        # instead of vanishing 2h after air time (was: `now - timedelta(hours=2)`).
+        _bws = (now - timedelta(days=_dss)).replace(hour=0, minute=0, second=0, microsecond=0)
         _bwe = (now + timedelta(days=(6 - _dss))).replace(
             hour=23, minute=59, second=59, microsecond=999999)
         if now.weekday() == 5 and now.hour >= 18:
@@ -4796,7 +4800,7 @@ def _build_wp_schedule_slots():
                     hour=int(_ea_start_h), minute=0)
             except Exception:
                 continue
-            if _bt < now - timedelta(hours=2) or _bt > now + timedelta(days=14):
+            if _bt < _bws or _bt > now + timedelta(days=14):
                 continue
             if _bt > _bwe:
                 continue
