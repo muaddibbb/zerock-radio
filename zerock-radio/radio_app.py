@@ -428,12 +428,33 @@ def load_schedule():
     try:
         with open(SCHEDULE_FILE) as f:
             return json.load(f)
-    except Exception:
+    except Exception as e:
+        # Root cause of the 2026-08-29 orphaned-NAS-files incident (136 files,
+        # 11.6GB, ~4 months): a corrupt/unreadable schedule.json used to come
+        # back here as a silent []. Since save_schedule() used to write
+        # non-atomically, ANY interruption mid-write (crash, disk-full moment,
+        # a restart racing a write) could leave a truncated/corrupt file — the
+        # next load_schedule() call would then silently see "[]", and whatever
+        # called it would happily save that empty list right back out,
+        # permanently erasing the entire schedule with no error, no crash, no
+        # trace. Now logs loudly instead of silently vanishing.
+        print(f"[Schedule] CRITICAL: schedule.json failed to parse ({e}) — "
+              f"returning [] to avoid crashing, but NOT overwriting the file. "
+              f"Investigate {SCHEDULE_FILE} immediately — a caller that saves "
+              f"this empty result back would wipe the real schedule.", flush=True)
         return []
 
 def save_schedule(data):
-    with open(SCHEDULE_FILE, 'w') as f:
+    # Atomic write (temp file + os.replace) — os.replace is atomic on POSIX, so
+    # a concurrent reader (or a crash mid-write) can only ever see the fully-old
+    # or fully-new file, never a truncated/corrupt intermediate one. See
+    # load_schedule()'s comment for the incident this prevents.
+    tmp_path = f"{SCHEDULE_FILE}.tmp-{os.getpid()}"
+    with open(tmp_path, 'w') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp_path, SCHEDULE_FILE)
 
 _schedule_lock = threading.Lock()
 
