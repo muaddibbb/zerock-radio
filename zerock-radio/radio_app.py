@@ -5886,15 +5886,16 @@ def api_schedule_url():
 
 @app.route('/api/schedule/<show_id>', methods=['DELETE'])
 def api_delete_show(show_id):
-    schedule = load_schedule()
-    to_delete = next((s for s in schedule if s['id'] == show_id), None)
-    if to_delete and not to_delete.get('triggered'):
-        try:
-            os.remove(to_delete['file_path'])
-        except Exception:
-            pass
-    schedule = [s for s in schedule if s['id'] != show_id]
-    save_schedule(schedule)
+    with _schedule_lock:
+        schedule = load_schedule()
+        to_delete = next((s for s in schedule if s['id'] == show_id), None)
+        if to_delete and not to_delete.get('triggered'):
+            try:
+                os.remove(to_delete['file_path'])
+            except Exception:
+                pass
+        schedule = [s for s in schedule if s['id'] != show_id]
+        save_schedule(schedule)
 
     # If this was a primary (non-rerun) episode for a fixed-day show,
     # mark that show as cancelled on the board for this week (applied at the next
