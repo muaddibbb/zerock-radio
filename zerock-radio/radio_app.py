@@ -6001,15 +6001,16 @@ def api_download_show(show_id):
 @app.route('/api/trigger/<show_id>', methods=['POST'])
 def api_trigger_now(show_id):
     """Manually trigger a show immediately."""
-    schedule = load_schedule()
-    show = next((s for s in schedule if s['id'] == show_id), None)
-    if not show:
-        return jsonify({'error': 'Show not found'}), 404
-    success = trigger_show(show)
-    if success:
-        show['triggered'] = True
-        show['triggered_at'] = datetime.now().isoformat()
-        save_schedule(schedule)
+    with _schedule_lock:
+        schedule = load_schedule()
+        show = next((s for s in schedule if s['id'] == show_id), None)
+        if not show:
+            return jsonify({'error': 'Show not found'}), 404
+        success = trigger_show(show)
+        if success:
+            show['triggered'] = True
+            show['triggered_at'] = datetime.now().isoformat()
+            save_schedule(schedule)
     return jsonify({'success': success})
 
 @app.route('/api/skip', methods=['POST'])
