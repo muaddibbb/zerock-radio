@@ -7734,8 +7734,10 @@ def _split_artist_song(label):
 # Every palash-form save (admin inline-edit or the candidate's own form — both
 # funnel through api_palash_form_submit) writes/updates a per-candidate .txt
 # file in this Drive folder with their Instagram/Facebook/TikTok links.
+# Auth: OAuth user credentials, NOT a service account — service accounts have
+# no storage quota and cannot create files in a normal (non-Shared-Drive) folder.
 PALASH_LINKS_DRIVE_FOLDER_ID = '1aVo06bW-Vqs9NiXMJf3kezpg68a7mIKx'
-DRIVE_SERVICE_ACCOUNT_PATH   = '/home/roy/drive_service_account.json'
+DRIVE_OAUTH_TOKEN_PATH       = '/home/roy/palash_oauth_token.json'
 DRIVE_WRITE_HELPER           = f"{RADIO_DIR}/drive_write_helper.py"
 DRIVE_WRITE_PYTHON           = '/home/roy/drive_sync_venv/bin/python3'
 
