@@ -9348,11 +9348,13 @@ def api_palash_form_submit(token):
     if not cand.get('communique_path'): missing.append('קומוניקט')
     if missing:
         _save_palash_candidates(candidates)   # keep whatever progress was made
+        threading.Thread(target=_sync_palash_drive_file, args=(token,), daemon=True).start()
         return jsonify({'ok': False, 'error': f'חסר: {", ".join(missing)}'}), 400
 
     cand['submitted']    = True
     cand['submitted_at'] = datetime.now().isoformat()
     _save_palash_candidates(candidates)
+    threading.Thread(target=_sync_palash_drive_file, args=(token,), daemon=True).start()
     return jsonify({'ok': True})
 
 
