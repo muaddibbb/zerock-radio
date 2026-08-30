@@ -7762,7 +7762,7 @@ def _sync_palash_drive_file(token):
 
         payload = {
             'folder_id':        PALASH_LINKS_DRIVE_FOLDER_ID,
-            'credentials_path': DRIVE_SERVICE_ACCOUNT_PATH,
+            'credentials_path': DRIVE_OAUTH_TOKEN_PATH,
             'filename':         filename,
             'content':          content,
             'drive_file_id':    cand.get('drive_file_id'),
