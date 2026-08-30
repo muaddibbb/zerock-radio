@@ -3,6 +3,12 @@
 app's system python lacks) — writes/updates one candidate's social-links .txt
 file in the Palash links Drive folder.
 
+Auth: OAuth user credentials (not a service account — service accounts have no
+storage quota and cannot create files in a normal personal Drive folder). The
+credentials file holds a long-lived refresh_token; google-auth transparently
+mints a fresh access token per run using it, so no re-login is ever needed
+unless the user revokes access.
+
 Input: JSON on stdin: {
   "folder_id": str, "credentials_path": str,
   "filename": str, "content": str,
@@ -11,7 +17,7 @@ Input: JSON on stdin: {
 Output: JSON on stdout: {"ok": true, "file_id": "..."} or {"ok": false, "error": "..."}
 """
 import sys, json
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 import io
@@ -24,8 +30,16 @@ def main():
     content = req['content']
     file_id = req.get('drive_file_id')
 
-    creds = service_account.Credentials.from_service_account_file(
-        creds_path, scopes=['https://www.googleapis.com/auth/drive'])
+    with open(creds_path) as f:
+        tok = json.load(f)
+    creds = Credentials(
+        token=tok.get('token'),
+        refresh_token=tok['refresh_token'],
+        token_uri=tok.get('token_uri', 'https://oauth2.googleapis.com/token'),
+        client_id=tok['client_id'],
+        client_secret=tok['client_secret'],
+        scopes=tok.get('scopes', ['https://www.googleapis.com/auth/drive']),
+    )
     service = build('drive', 'v3', credentials=creds, cache_discovery=False)
 
     media = MediaIoBaseUpload(io.BytesIO(content.encode('utf-8')), mimetype='text/plain', resumable=False)
