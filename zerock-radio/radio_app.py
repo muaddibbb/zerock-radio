@@ -7730,6 +7730,62 @@ def _split_artist_song(label):
                 return artist.strip(), song.strip()
     return '', label
 
+# ── Palash socials → Google Drive sync (added 2026-08-30) ────────────────────
+# Every palash-form save (admin inline-edit or the candidate's own form — both
+# funnel through api_palash_form_submit) writes/updates a per-candidate .txt
+# file in this Drive folder with their Instagram/Facebook/TikTok links.
+PALASH_LINKS_DRIVE_FOLDER_ID = '1aVo06bW-Vqs9NiXMJf3kezpg68a7mIKx'
+DRIVE_SERVICE_ACCOUNT_PATH   = '/home/roy/drive_service_account.json'
+DRIVE_WRITE_HELPER           = f"{RADIO_DIR}/drive_write_helper.py"
+DRIVE_WRITE_PYTHON           = '/home/roy/drive_sync_venv/bin/python3'
+
+def _sync_palash_drive_file(token):
+    """Write/update the candidate's '{artist} - {song}.txt' file in the Palash
+    links Drive folder with their current social links. Fire-and-forget —
+    failures are logged, never surfaced to the saving user/candidate."""
+    try:
+        candidates = _load_palash_candidates()
+        cand = next((c for c in candidates if c['token'] == token), None)
+        if not cand:
+            return
+        artist = (cand.get('artist_name') or '').strip() or 'לא ידוע'
+        song   = (cand.get('song_name')   or '').strip() or 'לא ידוע'
+        filename = f"{artist} - {song}.txt"
+        lines = [
+            f"אינסטגרם: {cand.get('instagram') or ''}",
+            f"פייסבוק: {cand.get('facebook') or ''}",
+            f"טיקטוק: {cand.get('tiktok') or ''}",
+        ]
+        content = '\n'.join(lines) + '\n'
+
+        payload = {
+            'folder_id':        PALASH_LINKS_DRIVE_FOLDER_ID,
+            'credentials_path': DRIVE_SERVICE_ACCOUNT_PATH,
+            'filename':         filename,
+            'content':          content,
+            'drive_file_id':    cand.get('drive_file_id'),
+        }
+        result = subprocess.run(
+            [DRIVE_WRITE_PYTHON, DRIVE_WRITE_HELPER],
+            input=json.dumps(payload, ensure_ascii=False),
+            capture_output=True, text=True, timeout=30,
+        )
+        out = json.loads(result.stdout.strip().splitlines()[-1]) if result.stdout.strip() else {}
+        if out.get('ok'):
+            new_file_id = out.get('file_id')
+            if new_file_id and new_file_id != cand.get('drive_file_id'):
+                candidates2 = _load_palash_candidates()
+                for c in candidates2:
+                    if c['token'] == token:
+                        c['drive_file_id'] = new_file_id
+                _save_palash_candidates(candidates2)
+            print(f"[PalashDrive] Synced '{filename}' (file_id={out.get('file_id')})", flush=True)
+        else:
+            print(f"[PalashDrive] Write failed for '{filename}': "
+                  f"{out.get('error') or result.stderr[-300:]}", flush=True)
+    except Exception as e:
+        print(f"[PalashDrive] Sync error: {e}", flush=True)
+
 def _send_palash_form_email(email, token):
     """Send the 'fill in your details' email with the candidate's personal form link."""
     try:
