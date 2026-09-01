@@ -2833,7 +2833,17 @@ def scheduler_loop():
                     diff = (show_time - now).total_seconds()
                     if show.get('show_key'):  # only log scheduled shows
                         print(f"[Scheduler] '{show['name']}' in {diff:.0f}s")
-                    if -600 <= diff <= 45:
+                    # Normal window: -600..45s around the scheduled start. Extended window:
+                    # up to 6h late — this only ever matters right after the server/app
+                    # restarts and finds a show whose start time already passed, because
+                    # a restart wipes Liquidsoap's in-memory "shows" queue entirely (the
+                    # normal 10-min catch-up window closes long before most reboots are
+                    # even noticed). Rather than silently ceding the rest of the slot to
+                    # Rocky, resume from the correct elapsed position — see trigger_show's
+                    # resume_from_seconds and _rewrite_cmds_for_resume. Beyond 6h we give up
+                    # for good (matches the old behavior for genuinely stale entries).
+                    _resume_seconds = -diff if diff < -600 else None
+                    if -21600 <= diff <= 45:
                         # Skip reruns during zikaron window — station plays memorial music only
                         if show.get('is_rerun', False) and is_zikaron_window():
                             print(f"[Scheduler] Skipping rerun '{show['name']}' — zikaron mode active", flush=True)
@@ -2843,10 +2853,16 @@ def scheduler_loop():
                             print(f"[Scheduler] Auto-rerun '{show['name']}' not ready "
                                   f"(status={show.get('auto_rerun_status')}) — skipping trigger")
                             continue
-                        print(f"[Scheduler] >>> Triggering '{show['name']}'!")
-                        if trigger_show(show):
+                        if _resume_seconds:
+                            print(f"[Scheduler] >>> '{show['name']}' missed its trigger window "
+                                  f"({_resume_seconds:.0f}s late) — attempting resume", flush=True)
+                        else:
+                            print(f"[Scheduler] >>> Triggering '{show['name']}'!")
+                        if trigger_show(show, resume_from_seconds=_resume_seconds):
                             show['triggered']    = True
                             show['triggered_at'] = now.isoformat()
+                            if _resume_seconds:
+                                show['resumed_after_gap'] = True
                             changed = True
                             # Reload jingle source after show trigger — rotate() can lose
                             # the pre-fetched jingle track when shows queue interrupts.
