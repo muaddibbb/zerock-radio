@@ -1326,6 +1326,16 @@ def trigger_show(show, resume_from_seconds=None):
         print(f"[Scheduler] ERROR: No playable tracks found for '{show['name']}'")
         return False
 
+    if resume_from_seconds and resume_from_seconds > 0:
+        new_cmds = _rewrite_cmds_for_resume(cmds, resume_from_seconds)
+        if new_cmds is None:
+            print(f"[Scheduler] Resume point (+{resume_from_seconds:.0f}s) is beyond "
+                  f"'{show['name']}'s full runtime — nothing left to resume into", flush=True)
+            return False
+        cmds = new_cmds
+        print(f"[Scheduler] Resuming '{show['name']}' at +{resume_from_seconds:.0f}s "
+              f"(missed the normal trigger window — likely a server reboot mid-show)", flush=True)
+
     print(f"[Scheduler] Pushing {len(cmds)} items to queue for '{show['name']}'")
     for cmd in cmds:
         print(f"  {cmd}")
