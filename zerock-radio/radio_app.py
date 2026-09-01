@@ -7868,14 +7868,15 @@ def _sync_palash_drive_file(token):
     except Exception as e:
         print(f"[PalashDrive] Sync error: {e}", flush=True)
 
-def _send_palash_form_email(email, token):
+def _send_palash_form_email(email, token, song_label=''):
     """Send the 'fill in your details' email with the candidate's personal form link."""
     try:
         form_url = f"{ZEROCK_PUBLIC_URL}/palash-form/{token}"
+        song_part = f" {song_label}" if song_label else ''
         body_text = (
             "שלום.\n\n"
-            "אנחנו שוקלים להעמיד את השיר שלכם להצבעת הקהל במצעד. לצורך כך, אנחנו "
-            "מבקשים שתיכנסו לטופס המצורף פה למטה  להשלים כמה פרטים קטנים:\n\n"
+            f"אנחנו שוקלים להעמיד את השיר שלכם{song_part} להצבעת הקהל במצעד. לצורך כך, אנחנו "
+            "מבקשים שתיכנסו לטופס המצורף פה למטה להשלים כמה פרטים קטנים:\n\n"
             f"{form_url}\n\n"
             "תודה,\n"
             "צוות מצעד הרוק של ישראל\n"
@@ -7885,8 +7886,8 @@ def _send_palash_form_email(email, token):
             '<div dir="rtl" style="font-family:Arial,sans-serif;font-size:16px;'
             'color:#222;line-height:1.8">'
             '<p>שלום.</p>'
-            '<p>אנחנו שוקלים להעמיד את השיר שלכם להצבעת הקהל במצעד. לצורך כך, אנחנו '
-            'מבקשים שתיכנסו לטופס המצורף פה למטה  להשלים כמה פרטים קטנים:</p>'
+            f'<p>אנחנו שוקלים להעמיד את השיר שלכם{song_part} להצבעת הקהל במצעד. לצורך כך, אנחנו '
+            'מבקשים שתיכנסו לטופס המצורף פה למטה להשלים כמה פרטים קטנים:</p>'
             f'<p><a href="{form_url}">{form_url}</a></p>'
             '<p>תודה,<br>צוות מצעד הרוק של ישראל<br>רדיו זה רוק</p>'
             '</div>'
