@@ -5397,6 +5397,7 @@ def _sync_wp_board(force=False):
                     '})'
                     '.catch(function(){});}'
                     'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",hf);else hf();'
+                    'setInterval(hf,180000);'
                     '}'
                     '})();</script>'
                 )
