@@ -9357,7 +9357,7 @@ def api_poll_set_next_palash(poll_id):
                 'created_at':      datetime.now().isoformat(),
                 'submitted_at':    None,
             })
-            to_email.append((new_email, token))
+            to_email.append((new_email, token, song_label))
     _save_palash_candidates(candidates)
 
     poll['next_palash']        = songs
