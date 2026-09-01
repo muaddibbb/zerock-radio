@@ -1162,7 +1162,40 @@ def get_audio_duration(path):
         pass
     return 3600.0
 
-def trigger_show(show):
+def _rewrite_cmds_for_resume(cmds, resume_from_seconds):
+    """Given a fully-built liquidsoap push-command list (as trigger_show builds
+    for any show type — regular/album/playlist, including Mitsad's interleaved
+    makaom/badge/פל"ש announcements), drop everything that would have already
+    played during `resume_from_seconds` of downtime, ffmpeg-trim the one file
+    straddling that point, and return a new cmds list starting from there.
+    Returns None if the resume point is beyond all the content (show has
+    already fully finished — nothing left to resume into)."""
+    push_paths = [c[len('shows.push '):] for c in cmds if c.startswith('shows.push ')]
+    cursor = 0.0
+    for i, path in enumerate(push_paths):
+        if not os.path.exists(path):
+            continue
+        dur = get_audio_duration(path)
+        if cursor + dur > resume_from_seconds:
+            offset = max(resume_from_seconds - cursor, 0.0)
+            _, ext = os.path.splitext(os.path.basename(path))
+            resume_path = os.path.join(NAS_TEMP, f'_resume_{int(time.time() * 1000)}{ext or ".mp3"}')
+            try:
+                result = subprocess.run(
+                    ['ffmpeg', '-y', '-ss', str(offset), '-i', path, '-c', 'copy', resume_path],
+                    capture_output=True, timeout=20)
+                if result.returncode != 0 or not os.path.exists(resume_path):
+                    return None
+            except Exception:
+                return None
+            remaining = push_paths[i + 1:]
+            return (['shows.flush_and_skip', f'shows.push {resume_path}']
+                    + [f'shows.push {p}' for p in remaining])
+        cursor += dur
+    return None  # resume point is beyond all available content
+
+
+def trigger_show(show, resume_from_seconds=None):
     """Push show content to Liquidsoap shows queue.
 
     Album show (ערב של אלבומים):
@@ -1173,6 +1206,12 @@ def trigger_show(show):
 
     Always flushes the queue first so shows start exactly on their scheduled time,
     even if a previous show is still playing (e.g. a recovery episode).
+
+    resume_from_seconds: if set, skip the first N seconds of the show's full
+    playback sequence instead of starting from the beginning — used to recover
+    a show that should already be airing (e.g. the server rebooted mid-broadcast
+    and Liquidsoap's in-memory queue was lost) without replaying it from scratch
+    or silently ceding the slot to Rocky. See scheduler_loop's trigger section.
     """
     # Flush any remaining items from the previous show so this one starts immediately
     cmds = ['shows.flush_and_skip']
