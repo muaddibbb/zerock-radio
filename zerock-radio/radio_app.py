@@ -9364,8 +9364,8 @@ def api_poll_set_next_palash(poll_id):
     poll['next_palash_emails'] = emails
     _save_polls(polls)
 
-    for email, token in to_email:
-        threading.Thread(target=_send_palash_form_email, args=(email, token), daemon=True).start()
+    for email, token, song_label in to_email:
+        threading.Thread(target=_send_palash_form_email, args=(email, token, song_label), daemon=True).start()
 
     return jsonify({'ok': True, 'next_palash': songs, 'next_palash_emails': emails,
                     'forms_sent': len(to_email)})
