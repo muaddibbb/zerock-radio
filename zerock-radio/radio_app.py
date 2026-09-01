@@ -1331,7 +1331,11 @@ def trigger_show(show, resume_from_seconds=None):
         if new_cmds is None:
             print(f"[Scheduler] Resume point (+{resume_from_seconds:.0f}s) is beyond "
                   f"'{show['name']}'s full runtime — nothing left to resume into", flush=True)
-            return False
+            # Distinct from a normal False: this is definitive (elapsed time only
+            # grows, so retrying later can't help) — the caller treats None as
+            # "give up on airing this live, but still let WP/rerun proceed as if
+            # it had" instead of retrying every scheduler tick forever.
+            return None
         cmds = new_cmds
         print(f"[Scheduler] Resuming '{show['name']}' at +{resume_from_seconds:.0f}s "
               f"(missed the normal trigger window — likely a server reboot mid-show)", flush=True)
