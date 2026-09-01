@@ -2862,7 +2862,18 @@ def scheduler_loop():
                                   f"({_resume_seconds:.0f}s late) — attempting resume", flush=True)
                         else:
                             print(f"[Scheduler] >>> Triggering '{show['name']}'!")
-                        if trigger_show(show, resume_from_seconds=_resume_seconds):
+                        _trigger_result = trigger_show(show, resume_from_seconds=_resume_seconds)
+                        if _trigger_result is None and _resume_seconds:
+                            # Definitively too late to resume live (the whole show's
+                            # runtime elapsed during the gap) — don't retry every 15s
+                            # forever. The content is still real, so let WP-publish and
+                            # rerun-scheduling below proceed as if it had aired; the
+                            # rerun will play it in full at its normal time.
+                            print(f"[Scheduler] '{show['name']}' — resume window closed; "
+                                  f"marking as triggered so its rerun/WP post still happen", flush=True)
+                            show['resume_failed_too_late'] = True
+                            _trigger_result = True
+                        if _trigger_result:
                             show['triggered']    = True
                             show['triggered_at'] = now.isoformat()
                             if _resume_seconds:
