@@ -9337,7 +9337,8 @@ def api_poll_set_next_palash(poll_id):
         candidates = [c for c in candidates
                       if not (c.get('poll_id') == poll_id and c.get('slot_index') == i)]
         if new_email:
-            artist_name, song_name = _split_artist_song(songs[i] if i < len(songs) else '')
+            song_label = songs[i] if i < len(songs) else ''
+            artist_name, song_name = _split_artist_song(song_label)
             token = secrets.token_urlsafe(16)
             candidates.append({
                 'token':           token,
