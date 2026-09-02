@@ -9458,7 +9458,7 @@ def api_poll_set_next_palash(poll_id):
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
         return jsonify({'error': 'poll not found'}), 404
-    data   = request.get_json(silent=True) or {}
+    data   = json.loads(request.form['data']) if 'data' in request.form else (request.get_json(silent=True) or {})
     songs  = data.get('songs') or []
     emails = data.get('emails') or []
     # Keep up to 5, strip whitespace, drop empty strings
