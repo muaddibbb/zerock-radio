@@ -224,6 +224,7 @@ POLLS_FILE                  = f"{RADIO_DIR}/polls.json"
 POLL_VOTES_FILE             = f"{RADIO_DIR}/poll_votes.json"
 PALASH_CANDIDATES_FILE      = f"{RADIO_DIR}/palash_form_candidates.json"
 PALASH_UPLOAD_DIR           = f"{RADIO_DIR}/static/palash_candidates"
+PALASH_SONGS_DIR            = f"{RADIO_DIR}/static/palash_songs"
 LISTENER_STATS_FILE         = f"{RADIO_DIR}/listener_stats.json"
 ROCKY_AUDIT_FILE            = f"{RADIO_DIR}/rocky_audit.json"
 ROCKY_MIN_SEC               = 120    # 2 min
