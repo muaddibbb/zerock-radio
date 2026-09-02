@@ -9511,15 +9511,38 @@ def api_poll_set_next_palash(poll_id):
             to_email.append((new_email, token, song_label))
     _save_palash_candidates(candidates)
 
+    # ── Per-slot MP3 uploads (song audio for the chart, uploaded to Drive) ────
+    mp3_paths = list(poll.get('next_palash_mp3') or [])
+    while len(mp3_paths) < len(songs):
+        mp3_paths.append(None)
+    mp3_paths = mp3_paths[:len(songs)]
+    uploaded_slots = []
+    for i in range(len(songs)):
+        f = request.files.get(f'song_mp3_{i}')
+        if f and f.filename:
+            ext = os.path.splitext(f.filename)[1].lower()
+            if ext != '.mp3':
+                print(f"[NextPalash] Ignored non-mp3 upload for slot {i}: {f.filename}", flush=True)
+                continue
+            os.makedirs(os.path.join(PALASH_SONGS_DIR, poll_id), exist_ok=True)
+            local_rel = f'palash_songs/{poll_id}/{i}.mp3'
+            f.save(os.path.join(RADIO_DIR, 'static', local_rel))
+            mp3_paths[i] = local_rel
+            uploaded_slots.append(i)
+
     poll['next_palash']        = songs
     poll['next_palash_emails'] = emails
+    poll['next_palash_mp3']    = mp3_paths
     _save_polls(polls)
 
     for email, token, song_label in to_email:
         threading.Thread(target=_send_palash_form_email, args=(email, token, song_label), daemon=True).start()
 
+    for i in uploaded_slots:
+        threading.Thread(target=_sync_next_palash_mp3_drive, args=(poll_id, i), daemon=True).start()
+
     return jsonify({'ok': True, 'next_palash': songs, 'next_palash_emails': emails,
-                    'forms_sent': len(to_email)})
+                    'forms_sent': len(to_email), 'mp3_uploaded': uploaded_slots})
 
 
 ALLOWED_PALASH_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.webp'}
