@@ -7973,6 +7973,63 @@ def _sync_palash_image_drive(token):
     except Exception as e:
         print(f"[PalashDrive] Image sync error: {e}", flush=True)
 
+PALASH_SONG_DRIVE_FOLDER_ID = '1ivWEW0mt4lp5wyWIBSjxr7DTUbRGDtTU'
+
+def _sync_next_palash_mp3_drive(poll_id, slot_index):
+    """Copy one 'הפינה לשיפוטכם' slot's uploaded MP3 to the Palash songs Drive
+    folder, named '{song} - {artist}.mp3'. Fire-and-forget."""
+    try:
+        polls = _load_polls()
+        poll = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return
+        mp3_paths = poll.get('next_palash_mp3') or []
+        if slot_index >= len(mp3_paths) or not mp3_paths[slot_index]:
+            return
+        local_path = os.path.join(RADIO_DIR, 'static', mp3_paths[slot_index])
+        if not os.path.exists(local_path):
+            print(f"[PalashDrive] Next-palash mp3 missing: {local_path}", flush=True)
+            return
+
+        songs = poll.get('next_palash') or []
+        label = songs[slot_index] if slot_index < len(songs) else ''
+        artist, song = _split_artist_song(label)
+        artist = artist or 'לא ידוע'
+        song   = song   or 'לא ידוע'
+        filename = f"{song} - {artist}.mp3"
+
+        drive_ids = dict(poll.get('next_palash_mp3_drive_ids') or {})
+        key = str(slot_index)
+        payload = {
+            'folder_id':        PALASH_SONG_DRIVE_FOLDER_ID,
+            'credentials_path': DRIVE_OAUTH_TOKEN_PATH,
+            'filename':         filename,
+            'file_path':        local_path,
+            'drive_file_id':    drive_ids.get(key),
+        }
+        result = subprocess.run(
+            [DRIVE_WRITE_PYTHON, DRIVE_WRITE_HELPER],
+            input=json.dumps(payload, ensure_ascii=False),
+            capture_output=True, text=True, timeout=60,
+        )
+        out = json.loads(result.stdout.strip().splitlines()[-1]) if result.stdout.strip() else {}
+        if out.get('ok'):
+            new_file_id = out.get('file_id')
+            if new_file_id and new_file_id != drive_ids.get(key):
+                polls2 = _load_polls()
+                for p in polls2:
+                    if p['id'] == poll_id:
+                        ids = dict(p.get('next_palash_mp3_drive_ids') or {})
+                        ids[key] = new_file_id
+                        p['next_palash_mp3_drive_ids'] = ids
+                _save_polls(polls2)
+            print(f"[PalashDrive] Synced next-palash mp3 '{filename}' (file_id={out.get('file_id')})", flush=True)
+        else:
+            print(f"[PalashDrive] Next-palash mp3 write failed for '{filename}': "
+                  f"{out.get('error') or result.stderr[-300:]}", flush=True)
+    except Exception as e:
+        print(f"[PalashDrive] Next-palash mp3 sync error: {e}", flush=True)
+
 def _sync_palash_drive_file(token):
     """Write/update the candidate's '{artist} - {song}.txt' file in the Palash
     links Drive folder with their current social links. Fire-and-forget —
