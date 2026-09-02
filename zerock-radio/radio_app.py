@@ -7999,7 +7999,7 @@ def _sync_palash_image_drive(token):
         drive_ids = dict(cand.get('image_drive_ids') or {})
         changed = False
 
-        for folder_id in PALASH_COMMUNIQUE_DRIVE_FOLDER_IDS:
+        for folder_id in PALASH_IMAGE_DRIVE_FOLDER_IDS:
             payload = {
                 'folder_id':        folder_id,
                 'credentials_path': DRIVE_OAUTH_TOKEN_PATH,
