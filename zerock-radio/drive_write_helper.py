@@ -14,7 +14,8 @@ Input: JSON on stdin: {
   "folder_id": str, "credentials_path": str, "filename": str,
   "content": str,        # text content — mutually exclusive with file_path
   "file_path": str,      # local file to upload as-is (mimetype guessed from filename)
-  "drive_file_id": str|null   # if known, update in place; else create + search-by-name first
+  "drive_file_id": str|null,  # if known, update in place; else create + search-by-name first
+  "action": "delete"|None     # "delete" removes drive_file_id instead of writing (folder_id/filename unused)
 }
 Output: JSON on stdout: {"ok": true, "file_id": "..."} or {"ok": false, "error": "..."}
 """
@@ -26,11 +27,7 @@ import io
 
 def main():
     req = json.load(sys.stdin)
-    folder_id = req['folder_id']
     creds_path = req['credentials_path']
-    filename = req['filename']
-    content = req.get('content')
-    file_path = req.get('file_path')
     file_id = req.get('drive_file_id')
 
     with open(creds_path) as f:
@@ -44,6 +41,20 @@ def main():
         scopes=tok.get('scopes', ['https://www.googleapis.com/auth/drive']),
     )
     service = build('drive', 'v3', credentials=creds, cache_discovery=False)
+
+    if req.get('action') == 'delete':
+        try:
+            service.files().delete(fileId=file_id).execute()
+            print(json.dumps({'ok': True, 'file_id': file_id}))
+        except Exception as e:
+            print(json.dumps({'ok': False, 'error': str(e)}))
+            sys.exit(1)
+        return
+
+    folder_id = req['folder_id']
+    filename = req['filename']
+    content = req.get('content')
+    file_path = req.get('file_path')
 
     if file_path:
         mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'

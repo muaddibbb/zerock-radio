@@ -1062,7 +1062,7 @@
                    style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
                           padding:7px 10px;color:var(--text);font-size:0.9em;font-family:inherit;
                           direction:rtl;text-align:right">
-            <button onclick="document.getElementById('palash-{{ i }}').value='';document.getElementById('palash-email-{{ i }}').value=''"
+            <button onclick="document.getElementById('palash-{{ i }}').value='';document.getElementById('palash-email-{{ i }}').value='';document.getElementById('palash-mp3-{{ i }}').value=''"
                     title="נקה שורה"
                     style="background:transparent;border:1px solid #3a3a3a;color:#666;
                            width:28px;height:28px;border-radius:5px;cursor:pointer;
@@ -1075,6 +1075,14 @@
                    style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
                           padding:5px 10px;color:var(--text);font-size:0.82em;font-family:inherit;
                           direction:ltr;text-align:left;color:#aaa">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-right:24px">
+            <input type="file" id="palash-mp3-{{ i }}" accept=".mp3,audio/mpeg"
+                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                          padding:4px 10px;color:var(--text);font-size:0.78em;font-family:inherit">
+            <span style="font-size:0.75em;color:#4caf50;white-space:nowrap">
+              {% if palash_poll.next_palash_mp3 is defined and palash_poll.next_palash_mp3|length > i and palash_poll.next_palash_mp3[i] %}✓ הועלה{% endif %}
+            </span>
           </div>
         </div>
         {% endfor %}
@@ -3164,8 +3172,10 @@ async function clearPalash(pollId) {
   for (let i = 0; i < 5; i++) {
     const el  = document.getElementById('palash-' + i);
     const eel = document.getElementById('palash-email-' + i);
+    const fel = document.getElementById('palash-mp3-' + i);
     if (el)  el.value  = '';
     if (eel) eel.value = '';
+    if (fel) fel.value = '';
   }
   await savePalash(pollId);
 }
@@ -3173,17 +3183,20 @@ async function clearPalash(pollId) {
 async function savePalash(pollId) {
   const songs  = [];
   const emails = [];
+  const fd = new FormData();
   for (let i = 0; i < 5; i++) {
     const el  = document.getElementById('palash-' + i);
     const eel = document.getElementById('palash-email-' + i);
+    const fel = document.getElementById('palash-mp3-' + i);
     if (el)  songs.push(el.value.trim());
     if (eel) emails.push(eel.value.trim().toLowerCase());
+    if (fel && fel.files && fel.files[0]) fd.append('song_mp3_' + i, fel.files[0]);
   }
+  fd.append('data', JSON.stringify({songs, emails}));
   try {
     const res = await fetch('/api/polls/' + pollId + '/next-palash', {
       method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({songs, emails})
+      body: fd
     });
     if (!res.ok) throw new Error(await res.text());
     const st = document.getElementById('palash-status');
