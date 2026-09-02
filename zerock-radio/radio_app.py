@@ -7830,6 +7830,65 @@ PALASH_COMMUNIQUE_DRIVE_FOLDER_IDS = [
     PALASH_LINKS_DRIVE_FOLDER_ID,
 ]
 
+# Photos additionally go to a third, lifecycle-managed folder: the image stays
+# there only while the candidate's song is still "running" in the Mitsad
+# (either as a current Palash candidate or promoted into the top 20) — removed
+# via _cleanup_dropped_palash_chart_images once a chart confirms it didn't make
+# the cut (see api_matzad_chart_create_from_poll).
+PALASH_CHART_IMAGE_FOLDER_ID = '1gvpT-hMjXQvOQsB0JhJJukxJTwwNO0Cn'
+PALASH_IMAGE_DRIVE_FOLDER_IDS = PALASH_COMMUNIQUE_DRIVE_FOLDER_IDS + [PALASH_CHART_IMAGE_FOLDER_ID]
+
+def _delete_drive_file(file_id):
+    """Delete one file from Drive by id. Returns True on success."""
+    try:
+        payload = {'credentials_path': DRIVE_OAUTH_TOKEN_PATH, 'drive_file_id': file_id, 'action': 'delete'}
+        result = subprocess.run(
+            [DRIVE_WRITE_PYTHON, DRIVE_WRITE_HELPER],
+            input=json.dumps(payload, ensure_ascii=False),
+            capture_output=True, text=True, timeout=30,
+        )
+        out = json.loads(result.stdout.strip().splitlines()[-1]) if result.stdout.strip() else {}
+        if out.get('ok'):
+            return True
+        print(f"[PalashDrive] Delete failed for {file_id}: {out.get('error') or result.stderr[-300:]}", flush=True)
+        return False
+    except Exception as e:
+        print(f"[PalashDrive] Delete error for {file_id}: {e}", flush=True)
+        return False
+
+def _cleanup_dropped_palash_chart_images(poll_id, chart):
+    """After a chart is finalized, remove the chart-lifecycle Drive image for
+    any Palash candidate whose song did NOT make the new top-20 (dropped out
+    of the Mitsad entirely, rather than being promoted)."""
+    try:
+        polls = _load_polls()
+        poll = next((p for p in polls if p['id'] == poll_id), None)
+        if not poll:
+            return
+        promoted_ids = {e['song_id'] for e in chart['ranking']}
+        dropped_slots = {
+            s.get('slot') - 1 for s in poll.get('songs', [])
+            if s.get('group') == 'palash' and s.get('id') not in promoted_ids and s.get('slot')
+        }
+        if not dropped_slots:
+            return
+        candidates = _load_palash_candidates()
+        changed = False
+        for cand in candidates:
+            if cand.get('poll_id') == poll_id and cand.get('slot_index') in dropped_slots:
+                ids = dict(cand.get('image_drive_ids') or {})
+                chart_file_id = ids.get(PALASH_CHART_IMAGE_FOLDER_ID)
+                if chart_file_id and _delete_drive_file(chart_file_id):
+                    ids.pop(PALASH_CHART_IMAGE_FOLDER_ID, None)
+                    cand['image_drive_ids'] = ids
+                    changed = True
+                    print(f"[PalashDrive] Removed chart image for dropped candidate "
+                          f"'{cand.get('label')}' (slot {cand.get('slot_index')})", flush=True)
+        if changed:
+            _save_palash_candidates(candidates)
+    except Exception as e:
+        print(f"[PalashDrive] Chart-image cleanup error: {e}", flush=True)
+
 def _ensure_pdf(local_path):
     """Return a path to a PDF version of local_path, converting via LibreOffice
     headless if it isn't already one. Returns (pdf_path, is_temp) — caller must
