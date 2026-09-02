@@ -9585,6 +9585,7 @@ def api_palash_form_submit(token):
         _save_palash_candidates(candidates)   # keep whatever progress was made
         threading.Thread(target=_sync_palash_drive_file, args=(token,), daemon=True).start()
         threading.Thread(target=_sync_palash_communique_drive, args=(token,), daemon=True).start()
+        threading.Thread(target=_sync_palash_image_drive, args=(token,), daemon=True).start()
         return jsonify({'ok': False, 'error': f'חסר: {", ".join(missing)}'}), 400
 
     cand['submitted']    = True
@@ -9592,6 +9593,7 @@ def api_palash_form_submit(token):
     _save_palash_candidates(candidates)
     threading.Thread(target=_sync_palash_drive_file, args=(token,), daemon=True).start()
     threading.Thread(target=_sync_palash_communique_drive, args=(token,), daemon=True).start()
+    threading.Thread(target=_sync_palash_image_drive, args=(token,), daemon=True).start()
     return jsonify({'ok': True})
 
 
