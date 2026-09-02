@@ -7917,6 +7917,61 @@ def _sync_palash_communique_drive(token):
     except Exception as e:
         print(f"[PalashDrive] Communique sync error: {e}", flush=True)
 
+def _sync_palash_image_drive(token):
+    """Copy the candidate's photo (as-is, no conversion) to both Palash Drive
+    folders, named '{song} - {artist}{ext}'. Fire-and-forget — failures are
+    logged, never surfaced to the saving user."""
+    try:
+        candidates = _load_palash_candidates()
+        cand = next((c for c in candidates if c['token'] == token), None)
+        if not cand or not cand.get('image_path'):
+            return
+        local_path = os.path.join(RADIO_DIR, 'static', cand['image_path'])
+        if not os.path.exists(local_path):
+            print(f"[PalashDrive] Image file missing: {local_path}", flush=True)
+            return
+
+        artist = (cand.get('artist_name') or '').strip() or 'לא ידוע'
+        song   = (cand.get('song_name')   or '').strip() or 'לא ידוע'
+        ext = os.path.splitext(local_path)[1]
+        filename = f"{song} - {artist}{ext}"
+        drive_ids = dict(cand.get('image_drive_ids') or {})
+        changed = False
+
+        for folder_id in PALASH_COMMUNIQUE_DRIVE_FOLDER_IDS:
+            payload = {
+                'folder_id':        folder_id,
+                'credentials_path': DRIVE_OAUTH_TOKEN_PATH,
+                'filename':         filename,
+                'file_path':        local_path,
+                'drive_file_id':    drive_ids.get(folder_id),
+            }
+            result = subprocess.run(
+                [DRIVE_WRITE_PYTHON, DRIVE_WRITE_HELPER],
+                input=json.dumps(payload, ensure_ascii=False),
+                capture_output=True, text=True, timeout=60,
+            )
+            out = json.loads(result.stdout.strip().splitlines()[-1]) if result.stdout.strip() else {}
+            if out.get('ok'):
+                new_file_id = out.get('file_id')
+                if new_file_id and new_file_id != drive_ids.get(folder_id):
+                    drive_ids[folder_id] = new_file_id
+                    changed = True
+                print(f"[PalashDrive] Synced image '{filename}' -> folder {folder_id} "
+                      f"(file_id={out.get('file_id')})", flush=True)
+            else:
+                print(f"[PalashDrive] Image write failed for '{filename}' -> folder {folder_id}: "
+                      f"{out.get('error') or result.stderr[-300:]}", flush=True)
+
+        if changed:
+            candidates2 = _load_palash_candidates()
+            for c in candidates2:
+                if c['token'] == token:
+                    c['image_drive_ids'] = drive_ids
+            _save_palash_candidates(candidates2)
+    except Exception as e:
+        print(f"[PalashDrive] Image sync error: {e}", flush=True)
+
 def _sync_palash_drive_file(token):
     """Write/update the candidate's '{artist} - {song}.txt' file in the Palash
     links Drive folder with their current social links. Fire-and-forget —
