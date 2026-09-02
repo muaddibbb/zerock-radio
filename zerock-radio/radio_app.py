@@ -10564,6 +10564,7 @@ def api_matzad_chart_create_from_poll():
     # No board sync: matzad is a fixed-day show already on the static weekly grid;
     # the board is a weekly snapshot (refreshed Saturday midnight).
     print(f"[NextChart] Auto-created matzad episode {show_id} from poll {poll_id} for {bcast_iso}", flush=True)
+    threading.Thread(target=_cleanup_dropped_palash_chart_images, args=(poll_id, chart), daemon=True).start()
     return jsonify({'ok': True, 'show': show, 'chart': chart})
 
 
