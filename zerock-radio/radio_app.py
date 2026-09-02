@@ -7822,6 +7822,101 @@ DRIVE_OAUTH_TOKEN_PATH       = '/home/roy/palash_oauth_token.json'
 DRIVE_WRITE_HELPER           = f"{RADIO_DIR}/drive_write_helper.py"
 DRIVE_WRITE_PYTHON           = '/home/roy/drive_sync_venv/bin/python3'
 
+# Communique (PDF/DOC) copies go to two folders — the dedicated communiques
+# folder plus the same links folder used for the socials .txt above.
+PALASH_COMMUNIQUE_DRIVE_FOLDER_IDS = [
+    '1ivWEW0mt4lp5wyWIBSjxr7DTUbRGDtTU',
+    PALASH_LINKS_DRIVE_FOLDER_ID,
+]
+
+def _ensure_pdf(local_path):
+    """Return a path to a PDF version of local_path, converting via LibreOffice
+    headless if it isn't already one. Returns (pdf_path, is_temp) — caller must
+    remove the temp file if is_temp is True. Returns (None, False) on failure."""
+    if local_path.lower().endswith('.pdf'):
+        return local_path, False
+    tmp_dir = tempfile.mkdtemp(prefix='palash_pdf_')
+    try:
+        result = subprocess.run(
+            ['soffice', '--headless', '--convert-to', 'pdf', '--outdir', tmp_dir, local_path],
+            capture_output=True, timeout=60,
+        )
+        base = os.path.splitext(os.path.basename(local_path))[0]
+        out_path = os.path.join(tmp_dir, f'{base}.pdf')
+        if result.returncode == 0 and os.path.exists(out_path):
+            return out_path, True
+        print(f"[PalashDrive] PDF conversion failed for {local_path}: "
+              f"{result.stderr.decode(errors='replace')[:300]}", flush=True)
+        return None, False
+    except Exception as e:
+        print(f"[PalashDrive] PDF conversion error for {local_path}: {e}", flush=True)
+        return None, False
+
+def _sync_palash_communique_drive(token):
+    """Copy the candidate's communique (converted to PDF if needed) to both
+    Palash communique Drive folders, named '{song} - {artist} comm.pdf'.
+    Fire-and-forget — failures are logged, never surfaced to the saving user."""
+    try:
+        candidates = _load_palash_candidates()
+        cand = next((c for c in candidates if c['token'] == token), None)
+        if not cand or not cand.get('communique_path'):
+            return
+        local_path = os.path.join(RADIO_DIR, cand['communique_path'])
+        if not os.path.exists(local_path):
+            print(f"[PalashDrive] Communique file missing: {local_path}", flush=True)
+            return
+
+        pdf_path, is_temp = _ensure_pdf(local_path)
+        if not pdf_path:
+            return
+        try:
+            artist = (cand.get('artist_name') or '').strip() or 'לא ידוע'
+            song   = (cand.get('song_name')   or '').strip() or 'לא ידוע'
+            filename = f"{song} - {artist} comm.pdf"
+            drive_ids = dict(cand.get('communique_drive_ids') or {})
+            changed = False
+
+            for folder_id in PALASH_COMMUNIQUE_DRIVE_FOLDER_IDS:
+                payload = {
+                    'folder_id':        folder_id,
+                    'credentials_path': DRIVE_OAUTH_TOKEN_PATH,
+                    'filename':         filename,
+                    'file_path':        pdf_path,
+                    'drive_file_id':    drive_ids.get(folder_id),
+                }
+                result = subprocess.run(
+                    [DRIVE_WRITE_PYTHON, DRIVE_WRITE_HELPER],
+                    input=json.dumps(payload, ensure_ascii=False),
+                    capture_output=True, text=True, timeout=60,
+                )
+                out = json.loads(result.stdout.strip().splitlines()[-1]) if result.stdout.strip() else {}
+                if out.get('ok'):
+                    new_file_id = out.get('file_id')
+                    if new_file_id and new_file_id != drive_ids.get(folder_id):
+                        drive_ids[folder_id] = new_file_id
+                        changed = True
+                    print(f"[PalashDrive] Synced communique '{filename}' -> folder {folder_id} "
+                          f"(file_id={out.get('file_id')})", flush=True)
+                else:
+                    print(f"[PalashDrive] Communique write failed for '{filename}' -> folder {folder_id}: "
+                          f"{out.get('error') or result.stderr[-300:]}", flush=True)
+
+            if changed:
+                candidates2 = _load_palash_candidates()
+                for c in candidates2:
+                    if c['token'] == token:
+                        c['communique_drive_ids'] = drive_ids
+                _save_palash_candidates(candidates2)
+        finally:
+            if is_temp:
+                try:
+                    os.remove(pdf_path)
+                    os.rmdir(os.path.dirname(pdf_path))
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"[PalashDrive] Communique sync error: {e}", flush=True)
+
 def _sync_palash_drive_file(token):
     """Write/update the candidate's '{artist} - {song}.txt' file in the Palash
     links Drive folder with their current social links. Fire-and-forget —
