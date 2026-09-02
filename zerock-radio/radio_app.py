@@ -7978,9 +7978,10 @@ def _sync_palash_communique_drive(token):
         print(f"[PalashDrive] Communique sync error: {e}", flush=True)
 
 def _sync_palash_image_drive(token):
-    """Copy the candidate's photo (as-is, no conversion) to both Palash Drive
-    folders, named '{song} - {artist}{ext}'. Fire-and-forget — failures are
-    logged, never surfaced to the saving user."""
+    """Copy the candidate's photo (as-is, no conversion) to all three Palash
+    Drive folders, named '{song} - {artist}{ext}'. Fire-and-forget — failures
+    are logged, never surfaced to the saving user. The third folder's copy is
+    lifecycle-managed — see _cleanup_dropped_palash_chart_images."""
     try:
         candidates = _load_palash_candidates()
         cand = next((c for c in candidates if c['token'] == token), None)
