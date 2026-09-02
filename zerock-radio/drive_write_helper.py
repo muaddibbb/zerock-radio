@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Standalone helper (run inside drive_sync_venv, has google-api deps the main
 app's system python lacks) — writes/updates one candidate's social-links .txt
-file in the Palash links Drive folder.
+file, or copies a binary file (e.g. a Palash communique PDF/DOC), into a Palash
+Drive folder.
 
 Auth: OAuth user credentials (not a service account — service accounts have no
 storage quota and cannot create files in a normal personal Drive folder). The
@@ -10,16 +11,17 @@ mints a fresh access token per run using it, so no re-login is ever needed
 unless the user revokes access.
 
 Input: JSON on stdin: {
-  "folder_id": str, "credentials_path": str,
-  "filename": str, "content": str,
+  "folder_id": str, "credentials_path": str, "filename": str,
+  "content": str,        # text content — mutually exclusive with file_path
+  "file_path": str,      # local file to upload as-is (mimetype guessed from filename)
   "drive_file_id": str|null   # if known, update in place; else create + search-by-name first
 }
 Output: JSON on stdout: {"ok": true, "file_id": "..."} or {"ok": false, "error": "..."}
 """
-import sys, json
+import sys, json, mimetypes
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseUpload
+from googleapiclient.http import MediaIoBaseUpload, MediaFileUpload
 import io
 
 def main():
@@ -27,7 +29,8 @@ def main():
     folder_id = req['folder_id']
     creds_path = req['credentials_path']
     filename = req['filename']
-    content = req['content']
+    content = req.get('content')
+    file_path = req.get('file_path')
     file_id = req.get('drive_file_id')
 
     with open(creds_path) as f:
@@ -42,7 +45,11 @@ def main():
     )
     service = build('drive', 'v3', credentials=creds, cache_discovery=False)
 
-    media = MediaIoBaseUpload(io.BytesIO(content.encode('utf-8')), mimetype='text/plain', resumable=False)
+    if file_path:
+        mimetype = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        media = MediaFileUpload(file_path, mimetype=mimetype, resumable=False)
+    else:
+        media = MediaIoBaseUpload(io.BytesIO((content or '').encode('utf-8')), mimetype='text/plain', resumable=False)
 
     try:
         if not file_id:
