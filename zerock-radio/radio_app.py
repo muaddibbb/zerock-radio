@@ -7861,7 +7861,7 @@ def _sync_palash_communique_drive(token):
         cand = next((c for c in candidates if c['token'] == token), None)
         if not cand or not cand.get('communique_path'):
             return
-        local_path = os.path.join(RADIO_DIR, cand['communique_path'])
+        local_path = os.path.join(RADIO_DIR, 'static', cand['communique_path'])
         if not os.path.exists(local_path):
             print(f"[PalashDrive] Communique file missing: {local_path}", flush=True)
             return
