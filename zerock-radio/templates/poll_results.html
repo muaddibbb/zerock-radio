@@ -474,11 +474,34 @@
           <span style="font-size:0.72em;color:{{ '#4ade80' if cand.submitted else '#f0a500' }}">
             {{ 'הושלם ✓' if cand.submitted else 'ממתין למועמד/ת' }}
           </span>
+          <button type="button" onclick="togglePalashLinks('{{ cand.token }}')"
+                  style="background:transparent;border:1px solid #3a3a3a;color:#888;border-radius:5px;
+                         padding:3px 10px;font-size:0.75em;cursor:pointer">📎 קבצים</button>
           <button type="button" onclick="togglePalashEdit('{{ cand.token }}')"
                   style="background:transparent;border:1px solid #3a3a3a;color:#888;border-radius:5px;
                          padding:3px 10px;font-size:0.75em;cursor:pointer">עריכה</button>
           {% endif %}
         </div>
+        {% if cand %}
+        <div id="palash-links-{{ cand.token }}" style="display:none;margin-top:8px;padding-top:8px;
+             border-top:1px solid #232323;gap:16px;font-size:0.78em;flex-wrap:wrap">
+          <span>
+            🎵 שיר —
+            {% if item.mp3_path %}<a href="/static/{{ item.mp3_path }}" target="_blank" style="color:#4ade80">קיים</a>
+            {% else %}<span style="color:#666">אין</span>{% endif %}
+          </span>
+          <span>
+            📄 קומוניקט —
+            {% if cand.communique_path %}<a href="/static/{{ cand.communique_path }}" target="_blank" style="color:#4ade80">קיים</a>
+            {% else %}<span style="color:#666">אין</span>{% endif %}
+          </span>
+          <span>
+            🖼️ תמונה —
+            {% if cand.image_path %}<a href="/static/{{ cand.image_path }}" target="_blank" style="color:#4ade80">קיימת</a>
+            {% else %}<span style="color:#666">אין</span>{% endif %}
+          </span>
+        </div>
+        {% endif %}
         {% if cand %}
         <div id="palash-edit-{{ cand.token }}" style="display:none;margin-top:10px;padding-top:10px;
              border-top:1px solid #232323">
@@ -526,6 +549,10 @@
     function togglePalashEdit(token){
       var el = document.getElementById('palash-edit-' + token);
       el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+    }
+    function togglePalashLinks(token){
+      var el = document.getElementById('palash-links-' + token);
+      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'flex' : 'none';
     }
     function savePalashCandidate(token){
       var msg = document.getElementById('pf-msg-' + token);

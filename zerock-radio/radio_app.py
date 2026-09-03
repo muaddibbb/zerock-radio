@@ -9874,16 +9874,21 @@ def api_polls_weekly_renew():
         else:
             new_song_weeks[new_id] = old_song_weeks[s['id']] + 1
 
+    _next_palash_candidates = {
+        c.get('slot_index'): c for c in _load_palash_candidates()
+        if c.get('poll_id') == old_poll['id']
+    }
     for i, label in enumerate(next_palash_labels):
         new_id = f's{21 + i:02d}'
+        _cand = _next_palash_candidates.get(i)
         new_songs.append({
             'id':          new_id,
             'group':       'palash',
             'slot':        i + 1,
             'label':       label,
             'email':       next_palash_emails[i] if i < len(next_palash_emails) else '',
-            'spotify_url': None,
-            'youtube_url': None,
+            'spotify_url': (_cand.get('spotify_url') if _cand else None) or None,
+            'youtube_url': (_cand.get('youtube_url') if _cand else None) or None,
         })
         # Palash: carry over old week count if song was previously on the chart,
         # otherwise 0. Never increment — palash weeks don't count toward the total.
