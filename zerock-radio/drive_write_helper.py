@@ -52,6 +52,15 @@ def main():
             sys.exit(1)
         return
 
+    if req.get('action') == 'rename':
+        try:
+            service.files().update(fileId=file_id, body={'name': req['filename']}, fields='id').execute()
+            print(json.dumps({'ok': True, 'file_id': file_id}))
+        except Exception as e:
+            print(json.dumps({'ok': False, 'error': str(e)}))
+            sys.exit(1)
+        return
+
     folder_id = req['folder_id']
     filename = req['filename']
     content = req.get('content')
