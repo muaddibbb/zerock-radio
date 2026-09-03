@@ -8844,6 +8844,16 @@ def api_matzad_episode_songs(show_id):
     pl_slots = show.get('playlist_slots') or []
     pa_files = show.get('palash_files')   or []
 
+    # Prefill each Palash slot's own submitted YouTube/Spotify links (admin can
+    # still override before creating the poll) — traced back via the poll this
+    # chart was generated from (see api_matzad_chart_create_from_poll).
+    _src_poll_id = show.get('auto_from_poll')
+    _palash_by_slot = {}
+    if _src_poll_id:
+        for c in _load_palash_candidates():
+            if c.get('poll_id') == _src_poll_id:
+                _palash_by_slot[c.get('slot_index')] = c
+
     songs = []
     # Pair each playlist file with its slot, sort 20→1 for display
     pairs = sorted(
@@ -8858,11 +8868,14 @@ def api_matzad_episode_songs(show_id):
             'label': _label_from_filename(f, r'^\d+_pl\d+_'),
         })
     for i, f in enumerate(pa_files, start=1):
+        _cand = _palash_by_slot.get(i - 1)
         songs.append({
-            'id':    f'p{i}',
-            'group': 'palash',
-            'slot':  i,
-            'label': _label_from_filename(f, r'^\d+_pa\d+_'),
+            'id':          f'p{i}',
+            'group':       'palash',
+            'slot':        i,
+            'label':       _label_from_filename(f, r'^\d+_pa\d+_'),
+            'spotify_url': (_cand.get('spotify_url') if _cand else None) or None,
+            'youtube_url': (_cand.get('youtube_url') if _cand else None) or None,
         })
     return jsonify({'show_id': show_id, 'songs': songs})
 
