@@ -15,7 +15,8 @@ Input: JSON on stdin: {
   "content": str,        # text content — mutually exclusive with file_path
   "file_path": str,      # local file to upload as-is (mimetype guessed from filename)
   "drive_file_id": str|null,  # if known, update in place; else create + search-by-name first
-  "action": "delete"|None     # "delete" removes drive_file_id instead of writing (folder_id/filename unused)
+  "action": "delete"|"rename"|None   # "delete" removes drive_file_id; "rename" only
+                                      # renames it to filename (no content change)
 }
 Output: JSON on stdout: {"ok": true, "file_id": "..."} or {"ok": false, "error": "..."}
 """
