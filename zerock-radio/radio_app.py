@@ -9637,6 +9637,8 @@ def api_poll_set_next_palash(poll_id):
                 'instagram':       '',
                 'facebook':        '',
                 'tiktok':          '',
+                'youtube_url':     '',
+                'spotify_url':     '',
                 'submitted':       False,
                 'created_at':      datetime.now().isoformat(),
                 'submitted_at':    None,
