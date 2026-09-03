@@ -9706,6 +9706,8 @@ def api_palash_form_submit(token):
     instagram   = (request.form.get('instagram')   or '').strip()
     facebook    = (request.form.get('facebook')    or '').strip()
     tiktok      = (request.form.get('tiktok')      or '').strip()
+    youtube_url = (request.form.get('youtube_url') or '').strip()
+    spotify_url = (request.form.get('spotify_url') or '').strip()
     if not artist_name or not song_name:
         return jsonify({'ok': False, 'error': 'שם האמן ושם השיר הם שדות חובה'}), 400
 
