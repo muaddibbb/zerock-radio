@@ -9361,10 +9361,12 @@ def poll_results_page(poll_id):
     any_votes      = max_votes_any > 0
     vote_url       = f"{ZEROCK_PUBLIC_URL}/poll/{poll_id}"
     _palash_candidates = _load_palash_candidates()
+    _next_palash_mp3   = poll.get('next_palash_mp3') or []
     next_palash_info = [
         {'label': label,
          'candidate': next((c for c in _palash_candidates
-                             if c.get('poll_id') == poll_id and c.get('slot_index') == i), None)}
+                             if c.get('poll_id') == poll_id and c.get('slot_index') == i), None),
+         'mp3_path': _next_palash_mp3[i] if i < len(_next_palash_mp3) else None}
         for i, label in enumerate(poll.get('next_palash') or [])
     ]
     return render_template('poll_results.html',
