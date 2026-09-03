@@ -9735,6 +9735,8 @@ def api_palash_form_submit(token):
     cand['instagram']   = instagram
     cand['facebook']    = facebook
     cand['tiktok']      = tiktok
+    cand['youtube_url'] = youtube_url
+    cand['spotify_url'] = spotify_url
 
     missing = []
     if not cand.get('image_path'):      missing.append('תמונה')
