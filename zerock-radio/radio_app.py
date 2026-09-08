@@ -4602,6 +4602,39 @@ def _local_temp_watchdog():
 
 threading.Thread(target=_local_temp_watchdog, daemon=True).start()
 
+def _palash_oauth_token_watchdog():
+    """The Palash Drive OAuth app is still in Google's 'Testing' publishing
+    status, which caps refresh tokens at 7 days regardless of use (confirmed
+    2026-09-08: all Drive syncs silently failed with invalid_grant once the
+    token crossed that line). Reminds Roy by WhatsApp to re-run the local
+    re-auth script (reauth_drive.py) before it lapses, since re-auth needs an
+    interactive browser consent this server can't do on its own."""
+    CHECK_EVERY_SEC = 6 * 3600   # 6 hours
+    WARN_AFTER_DAYS = 6          # 1-day buffer before the 7-day hard cutoff
+    RE_ALERT_HOURS  = 24
+    last_alert = None
+    while True:
+        time.sleep(CHECK_EVERY_SEC)
+        try:
+            age_days = (time.time() - os.path.getmtime(DRIVE_OAUTH_TOKEN_PATH)) / 86400
+            if age_days < WARN_AFTER_DAYS:
+                continue
+            now = datetime.now()
+            if last_alert and (now - last_alert).total_seconds() < RE_ALERT_HOURS * 3600:
+                continue
+            msg = (f"🔑 ZeRock — טוקן ה-Drive של הפל\"ש בן {age_days:.1f} ימים "
+                   f"(פג תוקף אחרי 7 ימים כל עוד האפליקציה ב-Testing ב-Google Cloud).\n\n"
+                   f"צריך לרענן אותו — הרץ reauth_drive.py במחשב (דורש דפדפן) "
+                   f"ותעלה את הטוקן החדש לשרת.")
+            _requests.post('http://127.0.0.1:7733/send',
+                            json={'to': _ROY_WA_NUMBER, 'message': msg}, timeout=10)
+            last_alert = now
+            print(f"[OAuthWatchdog] Alert sent — token age {age_days:.1f}d", flush=True)
+        except Exception as e:
+            print(f"[OAuthWatchdog] Error: {e}", flush=True)
+
+threading.Thread(target=_palash_oauth_token_watchdog, daemon=True).start()
+
 
 @app.route('/api/listener-stats/history')
 def api_listener_stats_history():

@@ -533,6 +533,12 @@
             <input type="url" id="pf-tiktok-{{ cand.token }}" value="{{ cand.tiktok or '' }}" placeholder="טיקטוק"
                    style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
           </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <input type="url" id="pf-youtube-{{ cand.token }}" value="{{ cand.youtube_url or '' }}" placeholder="יוטיוב"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+            <input type="url" id="pf-spotify-{{ cand.token }}" value="{{ cand.spotify_url or '' }}" placeholder="ספוטיפיי"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+          </div>
           <div style="display:flex;align-items:center;gap:10px">
             <button type="button" onclick="savePalashCandidate('{{ cand.token }}')"
                     style="background:#e63946;border:none;color:#fff;padding:6px 16px;border-radius:6px;
@@ -568,6 +574,8 @@
       fd.append('instagram', document.getElementById('pf-instagram-' + token).value.trim());
       fd.append('facebook', document.getElementById('pf-facebook-' + token).value.trim());
       fd.append('tiktok', document.getElementById('pf-tiktok-' + token).value.trim());
+      fd.append('youtube_url', document.getElementById('pf-youtube-' + token).value.trim());
+      fd.append('spotify_url', document.getElementById('pf-spotify-' + token).value.trim());
       var imgFile = document.getElementById('pf-image-' + token).files[0];
       var comFile = document.getElementById('pf-communique-' + token).files[0];
       if(imgFile) fd.append('image', imgFile);

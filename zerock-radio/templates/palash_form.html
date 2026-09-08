@@ -70,6 +70,12 @@
     <label>לינק לטיקטוק <span class="hint">(אופציונלי)</span></label>
     <input type="url" id="tiktok" value="{{ cand.tiktok or '' }}" placeholder="https://tiktok.com/...">
 
+    <label>לינק ליוטיוב <span class="hint">(אופציונלי)</span></label>
+    <input type="url" id="youtube_url" value="{{ cand.youtube_url or '' }}" placeholder="https://youtube.com/watch?v=...">
+
+    <label>לינק לספוטיפיי <span class="hint">(אופציונלי)</span></label>
+    <input type="url" id="spotify_url" value="{{ cand.spotify_url or '' }}" placeholder="https://open.spotify.com/track/...">
+
     <button id="save" onclick="save()">שליחת הפרטים</button>
     <div id="msg" class="msg"></div>
   </div>
@@ -89,6 +95,8 @@
       fd.append('instagram', document.getElementById('instagram').value.trim());
       fd.append('facebook', document.getElementById('facebook').value.trim());
       fd.append('tiktok', document.getElementById('tiktok').value.trim());
+      fd.append('youtube_url', document.getElementById('youtube_url').value.trim());
+      fd.append('spotify_url', document.getElementById('spotify_url').value.trim());
       var imgFile = document.getElementById('image').files[0];
       var comFile = document.getElementById('communique').files[0];
       if(imgFile) fd.append('image', imgFile);
