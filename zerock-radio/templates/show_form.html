@@ -426,6 +426,11 @@
     {% endfor %}
 
     {% elif show.key == 'matzad_harok' %}
+    <!-- Matzad broadcaster (varies week to week — no fixed host) -->
+    <div class="form-group">
+      <label>מגיש/ת השבוע</label>
+      <input type="text" name="matzad_harok_broadcaster" placeholder="שם המגיש/ה" style="direction:rtl" required>
+    </div>
     <!-- Playlist mode toggle -->
     <div class="form-group">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;text-transform:none;letter-spacing:normal;font-size:0.88rem">

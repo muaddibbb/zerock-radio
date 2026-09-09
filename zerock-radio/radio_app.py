@@ -4748,10 +4748,12 @@ _WP_BROADCASTER_PREFIX = {
     'singles':              'רוק ישראלי חדש עם ',
 }
 
-def _wp_broadcaster_str(show_cfg, is_rerun=False):
-    """Return the broadcaster display string for the WP board."""
+def _wp_broadcaster_str(show_cfg, is_rerun=False, override=None):
+    """Return the broadcaster display string for the WP board. `override` is
+    this week's actual broadcaster for shows with no fixed host (e.g. מצעד),
+    taken from the real schedule.json entry rather than the static config."""
     key  = show_cfg['key']
-    name = _resolve_broadcaster(show_cfg)
+    name = (override or '').strip() or _resolve_broadcaster(show_cfg)
     if not name:
         name = 'רוקי'
     prefix = _WP_BROADCASTER_PREFIX.get(key, '')
@@ -4817,7 +4819,8 @@ def _build_wp_schedule_slots():
     board_cancelled = _load_board_cancellations()
 
     # ── Scan queue for overrides + queue-only shows ────────────────────────────
-    queue_overrides    = {}   # show_key → (wp_day, start_h)   for regular rescheduled shows
+    queue_overrides       = {}   # show_key → (wp_day, start_h)   for regular rescheduled shows
+    broadcaster_overrides = {}   # show_key → broadcaster name    for regular shows with no fixed host (e.g. מצעד)
     queue_only_entries = {}   # show_key → LIST of {wp_day, start_h, broadcaster}  for QUEUE_ONLY_BOARD_SHOWS
     # Track the earliest (soonest) datetime seen per (key, wp_day) to deduplicate
     # episodes that land on the same weekday in different weeks within the 14-day window.
@@ -4883,6 +4886,9 @@ def _build_wp_schedule_slots():
                 else:
                     if key not in queue_overrides:
                         queue_overrides[key] = (ep_wp_day, ep_start_h)
+                    _entry_bc = (entry.get('broadcaster') or '').strip()
+                    if _entry_bc and key not in broadcaster_overrides:
+                        broadcaster_overrides[key] = _entry_bc
             except Exception:
                 pass
     except Exception:
@@ -4987,6 +4993,7 @@ def _build_wp_schedule_slots():
 
         dur  = _SHOW_DURATIONS_H.get(key, 1)
         slug = _WP_SLUGS.get(key, '')
+        bc_override = broadcaster_overrides.get(key)
 
         override = queue_overrides.get(key)
         if override:
@@ -5005,7 +5012,7 @@ def _build_wp_schedule_slots():
             'key':            key,
             'name':           show['name'],
             'slug':           slug,
-            'broadcaster':    _wp_broadcaster_str(show, is_rerun=False),
+            'broadcaster':    _wp_broadcaster_str(show, is_rerun=False, override=bc_override),
             'rerun':          False,
             'queue_override': is_queue_override,
         })
@@ -5022,7 +5029,7 @@ def _build_wp_schedule_slots():
                 'key':            key,
                 'name':           show['name'],
                 'slug':           slug,
-                'broadcaster':    _wp_broadcaster_str(show, is_rerun=True),
+                'broadcaster':    _wp_broadcaster_str(show, is_rerun=True, override=bc_override),
                 'rerun':          True,
                 'queue_override': False,
             })
@@ -5491,6 +5498,7 @@ def api_add_show():
     manual_date              = request.form.get('manual_date', '').strip()          # YYYY-MM-DD, only for על הרוקר
     al_haroker_broadcaster   = request.form.get('al_haroker_broadcaster', '').strip()   # broadcaster for על הרוקר
     erev_albumim_broadcaster = request.form.get('erev_albumim_broadcaster', '').strip() # broadcaster for ערב של אלבומים
+    matzad_harok_broadcaster = request.form.get('matzad_harok_broadcaster', '').strip() # varies week to week — no fixed host
     mode                  = request.form.get('mode', 'queue_to_broadcast').strip()
     # על הרוקר always uploads to Podbean/WP — never allow queue_only for this show.
     if show_key == 'al_harocker':
@@ -5687,6 +5695,7 @@ def api_add_show():
         'show_key':       show_key,
         'broadcaster':    (al_haroker_broadcaster   if show_key == 'al_harocker'   and al_haroker_broadcaster
                           else erev_albumim_broadcaster if show_key == 'erev_albumim' and erev_albumim_broadcaster
+                          else matzad_harok_broadcaster if show_key == 'matzad_harok' and matzad_harok_broadcaster
                           else (show_cfg['broadcaster'] if show_cfg else '')),
         'mode':           mode,
         'episode_num':      episode_num,
