@@ -3471,9 +3471,28 @@ def _poll_close_watcher():
         time.sleep(60)
 
 
+def _find_palash_candidate_image(label):
+    """Find the Palash form candidate matching this song label (across any
+    poll cycle — a song may have debuted as a Palash candidate weeks ago and
+    only now reached #1) and return the full local path to its uploaded
+    photo, or None if there is no match or no photo on file."""
+    label_norm = (label or '').strip()
+    if not label_norm:
+        return None
+    try:
+        for c in _load_palash_candidates():
+            if (c.get('label') or '').strip() == label_norm and c.get('image_path'):
+                full_path = os.path.join(RADIO_DIR, 'static', c['image_path'])
+                if os.path.exists(full_path):
+                    return full_path
+    except Exception:
+        pass
+    return None
+
 def _notify_whatsapp_poll_results(poll_id):
     """Send 2 WA messages to מצעד שבועי when voting closes:
-    1. Total voter count  2. First-place song label."""
+    1. Total voter count  2. First-place song label (+ its Palash-form photo,
+    if the winning song has one on file)."""
     try:
         polls = _load_polls()
         poll  = next((p for p in polls if p['id'] == poll_id), None)
