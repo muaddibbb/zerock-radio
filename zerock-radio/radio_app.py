@@ -3519,12 +3519,11 @@ def _notify_whatsapp_poll_results(poll_id):
         if ranked:
             winner = ranked[0]
             label  = winner.get('label', '').strip()
-            _requests.post(
-                'http://127.0.0.1:7733/send',
-                json={'to': _WA_GROUP_MATZAD,
-                      'message': f"🥇 מקום ראשון: {label}"},
-                timeout=10,
-            )
+            payload = {'to': _WA_GROUP_MATZAD, 'message': f"🥇 מקום ראשון: {label}"}
+            image_path = _find_palash_candidate_image(label)
+            if image_path:
+                payload['image_path'] = image_path
+            _requests.post('http://127.0.0.1:7733/send', json=payload, timeout=15)
         winner_label = ranked[0].get('label', '?') if ranked else '?'
         print(f'[PollWatcher] WA results sent — {total} voters, winner: {winner_label}', flush=True)
     except Exception as e:
