@@ -3524,7 +3524,7 @@ def _notify_whatsapp_poll_results(poll_id):
             message = f"🥇 מקום ראשון: {label}"
             image_url = _find_palash_candidate_image(label)
             if image_url:
-                message += f"\n📷 {image_url}"
+                message += f"\n\nתמונת זוכה:\n{image_url}"
             _requests.post('http://127.0.0.1:7733/send',
                             json={'to': _WA_GROUP_MATZAD, 'message': message},
                             timeout=10)
