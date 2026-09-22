@@ -3474,7 +3474,7 @@ def _poll_close_watcher():
 def _find_palash_candidate_image(label):
     """Find the Palash form candidate matching this song label (across any
     poll cycle — a song may have debuted as a Palash candidate weeks ago and
-    only now reached #1) and return the full local path to its uploaded
+    only now reached #1) and return a public download URL for its uploaded
     photo, or None if there is no match or no photo on file."""
     label_norm = (label or '').strip()
     if not label_norm:
@@ -3484,15 +3484,17 @@ def _find_palash_candidate_image(label):
             if (c.get('label') or '').strip() == label_norm and c.get('image_path'):
                 full_path = os.path.join(RADIO_DIR, 'static', c['image_path'])
                 if os.path.exists(full_path):
-                    return full_path
+                    return f"{ZEROCK_PUBLIC_URL}/static/{c['image_path']}"
     except Exception:
         pass
     return None
 
 def _notify_whatsapp_poll_results(poll_id):
     """Send 2 WA messages to מצעד שבועי when voting closes:
-    1. Total voter count  2. First-place song label (+ its Palash-form photo,
-    if the winning song has one on file)."""
+    1. Total voter count  2. First-place song label (+ a link to its
+    Palash-form photo, if the winning song has one on file — sent as a URL
+    rather than an attached image, since Baileys-sent images were getting
+    stuck on 'waiting for this message' for the recipient)."""
     try:
         polls = _load_polls()
         poll  = next((p for p in polls if p['id'] == poll_id), None)
@@ -3519,11 +3521,13 @@ def _notify_whatsapp_poll_results(poll_id):
         if ranked:
             winner = ranked[0]
             label  = winner.get('label', '').strip()
-            payload = {'to': _WA_GROUP_MATZAD, 'message': f"🥇 מקום ראשון: {label}"}
-            image_path = _find_palash_candidate_image(label)
-            if image_path:
-                payload['image_path'] = image_path
-            _requests.post('http://127.0.0.1:7733/send', json=payload, timeout=15)
+            message = f"🥇 מקום ראשון: {label}"
+            image_url = _find_palash_candidate_image(label)
+            if image_url:
+                message += f"\n📷 {image_url}"
+            _requests.post('http://127.0.0.1:7733/send',
+                            json={'to': _WA_GROUP_MATZAD, 'message': message},
+                            timeout=10)
         winner_label = ranked[0].get('label', '?') if ranked else '?'
         print(f'[PollWatcher] WA results sent — {total} voters, winner: {winner_label}', flush=True)
     except Exception as e:
