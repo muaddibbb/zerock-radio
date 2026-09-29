@@ -169,6 +169,7 @@ _WP_SHOW_IDS = {
     'זה רוק פורטה':            45,
     'מצעד הרוק של ישראל':     58,
     'נגד כיוון הזיפים':       42,
+    'עוד יום':                 41,
     'סינגלס':                  48,
     'סן פטרוק':                44,
     'ערב של אלבומים':          60,
@@ -332,7 +333,7 @@ SHOW_SCHEDULE = [
     # but these are excluded from the public WP weekly board until confirmed go-live ──
     {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '', 'board_hidden': True},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': '', 'board_hidden': True},
-    {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '', 'board_hidden': True},
+    {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '41'},
     {'key': 'ptzaim_haludim',       'name': 'פצעים חלודים',        'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '14:00', 'upload_time': '15:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '', 'board_hidden': True},
 ]
 
