@@ -141,6 +141,7 @@ _WP_SHOW_ART_URLS = {
     'נגד כיוון הזיפים':   'https://zerockradio.com/wp-content/uploads/2021/01/neged43.png',
     'סינגלס':             'https://zerockradio.com/wp-content/uploads/2021/01/8718-2c2d-43c5-a2a0-184992764b9f.png',
     'סן פטרוק':           'https://zerockradio.com/wp-content/uploads/2021/01/San-Patrock-clean.png',
+    'עוד יום':            'https://zerockradio.com/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-29-at-00.18.25-1.jpeg',
     'על הרוקר':           'https://zerockradio.com/wp-content/uploads/2021/02/Al-Ha-rocker4.gif',
     'פטרוק לילה':         'https://zerockradio.com/wp-content/uploads/2021/01/Night-Patrock-v2.png',
 }
