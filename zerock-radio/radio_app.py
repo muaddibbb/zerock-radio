@@ -22,6 +22,16 @@ NAS_TEMP     = "/mnt/nas/Music/ZeRock_Temp"  # final destination on NAS
 SCHEDULE_FILE = f"{RADIO_DIR}/schedule.json"
 BOARD_CANCELLATIONS_FILE = f"{RADIO_DIR}/board_cancellations.json"
 
+# Master kill switch for the entire Mitsad (chart/poll/Palash) pipeline —
+# touch/remove this file to pause/resume, no code change or deploy needed.
+# Checked by: _weekly_poll_renew_loop, api_polls_weekly_renew,
+# api_matzad_chart_create_from_poll, api_poll_set_next_palash,
+# palash_form_page, api_palash_form_submit, and send_vote_wa.sh (cron).
+MITSAD_HOLD_FILE = f"{RADIO_DIR}/.mitsad_on_hold"
+
+def _mitsad_on_hold():
+    return os.path.exists(MITSAD_HOLD_FILE)
+
 # Shows that only appear on the weekly board when an episode is queued (uploaded).
 # All other shows with a fixed day appear every week automatically.
 QUEUE_ONLY_BOARD_SHOWS = {'al_harocker', 'erev_albumim'}
@@ -3257,6 +3267,25 @@ def _weekly_poll_renew_loop():
         iso_week = datetime.now().isocalendar()[1]
         if _already_renewed_week[0] == iso_week:
             print("[WeeklyPoll] Already renewed this week — skipping", flush=True)
+            time.sleep(600)
+            continue
+
+        # Mitsad on hold (indefinite, via MITSAD_HOLD_FILE) — behaves like a
+        # standing _skip_dates entry: frees the chart number, never auto-resumes
+        # on its own. Repeats this check every week until the file is removed.
+        if _mitsad_on_hold():
+            print("[WeeklyPoll] Mitsad on hold — skipping renewal", flush=True)
+            _already_renewed_week[0] = iso_week
+            try:
+                _sp = _load_polls()
+                if _sp:
+                    _latest_sp = max(_sp, key=lambda p: p.get('closes_at', '') or '')
+                    if not _latest_sp.get('skipped'):
+                        _latest_sp['skipped'] = True
+                        _save_polls(_sp)
+                        print(f"[WeeklyPoll] Marked poll '{_latest_sp.get('id')}' as skipped (on hold)", flush=True)
+            except Exception as _se:
+                print(f"[WeeklyPoll] Could not mark skipped poll: {_se}", flush=True)
             time.sleep(600)
             continue
 
@@ -9672,6 +9701,8 @@ def api_poll_take_snapshot(poll_id):
 @app.route('/api/polls/<poll_id>/next-palash', methods=['PUT'])
 def api_poll_set_next_palash(poll_id):
     """Admin: set the 5 next-week הפינה לשיפוטכם songs."""
+    if _mitsad_on_hold():
+        return jsonify({'error': 'Mitsad is currently on hold'}), 423
     polls = _load_polls()
     poll  = next((p for p in polls if p['id'] == poll_id), None)
     if not poll:
@@ -9774,15 +9805,19 @@ def palash_form_page(token):
     """Public: personal form for a הפינה לשיפוטכם candidate — artist/song name,
     photo, press release (קומוניקט), and optional social links. Editable any
     time the token is valid (re-submission just updates the same record)."""
+    if _mitsad_on_hold():
+        return render_template('palash_form.html', invalid=False, on_hold=True, cand=None)
     candidates = _load_palash_candidates()
     cand = next((c for c in candidates if c['token'] == token), None)
-    return render_template('palash_form.html', invalid=(cand is None), cand=cand)
+    return render_template('palash_form.html', invalid=(cand is None), on_hold=False, cand=cand)
 
 
 @app.route('/api/palash-form/<token>', methods=['POST'])
 def api_palash_form_submit(token):
     """Save a candidate's form submission. Shared by the public form page AND
     the inline editor on the admin results page (same token-scoped record)."""
+    if _mitsad_on_hold():
+        return jsonify({'ok': False, 'error': 'Mitsad is currently on hold'}), 423
     candidates = _load_palash_candidates()
     cand = next((c for c in candidates if c['token'] == token), None)
     if not cand:
@@ -9889,6 +9924,8 @@ def _fill_missing_youtube_urls(poll_id):
 @app.route('/api/polls/weekly-renew', methods=['POST'])
 def api_polls_weekly_renew():
     """Admin: close current poll and open next week's poll (top-20 + next_palash)."""
+    if _mitsad_on_hold():
+        return jsonify({'error': 'Mitsad is currently on hold'}), 423
     import secrets as _sec2
     from datetime import timezone, timedelta as _td2
 

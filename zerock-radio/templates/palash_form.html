@@ -29,7 +29,12 @@
   </style>
 </head>
 <body>
-  {% if invalid %}
+  {% if on_hold %}
+  <div class="invalid">
+    <h1>הפינה לשיפוטכם בהפסקה זמנית</h1>
+    <p style="margin-top:10px">מצעד הרוק של ישראל מושהה כרגע. נעדכן כשהטופס ייפתח מחדש.</p>
+  </div>
+  {% elif invalid %}
   <div class="invalid">
     <h1>הטופס לא נמצא</h1>
     <p style="margin-top:10px">הקישור אינו תקין או שפג תוקפו. פנו לתחנה לקבלת קישור מעודכן.</p>
