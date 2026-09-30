@@ -10579,6 +10579,8 @@ def api_matzad_chart_create_from_poll():
       manual_date  — optional YYYY-MM-DD; otherwise next Thursday
       palash_0..palash_4 — 5 NEW פל״ש song uploads (required)
     """
+    if _mitsad_on_hold():
+        return jsonify({'error': 'Mitsad is currently on hold'}), 423
     poll_id     = (request.form.get('poll_id')     or '').strip()
     manual_date = (request.form.get('manual_date') or '').strip()
     if not poll_id:
