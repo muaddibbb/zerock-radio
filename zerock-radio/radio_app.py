@@ -1921,7 +1921,6 @@ def _notify_whatsapp_upload(show, wp_post_id):
     """Fire-and-forget: send WP show link to WhatsApp group via local bridge."""
     try:
         name = show.get('name', 'שידור חדש')
-        broadcaster = show.get('broadcaster', '')
 
         wp_link = None
         if wp_post_id and WP_USERNAME and WP_APP_PASS:
@@ -1938,15 +1937,8 @@ def _notify_whatsapp_upload(show, wp_post_id):
             except Exception:
                 pass
 
-        try:
-            from datetime import datetime as _dt
-            date_str = _dt.fromisoformat(show['scheduled_time']).strftime('%d/%m/%y')
-        except Exception:
-            date_str = ''
-        line1 = f"🎙️  {date_str} {name}"
-        if broadcaster:
-            line1 += f" — {broadcaster}"
-        parts = [line1]
+        title = _make_show_title(show)
+        parts = [f"🎙️  {title}"]
         if wp_link:
             parts.append(wp_link)
         message = '\n'.join(parts)
