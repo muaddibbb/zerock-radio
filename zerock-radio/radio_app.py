@@ -52,7 +52,6 @@ HEBREW_MUSIC_DIR  = "/mnt/nas/Music/Music Reorganized/Hebrew/allsorts"
 ZIKARON_DIR      = "/mnt/nas/Music/Zikaron"
 EXCLUDED_FILE    = f"{RADIO_DIR}/excluded_tracks.json"
 ZIKARON_FILE     = f"{RADIO_DIR}/zikaron_schedule.json"
-YOM_KIPPUR_FILE  = f"{RADIO_DIR}/yom_kippur_schedule.json"
 STREAM_STATES_FILE = f"{RADIO_DIR}/stream_states.json"
 MITZAD_DIR       = "/mnt/nas/Music/mitsad"
 
@@ -2178,12 +2177,10 @@ def _publish_wp_post(show_id, wp_post_id=None, show_name=None, broadcast_date=No
 
 def load_zikaron_schedule():
     """Load zikaron schedule.
-    Returns {holocaust: {from,until}, memorial: {from,until}, yom_kippur: {from,until}}.
-    Migrates old single-window format {from, until} → memorial automatically.
-    Also migrates yom_kippur_schedule.json → yom_kippur key on first run."""
+    Returns {holocaust: {from,until}, memorial: {from,until}}.
+    Migrates old single-window format {from, until} → memorial automatically."""
     empty = {'holocaust':  {'from': None, 'until': None},
-             'memorial':   {'from': None, 'until': None},
-             'yom_kippur': {'from': None, 'until': None}}
+             'memorial':   {'from': None, 'until': None}}
     try:
         if os.path.exists(ZIKARON_FILE):
             with open(ZIKARON_FILE) as f:
@@ -2191,25 +2188,13 @@ def load_zikaron_schedule():
             # Migrate old single-window format → memorial
             if 'from' in data or 'until' in data:
                 migrated = {'holocaust':  {'from': None, 'until': None},
-                            'memorial':   {'from': data.get('from'), 'until': data.get('until')},
-                            'yom_kippur': {'from': None, 'until': None}}
+                            'memorial':   {'from': data.get('from'), 'until': data.get('until')}}
                 save_zikaron_schedule(migrated)
                 return migrated
             # Ensure all keys exist
             data.setdefault('holocaust',  {'from': None, 'until': None})
             data.setdefault('memorial',   {'from': None, 'until': None})
-            data.setdefault('yom_kippur', {'from': None, 'until': None})
-            # One-time migration: absorb yom_kippur_schedule.json if yom_kippur slot still empty
-            if (not data['yom_kippur'].get('from') and os.path.exists(YOM_KIPPUR_FILE)):
-                try:
-                    with open(YOM_KIPPUR_FILE) as yf:
-                        yk = json.load(yf) or {}
-                    if yk.get('from'):
-                        data['yom_kippur'] = {'from': yk['from'], 'until': yk.get('until')}
-                        save_zikaron_schedule(data)
-                        print('[Zikaron] Migrated yom_kippur_schedule.json → zikaron_schedule.json', flush=True)
-                except Exception:
-                    pass
+            data.pop('yom_kippur', None)
             return data
     except Exception:
         pass
@@ -2231,13 +2216,13 @@ def is_oct7_window():
     return start <= now <= end
 
 def get_zikaron_type():
-    """Return 'holocaust', 'memorial', 'yom_kippur', 'oct7', or None based on current time."""
+    """Return 'holocaust', 'memorial', 'oct7', or None based on current time."""
     if is_oct7_window():
         return 'oct7'
     try:
         s = load_zikaron_schedule()
         now = datetime.now()
-        for ztype in ('holocaust', 'memorial', 'yom_kippur'):
+        for ztype in ('holocaust', 'memorial'):
             w = s.get(ztype, {})
             if w.get('from') and w.get('until'):
                 if datetime.fromisoformat(w['from']) <= now <= datetime.fromisoformat(w['until']):
@@ -2249,6 +2234,14 @@ def get_zikaron_type():
 def is_zikaron_window():
     """Return True if current time is within any configured zikaron window."""
     return get_zikaron_type() is not None
+
+# WP board text shown in place of the regular weekly grid while each zikaron
+# type is active (see _build_wp_schedule_html).
+_ZIKARON_BOARD_MESSAGES = {
+    'oct7':      "Oct' 7th - יום הזיכרון לאירועי 7 באוקטובר - מוזיקה שקטה",
+    'memorial':  "Rememberance Day - יום הזיכרון לחללי מערכות ישראל ונפגעי פעולות האיבה - מוזיקה שקטה",
+    'holocaust': "Holocaust Day - יום הזיכרון לשואה ולגבורה - מוזיקה שקטה",
+}
 
 _zikaron_lq_state = None   # last value sent to Liquidsoap
 
@@ -2279,65 +2272,6 @@ def _restore_stream_states():
         print(f"[StreamState] Restored: local={s['local_active']} ext={s['ext_active']}", flush=True)
     except Exception as e:
         print(f"[StreamState] Restore failed: {e}", flush=True)
-
-def load_yom_kippur_schedule():
-    """Return {'from': iso|None, 'until': iso|None}."""
-    try:
-        if os.path.exists(YOM_KIPPUR_FILE):
-            with open(YOM_KIPPUR_FILE) as f:
-                data = json.load(f) or {}
-                return {'from': data.get('from'), 'until': data.get('until')}
-    except Exception:
-        pass
-    return {'from': None, 'until': None}
-
-def save_yom_kippur_schedule(data):
-    with open(YOM_KIPPUR_FILE, 'w') as f:
-        json.dump(data, f, ensure_ascii=False)
-
-def is_yom_kippur_window():
-    s = load_yom_kippur_schedule()
-    if not s.get('from') or not s.get('until'):
-        return False
-    try:
-        now = datetime.now()
-        return datetime.fromisoformat(s['from']) <= now <= datetime.fromisoformat(s['until'])
-    except Exception:
-        return False
-
-_yom_kippur_lq_state = None   # last applied state (True=window active, both stopped)
-
-def _sync_yom_kippur_to_streams():
-    """When Yom Kippur window opens/closes, stop/start both streams.
-
-    Behaviour per user spec:
-      • At `from`  → stop  broadcast on local + external streams.
-      • At `until` → start broadcast on local + external streams.
-    Only fires on edge transitions to avoid stream-state thrashing.
-    """
-    global _yom_kippur_lq_state
-    in_window = is_yom_kippur_window()
-    if in_window == _yom_kippur_lq_state:
-        return
-    # First call after boot: just seed state, no transition (don't surprise the
-    # user by toggling streams when nothing changed since last run).
-    if _yom_kippur_lq_state is None:
-        _yom_kippur_lq_state = in_window
-        return
-    try:
-        if in_window:
-            # Enter window — stop both streams
-            lq_send(['var.set local_active = false', 'var.set ext_active = false'])
-            _save_stream_states(False, False)
-            print('[YomKippur] Window entered — both streams stopped', flush=True)
-        else:
-            # Exit window — start both streams
-            lq_send(['var.set local_active = true', 'var.set ext_active = true'])
-            _save_stream_states(True, True)
-            print('[YomKippur] Window exited — both streams started', flush=True)
-        _yom_kippur_lq_state = in_window
-    except Exception as e:
-        print(f'[YomKippur] Sync error: {e}', flush=True)
 
 def _sync_zikaron_to_lq():
     """Send var.set zikaron_active to Liquidsoap only when state changes.
@@ -3156,7 +3090,7 @@ def scheduler_loop():
             _restore_stream_states()
         _lq_was_running = lq_now
 
-        _sync_zikaron_to_lq()   # handles holocaust, memorial, yom_kippur, oct7 (auto, recurring)
+        _sync_zikaron_to_lq()   # handles holocaust, memorial, oct7 (auto, recurring)
 
         # NOTE: periodic 30-min board sync REMOVED (2026-06). The weekly board is a
         # weekly snapshot — it refreshes only at Saturday midnight (new broadcast
@@ -4170,8 +4104,8 @@ def api_zikaron_get():
 def api_zikaron_post():
     data  = request.get_json() or {}
     ztype = data.get('type', 'memorial')
-    if ztype not in ('holocaust', 'memorial', 'yom_kippur'):
-        return jsonify({'error': 'type must be holocaust, memorial, or yom_kippur'}), 400
+    if ztype not in ('holocaust', 'memorial'):
+        return jsonify({'error': 'type must be holocaust or memorial'}), 400
 
     sched = load_zikaron_schedule()
 
@@ -4199,38 +4133,6 @@ def api_zikaron_post():
     _sync_zikaron_to_lq()
     _sync_wp_board()
     return jsonify({'ok': True, 'active': is_zikaron_window(), 'active_type': get_zikaron_type()})
-
-@app.route('/api/yom-kippur', methods=['GET'])
-def api_yom_kippur_get():
-    """Legacy endpoint — yom kippur is now a zikaron type."""
-    sched = load_zikaron_schedule()
-    yk = sched.get('yom_kippur', {})
-    return jsonify({'schedule': yk, 'active': get_zikaron_type() == 'yom_kippur'})
-
-@app.route('/api/yom-kippur', methods=['POST'])
-def api_yom_kippur_post():
-    """Legacy endpoint — forwards to the zikaron system as type=yom_kippur."""
-    data = request.get_json() or {}
-    sched = load_zikaron_schedule()
-    if data.get('clear'):
-        sched['yom_kippur'] = {'from': None, 'until': None}
-        save_zikaron_schedule(sched)
-        _sync_zikaron_to_lq()
-        return jsonify({'ok': True})
-    from_iso, until_iso = data.get('from'), data.get('until')
-    if not from_iso or not until_iso:
-        return jsonify({'error': 'from and until are required'}), 400
-    try:
-        dt_from  = datetime.fromisoformat(from_iso)
-        dt_until = datetime.fromisoformat(until_iso)
-    except Exception:
-        return jsonify({'error': 'Invalid datetime format'}), 400
-    if dt_until <= dt_from:
-        return jsonify({'error': 'until must be after from'}), 400
-    sched['yom_kippur'] = {'from': dt_from.isoformat(), 'until': dt_until.isoformat()}
-    save_zikaron_schedule(sched)
-    _sync_zikaron_to_lq()
-    return jsonify({'ok': True, 'active': get_zikaron_type() == 'yom_kippur'})
 
 def _get_metadata_field(meta_str, field):
     """Extract a metadata field value from Liquidsoap request.metadata output."""
@@ -5213,11 +5115,17 @@ def _build_wp_schedule_html():
         ('שבת',        ''),
     ]
 
-    all_slots = _build_wp_schedule_slots()
+    # During an active Zikaron window, the board shows only a quiet-music
+    # notice instead of the regular grid — resumes automatically once the
+    # window ends (see _sync_zikaron_to_lq, which forces a resync on every
+    # entry/exit transition so this isn't stuck until the weekly snapshot).
+    _ztype = get_zikaron_type()
+    if _ztype in _ZIKARON_BOARD_MESSAGES:
+        return (f'<div id="zerock-board" class="schedule-grid zikaron-mode">'
+                f'<div class="zikaron-board-message">{_ZIKARON_BOARD_MESSAGES[_ztype]}</div>'
+                f'</div>')
 
-    # Zikaron (יום הזיכרון) is intentionally NOT rendered on the WP board —
-    # per policy, the weekly grid shows the regular schedule only.
-    zikaron_ranges = {}
+    all_slots = _build_wp_schedule_slots()
 
     # NOTE: CSS lives in _sync_wp_board path 4 (ihaf_insert_footer), NOT here.
     # Keeping CSS out of the HTML prevents it from leaking into page meta descriptions
