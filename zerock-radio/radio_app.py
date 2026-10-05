@@ -2219,8 +2219,21 @@ def save_zikaron_schedule(data):
     with open(ZIKARON_FILE, 'w') as f:
         json.dump(data, f, ensure_ascii=False)
 
+def is_oct7_window():
+    """October 7 commemoration — recurring every year automatically (unlike
+    the other zikaron types, which need a fresh from/until set each year).
+    Pure month/day/time check, no stored date needed."""
+    now = datetime.now()
+    if now.month != 10 or now.day != 7:
+        return False
+    start = now.replace(hour=6, minute=29, second=0, microsecond=0)
+    end   = now.replace(hour=23, minute=58, second=0, microsecond=0)
+    return start <= now <= end
+
 def get_zikaron_type():
-    """Return 'holocaust', 'memorial', 'yom_kippur', or None based on current time."""
+    """Return 'holocaust', 'memorial', 'yom_kippur', 'oct7', or None based on current time."""
+    if is_oct7_window():
+        return 'oct7'
     try:
         s = load_zikaron_schedule()
         now = datetime.now()
@@ -3143,7 +3156,7 @@ def scheduler_loop():
             _restore_stream_states()
         _lq_was_running = lq_now
 
-        _sync_zikaron_to_lq()   # handles holocaust, memorial, yom_kippur
+        _sync_zikaron_to_lq()   # handles holocaust, memorial, yom_kippur, oct7 (auto, recurring)
 
         # NOTE: periodic 30-min board sync REMOVED (2026-06). The weekly board is a
         # weekly snapshot — it refreshes only at Saturday midnight (new broadcast
