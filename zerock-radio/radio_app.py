@@ -2235,6 +2235,26 @@ def is_zikaron_window():
     """Return True if current time is within any configured zikaron window."""
     return get_zikaron_type() is not None
 
+def _zikaron_type_for_date(d):
+    """Like get_zikaron_type(), but for an arbitrary calendar date rather than
+    'now' — used by the WP board renderer so a day later in the current week
+    (e.g. checking Monday's board and seeing Wednesday is Oct 7) already shows
+    the Zikaron notice in advance, not only once it's actually happening."""
+    if d.month == 10 and d.day == 7:
+        return 'oct7'
+    try:
+        s = load_zikaron_schedule()
+        for ztype in ('holocaust', 'memorial'):
+            w = s.get(ztype, {})
+            if w.get('from') and w.get('until'):
+                d_from  = datetime.fromisoformat(w['from']).date()
+                d_until = datetime.fromisoformat(w['until']).date()
+                if d_from <= d <= d_until:
+                    return ztype
+    except Exception:
+        pass
+    return None
+
 # WP board text shown in place of the regular weekly grid while each zikaron
 # type is active (see _build_wp_schedule_html).
 _ZIKARON_BOARD_MESSAGES = {
@@ -5119,17 +5139,19 @@ def _build_wp_schedule_html():
         ('שבת',        ''),
     ]
 
-    # During an active Zikaron window, the board shows only a quiet-music
-    # notice instead of the regular grid — resumes automatically once the
-    # window ends (see _sync_zikaron_to_lq, which forces a resync on every
-    # entry/exit transition so this isn't stuck until the weekly snapshot).
-    _ztype = get_zikaron_type()
-    if _ztype in _ZIKARON_BOARD_MESSAGES:
-        return (f'<div id="zerock-board" class="schedule-grid zikaron-mode">'
-                f'<div class="zikaron-board-message">{_ZIKARON_BOARD_MESSAGES[_ztype]}</div>'
-                f'</div>')
-
     all_slots = _build_wp_schedule_slots()
+
+    # Per-day Zikaron check — a known date (Oct 7 every year, or an admin-set
+    # holocaust/memorial range) shows the quiet-music notice for THAT day even
+    # when viewed in advance (e.g. checking Monday's board for Wednesday),
+    # not only while it's actually happening right now.
+    _days_since_sun_html = (datetime.now().weekday() + 1) % 7
+    _week_start_date = datetime.now().date() - timedelta(days=_days_since_sun_html)
+    _day_zikaron = {}   # day_idx (0=Sun..6=Sat) -> zikaron type, for days in this board week
+    for _di in range(7):
+        _zt = _zikaron_type_for_date(_week_start_date + timedelta(days=_di))
+        if _zt:
+            _day_zikaron[_di] = _zt
 
     # NOTE: CSS lives in _sync_wp_board path 4 (ihaf_insert_footer), NOT here.
     # Keeping CSS out of the HTML prevents it from leaking into page meta descriptions
@@ -5148,7 +5170,20 @@ def _build_wp_schedule_html():
 
     # ── Show cells (flat, each positioned by grid-column + grid-row) ──────────
     for day_idx in range(7):
-        col       = day_idx + 1
+        col = day_idx + 1
+
+        if day_idx in _day_zikaron:
+            row_start = t_to_row(GRID_START_H)
+            row_end   = t_to_row(GRID_END_H)
+            msg = _ZIKARON_BOARD_MESSAGES.get(_day_zikaron[day_idx], '')
+            html_parts.append(
+                f'<div class="schedule-show zikaron-day" '
+                f'style="grid-column:{col};grid-row:{row_start}/{row_end}">'
+                f'<div class="zikaron-board-message">{msg}</div>'
+                f'</div>'
+            )
+            continue
+
         day_slots = sorted(all_slots[day_idx], key=lambda s: s['start_h'])
 
         # Fill gaps with Rocky
