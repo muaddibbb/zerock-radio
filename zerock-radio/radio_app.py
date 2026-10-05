@@ -2258,9 +2258,9 @@ def _zikaron_type_for_date(d):
 # WP board text shown in place of the regular weekly grid while each zikaron
 # type is active (see _build_wp_schedule_html).
 _ZIKARON_BOARD_MESSAGES = {
-    'oct7':      "Oct' 7th - יום הזיכרון לאירועי 7 באוקטובר - מוזיקה שקטה",
-    'memorial':  "Rememberance Day - יום הזיכרון לחללי מערכות ישראל ונפגעי פעולות האיבה - מוזיקה שקטה",
-    'holocaust': "Holocaust Day - יום הזיכרון לשואה ולגבורה - מוזיקה שקטה",
+    'oct7':      "יום הזיכרון לאירועי 7 באוקטובר - מוזיקה שקטה",
+    'memorial':  "יום הזיכרון לחללי מערכות ישראל ונפגעי פעולות האיבה - מוזיקה שקטה",
+    'holocaust': "יום הזיכרון לשואה ולגבורה - מוזיקה שקטה",
 }
 
 _zikaron_lq_state = None   # last value sent to Liquidsoap
