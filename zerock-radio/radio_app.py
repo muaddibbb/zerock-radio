@@ -43,10 +43,17 @@ LQ_HOST      = "127.0.0.1"
 LQ_PORT      = 1234
 
 PLAYLIST_DIR     = f"{RADIO_DIR}/playlists"
-ENGLISH_PLAYLIST = f"{PLAYLIST_DIR}/english.m3u"
-HEBREW_PLAYLIST  = f"{PLAYLIST_DIR}/hebrew.m3u"
+ENGLISH_PLAYLIST = f"{PLAYLIST_DIR}/english.m3u"   # canonical full list (for the audit + as the
+HEBREW_PLAYLIST  = f"{PLAYLIST_DIR}/hebrew.m3u"    # source the per-slot files below are derived from)
 JINGLES_PLAYLIST = f"{PLAYLIST_DIR}/jingles.m3u"
 ZIKARON_PLAYLIST = f"{PLAYLIST_DIR}/zikaron.m3u"
+# Per-rotation-slot derived files — each is the canonical list above reordered
+# with artist-spacing (see _artist_spaced_order), independently reshuffled so
+# the 3 parallel english slots (and 2 hebrew slots) diverge from each other.
+# Liquidsoap plays these in file order (mode="normal"), trusting the spacing;
+# see _reshuffle_split_playlists, run after every rebuild and hourly after.
+ENGLISH_PLAYLIST_SLOTS = [f"{PLAYLIST_DIR}/english_1.m3u", f"{PLAYLIST_DIR}/english_2.m3u", f"{PLAYLIST_DIR}/english_3.m3u"]
+HEBREW_PLAYLIST_SLOTS  = [f"{PLAYLIST_DIR}/hebrew_1.m3u",  f"{PLAYLIST_DIR}/hebrew_2.m3u"]
 ENGLISH_MUSIC_DIR = "/mnt/nas/Music/Music Reorganized/English"
 HEBREW_MUSIC_DIR  = "/mnt/nas/Music/Music Reorganized/Hebrew/allsorts"
 ZIKARON_DIR      = "/mnt/nas/Music/Zikaron"
@@ -814,6 +821,79 @@ def liquidsoap_running():
 _PLAYLIST_SCAN_POOL    = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix='pl-scan')
 _PLAYLIST_SCAN_TIMEOUT = 90  # seconds per root — generous vs. a normal ~20k-file NAS walk
 
+_rocky_last_scan = {}   # {'english': [paths], 'hebrew': [paths]} — cache of the last
+                        # cooldown-filtered NAS scan, so hourly reshuffles don't need
+                        # to re-walk the NAS (see _reshuffle_split_playlists).
+_rocky_last_scan_lock = threading.Lock()
+
+def _artist_spaced_order(tracks, seed=None):
+    """Reorder tracks so same-artist tracks land as far apart as possible,
+    instead of a flat shuffle that can cluster an artist's songs close
+    together purely by chance (round-robin across artist groups, each
+    internally shuffled). Falls back to the folder-derived artist name via
+    _rocky_track_meta when tags are missing — same logic the cooldown filter
+    already relies on, so an un-tagged track still gets reasonable spacing."""
+    rng = random.Random(seed)
+    groups = {}
+    for t in tracks:
+        try:
+            artist = (_rocky_track_meta(t).get('artist') or '').strip().lower()
+        except Exception:
+            artist = ''
+        groups.setdefault(artist or '__unknown__', []).append(t)
+    group_list = list(groups.values())
+    for g in group_list:
+        rng.shuffle(g)
+    rng.shuffle(group_list)
+    cursors   = [0] * len(group_list)
+    remaining = len(tracks)
+    result    = []
+    while remaining > 0:
+        progressed = False
+        for gi, g in enumerate(group_list):
+            if cursors[gi] < len(g):
+                result.append(g[cursors[gi]])
+                cursors[gi] += 1
+                remaining -= 1
+                progressed = True
+        if not progressed:
+            break
+    return result
+
+def _reshuffle_split_playlists():
+    """Regenerate the per-rotation-slot playlist files from the last known
+    (already NAS-scanned, cooldown-filtered) track lists, each independently
+    artist-spaced and reshuffled. No NAS walk — safe to call hourly."""
+    with _rocky_last_scan_lock:
+        snapshot = dict(_rocky_last_scan)
+    for name, dest_files in (('english', ENGLISH_PLAYLIST_SLOTS), ('hebrew', HEBREW_PLAYLIST_SLOTS)):
+        tracks = snapshot.get(name)
+        if not tracks:
+            continue
+        for i, dest_file in enumerate(dest_files):
+            try:
+                ordered = _artist_spaced_order(tracks, seed=f"{name}-{i}-{time.time()}")
+                os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+                with open(dest_file, 'w', encoding='utf-8') as f:
+                    f.write('\n'.join(ordered) + '\n')
+            except Exception as e:
+                print(f"[reshuffle_split_playlists] {name} slot {i} failed: {e}", flush=True)
+    print(f"[reshuffle_split_playlists] done — "
+          f"english={len(snapshot.get('english', []))} hebrew={len(snapshot.get('hebrew', []))}", flush=True)
+
+def _hourly_reshuffle_loop():
+    """Keeps the per-slot artist-spaced playlists fresh between full nightly
+    rebuilds — matches Liquidsoap's own reload cadence (reload=3600) so each
+    hourly reload gets a newly-spaced shuffle, not the exact same order."""
+    while True:
+        time.sleep(3600)
+        try:
+            _reshuffle_split_playlists()
+        except Exception as e:
+            print(f"[HourlyReshuffle] Error: {e}", flush=True)
+
+threading.Thread(target=_hourly_reshuffle_loop, daemon=True).start()
+
 def rebuild_playlists():
     """Rescan NAS music folders and rewrite the M3U playlist files.
     Respects the excluded_tracks list. Safe to call while Liquidsoap is playing —
@@ -897,9 +977,16 @@ def rebuild_playlists():
                 f.write('\n'.join(tracks) + '\n')
             results[name] = len(tracks)
             print(f"[rebuild_playlists] {name}: {len(tracks)} tracks → {dest_file}", flush=True)
+            if name in ('english', 'hebrew'):
+                with _rocky_last_scan_lock:
+                    _rocky_last_scan[name] = tracks
         except Exception as e:
             results[name] = f'ERROR: {e}'
             print(f"[rebuild_playlists] {name} failed: {e}", flush=True)
+    try:
+        _reshuffle_split_playlists()
+    except Exception as e:
+        print(f"[rebuild_playlists] split-playlist reshuffle failed: {e}", flush=True)
     return results
 
 # ─── Rocky rules enforcement ─────────────────────────────────────────────────
