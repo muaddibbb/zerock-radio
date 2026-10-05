@@ -2294,6 +2294,10 @@ def _sync_zikaron_to_lq():
         # Reload jingle source after zikaron transition — the show/queue interaction
         # can cause rotate() to lose the pre-fetched jingle track.
         threading.Timer(5.0, _reload_jingle_source, args=('after zikaron transition',)).start()
+        # Refresh the WP board immediately on entry AND exit — don't wait for the
+        # weekly Saturday-midnight snapshot, since a zikaron day can fall any day
+        # of the week and must flip the board message on/off same-day.
+        _sync_wp_board(force=True)
     except Exception as e:
         print(f"[Zikaron] Telnet error: {e}", flush=True)
 
