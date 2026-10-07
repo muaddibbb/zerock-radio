@@ -3199,6 +3199,12 @@ def scheduler_loop():
             print("[Scheduler] Liquidsoap came online — restoring stream states", flush=True)
             time.sleep(2)   # give LQ a moment to finish initialising
             _restore_stream_states()
+            # Liquidsoap's own zikaron_active resets to its code default (false) on
+            # restart — force a re-push here even if our cached _zikaron_lq_state
+            # already matches "should be active", since our cache tracks OUR last
+            # send, not Liquidsoap's actual variable (which just got reset under us).
+            global _zikaron_lq_state
+            _zikaron_lq_state = None
         _lq_was_running = lq_now
 
         _sync_zikaron_to_lq()   # handles holocaust, memorial, oct7 (auto, recurring)
