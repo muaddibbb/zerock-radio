@@ -126,6 +126,7 @@ _WP_FEATURED_IMAGES = {
     'מצעד הרוק של ישראל':     389,
     'נגד כיוון הזיפים':       450,
     'עוד יום':                 15575,
+    'Rusty Wounds - פצעים חלודים': 15606,
     'סינגלס':                  374,
     'סן פטרוק':                389,
     'על הרוקר':                769,
@@ -157,6 +158,7 @@ _WP_SHOW_ART_URLS = {
     'סינגלס':             'https://zerockradio.com/wp-content/uploads/2021/01/8718-2c2d-43c5-a2a0-184992764b9f.png',
     'סן פטרוק':           'https://zerockradio.com/wp-content/uploads/2021/01/San-Patrock-clean.png',
     'עוד יום':            'https://zerockradio.com/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-29-at-00.18.25-1.jpeg',
+    'Rusty Wounds - פצעים חלודים': 'https://zerockradio.com/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-05-at-23.15.06.jpeg',
     'על הרוקר':           'https://zerockradio.com/wp-content/uploads/2021/02/Al-Ha-rocker4.gif',
     'פטרוק לילה':         'https://zerockradio.com/wp-content/uploads/2021/01/Night-Patrock-v2.png',
 }
@@ -344,7 +346,7 @@ SHOW_SCHEDULE = [
     {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': '', 'board_hidden': True},
     {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
-    {'key': 'ptzaim_haludim',       'name': 'פצעים חלודים',        'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '', 'board_hidden': True},
+    {'key': 'ptzaim_haludim',       'name': 'Rusty Wounds - פצעים חלודים', 'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '', 'board_hidden': True},
 ]
 
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
