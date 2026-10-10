@@ -95,7 +95,38 @@ background = fallback(track_sensitive=false, [zikaron_switch, rocky])
 background = blank.skip(background, max_blank=4.)
 
 # Main stream: shows take priority over background
-main = fallback(track_sensitive=false, [shows, background])
+# Built as an explicit switch() (what fallback() desugars to) so we can read
+# back `.selected()` below — fallback() itself doesn't expose that.
+main = switch(track_sensitive=false, [({true}, shows), ({true}, background)])
+
+# BUG FIX: fallback/switch never pauses its inactive (lower-priority) child —
+# `background` keeps silently advancing through its rotate()/cross() chain
+# the whole time a show is airing on top of it. So when `shows` drains and
+# `main` falls back to `background`, listeners hear wherever background had
+# silently drifted to — not a freshly chosen track, and the cut lands
+# mid-track with no warning.
+#
+# Fix: watch which child `main` has selected. The instant it flips away from
+# `shows` back to `background` (i.e. a show just ended), force `background`
+# to skip to its next track. This only fires on that specific transition —
+# never on background's own internal rotate/cross transitions — so it can't
+# disturb the E-E-H-E-H-J rotate cycle position or interfere with Zikaron
+# mode (background.skip() simply routes down to whichever leaf is currently
+# live, exactly like the existing /api/skip -> rocky_out.skip mechanism
+# already does safely in production).
+last_main_selected = ref("")
+def _resume_background_fresh() =
+  selected = main.selected()
+  if null.defined(selected) then
+    selected_id = source.id(null.get(selected))
+    previous = last_main_selected()
+    if previous == source.id(shows) and selected_id != source.id(shows) then
+      source.skip(background)
+    end
+    last_main_selected := selected_id
+  end
+end
+main = source.on_frame(main, _resume_background_fresh)
 
 # Write current track info to now_playing.txt on every track start.
 # This fires synchronously in Liquidsoap — gives Python instant path detection

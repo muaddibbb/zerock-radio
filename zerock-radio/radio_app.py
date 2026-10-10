@@ -5261,114 +5261,131 @@ def _build_wp_schedule_html():
     # NOTE: CSS lives in _sync_wp_board path 4 (ihaf_insert_footer), NOT here.
     # Keeping CSS out of the HTML prevents it from leaking into page meta descriptions
     # via Rank Math reading post 254 content (updated by zerock/v1/schedule).
-    HOURS_COL = 1   # dedicated time-axis column, placed before the 7 day columns
-                    # (renders on the far RIGHT in this RTL page, since column 1
-                    # is the first-rendered column; day columns shift to 2-8)
+    #
+    # Layout: the week is split into 4 "day-group" blocks — (Sun,Mon), (Tue,Wed),
+    # (Thu,Fri), (Sat) — each its OWN complete mini-grid with its own hours column
+    # and day headers. Desktop CSS lays the 4 blocks out side by side (one row);
+    # mobile CSS stacks them vertically, so scrolling down reveals the next pair
+    # of days instead of needing a horizontal swipe.
+    DAY_GROUPS = [(0, 1), (2, 3), (4, 5), (6,)]   # day_idx tuples, Sun=0..Sat=6
+
+    HOURS_COL = 1   # dedicated time-axis column within EACH group's own mini-grid
+                    # (renders on the far RIGHT of that group in this RTL page)
     DAY_COL_OFFSET = 2
 
     html_parts = ['<div id="zerock-board" class="schedule-grid">']
 
-    # ── Corner cell above the hours column (grid-row: 1) ──────────────────────
-    html_parts.append(
-        f'<div class="schedule-top schedule-hours-corner" style="grid-column:{HOURS_COL};grid-row:1"></div>'
-    )
+    for group_idx, group in enumerate(DAY_GROUPS):
+        # First group (Sun+Mon) renders rightmost in this RTL flex row — its hours
+        # column is the ONE hours axis desktop should show. On desktop the other
+        # 3 groups' hours columns are hidden via CSS (.schedule-daygroup:not(:first-child)),
+        # so the 4 blocks visually merge into a single continuous week-wide grid.
+        first_cls = ' schedule-daygroup-first' if group_idx == 0 else ''
+        html_parts.append(f'<div class="schedule-daygroup{first_cls}" style="--group-days:{len(group)}">')
 
-    # ── Hour-axis labels (grid-column: HOURS_COL, one cell per hour) ──────────
-    for hour in range(GRID_START_H, GRID_END_H):
-        row = t_to_row(hour)
+        # ── Corner cell above the hours column (grid-row: 1) ──────────────────
         html_parts.append(
-            f'<div class="schedule-hour-label" style="grid-column:{HOURS_COL};grid-row:{row}/{row + int(60 / MINS_PER_ROW)}">'
-            f'{hour:02d}:00</div>'
+            f'<div class="schedule-top schedule-hours-corner" style="grid-column:{HOURS_COL};grid-row:1"></div>'
         )
 
-    # ── Day header row (grid-row: 1) ──────────────────────────────────────────
-    for day_idx in range(7):
-        col = day_idx + DAY_COL_OFFSET
-        day_name, day_subtitle = DAY_NAMES[day_idx]
-        sub_html = f'<span>{day_subtitle}</span>' if day_subtitle else ''
-        html_parts.append(
-            f'<div class="schedule-top" style="grid-column:{col};grid-row:1">'
-            f'{day_name}{sub_html}</div>'
-        )
-
-    # ── Show cells (flat, each positioned by grid-column + grid-row) ──────────
-    for day_idx in range(7):
-        col = day_idx + DAY_COL_OFFSET
-
-        if day_idx in _day_zikaron:
-            row_start = t_to_row(GRID_START_H)
-            row_end   = t_to_row(GRID_END_H)
-            msg = _ZIKARON_BOARD_MESSAGES.get(_day_zikaron[day_idx], '')
+        # ── Hour-axis labels (grid-column: HOURS_COL, one cell per hour) ──────
+        for hour in range(GRID_START_H, GRID_END_H):
+            row = t_to_row(hour)
             html_parts.append(
-                f'<div class="schedule-show zikaron-day" '
-                f'style="grid-column:{col};grid-row:{row_start}/{row_end}">'
-                f'<div class="zikaron-board-message">{msg}</div>'
-                f'</div>'
+                f'<div class="schedule-hour-label" style="grid-column:{HOURS_COL};grid-row:{row}/{row + int(60 / MINS_PER_ROW)}">'
+                f'{hour:02d}:00</div>'
             )
-            continue
 
-        day_slots = sorted(all_slots[day_idx], key=lambda s: s['start_h'])
+        # ── Day header row (grid-row: 1) ───────────────────────────────────────
+        for local_idx, day_idx in enumerate(group):
+            col = local_idx + DAY_COL_OFFSET
+            day_name, day_subtitle = DAY_NAMES[day_idx]
+            sub_html = f'<span>{day_subtitle}</span>' if day_subtitle else ''
+            html_parts.append(
+                f'<div class="schedule-top" style="grid-column:{col};grid-row:1">'
+                f'{day_name}{sub_html}</div>'
+            )
 
-        # Fill gaps with Rocky
-        filled = []
-        cursor = 0.0
-        for slot in day_slots:
-            if slot['start_h'] > cursor + 0.01:
+        # ── Show cells (flat, each positioned by grid-column + grid-row) ──────
+        for local_idx, day_idx in enumerate(group):
+            col = local_idx + DAY_COL_OFFSET
+
+            if day_idx in _day_zikaron:
+                row_start = t_to_row(GRID_START_H)
+                row_end   = t_to_row(GRID_END_H)
+                msg = _ZIKARON_BOARD_MESSAGES.get(_day_zikaron[day_idx], '')
+                html_parts.append(
+                    f'<div class="schedule-show zikaron-day" '
+                    f'style="grid-column:{col};grid-row:{row_start}/{row_end}">'
+                    f'<div class="zikaron-board-message">{msg}</div>'
+                    f'</div>'
+                )
+                continue
+
+            day_slots = sorted(all_slots[day_idx], key=lambda s: s['start_h'])
+
+            # Fill gaps with Rocky
+            filled = []
+            cursor = 0.0
+            for slot in day_slots:
+                if slot['start_h'] > cursor + 0.01:
+                    filled.append({
+                        'start_h': cursor, 'end_h': slot['start_h'],
+                        'key': '__rocky__', 'name': JUST_ROCK_NAME,
+                        'slug': JUST_ROCK_SLUG, 'broadcaster': ROCKY_BROADCASTER,
+                        'rerun': False,
+                    })
+                filled.append(slot)
+                cursor = slot['end_h']
+            if cursor < 24.0:
                 filled.append({
-                    'start_h': cursor, 'end_h': slot['start_h'],
+                    'start_h': cursor, 'end_h': 24.0,
                     'key': '__rocky__', 'name': JUST_ROCK_NAME,
                     'slug': JUST_ROCK_SLUG, 'broadcaster': ROCKY_BROADCASTER,
                     'rerun': False,
                 })
-            filled.append(slot)
-            cursor = slot['end_h']
-        if cursor < 24.0:
-            filled.append({
-                'start_h': cursor, 'end_h': 24.0,
-                'key': '__rocky__', 'name': JUST_ROCK_NAME,
-                'slug': JUST_ROCK_SLUG, 'broadcaster': ROCKY_BROADCASTER,
-                'rerun': False,
-            })
 
-        prev_vis_end = GRID_START_H   # track end of previous visible show (per column)
+            prev_vis_end = GRID_START_H   # track end of previous visible show (per column)
 
-        for slot in filled:
-            s_h = slot['start_h']
-            e_h = slot['end_h']
+            for slot in filled:
+                s_h = slot['start_h']
+                e_h = slot['end_h']
 
-            # Clip to grid visible range; skip if entirely outside
-            vis_start = max(GRID_START_H, s_h)
-            vis_end   = min(GRID_END_H,   e_h)
-            if vis_end <= vis_start + 0.01:
-                continue  # e.g. overnight Rocky 00:00–08:00
+                # Clip to grid visible range; skip if entirely outside
+                vis_start = max(GRID_START_H, s_h)
+                vis_end   = min(GRID_END_H,   e_h)
+                if vis_end <= vis_start + 0.01:
+                    continue  # e.g. overnight Rocky 00:00–08:00
 
-            row_start = t_to_row(vis_start)
-            row_end   = t_to_row(vis_end)
-            if row_end <= row_start:
-                continue
+                row_start = t_to_row(vis_start)
+                row_end   = t_to_row(vis_end)
+                if row_end <= row_start:
+                    continue
 
-            # Add top border only when this show starts after an empty gap
-            # (consecutive shows share only one border — the previous show's bottom edge)
-            show_cls = 'schedule-show gap-top' if vis_start > prev_vis_end + 0.01 else 'schedule-show'
-            prev_vis_end = vis_end
+                # Add top border only when this show starts after an empty gap
+                # (consecutive shows share only one border — the previous show's bottom edge)
+                show_cls = 'schedule-show gap-top' if vis_start > prev_vis_end + 0.01 else 'schedule-show'
+                prev_vis_end = vis_end
 
-            # Time label shows actual (unclipped) times
-            sh_i = int(s_h);          sm_i = int((s_h - sh_i) * 60)
-            eh_i = int(e_h) % 24;     em_i = int((e_h - int(e_h)) * 60)
-            time_str  = f"{sh_i:02d}:{sm_i:02d} - {eh_i:02d}:{em_i:02d}"
-            show_url  = WP_BASE + slot['slug'] + '/' if slot['slug'] else '#'
-            name_html = (f'<a href="{show_url}" class="pagelink">{slot["name"]}</a>'
-                         if slot['slug'] else slot['name'])
+                # Time label shows actual (unclipped) times
+                sh_i = int(s_h);          sm_i = int((s_h - sh_i) * 60)
+                eh_i = int(e_h) % 24;     em_i = int((e_h - int(e_h)) * 60)
+                time_str  = f"{sh_i:02d}:{sm_i:02d} - {eh_i:02d}:{em_i:02d}"
+                show_url  = WP_BASE + slot['slug'] + '/' if slot['slug'] else '#'
+                name_html = (f'<a href="{show_url}" class="pagelink">{slot["name"]}</a>'
+                             if slot['slug'] else slot['name'])
 
-            html_parts.append(
-                f'<div class="{show_cls}" '
-                f'style="grid-column:{col};grid-row:{row_start}/{row_end}">'
-            )
-            html_parts.append(f'<div class="schedule-show-time">{time_str}</div>')
-            html_parts.append(f'<div class="schedule-show-the-show">{name_html}</div>')
-            html_parts.append('<div class="broadcaster-socials"></div>')
-            html_parts.append(f'<div class="schedule-show-text">{slot["broadcaster"]}</div>')
-            html_parts.append('</div>')
+                html_parts.append(
+                    f'<div class="{show_cls}" '
+                    f'style="grid-column:{col};grid-row:{row_start}/{row_end}">'
+                )
+                html_parts.append(f'<div class="schedule-show-time">{time_str}</div>')
+                html_parts.append(f'<div class="schedule-show-the-show">{name_html}</div>')
+                html_parts.append('<div class="broadcaster-socials"></div>')
+                html_parts.append(f'<div class="schedule-show-text">{slot["broadcaster"]}</div>')
+                html_parts.append('</div>')
+
+        html_parts.append('</div>')   # close .schedule-daygroup
 
     html_parts.append('</div>')
     return '\n'.join(html_parts)
@@ -5503,14 +5520,36 @@ def _sync_wp_board(force=False):
                     # is not rendered at all.
                     f'body:not(.page-id-{WP_SCHEDULE_PAGE_ID}) #zerock-board{{display:none!important}}'
                     '.schedule-grid:not(#zerock-board){display:none!important}'
+                    # #zerock-board is now a simple flex row of 4 "day-group" blocks
+                    # (Sun+Mon, Tue+Wed, Thu+Fri, Sat) — each block is its own complete
+                    # mini-grid (hours column + header + show cells). On mobile this
+                    # becomes flex-direction:column, so scrolling down moves from one
+                    # day-pair to the next instead of needing a horizontal swipe.
+                    # Desktop: the 4 blocks merge into one continuous week-wide grid —
+                    # no gap between them, and only the first (rightmost) block shows
+                    # its hours column; the other 3 hide theirs (see :not(:first-child)
+                    # rule below) and lose their own 52px hours-column track too.
                     '#zerock-board{'
-                    'display:grid!important;'
-                    'grid-template-columns:52px repeat(7,1fr);'
+                    'display:flex!important;flex-direction:row;'
+                    'width:1140px;max-width:100%;margin:0 auto;gap:0;'
+                    '}'
+                    '#zerock-board .schedule-daygroup{'
+                    'display:grid!important;flex:1 1 0;'
+                    'grid-template-columns:52px repeat(var(--group-days),1fr);'
                     f'grid-template-rows:45px repeat({_GRID_ROWS},40px);'
-                    'gap:0;width:1140px;max-width:100%;margin:0 auto;'
-                    'background-color:#2a2a2a;'
-                    'overflow-x:visible;'
+                    'gap:0;background-color:#2a2a2a;'
                     'border:1px solid rgba(255,255,255,.25);'
+                    'border-inline-end:none;'   # shared edge with the next block — avoid doubling
+                    '}'
+                    '#zerock-board .schedule-daygroup:first-child{'
+                    'border-inline-end:1px solid rgba(255,255,255,.25);'
+                    '}'
+                    '#zerock-board .schedule-daygroup:not(:first-child){'
+                    'grid-template-columns:repeat(var(--group-days),1fr);'
+                    '}'
+                    '#zerock-board .schedule-daygroup:not(:first-child) .schedule-hour-label,'
+                    '#zerock-board .schedule-daygroup:not(:first-child) .schedule-hours-corner{'
+                    'display:none;'
                     '}'
                     # Every cell (header, hour label, show) draws its own full border —
                     # a closed box — instead of relying on shared/conditional edges.
@@ -5559,28 +5598,12 @@ def _sync_wp_board(force=False):
                     # reduces how much it can cover while scrolling.
                     '.floating-live-wrapper{height:64px!important;padding:4px 0!important;}'
                     '.floating-live-wrapper .floating-live{height:40px!important;}'
-                    # ── Mobile: show 2 day-columns per "page", swipe/scroll horizontally
-                    # for the rest; vertical scroll still reveals all hours of the visible
-                    # days. Each day column gets a fixed width (~44vw) instead of 1fr so the
-                    # grid becomes wider than the viewport and scrolls, snapping on day
-                    # boundaries. The hours column stays pinned (sticky) so the time axis
-                    # is always visible no matter which day-pair is in view.
+                    # ── Mobile: stack the 4 day-group blocks vertically (full width each)
+                    # so scrolling DOWN the page reveals the next pair of days, instead of
+                    # a horizontal swipe. Each block keeps its own hours column + header.
                     '@media (max-width:700px){'
-                    '#zerock-board{'
-                    'width:100%!important;'
-                    'grid-template-columns:52px repeat(7,44vw)!important;'
-                    'overflow-x:auto!important;'
-                    'scroll-snap-type:x mandatory;'
-                    '-webkit-overflow-scrolling:touch;'
-                    '}'
-                    '#zerock-board .schedule-top,'
-                    '#zerock-board .schedule-show{scroll-snap-align:start;}'
-                    '#zerock-board .schedule-hour-label,'
-                    '#zerock-board .schedule-hours-corner{'
-                    'position:sticky;'
-                    'inset-inline-start:0;'
-                    'z-index:2;'
-                    '}'
+                    '#zerock-board{flex-direction:column;gap:16px;}'
+                    '#zerock-board .schedule-daygroup{width:100%;}'
                     '}'
                     '</style>'
                 )
