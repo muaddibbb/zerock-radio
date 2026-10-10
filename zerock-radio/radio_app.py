@@ -5478,11 +5478,10 @@ def _sync_wp_board(force=False):
             #     hides the PHP grid; our div (with the class) inherits flex layout.
             try:
                 # html already contains id="zerock-board" (set in _build_wp_schedule_html).
-                # Border strategy:
-                #  - Column separators: background-image (empty areas) + border-right (cells)
-                #  - Header bottom: border-bottom on .schedule-top
-                #  - Show separators: border-bottom on every show + border-top only on
-                #    shows with class "gap-top" (starts after empty space) to avoid doubling
+                # Border strategy: every cell (header / hour-label / show) draws its own
+                # full 1px border — a fully enclosed box — so adjacent cells' borders
+                # simply sit flush against each other. Simpler than the old shared-edge
+                # approach and avoids any visible gaps or doubled lines.
                 # NOTE: no <script> — upress.io WAF permanently blocks <script> in POST bodies.
                 _GRID_ROWS = 34  # (GRID_END_H=24 − GRID_START_H=7) × 60 / MINS_PER_ROW=30
                 css = (
@@ -5500,33 +5499,32 @@ def _sync_wp_board(force=False):
                     'gap:0;width:1140px;max-width:100%;margin:0 auto;'
                     'background-color:#2a2a2a;'
                     'border:1px solid rgba(255,255,255,.25);'
-                    # Column separators in empty areas (show cells cover this with their own border-right)
-                    'background-image:repeating-linear-gradient(to right,transparent 0,transparent calc((100% - 52px)/7 - 1px),rgba(255,255,255,.25) calc((100% - 52px)/7 - 1px),rgba(255,255,255,.25) calc((100% - 52px)/7));'
-                    'background-size:calc(100% - 52px) 100%;background-repeat:no-repeat;'
+                    '}'
+                    # Every cell (header, hour label, show) draws its own full border —
+                    # a closed box — instead of relying on shared/conditional edges.
+                    # Adjacent cells' 1px borders sit flush against each other.
+                    '#zerock-board .schedule-top,'
+                    '#zerock-board .schedule-hour-label,'
+                    '#zerock-board .schedule-show{'
+                    'border:1px solid rgba(255,255,255,.25);'
                     '}'
                     '#zerock-board .schedule-top{'
                     'height:auto!important;box-sizing:border-box;background-color:inherit;'
-                    'border-right:1px solid rgba(255,255,255,.25);'
-                    'border-bottom:1px solid rgba(255,255,255,.25);'
                     'display:flex;flex-direction:column;justify-content:center;align-items:center;'
                     'padding:5px;font-weight:bold;text-align:center;'
                     '}'
-                    '#zerock-board .schedule-hours-corner{border-right:none;}'
+                    '#zerock-board .schedule-hours-corner{border:none;}'
                     '#zerock-board .schedule-hour-label{'
                     'box-sizing:border-box;background-color:inherit;'
-                    'border-bottom:1px solid rgba(255,255,255,.12);'
+                    'border-color:rgba(255,255,255,.12);'
                     'display:flex;align-items:flex-start;justify-content:center;'
                     'padding-top:2px;font-size:11px;color:rgba(255,255,255,.6);'
                     '}'
                     '#zerock-board .schedule-show{'
                     'height:auto!important;box-sizing:border-box;overflow:hidden;'
                     'background-color:inherit!important;'
-                    'border-right:1px solid rgba(255,255,255,.25);'
                     'display:flex!important;flex-direction:column;align-items:center;justify-content:center;'
                     'text-align:center;'
-                    '}'
-                    '#zerock-board .schedule-show.gap-top{'
-                    'border-top:1px solid rgba(255,255,255,.25);'
                     '}'
                     '#zerock-board .schedule-show-time{'
                     'font-size:11px;color:rgba(255,255,255,.55);text-align:center;'
