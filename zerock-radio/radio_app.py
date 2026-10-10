@@ -5531,8 +5531,8 @@ def _sync_wp_board(force=False):
                     '#zerock-board .schedule-show-time{'
                     'font-size:11px;color:rgba(255,255,255,.55);text-align:center;'
                     '}'
-                    '#zerock-board .schedule-show-the-show{text-align:center;}'
-                    '#zerock-board .schedule-show-text{text-align:center;}'
+                    '#zerock-board .schedule-show-the-show{text-align:center;word-break:normal;overflow-wrap:anywhere;}'
+                    '#zerock-board .schedule-show-text{text-align:center;word-break:normal;overflow-wrap:anywhere;}'
                     '</style>'
                 )
                 # Combined JS fix — single <script> block (WAF strips 2nd block).

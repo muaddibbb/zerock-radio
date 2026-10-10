@@ -14,24 +14,16 @@ settings.log.file.path := "/home/roy/zerock-radio/logs/liquidsoap.log"
 settings.log.level := 3
 
 # Playlist files (pre-built from NAS, stored locally to avoid startup NAS scan hangs)
-# english_1/2/3 and hebrew_1/2 are per-rotation-slot files, each independently
-# artist-spaced and reshuffled by radio_app.py (round-robin across artists
-# instead of a flat shuffle, so one artist's songs can't cluster close
-# together purely by chance) — see _artist_spaced_order / _reshuffle_split_playlists.
-english_pl_1 = "/home/roy/zerock-radio/playlists/english_1.m3u"
-english_pl_2 = "/home/roy/zerock-radio/playlists/english_2.m3u"
-english_pl_3 = "/home/roy/zerock-radio/playlists/english_3.m3u"
-hebrew_pl_1  = "/home/roy/zerock-radio/playlists/hebrew_1.m3u"
-hebrew_pl_2  = "/home/roy/zerock-radio/playlists/hebrew_2.m3u"
-jingles_pl   = "/home/roy/zerock-radio/playlists/jingles.m3u"
-zikaron_pl   = "/home/roy/zerock-radio/playlists/zikaron.m3u"
+english_pl = "/home/roy/zerock-radio/playlists/english.m3u"
+hebrew_pl  = "/home/roy/zerock-radio/playlists/hebrew.m3u"
+jingles_pl = "/home/roy/zerock-radio/playlists/jingles.m3u"
+zikaron_pl = "/home/roy/zerock-radio/playlists/zikaron.m3u"
 
 # Rocky sources — each playlist filtered independently so duration skips never
 # disturb the rotate's position, guaranteeing the E E H E H J order at all times.
-# mode="normal" plays each file in the order radio_app.py wrote it (artist-spaced);
-# mode="randomize" (jingles) is fine since repetition there isn't a band/artist concern.
-def make_music_src(id, pl, mode) =
-  src = playlist(id=id, mode=mode, reload=3600, reload_mode="poll", pl)
+# randomize mode shuffles the full list before repeating — far fewer repeats than random.
+def make_music_src(id, pl) =
+  src = playlist(id=id, mode="randomize", reload=3600, reload_mode="poll", pl)
   # Duration filter inside the source: skip tracks < 90s or > 480s.
   # Skipping within the source leaves rotate's cycle position untouched.
   filtered = source.on_track(src, fun(m) -> begin
@@ -43,11 +35,11 @@ def make_music_src(id, pl, mode) =
   mksafe(filtered)
 end
 
-english1 = make_music_src("src_e1", english_pl_1, "normal")
-english2 = make_music_src("src_e2", english_pl_2, "normal")
-english3 = make_music_src("src_e3", english_pl_3, "normal")
-hebrew1  = make_music_src("src_h1", hebrew_pl_1, "normal")
-hebrew2  = make_music_src("src_h2", hebrew_pl_2, "normal")
+english1 = make_music_src("src_e1", english_pl)
+english2 = make_music_src("src_e2", english_pl)
+english3 = make_music_src("src_e3", english_pl)
+hebrew1  = make_music_src("src_h1", hebrew_pl)
+hebrew2  = make_music_src("src_h2", hebrew_pl)
 # Jingles are intentionally short — no duration filter applied
 jingle   = mksafe(playlist(id="src_j", mode="randomize", reload=3600, reload_mode="poll", jingles_pl))
 
