@@ -5240,8 +5240,18 @@ def _build_wp_schedule_html():
     # holocaust/memorial range) shows the quiet-music notice for THAT day even
     # when viewed in advance (e.g. checking Monday's board for Wednesday),
     # not only while it's actually happening right now.
+    #
+    # On Saturday specifically, treat the board as already showing the UPCOMING
+    # week (Sun–Sat starting tomorrow) rather than the week that's ending today —
+    # the nightly auto-sync flips to the new week at Sunday 00:00 anyway, so a
+    # Saturday viewer should see the same thing a few hours early, not the week
+    # that's about to end.
+    _today = datetime.now().date()
     _days_since_sun_html = (datetime.now().weekday() + 1) % 7
-    _week_start_date = datetime.now().date() - timedelta(days=_days_since_sun_html)
+    if datetime.now().weekday() == 5:   # Saturday — jump straight to next week
+        _week_start_date = _today + timedelta(days=1)
+    else:
+        _week_start_date = _today - timedelta(days=_days_since_sun_html)
     _day_zikaron = {}   # day_idx (0=Sun..6=Sat) -> zikaron type, for days in this board week
     for _di in range(7):
         _zt = _zikaron_type_for_date(_week_start_date + timedelta(days=_di))
@@ -5526,15 +5536,19 @@ def _sync_wp_board(force=False):
                     'display:flex!important;flex-direction:column;align-items:center;justify-content:center;'
                     'text-align:center;padding:2px 4px;gap:2px;'
                     '}'
-                    '#zerock-board .schedule-show-the-show{font-size:13px;line-height:1.15;margin:0!important;}'
-                    '#zerock-board .schedule-show-text{font-size:11px;line-height:1.1;margin:0!important;color:rgba(255,255,255,.7);}'
                     # Per-show time range is now redundant (hours live in the side axis)
                     # and was the main cause of 3-4 lines of text overflowing short
                     # (one-hour = 80px) cells. Hide it, freeing vertical space for the
                     # show title + broadcaster to actually fit without clipping.
                     '#zerock-board .schedule-show-time{display:none;}'
-                    '#zerock-board .schedule-show-the-show{text-align:center;word-break:normal;overflow-wrap:anywhere;}'
-                    '#zerock-board .schedule-show-text{text-align:center;word-break:normal;overflow-wrap:anywhere;}'
+                    '#zerock-board .schedule-show-the-show{'
+                    'font-size:13px;line-height:1.15;margin:0!important;'
+                    'text-align:center;word-break:normal;overflow-wrap:anywhere;'
+                    '}'
+                    '#zerock-board .schedule-show-text{'
+                    'font-size:11px;line-height:1.1;margin:0!important;color:rgba(255,255,255,.7);'
+                    'text-align:center;word-break:normal;overflow-wrap:anywhere;'
+                    '}'
                     # Theme's floating play/pause bar (.floating-live-wrapper) is pinned via a
                     # hardcoded `top` pixel value rather than `bottom`, so on narrow viewports
                     # it can sit on top of page content (incl. our board) at a fixed scroll
