@@ -5509,7 +5509,7 @@ def _sync_wp_board(force=False):
                     'border:1px solid rgba(255,255,255,.25);'
                     '}'
                     '#zerock-board .schedule-top{'
-                    'height:auto!important;box-sizing:border-box;background-color:inherit;'
+                    'height:100%!important;box-sizing:border-box;background-color:inherit;'
                     'display:flex;flex-direction:column;justify-content:center;align-items:center;'
                     'padding:5px;font-weight:bold;text-align:center;'
                     '}'
@@ -5521,16 +5521,28 @@ def _sync_wp_board(force=False):
                     'padding-top:2px;font-size:11px;color:rgba(255,255,255,.6);'
                     '}'
                     '#zerock-board .schedule-show{'
-                    'height:auto!important;box-sizing:border-box;overflow:hidden;'
+                    'height:100%!important;box-sizing:border-box;overflow:hidden;'
                     'background-color:inherit!important;'
                     'display:flex!important;flex-direction:column;align-items:center;justify-content:center;'
-                    'text-align:center;'
+                    'text-align:center;padding:2px 4px;gap:2px;'
                     '}'
-                    '#zerock-board .schedule-show-time{'
-                    'font-size:11px;color:rgba(255,255,255,.55);text-align:center;'
-                    '}'
+                    '#zerock-board .schedule-show-the-show{font-size:13px;line-height:1.15;margin:0!important;}'
+                    '#zerock-board .schedule-show-text{font-size:11px;line-height:1.1;margin:0!important;color:rgba(255,255,255,.7);}'
+                    # Per-show time range is now redundant (hours live in the side axis)
+                    # and was the main cause of 3-4 lines of text overflowing short
+                    # (one-hour = 80px) cells. Hide it, freeing vertical space for the
+                    # show title + broadcaster to actually fit without clipping.
+                    '#zerock-board .schedule-show-time{display:none;}'
                     '#zerock-board .schedule-show-the-show{text-align:center;word-break:normal;overflow-wrap:anywhere;}'
                     '#zerock-board .schedule-show-text{text-align:center;word-break:normal;overflow-wrap:anywhere;}'
+                    # Theme's floating play/pause bar (.floating-live-wrapper) is pinned via a
+                    # hardcoded `top` pixel value rather than `bottom`, so on narrow viewports
+                    # it can sit on top of page content (incl. our board) at a fixed scroll
+                    # position instead of staying docked to one screen edge. Shrinking its
+                    # footprint here (not ours to fix at the source — it's theme markup)
+                    # reduces how much it can cover while scrolling.
+                    '.floating-live-wrapper{height:64px!important;padding:4px 0!important;}'
+                    '.floating-live-wrapper .floating-live{height:40px!important;}'
                     '</style>'
                 )
                 # Combined JS fix — single <script> block (WAF strips 2nd block).
