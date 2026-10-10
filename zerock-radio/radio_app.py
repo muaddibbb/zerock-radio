@@ -5544,8 +5544,11 @@ def _sync_wp_board(force=False):
                     '#zerock-board .schedule-daygroup:first-child{'
                     'border-inline-end:1px solid rgba(255,255,255,.25);'
                     '}'
+                    # Non-first groups keep the 52px hours-column TRACK (so day cells'
+                    # grid-column:2/3 positions stay valid) but shrink it to 0 width and
+                    # hide its content — effectively invisible without reflowing columns.
                     '#zerock-board .schedule-daygroup:not(:first-child){'
-                    'grid-template-columns:repeat(var(--group-days),1fr);'
+                    'grid-template-columns:0 repeat(var(--group-days),1fr);'
                     '}'
                     '#zerock-board .schedule-daygroup:not(:first-child) .schedule-hour-label,'
                     '#zerock-board .schedule-daygroup:not(:first-child) .schedule-hours-corner{'
@@ -5600,10 +5603,18 @@ def _sync_wp_board(force=False):
                     '.floating-live-wrapper .floating-live{height:40px!important;}'
                     # ── Mobile: stack the 4 day-group blocks vertically (full width each)
                     # so scrolling DOWN the page reveals the next pair of days, instead of
-                    # a horizontal swipe. Each block keeps its own hours column + header.
+                    # a horizontal swipe. Each block gets its OWN visible hours column
+                    # again (undoing the desktop merge-into-one-grid treatment above).
                     '@media (max-width:700px){'
                     '#zerock-board{flex-direction:column;gap:16px;}'
-                    '#zerock-board .schedule-daygroup{width:100%;}'
+                    '#zerock-board .schedule-daygroup{'
+                    'width:100%;border-inline-end:1px solid rgba(255,255,255,.25)!important;'
+                    'grid-template-columns:52px repeat(var(--group-days),1fr)!important;'
+                    '}'
+                    '#zerock-board .schedule-daygroup .schedule-hour-label,'
+                    '#zerock-board .schedule-daygroup .schedule-hours-corner{'
+                    'display:flex!important;'
+                    '}'
                     '}'
                     '</style>'
                 )
