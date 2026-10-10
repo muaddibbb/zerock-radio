@@ -5251,7 +5251,24 @@ def _build_wp_schedule_html():
     # NOTE: CSS lives in _sync_wp_board path 4 (ihaf_insert_footer), NOT here.
     # Keeping CSS out of the HTML prevents it from leaking into page meta descriptions
     # via Rank Math reading post 254 content (updated by zerock/v1/schedule).
+    HOURS_COL = 8   # dedicated time-axis column, placed after the 7 day columns
+                    # (renders on the far LEFT in this RTL page, since column 1
+                    # — Sunday — renders on the right; keeps day order untouched)
+
     html_parts = ['<div id="zerock-board" class="schedule-grid">']
+
+    # ── Corner cell above the hours column (grid-row: 1) ──────────────────────
+    html_parts.append(
+        f'<div class="schedule-top schedule-hours-corner" style="grid-column:{HOURS_COL};grid-row:1"></div>'
+    )
+
+    # ── Hour-axis labels (grid-column: HOURS_COL, one cell per hour) ──────────
+    for hour in range(GRID_START_H, GRID_END_H):
+        row = t_to_row(hour)
+        html_parts.append(
+            f'<div class="schedule-hour-label" style="grid-column:{HOURS_COL};grid-row:{row}/{row + int(60 / MINS_PER_ROW)}">'
+            f'{hour:02d}:00</div>'
+        )
 
     # ── Day header row (grid-row: 1) ──────────────────────────────────────────
     for day_idx in range(7):
@@ -5478,30 +5495,44 @@ def _sync_wp_board(force=False):
                     '.schedule-grid:not(#zerock-board){display:none!important}'
                     '#zerock-board{'
                     'display:grid!important;'
-                    'grid-template-columns:repeat(7,1fr);'
+                    'grid-template-columns:repeat(7,1fr) 52px;'
                     f'grid-template-rows:45px repeat({_GRID_ROWS},40px);'
                     'gap:0;width:1140px;max-width:100%;margin:0 auto;'
                     'background-color:#2a2a2a;'
                     'border:1px solid rgba(255,255,255,.25);'
                     # Column separators in empty areas (show cells cover this with their own border-right)
-                    'background-image:repeating-linear-gradient(to right,transparent 0,transparent calc(100%/7 - 1px),rgba(255,255,255,.25) calc(100%/7 - 1px),rgba(255,255,255,.25) calc(100%/7));'
-                    'background-size:100% 100%;background-repeat:no-repeat;'
+                    'background-image:repeating-linear-gradient(to right,transparent 0,transparent calc((100% - 52px)/7 - 1px),rgba(255,255,255,.25) calc((100% - 52px)/7 - 1px),rgba(255,255,255,.25) calc((100% - 52px)/7));'
+                    'background-size:calc(100% - 52px) 100%;background-repeat:no-repeat;'
                     '}'
                     '#zerock-board .schedule-top{'
                     'height:auto!important;box-sizing:border-box;background-color:inherit;'
                     'border-right:1px solid rgba(255,255,255,.25);'
                     'border-bottom:1px solid rgba(255,255,255,.25);'
                     'display:flex;flex-direction:column;justify-content:center;align-items:center;'
-                    'padding:5px;font-weight:bold;'
+                    'padding:5px;font-weight:bold;text-align:center;'
+                    '}'
+                    '#zerock-board .schedule-hours-corner{border-right:none;}'
+                    '#zerock-board .schedule-hour-label{'
+                    'box-sizing:border-box;background-color:inherit;'
+                    'border-bottom:1px solid rgba(255,255,255,.12);'
+                    'display:flex;align-items:flex-start;justify-content:center;'
+                    'padding-top:2px;font-size:11px;color:rgba(255,255,255,.6);'
                     '}'
                     '#zerock-board .schedule-show{'
                     'height:auto!important;box-sizing:border-box;overflow:hidden;'
                     'background-color:inherit!important;'
                     'border-right:1px solid rgba(255,255,255,.25);'
+                    'display:flex!important;flex-direction:column;align-items:center;justify-content:center;'
+                    'text-align:center;'
                     '}'
                     '#zerock-board .schedule-show.gap-top{'
                     'border-top:1px solid rgba(255,255,255,.25);'
                     '}'
+                    '#zerock-board .schedule-show-time{'
+                    'font-size:11px;color:rgba(255,255,255,.55);text-align:center;'
+                    '}'
+                    '#zerock-board .schedule-show-the-show{text-align:center;}'
+                    '#zerock-board .schedule-show-text{text-align:center;}'
                     '</style>'
                 )
                 # Combined JS fix — single <script> block (WAF strips 2nd block).
