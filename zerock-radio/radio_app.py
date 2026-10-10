@@ -2389,8 +2389,23 @@ def _sync_zikaron_to_lq():
     should_be = is_zikaron_window()
     if should_be == _zikaron_lq_state:
         return
+    # _zikaron_lq_state is a plain process-local global, reset to None by every
+    # zerock-radio-web restart (for ANY reason — a deploy, a crash, etc.), not just
+    # by an actual zikaron entry/exit. On that first sync after a fresh start there
+    # is nothing to "transition" from — we're only establishing Liquidsoap's actual
+    # var to match reality. Do that silently (no quiet-jingle interrupt pushed into
+    # `shows`, which would otherwise audibly cut into whatever happened to be
+    # playing at that moment — confirmed happening on every restart during today's
+    # unrelated board-CSS deploy/restart cycle, even though zikaron was off the
+    # whole time and never actually changed).
+    is_first_sync_this_process = _zikaron_lq_state is None
     val = 'true' if should_be else 'false'
     try:
+        if is_first_sync_this_process:
+            _lq_connect_send([f'var.set zikaron_active = {val}'])
+            _zikaron_lq_state = should_be
+            print(f"[Zikaron] Startup sync: zikaron_active={val} (type={get_zikaron_type()}), no jingle", flush=True)
+            return
         # Push quiet jingle first (shows queue has top priority — it plays immediately
         # regardless of zikaron state, bridging the transition cleanly).
         cmds = [
