@@ -322,7 +322,7 @@ SHOW_SCHEDULE = [
     {'key': 'pascal',               'name': 'אני לא בפסקול',      'broadcaster': 'שיר אסולין',   'day': 6,    'time': '17:00', 'upload_time': '19:00', 'rerun_days_offset': 3,    'rerun_time': '14:00','wp_show_id': ''},
     {'key': 'patrock_laila_eliran', 'name': 'פטרוק לילה',         'broadcaster': 'אלירן קטנוב',  'day': 1,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 4,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'patrock_laila_meir',   'name': 'פטרוק לילה',         'broadcaster': 'מאיר הוברמן',  'day': 2,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 3,    'rerun_time': '13:00','wp_show_id': ''},
-    {'key': 'hashulter',            'name': 'השאלטר',              'broadcaster': 'דוד שאבי',     'day': 0,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 3,    'rerun_time': '12:00','wp_show_id': ''},
+    {'key': 'hashulter',            'name': 'השאלטר',              'broadcaster': 'דוד שאבי',     'day': 0,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'on_air',               'name': 'On Air',              'broadcaster': 'רועי קופרמן',  'day': 0,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '18:00','wp_show_id': ''},
     {'key': 'oy_vavoy',             'name': 'Oy Vavoy',            'broadcaster': 'יותם "דפיילר" אבני', 'day': 0,    'time': '11:00', 'upload_time': '12:00', 'rerun_days_offset': 1,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'san_patrock_assaf',    'name': 'סן פטרוק',            'broadcaster': 'אסף פלג',      'day': 0,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 5,    'rerun_time': '10:00','wp_show_id': ''},
@@ -343,7 +343,7 @@ SHOW_SCHEDULE = [
 
     # ── Prepared but not yet announced (board_hidden) — upload links are live,
     # but these are excluded from the public WP weekly board until confirmed go-live ──
-    {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
+    {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': '', 'board_hidden': True},
     {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
     {'key': 'ptzaim_haludim',       'name': 'Rusty Wounds - פצעים חלודים', 'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '', 'board_hidden': True},
