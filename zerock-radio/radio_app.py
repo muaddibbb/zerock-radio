@@ -5002,11 +5002,17 @@ def _build_wp_schedule_slots():
         # Board week start (Sunday 00:00) — a booking stays visible for the rest
         # of its displayed week even after it airs, same as fixed-day shows,
         # instead of vanishing 2h after air time (was: `now - timedelta(hours=2)`).
-        _bws = (now - timedelta(days=_dss)).replace(hour=0, minute=0, second=0, microsecond=0)
-        _bwe = (now + timedelta(days=(6 - _dss))).replace(
-            hour=23, minute=59, second=59, microsecond=999999)
-        if now.weekday() == 5 and now.hour >= 18:
-            _bwe += timedelta(days=7)
+        # On Saturday (any time, not just after 18:00 — matches the Zikaron
+        # per-day board logic's Saturday-forward rule) the board already shows
+        # the UPCOMING week, since the nightly auto-sync flips to it at Sunday
+        # 00:00 anyway — a Saturday viewer should see the same thing early.
+        if now.weekday() == 5:
+            _bws = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            _bwe = (now + timedelta(days=7)).replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            _bws = (now - timedelta(days=_dss)).replace(hour=0, minute=0, second=0, microsecond=0)
+            _bwe = (now + timedelta(days=(6 - _dss))).replace(
+                hour=23, minute=59, second=59, microsecond=999999)
         for _b in (_load_erev_albumim_bookings() or []):
             try:
                 _bt = datetime.strptime(_b.get('date', ''), '%Y-%m-%d').replace(
@@ -5044,12 +5050,15 @@ def _build_wp_schedule_slots():
         _ah_pfx = _WP_BROADCASTER_PREFIX.get('al_harocker', '')
         _ah_dss = (now.weekday() + 1) % 7
         # Same rationale as Erev Albumim above — stay visible for the rest of the
-        # displayed week instead of vanishing 2h after air time.
-        _ah_bws = (now - timedelta(days=_ah_dss)).replace(hour=0, minute=0, second=0, microsecond=0)
-        _ah_bwe = (now + timedelta(days=(6 - _ah_dss))).replace(
-            hour=23, minute=59, second=59, microsecond=999999)
-        if now.weekday() == 5 and now.hour >= 18:
-            _ah_bwe += timedelta(days=7)
+        # displayed week instead of vanishing 2h after air time, and the same
+        # Saturday-forward rule (any time on Saturday, not just after 18:00).
+        if now.weekday() == 5:
+            _ah_bws = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+            _ah_bwe = (now + timedelta(days=7)).replace(hour=23, minute=59, second=59, microsecond=999999)
+        else:
+            _ah_bws = (now - timedelta(days=_ah_dss)).replace(hour=0, minute=0, second=0, microsecond=0)
+            _ah_bwe = (now + timedelta(days=(6 - _ah_dss))).replace(
+                hour=23, minute=59, second=59, microsecond=999999)
         for _b in (_load_al_haroker_bookings() or []):
             try:
                 _bt = datetime.strptime(_b.get('date', ''), '%Y-%m-%d').replace(
