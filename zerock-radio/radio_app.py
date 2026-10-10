@@ -5261,9 +5261,10 @@ def _build_wp_schedule_html():
     # NOTE: CSS lives in _sync_wp_board path 4 (ihaf_insert_footer), NOT here.
     # Keeping CSS out of the HTML prevents it from leaking into page meta descriptions
     # via Rank Math reading post 254 content (updated by zerock/v1/schedule).
-    HOURS_COL = 8   # dedicated time-axis column, placed after the 7 day columns
-                    # (renders on the far LEFT in this RTL page, since column 1
-                    # — Sunday — renders on the right; keeps day order untouched)
+    HOURS_COL = 1   # dedicated time-axis column, placed before the 7 day columns
+                    # (renders on the far RIGHT in this RTL page, since column 1
+                    # is the first-rendered column; day columns shift to 2-8)
+    DAY_COL_OFFSET = 2
 
     html_parts = ['<div id="zerock-board" class="schedule-grid">']
 
@@ -5282,7 +5283,7 @@ def _build_wp_schedule_html():
 
     # ── Day header row (grid-row: 1) ──────────────────────────────────────────
     for day_idx in range(7):
-        col = day_idx + 1
+        col = day_idx + DAY_COL_OFFSET
         day_name, day_subtitle = DAY_NAMES[day_idx]
         sub_html = f'<span>{day_subtitle}</span>' if day_subtitle else ''
         html_parts.append(
@@ -5292,7 +5293,7 @@ def _build_wp_schedule_html():
 
     # ── Show cells (flat, each positioned by grid-column + grid-row) ──────────
     for day_idx in range(7):
-        col = day_idx + 1
+        col = day_idx + DAY_COL_OFFSET
 
         if day_idx in _day_zikaron:
             row_start = t_to_row(GRID_START_H)
@@ -5504,10 +5505,11 @@ def _sync_wp_board(force=False):
                     '.schedule-grid:not(#zerock-board){display:none!important}'
                     '#zerock-board{'
                     'display:grid!important;'
-                    'grid-template-columns:repeat(7,1fr) 52px;'
+                    'grid-template-columns:52px repeat(7,1fr);'
                     f'grid-template-rows:45px repeat({_GRID_ROWS},40px);'
                     'gap:0;width:1140px;max-width:100%;margin:0 auto;'
                     'background-color:#2a2a2a;'
+                    'overflow-x:visible;'
                     'border:1px solid rgba(255,255,255,.25);'
                     '}'
                     # Every cell (header, hour label, show) draws its own full border —
@@ -5557,6 +5559,29 @@ def _sync_wp_board(force=False):
                     # reduces how much it can cover while scrolling.
                     '.floating-live-wrapper{height:64px!important;padding:4px 0!important;}'
                     '.floating-live-wrapper .floating-live{height:40px!important;}'
+                    # ── Mobile: show 2 day-columns per "page", swipe/scroll horizontally
+                    # for the rest; vertical scroll still reveals all hours of the visible
+                    # days. Each day column gets a fixed width (~44vw) instead of 1fr so the
+                    # grid becomes wider than the viewport and scrolls, snapping on day
+                    # boundaries. The hours column stays pinned (sticky) so the time axis
+                    # is always visible no matter which day-pair is in view.
+                    '@media (max-width:700px){'
+                    '#zerock-board{'
+                    'width:100%!important;'
+                    'grid-template-columns:52px repeat(7,44vw)!important;'
+                    'overflow-x:auto!important;'
+                    'scroll-snap-type:x mandatory;'
+                    '-webkit-overflow-scrolling:touch;'
+                    '}'
+                    '#zerock-board .schedule-top,'
+                    '#zerock-board .schedule-show{scroll-snap-align:start;}'
+                    '#zerock-board .schedule-hour-label,'
+                    '#zerock-board .schedule-hours-corner{'
+                    'position:sticky;'
+                    'inset-inline-start:0;'
+                    'z-index:2;'
+                    '}'
+                    '}'
                     '</style>'
                 )
                 # Combined JS fix — single <script> block (WAF strips 2nd block).
