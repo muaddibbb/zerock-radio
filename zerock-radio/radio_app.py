@@ -54,8 +54,8 @@ ZIKARON_PLAYLIST = f"{PLAYLIST_DIR}/zikaron.m3u"
 # see _reshuffle_split_playlists, run after every rebuild and hourly after.
 ENGLISH_PLAYLIST_SLOTS = [f"{PLAYLIST_DIR}/english_1.m3u", f"{PLAYLIST_DIR}/english_2.m3u", f"{PLAYLIST_DIR}/english_3.m3u"]
 HEBREW_PLAYLIST_SLOTS  = [f"{PLAYLIST_DIR}/hebrew_1.m3u",  f"{PLAYLIST_DIR}/hebrew_2.m3u"]
-ENGLISH_MUSIC_DIR = "/mnt/nas/Music/Music Reorganized/English"
-HEBREW_MUSIC_DIR  = "/mnt/nas/Music/Music Reorganized/Hebrew/allsorts"
+ENGLISH_MUSIC_DIR = "/mnt/nas/Music/Music Reorganized/New_English"
+HEBREW_MUSIC_DIR  = "/mnt/nas/Music/Music Reorganized/New_Israeli"
 ZIKARON_DIR      = "/mnt/nas/Music/Zikaron"
 EXCLUDED_FILE    = f"{RADIO_DIR}/excluded_tracks.json"
 ZIKARON_FILE     = f"{RADIO_DIR}/zikaron_schedule.json"
