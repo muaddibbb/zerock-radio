@@ -101,6 +101,10 @@
     .btn:hover { background: var(--accent-hov); }
     .btn-dl { background: var(--success); color: #000; font-weight: 600; }
     .btn-dl:hover { background: var(--success-hov); }
+    .link-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+    .btn-link { background: var(--surface2, #1a1d27); color: var(--text); border: 1px solid var(--accent); }
+    .btn-link:hover { background: var(--accent); color: #fff; }
+    .too-big { color: var(--text-muted); font-size: 0.82rem; margin: 8px 0 0; }
     .help-tip {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -237,8 +241,8 @@
   </div>
 
   <div class="help-tip">
-    אמנים שולחים את השיר החדש שלהם בקובץ MP3/WAV/FLAC ישר ל-<code>rockzerock@gmail.com</code>.
-    הקבצים מופיעים כאן תוך 5 דקות, נשמרים למשך 90 יום, וניתנים להורדה כ-MP3.
+    אמנים שולחים את השיר החדש שלהם ל-<code>rockzerock@gmail.com</code> — כקובץ MP3/WAV/FLAC או כקישור (Drive, WeTransfer, Spotify, YouTube ועוד).
+    קבצים מופיעים כאן תוך 5 דקות עם נגן והורדה כ-MP3, קישורים מופיעים ככפתורים. הכול נשמר למשך 90 יום.
   </div>
 
   <div id="list">
@@ -285,9 +289,17 @@ function docIcon(ct, name) {
 let _loading = false;
 let _allReleases = [];
 
+function hayOf(r) {
+  return [
+    r.from_name, r.from_email, r.subject,
+    ...(r.links || []).map(l => l.label),
+    ...(r.files || []).flatMap(f => [f.artist, f.title, f.filename])
+  ].join(' ').toLowerCase();
+}
+
 function releaseCard(r) {
   return `
-    <div class="release">
+    <div class="release" data-id="${escapeHtml(r.id)}" data-hay="${escapeHtml(hayOf(r))}">
       <div class="release-header">
         <div class="from">
           ${escapeHtml(r.from_name) || escapeHtml(r.from_email)}
@@ -301,6 +313,14 @@ function releaseCard(r) {
           <summary>על השיר</summary>
           <div class="body-text">${escapeHtml((r.body_text || '').trim())}</div>
         </details>` : ''}
+      ${(r.links || []).length ? `
+        <div class="link-list">
+          ${r.links.map(l => `
+            <a class="btn btn-link" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHtml(l.label || 'קישור')}</a>
+          `).join('')}
+        </div>` : ''}
+      ${(r.too_big || []).length ? `
+        <div class="too-big">⚠ הקובץ (${escapeHtml(r.too_big.join(', '))}) גדול מדי להעלאה אוטומטית — הוא נשלח במייל.</div>` : ''}
       ${(r.docs || []).length ? `
         <div class="doc-list">
           ${(r.docs || []).map(d => `
@@ -332,33 +352,57 @@ function releaseCard(r) {
   `;
 }
 
+// Reconcile the list with the latest data WITHOUT rebuilding cards that stay.
+// (The old code replaced the whole list's innerHTML every minute and on every
+// keystroke in the search box, which destroyed the <audio> element that was
+// playing — so a song cut off after at most ~60 seconds.)
+function syncList() {
+  const list = document.getElementById('list');
+  list.querySelectorAll(':scope > .empty').forEach(el => el.remove());
+  const have = new Map([...list.querySelectorAll(':scope > .release[data-id]')]
+                         .map(el => [el.dataset.id, el]));
+  const wanted = new Set(_allReleases.map(r => r.id));
+  have.forEach((el, id) => { if (!wanted.has(id)) el.remove(); });
+  let prev = null;
+  for (const r of _allReleases) {
+    let el = have.get(r.id);
+    if (!el) {
+      const tpl = document.createElement('template');
+      tpl.innerHTML = releaseCard(r).trim();
+      el = tpl.content.firstElementChild;
+      if (prev) prev.after(el); else list.prepend(el);
+    }
+    prev = el;
+  }
+}
+
+// Search only shows/hides existing cards — it never rebuilds them.
 function applyFilter() {
   const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
-  const list = document.getElementById('list');
   const countEl = document.getElementById('searchCount');
-
-  if (!_allReleases.length) return;
-
-  const filtered = q
-    ? _allReleases.filter(r => {
-        const hay = [
-          r.from_name, r.from_email, r.subject,
-          ...(r.files || []).flatMap(f => [f.artist, f.title, f.filename])
-        ].join(' ').toLowerCase();
-        return hay.includes(q);
-      })
-    : _allReleases;
-
-  if (!filtered.length) {
-    list.innerHTML = `<div class="empty">לא נמצאו תוצאות עבור "<strong>${escapeHtml(q)}</strong>"</div>`;
-    countEl.textContent = '';
-    return;
+  const list = document.getElementById('list');
+  const cards = [...list.querySelectorAll(':scope > .release')];
+  let shown = 0, files = 0;
+  for (const el of cards) {
+    const match = !q || (el.dataset.hay || '').includes(q);
+    el.style.display = match ? '' : 'none';
+    if (match) { shown++; files += el.querySelectorAll('audio').length; }
   }
-
-  list.innerHTML = filtered.map(releaseCard).join('');
-  const totalFiles = filtered.reduce((s, r) => s + (r.files || []).length, 0);
-  countEl.textContent = q
-    ? `${filtered.length} אימיילים, ${totalFiles} שירים (מתוך ${_allReleases.length})`
+  let none = document.getElementById('noResults');
+  if (!none) {
+    none = document.createElement('div');
+    none.id = 'noResults';
+    none.className = 'empty';
+    list.after(none);
+  }
+  if (cards.length && !shown) {
+    none.innerHTML = `לא נמצאו תוצאות עבור "<strong>${escapeHtml(q)}</strong>"`;
+    none.style.display = '';
+  } else {
+    none.style.display = 'none';
+  }
+  countEl.textContent = q && shown
+    ? `${shown} אימיילים, ${files} שירים (מתוך ${cards.length})`
     : '';
 }
 
@@ -374,8 +418,10 @@ async function load() {
     const meta = document.getElementById('metaBar');
     const total = data.length;
     const totalFiles = data.reduce((s, r) => s + (r.files || []).length, 0);
+    const totalLinks = data.filter(r => !(r.files || []).length && (r.links || []).length).length;
     meta.innerHTML = total
-      ? `<strong>${total}</strong> אימיילים, <strong>${totalFiles}</strong> שירים`
+      ? `<strong>${total}</strong> אימיילים, <strong>${totalFiles}</strong> שירים` +
+        (totalLinks ? `, <strong>${totalLinks}</strong> עם קישורים בלבד` : '')
       : '';
     if (!total) {
       document.getElementById('list').innerHTML = `<div class="empty">
@@ -384,10 +430,14 @@ async function load() {
       </div>`;
       return;
     }
-    applyFilter(); // render with current search query (or all if empty)
+    syncList();
+    applyFilter();
   } catch (e) {
-    document.getElementById('list').innerHTML =
-      '<div class="empty">שגיאה בטעינת הרשימה</div>';
+    // keep whatever is on screen (and playing) if a refresh fails
+    if (!document.querySelector('#list .release')) {
+      document.getElementById('list').innerHTML =
+        '<div class="empty">שגיאה בטעינת הרשימה</div>';
+    }
     console.error(e);
   } finally {
     _loading = false;
@@ -410,7 +460,7 @@ document.getElementById('refreshBtn').addEventListener('click', async () => {
 });
 
 load();
-setInterval(load, 60000); // soft refresh once a minute
+setInterval(load, 60000); // soft refresh once a minute — safe now: playing songs are never touched
 </script>
 </body>
 </html>

@@ -11189,6 +11189,7 @@ NEW_RELEASES_TTL_DAYS = 90
 NEW_RELEASES_LOOKBACK_DAYS = 100  # SINCE search window (TTL + small buffer)
 NEW_RELEASES_POLL_SEC = 300       # 5 min
 NEW_RELEASES_MAX_FILE_BYTES = 60 * 1024 * 1024   # 60 MB per attachment
+_NR_MAX_PER_POLL = 250            # messages fetched per poll cycle (bounds the one-time re-check backlog)
 
 _IMAP_HOST = "imap.gmail.com"
 _IMAP_USER = os.environ.get('ZEROCK_SMTP_USER', '')
@@ -11316,6 +11317,118 @@ def _nr_is_audio_part(part):
     return False
 
 
+# ── Song links (emails that carry a LINK to the song instead of an attachment) ──
+# host (suffix match) -> label shown on the button
+_NR_LINK_HOSTS = {
+    'drive.google.com': 'Google Drive', 'docs.google.com': 'Google Drive',
+    'dropbox.com': 'Dropbox', 'wetransfer.com': 'WeTransfer', 'we.tl': 'WeTransfer',
+    'mega.nz': 'MEGA', 'mega.io': 'MEGA', '1drv.ms': 'OneDrive', 'onedrive.live.com': 'OneDrive',
+    'mediafire.com': 'MediaFire', 'sendspace.com': 'SendSpace', 'box.com': 'Box',
+    'filemail.com': 'Filemail', 'swisstransfer.com': 'SwissTransfer',
+    'transfernow.net': 'TransferNow', 'pcloud.com': 'pCloud', 'hightail.com': 'Hightail',
+    'spotify.com': 'Spotify', 'youtube.com': 'YouTube', 'youtu.be': 'YouTube',
+    'soundcloud.com': 'SoundCloud', 'music.apple.com': 'Apple Music',
+    'itunes.apple.com': 'Apple Music', 'bandcamp.com': 'Bandcamp', 'deezer.com': 'Deezer',
+    'tidal.com': 'Tidal', 'anghami.com': 'Anghami', 'songwhip.com': 'Songwhip',
+    'linktr.ee': 'Linktree', 'ffm.to': 'קישור', 'lnk.to': 'קישור', 'smarturl.it': 'קישור',
+    'hypeddit.com': 'Hypeddit', 'ditto.fm': 'Ditto', 'orcd.co': 'קישור',
+    'distrokid.com': 'DistroKid', 'onerpm.link': 'קישור', 'fanlink.to': 'קישור',
+}
+# Hosts that are *file transfers*: a notification from these is a real submission
+# even when it comes from a noreply/bulk-looking sender (e.g. WeTransfer, Drive shares).
+_NR_FILE_SHARE_HOSTS = {
+    'drive.google.com', 'docs.google.com', 'dropbox.com', 'wetransfer.com', 'we.tl',
+    'mega.nz', 'mega.io', '1drv.ms', 'onedrive.live.com', 'mediafire.com', 'sendspace.com',
+    'box.com', 'filemail.com', 'swisstransfer.com', 'transfernow.net', 'pcloud.com',
+    'hightail.com',
+}
+_NR_NOREPLY_LOCALS = {
+    'noreply', 'no-reply', 'donotreply', 'do-not-reply', 'mailer-daemon', 'postmaster',
+    'notifications', 'notification', 'newsletter', 'news', 'bounce', 'bounces',
+}
+_NR_URL_RE  = re.compile(r'https?://[^\s<>"\'\)\]]+', re.I)
+_NR_HREF_RE = re.compile(r'href\s*=\s*["\']([^"\']+)["\']', re.I)
+
+
+def _nr_host_match(host, table):
+    host = (host or '').lower()
+    if host.startswith('www.'):
+        host = host[4:]
+    for k in table:
+        if host == k or host.endswith('.' + k):
+            return k
+    return None
+
+
+def _nr_extract_links(msg, limit=10):
+    """Song/share links found in the message body → [{'url', 'label', 'share'}].
+    Looks at plain-text URLs and HTML hrefs; unwraps google.com/url?q= redirects;
+    keeps only known music / file-sharing hosts so signatures and tracking pixels
+    don't show up as 'songs'."""
+    from urllib.parse import urlparse, parse_qs, unquote
+    import html as _html
+    raw = []
+    for part in msg.walk():
+        ct = part.get_content_type()
+        if ct not in ('text/plain', 'text/html'):
+            continue
+        if 'attachment' in (part.get('Content-Disposition', '') or '').lower():
+            continue
+        try:
+            text = (part.get_payload(decode=True) or b'').decode(
+                part.get_content_charset() or 'utf-8', errors='replace')
+        except Exception:
+            continue
+        if ct == 'text/html':
+            raw += [_html.unescape(u) for u in _NR_HREF_RE.findall(text)]
+        raw += _NR_URL_RE.findall(_html.unescape(text))
+    out, seen = [], set()
+    for u in raw:
+        u = u.strip().rstrip('.,;:!?)')
+        try:
+            p = urlparse(u)
+            if p.scheme not in ('http', 'https'):
+                continue
+            if _nr_host_match(p.netloc, {'google.com': 1}) and p.path == '/url':
+                q = parse_qs(p.query)
+                inner = (q.get('q') or q.get('url') or [''])[0]
+                if inner:
+                    u = unquote(inner)
+                    p = urlparse(u)
+                    if p.scheme not in ('http', 'https'):
+                        continue
+            key = _nr_host_match(p.netloc, _NR_LINK_HOSTS)
+            if not key:
+                continue
+            # skip bare site roots / non-content pages (e.g. https://www.youtube.com/)
+            if (p.path or '/') == '/' and not p.query and key not in ('we.tl',):
+                continue
+            if u in seen:
+                continue
+            seen.add(u)
+            out.append({'url': u, 'label': _NR_LINK_HOSTS[key],
+                        'share': bool(_nr_host_match(p.netloc, _NR_FILE_SHARE_HOSTS))})
+        except Exception:
+            continue
+        if len(out) >= limit:
+            break
+    return out
+
+
+def _nr_is_bulk(msg, from_email):
+    """Newsletter / notification-looking message (List-Unsubscribe, Precedence: bulk,
+    noreply sender, auto-generated)."""
+    if msg.get('List-Unsubscribe') or msg.get('List-Id'):
+        return True
+    if (msg.get('Precedence', '') or '').strip().lower() in ('bulk', 'list', 'junk'):
+        return True
+    auto = (msg.get('Auto-Submitted', '') or '').strip().lower()
+    if auto and auto != 'no':
+        return True
+    local = (from_email or '').split('@')[0].lower()
+    return local in _NR_NOREPLY_LOCALS
+
+
 def _nr_is_doc_part(part):
     """True if this part is a non-audio attachment worth keeping (PDF, image, doc…)."""
     disp = part.get('Content-Disposition', '').lower()
@@ -11413,12 +11526,38 @@ def _nr_process_message(M, msg_uid):
 
     body_text = _nr_extract_body(msg)
 
+    # Song links: a bulk/noreply sender only counts when the link is a real file
+    # transfer (WeTransfer / Drive-share notifications ARE genuine submissions).
+    _bulk = _nr_is_bulk(msg, from_email)
+    links = [l for l in _nr_extract_links(msg) if (not _bulk) or l['share']]
+
+    def _entry(files, docs, too_big=None):
+        return {
+            'id':          f"{msg_uid.decode()}_{int(time.time() * 1000)}",
+            'imap_uid':    msg_uid.decode(),
+            'from_name':   from_name,
+            'from_email':  from_email,
+            'subject':     subject,
+            'body_text':   body_text,
+            'received_at': received_at,
+            'fetched_at':  datetime.now().isoformat(),
+            'files':       files,
+            'docs':        docs,
+            'links':       links,
+            'too_big':     too_big or [],
+            'nr_v':        2,
+        }
+
     audio_parts = [p for p in msg.walk()
                    if p.get_content_maintype() != 'multipart' and _nr_is_audio_part(p)]
     if not audio_parts:
-        return None
+        # Link-only submission: show it (with its links) instead of dropping it.
+        if not links:
+            return None
+        return _entry([], _nr_save_docs(msg))
 
     os.makedirs(NEW_RELEASES_DIR, exist_ok=True)
+    too_big = []
     saved = []
     for i, part in enumerate(audio_parts):
         orig_name = _nr_decode_header(part.get_filename() or f'song_{i+1}.mp3')
@@ -11435,6 +11574,7 @@ def _nr_process_message(M, msg_uid):
             continue
         if len(payload) > NEW_RELEASES_MAX_FILE_BYTES:
             print(f"[NewReleases] skip {orig_name} ({len(payload)} bytes > cap)", flush=True)
+            too_big.append(orig_name)
             continue
 
         # Always save the original first
@@ -11475,9 +11615,17 @@ def _nr_process_message(M, msg_uid):
         })
 
     if not saved:
+        # Every attachment was too big / unreadable. Still show the email when it
+        # has links or we know a (too large) song was attached, so it isn't lost.
+        if links or too_big:
+            return _entry([], _nr_save_docs(msg), too_big)
         return None
 
-    # Save non-audio attachments (PDFs, images, docs describing the song)
+    return _entry(saved, _nr_save_docs(msg), too_big)
+
+
+def _nr_save_docs(msg):
+    """Save non-audio attachments (PDFs, images, docs describing the song)."""
     doc_parts = [p for p in msg.walk()
                  if p.get_content_maintype() != 'multipart' and _nr_is_doc_part(p)]
     saved_docs = []
@@ -11507,19 +11655,7 @@ def _nr_process_message(M, msg_uid):
             'size':         len(payload),
             'content_type': part.get_content_type() or 'application/octet-stream',
         })
-
-    return {
-        'id':          f"{msg_uid.decode()}_{int(time.time() * 1000)}",
-        'imap_uid':    msg_uid.decode(),
-        'from_name':   from_name,
-        'from_email':  from_email,
-        'subject':     subject,
-        'body_text':   body_text,
-        'received_at': received_at,
-        'fetched_at':  datetime.now().isoformat(),
-        'files':       saved,
-        'docs':        saved_docs,
-    }
+    return saved_docs
 
 
 def _nr_poll_once():
@@ -11561,23 +11697,57 @@ def _nr_poll_once_locked():
 
         with _releases_lock:
             rels = _nr_load()
-            seen_uids = {r.get('imap_uid') for r in rels}
+            # Placeholders written by the OLD logic (no nr_v marker) were skipped only
+            # because the mail had no audio ATTACHMENT — link-only submissions were
+            # lost that way. Treat them as unseen so they get re-evaluated once.
+            seen_uids = {r.get('imap_uid') for r in rels
+                         if not (r.get('no_audio') and r.get('nr_v') != 2)}
 
+        _expiry_cutoff = datetime.now() - timedelta(days=NEW_RELEASES_TTL_DAYS)
         new_count = 0
+        processed = 0
         for uid in uids:
             if uid.decode() in seen_uids:
                 continue
+            if processed >= _NR_MAX_PER_POLL:
+                break           # the rest is picked up on the next poll cycle
+            processed += 1
             try:
                 entry = _nr_process_message(M, uid)
             except Exception as e:
                 print(f"[NewReleases] process error uid={uid}: {e}", flush=True)
                 continue
+            # Already older than the retention window → don't (re)add it, or the
+            # hourly cleanup would delete it and the next poll would add it again.
+            if entry:
+                try:
+                    _rcv = datetime.fromisoformat((entry.get('received_at') or '').replace('Z', ''))
+                    if _rcv.tzinfo is not None:
+                        _rcv = _rcv.replace(tzinfo=None)
+                    if _rcv < _expiry_cutoff:
+                        for f in entry.get('files', []):
+                            for path_key in ('path', 'orig_path'):
+                                p = f.get(path_key, '')
+                                if p and os.path.exists(p):
+                                    try: os.remove(p)
+                                    except Exception: pass
+                        for d in entry.get('docs', []):
+                            p = d.get('path', '')
+                            if p and os.path.exists(p):
+                                try: os.remove(p)
+                                except Exception: pass
+                        entry = None
+                except Exception:
+                    pass
             if not entry:
                 # Mark this UID as processed too (so we don't keep parsing the
                 # same headerless or audio-less message every poll), with a
                 # placeholder so it dedupes — but no files, so cleanup ignores.
                 with _releases_lock:
                     rels = _nr_load()
+                    # replace an old-logic placeholder with a current (nr_v=2) one
+                    rels = [r for r in rels if not (r.get('imap_uid') == uid.decode()
+                                                    and r.get('no_audio') and r.get('nr_v') != 2)]
                     if not any(r.get('imap_uid') == uid.decode() for r in rels):
                         rels.append({
                             'id':          f"{uid.decode()}_skip",
@@ -11589,11 +11759,15 @@ def _nr_poll_once_locked():
                             'fetched_at':  datetime.now().isoformat(),
                             'files':       [],
                             'no_audio':    True,
+                            'nr_v':        2,
                         })
-                        _nr_save(rels)
+                    _nr_save(rels)
                 continue
             with _releases_lock:
                 rels = _nr_load()
+                # drop the old-logic placeholder for this UID so the real entry can replace it
+                rels = [r for r in rels if not (r.get('imap_uid') == entry['imap_uid']
+                                                and r.get('no_audio') and r.get('nr_v') != 2)]
                 # Defensive re-check: if another path slipped this UID in
                 # while we were downloading/transcoding, drop the files we
                 # just saved and skip — the existing entry wins.
@@ -11621,6 +11795,11 @@ def _nr_poll_once_locked():
                     for r in rels if r.get('files')
                     for f in r['files']
                 }
+                # Same sender re-sending the same song LINK(s) (and no files) counts as a duplicate too.
+                if not entry.get('files') and entry.get('links'):
+                    new_keys |= {(entry.get('from_email','').lower(), l['url']) for l in entry['links']}
+                    existing_keys |= {(r.get('from_email','').lower(), l['url'])
+                                      for r in rels for l in (r.get('links') or [])}
                 if new_keys & existing_keys:
                     print(f"[NewReleases] skip content-dup uid={entry['imap_uid']} "
                           f"from={entry['from_email']!r}", flush=True)
@@ -11642,7 +11821,7 @@ def _nr_poll_once_locked():
                         'from_name': '', 'from_email': '', 'subject': '',
                         'received_at': datetime.now().isoformat(),
                         'fetched_at':  datetime.now().isoformat(),
-                        'files': [], 'no_audio': True,
+                        'files': [], 'no_audio': True, 'nr_v': 2,
                     })
                     _nr_save(rels)
                     continue
@@ -11734,7 +11913,8 @@ def new_heb_releases_page():
 def api_new_releases():
     """JSON list of releases (newest first), absolute paths stripped from output."""
     rels = _nr_load()
-    rels = [r for r in rels if r.get('files') and not r.get('no_audio')]
+    # Show emails with audio files OR song links (link-only submissions used to be hidden)
+    rels = [r for r in rels if (r.get('files') or r.get('links')) and not r.get('no_audio')]
     rels.sort(key=lambda r: r.get('received_at', ''), reverse=True)
     out = []
     for r in rels:
@@ -11769,6 +11949,9 @@ def api_new_releases():
             'received_at': r.get('received_at', ''),
             'files':       files,
             'docs':        docs,
+            'links':       [{'url': l.get('url', ''), 'label': l.get('label', '')}
+                            for l in (r.get('links') or []) if l.get('url')],
+            'too_big':     r.get('too_big') or [],
         })
     return jsonify(out)
 
