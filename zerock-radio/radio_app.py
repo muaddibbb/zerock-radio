@@ -5664,11 +5664,15 @@ def _sync_wp_board(force=False):
                     # Homepage fix — (a) schedule patch, then (b) live override
                     'var _hp=window.location.pathname;'
                     'if(_hp==="/"||_hp===""||_hp==="/index.php"){'
-                    'function hf(){'
-                    'fetch("/wp-json/zr/v1/np")'
-                    '.then(function(r){return r.json();})'
-                    '.then(function(html){'
-                    'var d=document.createElement("div");d.innerHTML=html;'
+                    # The last good zr/v1/np payload is kept in _zrd and (re)applied by ap().
+                    # The theme's own webreach-hp-scripts.js polls the admin-ajax `get_shows`
+                    # action every 60s and OVERWRITES this box from the theme's native (stale)
+                    # WP schedule — so the box looked right for ~60s, then jumped to the wrong
+                    # show. ap() is therefore also re-run right after each get_shows response
+                    # (jQuery ajaxComplete fires after the theme's success handler, before paint).
+                    'var _zrd=null;'
+                    'function ap(){'
+                    'if(!_zrd)return;var d=_zrd;'
                     'function p(s){var a=d.querySelector(s),b=document.querySelector(s);if(a&&b)b.textContent=a.textContent.trim();}'
                     'p(".hp-live-now .hp-show-name");p(".hp-live-now .hp-show-text");p(".hp-live-now .hp-show-time");'
                     'p(".hp-next-show .hp-show-name");p(".hp-next-show .hp-show-text");p(".hp-next-show .hp-show-time");'
@@ -5680,9 +5684,18 @@ def _sync_wp_board(force=False):
                     'function pi(sel){var a=d.querySelector(sel+" .hp-show-name"),img=document.querySelector(sel+" img");'
                     'if(a&&img){img.src=_art(a.textContent);}}'
                     'pi(".hp-live-now");pi(".hp-next-show");'
+                    # The theme also sets the player bar's "now broadcasting" label from get_shows.
+                    'var nn=d.querySelector(".hp-live-now .hp-show-name"),np=document.querySelector(".now-playing-show");'
+                    'if(nn&&np)np.textContent=nn.textContent.trim();'
                     # now-playing comes ONLY from the weekly board (zr/v1/np); no live-stream override.
-                    '})'
+                    '}'
+                    'function hf(){'
+                    'fetch("/wp-json/zr/v1/np")'
+                    '.then(function(r){return r.json();})'
+                    '.then(function(html){var d=document.createElement("div");d.innerHTML=html;_zrd=d;ap();})'
                     '.catch(function(){});}'
+                    'if(window.jQuery){jQuery(document).ajaxComplete(function(e,x,s){'
+                    'if((String((s&&s.url)||"")+String((s&&s.data)||"")).indexOf("get_shows")!==-1)ap();});}'
                     'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",hf);else hf();'
                     'setInterval(hf,180000);'
                     '}'
