@@ -5211,6 +5211,10 @@ def _build_wp_now_playing_json():
         'slots':      flat,
         'updated_at': datetime.now().isoformat(timespec='seconds'),
         'tz':         'Asia/Jerusalem',
+        # show name -> artwork URL, read by the `get_shows` admin-ajax override snippet
+        # (the theme's own polling of that action otherwise overwrites the homepage box)
+        'art':         dict(_WP_SHOW_ART_URLS),
+        'art_default': _WP_SHOW_ART_DEFAULT,
     }
 
 
