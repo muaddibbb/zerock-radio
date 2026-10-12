@@ -292,6 +292,30 @@ os.makedirs(NAS_TEMP, exist_ok=True)
 
 
 @app.after_request
+def _inject_site_logo(resp):
+    """Show the ZeRock logo (/static/logo.png) at the top of every HTML page.
+    Pages that already render that logo themselves are left alone. The injected
+    CSS stacks the page vertically so pages that centre their card with a flex
+    row (live stream / one-time upload) get the logo ABOVE the card, not beside it."""
+    try:
+        if (not resp.direct_passthrough
+                and 'text/html' in (resp.headers.get('Content-Type') or '')):
+            body = resp.get_data(as_text=True)
+            m = re.search(r'<body[^>]*>', body, re.I)
+            if m and 'zr-top-logo' not in body and '/static/logo.png' not in body:
+                logo = (
+                    '<style>body{flex-direction:column}'
+                    '#zr-top-logo{width:100%;text-align:center;padding:14px 0 6px;flex:0 0 auto}'
+                    '#zr-top-logo img{height:60px;width:auto;opacity:.92}</style>'
+                    '<div id="zr-top-logo"><img src="/static/logo.png" alt="ZeRock Radio"></div>'
+                )
+                resp.set_data(body[:m.end()] + logo + body[m.end():])
+    except Exception:
+        pass
+    return resp
+
+
+@app.after_request
 def _inject_kupernet_footer(resp):
     """Append a 'נוצר ע״י Kupernet Systems' credit to the bottom of every HTML page."""
     try:
