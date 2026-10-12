@@ -389,10 +389,12 @@
     <input type="hidden" name="show_key" value="{{ show.key }}">
     <input type="hidden" name="mode" value="{{ 'queue_only' if show.no_podbean else 'queue_to_broadcast' }}">
 
+    {% if show.key not in ['forte', 'forte_tal'] %}
     <div class="form-group">
       <label>מספר פרק <span style="color:var(--text-muted);font-weight:normal;text-transform:none">(אופציונלי)</span></label>
       <input type="number" name="episode_num" placeholder="042" min="1" step="1" style="direction:ltr">
     </div>
+    {% endif %}
 
     {% if show.key in ['shabi', 'beat_on'] %}
     <div class="form-group">
