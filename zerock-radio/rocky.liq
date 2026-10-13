@@ -14,28 +14,25 @@ settings.log.file.path := "/home/roy/zerock-radio/logs/liquidsoap.log"
 settings.log.level := 3
 
 # Playlist files (pre-built from NAS, stored locally to avoid startup NAS scan hangs)
-english_pl = "/home/roy/zerock-radio/playlists/english.m3u"
-hebrew_pl  = "/home/roy/zerock-radio/playlists/hebrew.m3u"
+english_pl = "/home/roy/zerock-radio/playlists/english_liq.m3u"
+hebrew_pl  = "/home/roy/zerock-radio/playlists/hebrew_liq.m3u"
 jingles_pl = "/home/roy/zerock-radio/playlists/jingles.m3u"
 zikaron_pl = "/home/roy/zerock-radio/playlists/zikaron.m3u"
 
 # ── Volume normalization for Rocky MUSIC (shows are never touched) ─────────────
-# Every song is measured once (ReplayGain, via the `replaygain:` playlist prefix) and
-# given a fixed gain so all songs land at the same loudness, then lifted to the
-# station level below. Measured 2026-10-13 on the live library: raw songs spread
-# ~13 LU (-21 .. -6 LUFS); after this chain the spread is ~2 LU.
-# To make Rocky louder/quieter change ONLY rocky_target_lufs (shows sit around -11.5).
-rocky_target_lufs = -13.
-# Level (LUFS) Liquidsoap's ReplayGain brings every track to (measured: -17.7, stdev 0.7).
-rg_reference_lufs = -17.7
+# english_liq.m3u / hebrew_liq.m3u (written by the radio app, see rocky_loudness.py) list the
+# same songs as english.m3u / hebrew.m3u, but each line carries that song's gain, e.g.
+#     annotate:liq_amplify="-3.20 dB":/mnt/nas/Music/.../song.flac
+# amplify() below applies it, so every song reaches the same loudness (the station level is
+# set in rocky_loudness.py: TARGET_LUFS). Nothing is analysed while a song plays — doing that
+# at play time via the replaygain: protocol stalled on large FLAC files in testing.
+# A song without a tag (not measured yet) simply plays at its original level.
 
 # Rocky sources — each playlist filtered independently so duration skips never
 # disturb the rotate's position, guaranteeing the E E H E H J order at all times.
 # randomize mode shuffles the full list before repeating — far fewer repeats than random.
 def make_music_src(id, pl) =
-  # prefix="replaygain:" computes the track gain when the song is loaded ahead of playing;
-  # if a file cannot be analysed the protocol returns it unchanged (plays without leveling).
-  src = playlist(id=id, mode="randomize", reload=3600, reload_mode="poll", prefix="replaygain:", pl)
+  src = playlist(id=id, mode="randomize", reload=3600, reload_mode="poll", pl)
   # Duration filter inside the source: skip tracks < 90s or > 480s.
   # Skipping within the source leaves rotate's cycle position untouched.
   filtered = source.on_track(src, fun(m) -> begin
@@ -44,9 +41,9 @@ def make_music_src(id, pl) =
       source.skip(src)
     end
   end)
-  # per-song gain -> station level -> peak limiter (so boosting quiet songs cannot clip)
-  leveled = replaygain(filtered)
-  leveled = amplify(lin_of_dB(rocky_target_lufs - rg_reference_lufs), leveled)
+  # per-song gain from the playlist tag (default key liq_amplify), then a peak limiter so
+  # boosting a quiet song cannot clip
+  leveled = amplify(1., filtered)
   leveled = limit(attack=2., release=120., threshold=-3., leveled)
   mksafe(leveled)
 end

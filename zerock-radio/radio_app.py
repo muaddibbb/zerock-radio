@@ -922,6 +922,45 @@ def _hourly_reshuffle_loop():
 
 threading.Thread(target=_hourly_reshuffle_loop, daemon=True).start()
 
+# ─── Rocky volume normalization (see rocky_loudness.py) ──────────────────────
+# english_liq.m3u / hebrew_liq.m3u are what Liquidsoap plays: the same songs as
+# english.m3u / hebrew.m3u, each line carrying the gain that brings that song to the
+# station level. Songs are measured once in the background and cached.
+try:
+    import rocky_loudness as _rocky_loudness
+except Exception as _rl_e:                       # never let this break the app
+    _rocky_loudness = None
+    print(f"[Loudness] module unavailable: {_rl_e}", flush=True)
+_loudness_thread_lock = threading.Lock()
+
+def _loudness_refresh_async(reason=''):
+    """Write the gain playlists now (fast, from cache), then measure any songs that
+    are not measured yet in a low-priority background thread and rewrite again."""
+    if _rocky_loudness is None:
+        return
+    try:
+        _rocky_loudness.write_all()
+    except Exception as e:
+        print(f"[Loudness] write failed: {e}", flush=True)
+    def _work():
+        if not _loudness_thread_lock.acquire(blocking=False):
+            return                                # a scan is already running
+        try:
+            n = _rocky_loudness.scan(_rocky_loudness._all_tracks(), workers=1,
+                                     log=lambda m: print(m, flush=True))
+            if n:
+                _rocky_loudness.write_all()
+                print(f"[Loudness] {n} new song(s) measured, gain playlists updated ({reason})", flush=True)
+        except Exception as e:
+            print(f"[Loudness] scan error: {e}", flush=True)
+        finally:
+            _loudness_thread_lock.release()
+    threading.Thread(target=_work, daemon=True, name='loudness-scan').start()
+
+# make sure the gain playlists exist (and new songs get measured) shortly after every start
+threading.Timer(90, lambda: _loudness_refresh_async('startup')).start()
+
+
 def rebuild_playlists():
     """Rescan NAS music folders and rewrite the M3U playlist files.
     Respects the excluded_tracks list. Safe to call while Liquidsoap is playing —
@@ -1015,6 +1054,7 @@ def rebuild_playlists():
         _reshuffle_split_playlists()
     except Exception as e:
         print(f"[rebuild_playlists] split-playlist reshuffle failed: {e}", flush=True)
+    _loudness_refresh_async('after rebuild')
     return results
 
 # ─── Rocky rules enforcement ─────────────────────────────────────────────────

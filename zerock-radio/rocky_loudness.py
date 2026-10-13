@@ -35,6 +35,7 @@ CACHE_FILE    = f"{RADIO_DIR}/rocky_loudness.json"
 TARGET_LUFS   = -13.0
 GAIN_MIN_DB   = -15.0      # never attenuate more than this
 GAIN_MAX_DB   = 12.0       # never boost more than this
+PEAK_CEILING_DB = 1.0      # a boost may not push a song's peak above this (dBFS)
 MEASURE_SECS  = 600        # measure at most the first 10 minutes of a file
 
 PAIRS = [   # (plain playlist the app uses, Liquidsoap playlist with gains)
@@ -99,14 +100,20 @@ def measure(path):
 
 
 def gain_db(entry):
+    """dB to apply so the song reaches TARGET_LUFS, but never boost a song so far that its
+    peaks would exceed PEAK_CEILING_DB (very dynamic songs then land a little under target
+    instead of clipping)."""
     g = TARGET_LUFS - float(entry['lufs'])
+    peak = entry.get('peak')
+    if g > 0 and peak is not None:
+        g = min(g, max(0.0, PEAK_CEILING_DB - float(peak)))
     return max(GAIN_MIN_DB, min(GAIN_MAX_DB, g))
 
 
 def liq_line(path, cache):
     """Playlist line for one song: annotated with its gain when measured, else plain."""
     e = cache.get(path)
-    key = _stat_key(path) if e else None
+    key = _stat_key(path) if (e and e.get('lufs') is not None) else None
     if e and key and e.get('size') == key[0] and e.get('mtime') == key[1]:
         # annotate: uses ':' as a separator — leave paths that contain one un-annotated
         if ':' not in path and '"' not in path:
@@ -206,7 +213,7 @@ def stats():
         sd = (sum((x - m) ** 2 for x in meas) / len(meas)) ** 0.5
         print(f"raw loudness: mean {m:.1f} LUFS, stdev {sd:.2f}, min {min(meas):.1f}, max {max(meas):.1f} (spread {max(meas) - min(meas):.1f} LU)")
         clamped = [x for x in meas if not (GAIN_MIN_DB <= TARGET_LUFS - x <= GAIN_MAX_DB)]
-        after = [x + max(GAIN_MIN_DB, min(GAIN_MAX_DB, TARGET_LUFS - x)) for x in meas]
+        after = [t_lufs + gain_db(cache[t]) for t in tracks if t in cache and cache[t].get('lufs') is not None for t_lufs in [cache[t]['lufs']]]
         print(f"after leveling (target {TARGET_LUFS}): min {min(after):.1f}, max {max(after):.1f}; songs whose gain hits the limit: {len(clamped)}")
 
 
