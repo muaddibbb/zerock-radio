@@ -101,6 +101,7 @@ _WP_SHOW_SLUGS = {
     'זה רוק פורטה':        'forte',
     'נגד כיוון הזיפים':   'zifim',
     'עוד יום':             'od-yom',
+    'Rusty Wounds - פצעים חלודים': 'rusty-wounds',
     'סינגלס':              'singles',
     'סן פטרוק':            'patrock',
     'על הרוקר':            'al-harocker',
@@ -184,6 +185,7 @@ _WP_SHOW_IDS = {
     'מצעד הרוק של ישראל':     58,
     'נגד כיוון הזיפים':       42,
     'עוד יום':                 41,
+    'Rusty Wounds - פצעים חלודים': 327,
     'סינגלס':                  48,
     'סן פטרוק':                44,
     'ערב של אלבומים':          60,
@@ -370,7 +372,7 @@ SHOW_SCHEDULE = [
     {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': '', 'board_hidden': True},
     {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
-    {'key': 'ptzaim_haludim',       'name': 'Rusty Wounds - פצעים חלודים', 'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '', 'board_hidden_until': '2026-10-11T13:00:00'},
+    {'key': 'ptzaim_haludim',       'name': 'Rusty Wounds - פצעים חלודים', 'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '327', 'board_hidden_until': '2026-10-11T13:00:00'},
 ]
 
 DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -4834,6 +4836,9 @@ _WP_SLUGS = {
     'on_the_mend':          'onthemend',
     'shabi':                'sotr',
     'forte':                'forte',
+    'forte_tal':            'forte',
+    'od_yom':               'od-yom',
+    'ptzaim_haludim':       'wounds',
     'beat_on':              'beat-on',
     'stage_dive':           'stage-dive',
     'erev_albumim':         'erev-albumim',
