@@ -123,7 +123,7 @@ _WP_FEATURED_IMAGES = {
     'אני לא בפסקול':          461,
     'האחות':                   12987,
     'השאלטר':                  10875,
-    'זה רוק פורטה':            4382,
+    'זה רוק פורטה':            15645,   # WhatsApp Image 2026-10-14 (all Forte hosts)
     'מצעד הרוק של ישראל':     389,
     'נגד כיוון הזיפים':       450,
     'עוד יום':                 15575,
@@ -153,7 +153,7 @@ _WP_SHOW_ART_URLS = {
     'אני לא בפסקול':      'https://zerockradio.com/wp-content/uploads/2021/01/ani-lo.png',
     'האחות':              'https://zerockradio.com/wp-content/uploads/2024/12/האחות.jpg',
     'השאלטר':             'https://zerockradio.com/wp-content/uploads/2023/12/סופי-scaled.jpg',
-    'זה רוק פורטה':       'https://zerockradio.com/wp-content/uploads/2022/01/Forte-new-lineup-2022.gif',
+    'זה רוק פורטה':       'https://zerockradio.com/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-14-at-22.02.23.jpeg',
     'מצעד הרוק של ישראל': 'https://zerockradio.com/wp-content/uploads/2021/01/San-Patrock-clean.png',
     'נגד כיוון הזיפים':   'https://zerockradio.com/wp-content/uploads/2021/01/neged43.png',
     'סינגלס':             'https://zerockradio.com/wp-content/uploads/2021/01/8718-2c2d-43c5-a2a0-184992764b9f.png',
@@ -369,6 +369,7 @@ SHOW_SCHEDULE = [
     # ── Prepared but not yet announced (board_hidden) — upload links are live,
     # but these are excluded from the public WP weekly board until confirmed go-live ──
     {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
+    {'key': 'forte_roy',            'name': 'זה רוק פורטה',        'broadcaster': 'רועי קופרמן',  'day': 6,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45', 'board_hidden': True},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': '', 'board_hidden': True},
     {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
     {'key': 'ptzaim_haludim',       'name': 'Rusty Wounds - פצעים חלודים', 'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '327', 'board_hidden_until': '2026-10-11T13:00:00'},
@@ -4876,6 +4877,7 @@ _WP_SLUGS = {
     'shabi':                'sotr',
     'forte':                'forte',
     'forte_tal':            'forte',
+    'forte_roy':            'forte',
     'od_yom':               'od-yom',
     'ptzaim_haludim':       'wounds',
     'beat_on':              'beat-on',
@@ -4893,7 +4895,7 @@ _SHOW_DURATIONS_H = {
     'san_patrock_rivka': 1, 'time_warp': 1, 'breakdown': 1, 'singles': 1,
     'haachot': 1, 'on_the_mend': 1, 'shabi': 1, 'forte': 1,
     'beat_on': 1, 'stage_dive': 1, 'erev_albumim': 7, 'matzad_harok': 2,
-    'forte_tal': 1, 'rakevet_laila': 2, 'od_yom': 1, 'ptzaim_haludim': 1,
+    'forte_tal': 1, 'forte_roy': 1, 'rakevet_laila': 2, 'od_yom': 1, 'ptzaim_haludim': 1,
 }
 
 # Broadcaster display prefix rules
