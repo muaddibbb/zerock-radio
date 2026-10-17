@@ -1,0 +1,1080 @@
+WordPress episodes with NO Show tag (published episodes, newest first)
+Checked 9174 published episodes on zerockradio.com — 1075 have no Show.
+By year: 2026: 11, 2025: 137, 2024: 257, 2023: 268, 2022: 213, 2021: 189
+
+ID	Date	Title	Link	Edit
+15454	2026-08-17	On Air 82 – רועי קופרמן 17/08/26	https://zerockradio.com/episodes/on-air-170826/	https://zerockradio.com/wp-admin/post.php?post=15454&action=edit
+15208	2026-06-01	On Air 081 – רועי קופרמן 01/06/26	https://zerockradio.com/episodes/on-air-010626/	https://zerockradio.com/wp-admin/post.php?post=15208&action=edit
+15176	2026-05-25	On Air 80 – רועי קופרמן 25/05/26	https://zerockradio.com/episodes/on-air-250526/	https://zerockradio.com/wp-admin/post.php?post=15176&action=edit
+15147	2026-05-18	On Air 79 – רועי קופרמן 18/05/26	https://zerockradio.com/episodes/on-air-79-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-18-05-26/	https://zerockradio.com/wp-admin/post.php?post=15147&action=edit
+14749	2026-03-09	On Air 78 – רועי קופרמן 9/3/26	https://zerockradio.com/episodes/on-air-090326/	https://zerockradio.com/wp-admin/post.php?post=14749&action=edit
+14657	2026-02-16	On Air 77 – רועי קופרמן 15/2/26	https://zerockradio.com/episodes/on-air-160226/	https://zerockradio.com/wp-admin/post.php?post=14657&action=edit
+14615	2026-02-09	On Air 76 – רועי קופרמן 9/2/26	https://zerockradio.com/episodes/on-air-090226/	https://zerockradio.com/wp-admin/post.php?post=14615&action=edit
+14541	2026-01-26	On Air 75 – רועי קופרמן 26/1/26	https://zerockradio.com/episodes/on-air-250126/	https://zerockradio.com/wp-admin/post.php?post=14541&action=edit
+14516	2026-01-19	On Air 74 – רועי קופרמן	https://zerockradio.com/episodes/on-air-74-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f/	https://zerockradio.com/wp-admin/post.php?post=14516&action=edit
+14481	2026-01-12	On Air 73 – רועי קופרמן 12/1/26	https://zerockradio.com/episodes/on-air-120126/	https://zerockradio.com/wp-admin/post.php?post=14481&action=edit
+14456	2026-01-05	On Air 72 – רועי קופרמן 5/1/26	https://zerockradio.com/episodes/on-air-050126/	https://zerockradio.com/wp-admin/post.php?post=14456&action=edit
+14435	2025-12-31	On Air 71 – רועי קופרמן 31/12/25	https://zerockradio.com/episodes/on-ari-311225/	https://zerockradio.com/wp-admin/post.php?post=14435&action=edit
+14409	2025-12-24	On Air 70 – רועי קופרמן 24/12/25	https://zerockradio.com/episodes/on-air-241225/	https://zerockradio.com/wp-admin/post.php?post=14409&action=edit
+14359	2025-12-08	זה פרוג – ערן הר-פז 8/12/25	https://zerockradio.com/episodes/prog-081225/	https://zerockradio.com/wp-admin/post.php?post=14359&action=edit
+14341	2025-12-03	On Air 69 – רועי קופרמן 3/12/25	https://zerockradio.com/episodes/on-air-69-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-3-12-25/	https://zerockradio.com/wp-admin/post.php?post=14341&action=edit
+14316	2025-11-26	On Air 68 – רועי קופרמן 26/11/25	https://zerockradio.com/episodes/on-air-261125/	https://zerockradio.com/wp-admin/post.php?post=14316&action=edit
+14170	2025-10-21	המטריה 24 – דורית אורן 21/10/25	https://zerockradio.com/episodes/mitria-211025/	https://zerockradio.com/wp-admin/post.php?post=14170&action=edit
+14163	2025-10-20	זה פרוג – ערן הר-פז 20/10/25	https://zerockradio.com/episodes/prog-201025/	https://zerockradio.com/wp-admin/post.php?post=14163&action=edit
+14097	2025-09-16	המטריה 23 – דורית אורן 16/9/25	https://zerockradio.com/episodes/mmitria-160925/	https://zerockradio.com/wp-admin/post.php?post=14097&action=edit
+14078	2025-09-11	טופ אוף דה רוק – טל סיוון ובר קציר 11/9/25	https://zerockradio.com/episodes/toprock-110925/	https://zerockradio.com/wp-admin/post.php?post=14078&action=edit
+14068	2025-09-08	זה פרוג – ערן הר-פז 8/9/25	https://zerockradio.com/episodes/prog-080925/	https://zerockradio.com/wp-admin/post.php?post=14068&action=edit
+14053	2025-09-03	On Air 67 -רועי קופרמן 3/9/25	https://zerockradio.com/episodes/on-air-030925/	https://zerockradio.com/wp-admin/post.php?post=14053&action=edit
+14050	2025-09-02	המטריה 22 – דורית אורן 2/9/25	https://zerockradio.com/episodes/mitria-020925/	https://zerockradio.com/wp-admin/post.php?post=14050&action=edit
+14024	2025-08-27	On Air 66 – רועי קופרמן 27/8/25	https://zerockradio.com/episodes/on-air-270825/	https://zerockradio.com/wp-admin/post.php?post=14024&action=edit
+14023	2025-08-26	המטריה 21 – דורית אורן 26/8/25	https://zerockradio.com/episodes/mitria-260825/	https://zerockradio.com/wp-admin/post.php?post=14023&action=edit
+14017	2025-08-25	זה פרוג – ערן הר-פז 25/8/25	https://zerockradio.com/episodes/prog-250825/	https://zerockradio.com/wp-admin/post.php?post=14017&action=edit
+14000	2025-08-21	טופ אוף דה רוק – טל סיוון ובר קציר 21/8/25	https://zerockradio.com/episodes/toprock-210825/	https://zerockradio.com/wp-admin/post.php?post=14000&action=edit
+13994	2025-08-20	On Air 65 – רועי קופרמן 20/8/25	https://zerockradio.com/episodes/on-air-200825/	https://zerockradio.com/wp-admin/post.php?post=13994&action=edit
+13968	2025-08-12	המטריה 20 – דורית אורן 12/8/25	https://zerockradio.com/episodes/mitria-120825/	https://zerockradio.com/wp-admin/post.php?post=13968&action=edit
+13950	2025-08-07	טוטאל רוק אוזי אוסבורן – אלעד אביגן 7/8/25	https://zerockradio.com/episodes/ozzy-070825/	https://zerockradio.com/wp-admin/post.php?post=13950&action=edit
+13947	2025-08-07	טופ אוף דה רוק – טל סיוון ובר קציר 7/8/25	https://zerockradio.com/episodes/toprock-070825/	https://zerockradio.com/wp-admin/post.php?post=13947&action=edit
+13945	2025-08-06	On Air 64 – רועי קופרמן 6/8/25	https://zerockradio.com/episodes/on-air-060825/	https://zerockradio.com/wp-admin/post.php?post=13945&action=edit
+13942	2025-08-06	פירוק לגורמים 34 – נופר נירן 6/8/25	https://zerockradio.com/episodes/piruk-060825/	https://zerockradio.com/wp-admin/post.php?post=13942&action=edit
+13918	2025-07-31	טופ אוף דה רוק – טל סיוון ובר קציר 31/7/25	https://zerockradio.com/episodes/toprock-310725/	https://zerockradio.com/wp-admin/post.php?post=13918&action=edit
+13905	2025-07-30	פירוק לגורמים 33 – נופר נירן 30/7/25	https://zerockradio.com/episodes/piruk-300725/	https://zerockradio.com/wp-admin/post.php?post=13905&action=edit
+13887	2025-07-24	טופ אוף דה רוק – טל סיוון ובר קציר 24/7/25	https://zerockradio.com/episodes/toprock-240725/	https://zerockradio.com/wp-admin/post.php?post=13887&action=edit
+13883	2025-07-23	On Air 63 – רועי קופרמן 23/7/25	https://zerockradio.com/episodes/on-air-230725/	https://zerockradio.com/wp-admin/post.php?post=13883&action=edit
+13881	2025-07-23	פירוק לגורמים 32 – נופר נירן 23/7/25	https://zerockradio.com/episodes/piruk-230725/	https://zerockradio.com/wp-admin/post.php?post=13881&action=edit
+13879	2025-07-22	המטריה 19 – דורית אורן 22/7/25	https://zerockradio.com/episodes/mitria-220725/	https://zerockradio.com/wp-admin/post.php?post=13879&action=edit
+13866	2025-07-21	מסע הצלב של איתמר ענברי 119 – 21/7/25	https://zerockradio.com/episodes/crusade-210725/	https://zerockradio.com/wp-admin/post.php?post=13866&action=edit
+13869	2025-07-21	זה פרוג – ערן הר-פז 21/7/25	https://zerockradio.com/episodes/%d7%96%d7%94-%d7%a4%d7%a8%d7%95%d7%92-%d7%a2%d7%a8%d7%9f-%d7%94%d7%a8-%d7%a4%d7%96-21-7-25/	https://zerockradio.com/wp-admin/post.php?post=13869&action=edit
+13856	2025-07-17	טופ אוף דה רוק – טל סיוון ובר קציר 17/7/25	https://zerockradio.com/episodes/toprock-170725/	https://zerockradio.com/wp-admin/post.php?post=13856&action=edit
+13851	2025-07-16	פירוק לגורמים 31 – נופר נירן 16/7/25	https://zerockradio.com/episodes/piruk-160725/	https://zerockradio.com/wp-admin/post.php?post=13851&action=edit
+13848	2025-07-15	המטריה 18 – דורית אורן 15/7/25	https://zerockradio.com/episodes/mitria-150725/	https://zerockradio.com/wp-admin/post.php?post=13848&action=edit
+13845	2025-07-14	מסע הצלב של איתמר ענברי 118 – 14/7/25	https://zerockradio.com/episodes/crusade-140725/	https://zerockradio.com/wp-admin/post.php?post=13845&action=edit
+13811	2025-07-10	טופ אוף דה רוק – טל סיוון ובר קציר 10/7/25	https://zerockradio.com/episodes/toprock-100725/	https://zerockradio.com/wp-admin/post.php?post=13811&action=edit
+13822	2025-07-09	On Air 62 – רועי קופרמן 9/7/25	https://zerockradio.com/episodes/on-air-62-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-9-7-25/	https://zerockradio.com/wp-admin/post.php?post=13822&action=edit
+13821	2025-07-09	פירוק לגורמים 30 – נופר נירן 9/7/25	https://zerockradio.com/episodes/piruk-090725/	https://zerockradio.com/wp-admin/post.php?post=13821&action=edit
+13806	2025-07-07	מסע הצלב של איתמר ענברי 117 – 7/7/25	https://zerockradio.com/episodes/crusade-070725/	https://zerockradio.com/wp-admin/post.php?post=13806&action=edit
+13787	2025-07-02	On Air 61 – רועי קופרמן 2/7/25	https://zerockradio.com/episodes/on-air-020725/	https://zerockradio.com/wp-admin/post.php?post=13787&action=edit
+13785	2025-07-02	פירוק לגורמים 29 – נופר נירן 2/7/25	https://zerockradio.com/episodes/piruk-020725/	https://zerockradio.com/wp-admin/post.php?post=13785&action=edit
+13759	2025-06-25	פירוק לגורמים 28 – נופר נירן 25/6/25	https://zerockradio.com/episodes/piruk-250625/	https://zerockradio.com/wp-admin/post.php?post=13759&action=edit
+13743	2025-06-18	On Air 60 – רועי קופרמן 18/7/25	https://zerockradio.com/episodes/on-air-180625/	https://zerockradio.com/wp-admin/post.php?post=13743&action=edit
+13730	2025-06-12	טופ אוף דה רוק – טל סיוון ובר קציר 12/6/25	https://zerockradio.com/episodes/toprock-120625/	https://zerockradio.com/wp-admin/post.php?post=13730&action=edit
+13722	2025-06-11	פירוק לגורמים 27 – נופר נירן 11/6/25	https://zerockradio.com/episodes/piruk-110625/	https://zerockradio.com/wp-admin/post.php?post=13722&action=edit
+13715	2025-06-09	מסע הצלב של איתמר ענברי 116 – 9/6/25	https://zerockradio.com/episodes/crusade-090625/	https://zerockradio.com/wp-admin/post.php?post=13715&action=edit
+13705	2025-06-05	טופ אוף דה רוק – טל סיוון ובר קציר 5/6/25	https://zerockradio.com/episodes/toprock-050625/	https://zerockradio.com/wp-admin/post.php?post=13705&action=edit
+13696	2025-06-04	פירוק לגורמים 26 – נופר נירן 4/6/25	https://zerockradio.com/episodes/piruk-040625/	https://zerockradio.com/wp-admin/post.php?post=13696&action=edit
+13689	2025-06-03	המטריה 17 – דורית אורן 3/6/25	https://zerockradio.com/episodes/mitria-030625/	https://zerockradio.com/wp-admin/post.php?post=13689&action=edit
+13682	2025-05-29	טופ אוף דה רוק – טל סיוון ובר קציר 29/5/25	https://zerockradio.com/episodes/toprock-290525/	https://zerockradio.com/wp-admin/post.php?post=13682&action=edit
+13681	2025-05-28	On Air 59 – רועי קופרמן 28/5/25	https://zerockradio.com/episodes/on-air-280525/	https://zerockradio.com/wp-admin/post.php?post=13681&action=edit
+13672	2025-05-28	פירוק לגורמים 25 – נופר נירן 28/5/25	https://zerockradio.com/episodes/piruk-280525/	https://zerockradio.com/wp-admin/post.php?post=13672&action=edit
+13675	2025-05-27	המטריה 16 – דורית אורן 27/5/25	https://zerockradio.com/episodes/mitria-270525/	https://zerockradio.com/wp-admin/post.php?post=13675&action=edit
+13668	2025-05-26	מסע הצלב של איתמר ענברי 115 – 26/5/25	https://zerockradio.com/episodes/crusade-260525/	https://zerockradio.com/wp-admin/post.php?post=13668&action=edit
+13647	2025-05-22	טופ אוף דה רוק – טל סיוון ובר קציר 22/5/25	https://zerockradio.com/episodes/%d7%98%d7%95%d7%a4-%d7%90%d7%95%d7%a3-%d7%93%d7%94-%d7%a8%d7%95%d7%a7-%d7%98%d7%9c-%d7%a1%d7%99%d7%95%d7%95%d7%9f-%d7%95%d7%91%d7%a8-%d7%a7%d7%a6%d7%99%d7%a8-22-5-25/	https://zerockradio.com/wp-admin/post.php?post=13647&action=edit
+13643	2025-05-21	פירוק לגורמים 24 – נופר נירן 21/5/25	https://zerockradio.com/episodes/piruk-210525/	https://zerockradio.com/wp-admin/post.php?post=13643&action=edit
+13628	2025-05-19	מסע הצלב של איתמר ענברי 114 – 19/5/25	https://zerockradio.com/episodes/crusade-190525/	https://zerockradio.com/wp-admin/post.php?post=13628&action=edit
+13618	2025-05-15	טופ אוף דה רוק – טל סיון ובר קציר 15/5/25	https://zerockradio.com/episodes/toprock-150525/	https://zerockradio.com/wp-admin/post.php?post=13618&action=edit
+13613	2025-05-14	On Air 58 – רועי קופרמן 14/5/25	https://zerockradio.com/episodes/on-air-140525/	https://zerockradio.com/wp-admin/post.php?post=13613&action=edit
+13610	2025-05-14	פירוק לגורמים 23 – נופר נירן 14/5/25	https://zerockradio.com/episodes/piruk-140525/	https://zerockradio.com/wp-admin/post.php?post=13610&action=edit
+13608	2025-05-13	המטריה 15 – דורית אורן 13/5/25	https://zerockradio.com/episodes/mitria-130525/	https://zerockradio.com/wp-admin/post.php?post=13608&action=edit
+13599	2025-05-12	מסע הצלב של איתמר ענברי 113 – 12/5/25	https://zerockradio.com/episodes/crusade-120524/	https://zerockradio.com/wp-admin/post.php?post=13599&action=edit
+13592	2025-05-08	טופ אוף דה רוק – טל סיוון ובר קציר 8/5/25	https://zerockradio.com/episodes/toprock-080525/	https://zerockradio.com/wp-admin/post.php?post=13592&action=edit
+13581	2025-05-07	On Air 57 – רועי קופרמן 7/5/25	https://zerockradio.com/episodes/on-air-070525/	https://zerockradio.com/wp-admin/post.php?post=13581&action=edit
+13580	2025-05-07	פירוק לגורמים 22 – נופר נירן 7/5/25	https://zerockradio.com/episodes/piruk-070525/	https://zerockradio.com/wp-admin/post.php?post=13580&action=edit
+13567	2025-05-05	מסע הצלב של איתמר ענברי 112 – 5/5/25	https://zerockradio.com/episodes/crusade-050525/	https://zerockradio.com/wp-admin/post.php?post=13567&action=edit
+13555	2025-04-29	המטריה 14 – דורית אורן 29/4/25	https://zerockradio.com/episodes/mitria-290425/	https://zerockradio.com/wp-admin/post.php?post=13555&action=edit
+13542	2025-04-28	מסע הצלב של איתמר ענברי 111 – 28/4/25	https://zerockradio.com/episodes/crusade-280425/	https://zerockradio.com/wp-admin/post.php?post=13542&action=edit
+13521	2025-04-21	מסע הצלב של איתמר ענברי 110 – 21/4/25	https://zerockradio.com/episodes/crusade-210425/	https://zerockradio.com/wp-admin/post.php?post=13521&action=edit
+13506	2025-04-16	On Air 56 – רועי קופרמן 16/4/25	https://zerockradio.com/episodes/on-air-160425/	https://zerockradio.com/wp-admin/post.php?post=13506&action=edit
+13505	2025-04-16	פירוק לגורמים 21 – נופר נירן 16/4/25	https://zerockradio.com/episodes/piruk-160425/	https://zerockradio.com/wp-admin/post.php?post=13505&action=edit
+13486	2025-04-10	טופ אוף דה רוק – טל סיוון ובר קציר 10/4/25	https://zerockradio.com/episodes/toprock-100425/	https://zerockradio.com/wp-admin/post.php?post=13486&action=edit
+13481	2025-04-09	פירוק לגורמים 20 – נופר נירן 9/4/25	https://zerockradio.com/episodes/piruk-090425/	https://zerockradio.com/wp-admin/post.php?post=13481&action=edit
+13478	2025-04-08	המטריה 13 – דורית אורן 8/4/25	https://zerockradio.com/episodes/mitria-080425/	https://zerockradio.com/wp-admin/post.php?post=13478&action=edit
+13462	2025-04-07	מסע הצלב של איתמר ענברי 109 – 7/4/25	https://zerockradio.com/episodes/crusade-070425/	https://zerockradio.com/wp-admin/post.php?post=13462&action=edit
+13450	2025-04-03	טופ אוף דה רוק – טל סיון ובר קציר 3/4/25	https://zerockradio.com/episodes/toprock-030425/	https://zerockradio.com/wp-admin/post.php?post=13450&action=edit
+13446	2025-04-02	On Air 55 – רועי קופרמן 2/4/25	https://zerockradio.com/episodes/on-air-55-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-2-4-25/	https://zerockradio.com/wp-admin/post.php?post=13446&action=edit
+13445	2025-04-02	פירוק לגורמים 19 – נופר נירן 2/4/25	https://zerockradio.com/episodes/piruk-020425/	https://zerockradio.com/wp-admin/post.php?post=13445&action=edit
+13439	2025-03-31	מסע הצלב של איתמר ענברי 108 – 31/3/25	https://zerockradio.com/episodes/crusade-310325/	https://zerockradio.com/wp-admin/post.php?post=13439&action=edit
+13436	2025-03-31	זה פרוג – ערן הר-פז 31/3/25	https://zerockradio.com/episodes/prog-310325/	https://zerockradio.com/wp-admin/post.php?post=13436&action=edit
+13417	2025-03-26	On Air 54 – רועי קופרמן 26/3/25	https://zerockradio.com/episodes/on-air-260325/	https://zerockradio.com/wp-admin/post.php?post=13417&action=edit
+13416	2025-03-26	פירוק לגורמים 18 – נופר נירן 26/3/25	https://zerockradio.com/episodes/piruk-260325/	https://zerockradio.com/wp-admin/post.php?post=13416&action=edit
+13412	2025-03-25	מסע הצלב של איתמר ענברי 107 – 24/3/25	https://zerockradio.com/episodes/crusade-240325/	https://zerockradio.com/wp-admin/post.php?post=13412&action=edit
+13409	2025-03-25	המטריה 12 – דורית אורן 25/3/25	https://zerockradio.com/episodes/mitria-250325/	https://zerockradio.com/wp-admin/post.php?post=13409&action=edit
+13393	2025-03-20	טופ אוף דה רוק – טל סיוון ובר קציר 20/3/25	https://zerockradio.com/episodes/toprock-200325/	https://zerockradio.com/wp-admin/post.php?post=13393&action=edit
+13385	2025-03-19	פירוק לגורמים 17 – נופר נירן 19/3/25	https://zerockradio.com/episodes/piruk-190325/	https://zerockradio.com/wp-admin/post.php?post=13385&action=edit
+13388	2025-03-19	The Drop 97 – טל אופיר 19/3/25	https://zerockradio.com/episodes/drop-190324-2/	https://zerockradio.com/wp-admin/post.php?post=13388&action=edit
+13381	2025-03-18	המטריה 11 – דורית אורן 18/3/25	https://zerockradio.com/episodes/mirtia-180325/	https://zerockradio.com/wp-admin/post.php?post=13381&action=edit
+13374	2025-03-17	מסע הצלב של איתמר ענברי 106 – 17/3/25	https://zerockradio.com/episodes/crusade-170325/	https://zerockradio.com/wp-admin/post.php?post=13374&action=edit
+13355	2025-03-13	טופ אוף דה רוק – טל סיוון ובר קציר 13/3/25	https://zerockradio.com/episodes/toprock-130225-2/	https://zerockradio.com/wp-admin/post.php?post=13355&action=edit
+13347	2025-03-12	On Air 53 – רועי קופרמן 12/3/25	https://zerockradio.com/episodes/on-air-120325/	https://zerockradio.com/wp-admin/post.php?post=13347&action=edit
+13346	2025-03-12	פירוק לגורמים 16 – נופר נירן 12/3/25	https://zerockradio.com/episodes/%d7%a4%d7%99%d7%a8%d7%95%d7%a7-%d7%9c%d7%92%d7%95%d7%a8%d7%9e%d7%99%d7%9d-16-%d7%a0%d7%95%d7%a4%d7%a8-%d7%a0%d7%99%d7%a8%d7%9f-12-3-25/	https://zerockradio.com/wp-admin/post.php?post=13346&action=edit
+13336	2025-03-12	The Drop 96 – טל אופיר 12/3/25	https://zerockradio.com/episodes/drop-120325/	https://zerockradio.com/wp-admin/post.php?post=13336&action=edit
+13344	2025-03-11	המטריה 10 – דורית אורן 11/3/25	https://zerockradio.com/episodes/mitria-110325/	https://zerockradio.com/wp-admin/post.php?post=13344&action=edit
+13340	2025-03-10	מסע הצלב של איתמר ענברי 105 – 10/3/25	https://zerockradio.com/episodes/crusade-100325/	https://zerockradio.com/wp-admin/post.php?post=13340&action=edit
+13321	2025-03-06	טופ אוף דה רוק – טל סיוון ובר קציר 6/3/25	https://zerockradio.com/episodes/toprock-060325/	https://zerockradio.com/wp-admin/post.php?post=13321&action=edit
+13317	2025-03-05	פירוק לגורמים 15 – נופר נירן 5/3/25	https://zerockradio.com/episodes/piruk-050325/	https://zerockradio.com/wp-admin/post.php?post=13317&action=edit
+13312	2025-03-04	המטריה 9 – דורית אורן 4/3/25	https://zerockradio.com/episodes/mitria-040325/	https://zerockradio.com/wp-admin/post.php?post=13312&action=edit
+13291	2025-02-27	טופ טוף דה רוק – טל סיוון ובר קציר 27/2/25	https://zerockradio.com/episodes/toprock-270225/	https://zerockradio.com/wp-admin/post.php?post=13291&action=edit
+13284	2025-02-26	On Air 52 – רועי קופרמן 26/2/25	https://zerockradio.com/episodes/on-air-260225/	https://zerockradio.com/wp-admin/post.php?post=13284&action=edit
+13283	2025-02-26	פירוק לגורמים 14 – נופר נירן 26/2/25	https://zerockradio.com/episodes/piruk-260225/	https://zerockradio.com/wp-admin/post.php?post=13283&action=edit
+13274	2025-02-24	מסע הצלב של איתמר ענברי 104 – 24/2/25	https://zerockradio.com/episodes/%d7%9e%d7%a1%d7%a2-%d7%94%d7%a6%d7%9c%d7%91-%d7%a9%d7%9c-%d7%90%d7%99%d7%aa%d7%9e%d7%a8-%d7%a2%d7%a0%d7%91%d7%a8%d7%99-104-24-2-25/	https://zerockradio.com/wp-admin/post.php?post=13274&action=edit
+13251	2025-02-19	On Air 51 – רועי קופרמן 19/2/25	https://zerockradio.com/episodes/on-air-190225/	https://zerockradio.com/wp-admin/post.php?post=13251&action=edit
+13250	2025-02-19	פירוק לגורמים 13 – נופר נירן 19/2/25	https://zerockradio.com/episodes/piruk-190225/	https://zerockradio.com/wp-admin/post.php?post=13250&action=edit
+13242	2025-02-18	המטריה 8 – דורית אורן 18/2/25	https://zerockradio.com/episodes/mitria-180225/	https://zerockradio.com/wp-admin/post.php?post=13242&action=edit
+13237	2025-02-17	מסע הצלב של איתמר ענברי 103 – 17/2/25	https://zerockradio.com/episodes/crusade-170225/	https://zerockradio.com/wp-admin/post.php?post=13237&action=edit
+13240	2025-02-17	זה פרוג – ערן הר-פז 17/2/25	https://zerockradio.com/episodes/prog-170225/	https://zerockradio.com/wp-admin/post.php?post=13240&action=edit
+13219	2025-02-13	טופ אוף דה רוק – טל סיוון ובר קציר 13/2/25	https://zerockradio.com/episodes/toprock-130225/	https://zerockradio.com/wp-admin/post.php?post=13219&action=edit
+13214	2025-02-12	On Air 50 – רועי קופרמן 12/2/25	https://zerockradio.com/episodes/on-air-50-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-12-2-25/	https://zerockradio.com/wp-admin/post.php?post=13214&action=edit
+13217	2025-02-12	The Drop 95 – טל אופיר 12/2/25	https://zerockradio.com/episodes/drop-120225/	https://zerockradio.com/wp-admin/post.php?post=13217&action=edit
+13209	2025-02-11	המטריה 7 – דורית אורן 11/2/25	https://zerockradio.com/episodes/mitria-110225/	https://zerockradio.com/wp-admin/post.php?post=13209&action=edit
+13202	2025-02-10	מסע הצלב של איתמר ענברי 102 – 10/2/25	https://zerockradio.com/episodes/crusade-100225/	https://zerockradio.com/wp-admin/post.php?post=13202&action=edit
+13187	2025-02-06	טופ אוף דה רוק – טל סיוון ובר קציר 6/2/25	https://zerockradio.com/episodes/toprock-060225/	https://zerockradio.com/wp-admin/post.php?post=13187&action=edit
+13180	2025-02-05	פירוק לגורמים 12 – נופר נירן 5/2/25	https://zerockradio.com/episodes/piruk-050225/	https://zerockradio.com/wp-admin/post.php?post=13180&action=edit
+13179	2025-02-05	The Drop 94 – טל אופיר 5/2/25	https://zerockradio.com/episodes/drop-050225/	https://zerockradio.com/wp-admin/post.php?post=13179&action=edit
+13170	2025-02-04	המטריה 6 – דורית אורן 4/2/25	https://zerockradio.com/episodes/mitria-040225/	https://zerockradio.com/wp-admin/post.php?post=13170&action=edit
+13166	2025-02-03	מסע הצלב של איתמר ענברי – 3/2/25	https://zerockradio.com/episodes/crusade-030225/	https://zerockradio.com/wp-admin/post.php?post=13166&action=edit
+13140	2025-01-29	פירוק לגורמים 11 – נופר נירן 29/1/25	https://zerockradio.com/episodes/piruk-290125/	https://zerockradio.com/wp-admin/post.php?post=13140&action=edit
+13142	2025-01-29	The Drop 93 – טל אופיר 29/1/25	https://zerockradio.com/episodes/drop-290125/	https://zerockradio.com/wp-admin/post.php?post=13142&action=edit
+13134	2025-01-28	המטריה 5 – דורית אורן 28/1/25	https://zerockradio.com/episodes/mitria-280125/	https://zerockradio.com/wp-admin/post.php?post=13134&action=edit
+13131	2025-01-28	מסע הצלב של איתמר ענברי 100- 27/1/25	https://zerockradio.com/episodes/crusade-270125/	https://zerockradio.com/wp-admin/post.php?post=13131&action=edit
+13115	2025-01-23	טופ אוף דה רוק – טל סיוון ובר קציר 23/1/25	https://zerockradio.com/episodes/toprock-230125/	https://zerockradio.com/wp-admin/post.php?post=13115&action=edit
+13105	2025-01-22	On Air 49 – רועי קופרמן 22/1/24	https://zerockradio.com/episodes/on-air-220125/	https://zerockradio.com/wp-admin/post.php?post=13105&action=edit
+13107	2025-01-22	פירוק לגורמים 10 – נופר נירן 22/1/25	https://zerockradio.com/episodes/piruk/	https://zerockradio.com/wp-admin/post.php?post=13107&action=edit
+13087	2025-01-16	The Drop 92 – טל אופיר 15/1/25	https://zerockradio.com/episodes/drop-150125/	https://zerockradio.com/wp-admin/post.php?post=13087&action=edit
+13071	2025-01-15	On Air 48 – רועי קופרמן 15/1/25	https://zerockradio.com/episodes/on-air-48-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-15-1-25/	https://zerockradio.com/wp-admin/post.php?post=13071&action=edit
+13070	2025-01-15	פירוק לגורמים 9 – נופר נירן 15/1/25	https://zerockradio.com/episodes/piruk-150125/	https://zerockradio.com/wp-admin/post.php?post=13070&action=edit
+13076	2025-01-15	מסע הצלב של איתמר ענברי 99 – 13/1/25	https://zerockradio.com/episodes/crusade-130125/	https://zerockradio.com/wp-admin/post.php?post=13076&action=edit
+13073	2025-01-15	Mixtape 11 – גלית קורני 15/01/2025	https://zerockradio.com/episodes/mixtape-15012025/	https://zerockradio.com/wp-admin/post.php?post=13073&action=edit
+13046	2025-01-09	טופ אוף דה רוק – טל סיוון ובר קציר 9/1/25	https://zerockradio.com/episodes/toprock-090125/	https://zerockradio.com/wp-admin/post.php?post=13046&action=edit
+13040	2025-01-08	פירוק לגורמים 8 – נופר נירן 8/1/25	https://zerockradio.com/episodes/piruk-080125/	https://zerockradio.com/wp-admin/post.php?post=13040&action=edit
+13044	2025-01-08	Mixtape 10 – גלית קורני 08/01/2025	https://zerockradio.com/episodes/mixtape-08012025/	https://zerockradio.com/wp-admin/post.php?post=13044&action=edit
+13030	2025-01-07	המטריה 4 – דורית אורן 7/1/25	https://zerockradio.com/episodes/mitria-070125/	https://zerockradio.com/wp-admin/post.php?post=13030&action=edit
+13023	2025-01-06	מסע הצלב של איתמר ענברי 98 – 6/1/25	https://zerockradio.com/episodes/crusade-060125/	https://zerockradio.com/wp-admin/post.php?post=13023&action=edit
+13004	2025-01-02	טופ אוף דה רוק – טל סיוון ובר קציר 2/1/25	https://zerockradio.com/episodes/toprock-020125/	https://zerockradio.com/wp-admin/post.php?post=13004&action=edit
+13002	2025-01-02	Mixtape 9 – גלית קורני 1/1/25	https://zerockradio.com/episodes/mixtape-010125/	https://zerockradio.com/wp-admin/post.php?post=13002&action=edit
+12996	2025-01-01	On Air 47 – רועי קופרמן 1/1/25	https://zerockradio.com/episodes/on-air-010125/	https://zerockradio.com/wp-admin/post.php?post=12996&action=edit
+12998	2025-01-01	פירוק לגורמים 7 – נופר נירן 1/1/24	https://zerockradio.com/episodes/piruk-010124/	https://zerockradio.com/wp-admin/post.php?post=12998&action=edit
+12985	2024-12-31	המטריה 3 – דורית אורן 31/12/24	https://zerockradio.com/episodes/mitria-311224/	https://zerockradio.com/wp-admin/post.php?post=12985&action=edit
+12980	2024-12-30	מסע הצלב של איתמר ענברי – 30/12/24	https://zerockradio.com/episodes/crusade-301224/	https://zerockradio.com/wp-admin/post.php?post=12980&action=edit
+12979	2024-12-30	זה פרוג – ערן הר-פז 30/12/24	https://zerockradio.com/episodes/prog-301224/	https://zerockradio.com/wp-admin/post.php?post=12979&action=edit
+12958	2024-12-26	טופ אוף דה רוק – טל סיוון ובר קציר 26/12/24	https://zerockradio.com/episodes/toprock-261224/	https://zerockradio.com/wp-admin/post.php?post=12958&action=edit
+12951	2024-12-25	On Air 46 – רועי קופרמן 25/12/24	https://zerockradio.com/episodes/on-air-46-%d7%a8%d7%95%d7%a2%d7%99-%d7%a7%d7%95%d7%a4%d7%a8%d7%9e%d7%9f-25-12-24/	https://zerockradio.com/wp-admin/post.php?post=12951&action=edit
+12950	2024-12-25	פירוק לגורמים 6 – נופר נירן 25/12/24	https://zerockradio.com/episodes/piruk-251224/	https://zerockradio.com/wp-admin/post.php?post=12950&action=edit
+12949	2024-12-25	The Drop 91 – טל אופיר 25/12/24	https://zerockradio.com/episodes/the-drop-251224/	https://zerockradio.com/wp-admin/post.php?post=12949&action=edit
+12935	2024-12-24	המטריה 2 – דורית אורן 24/12/24	https://zerockradio.com/episodes/mitria-241224/	https://zerockradio.com/wp-admin/post.php?post=12935&action=edit
+12902	2024-12-18	פירוק לגורמים 5 – נופר נירן 18/12/24	https://zerockradio.com/episodes/piruk-181224/	https://zerockradio.com/wp-admin/post.php?post=12902&action=edit
+12914	2024-12-18	הדרופ 90 – טל אופיר 18/12/2024	https://zerockradio.com/episodes/drop-19122024/	https://zerockradio.com/wp-admin/post.php?post=12914&action=edit
+12905	2024-12-18	Mixtape 8 – גלית קורני 18/12/2024	https://zerockradio.com/episodes/mixtape-18122024/	https://zerockradio.com/wp-admin/post.php?post=12905&action=edit
+12892	2024-12-16	מסע הצלב של איתמר ענברי 96 – 16/12/24	https://zerockradio.com/episodes/crusade-161224/	https://zerockradio.com/wp-admin/post.php?post=12892&action=edit
+12870	2024-12-12	טופ אוף דה רוק – טל סיוון ובר קציר 12/12/24	https://zerockradio.com/episodes/toprock-121224/	https://zerockradio.com/wp-admin/post.php?post=12870&action=edit
+12860	2024-12-11	On Air 45 – רועי קופרמן 11/12/24	https://zerockradio.com/episodes/on-air-111224/	https://zerockradio.com/wp-admin/post.php?post=12860&action=edit
+12859	2024-12-11	פירוק לגורמים 4 – נופר נירן 11/12/24	https://zerockradio.com/episodes/piruk-111224/	https://zerockradio.com/wp-admin/post.php?post=12859&action=edit
+12865	2024-12-11	Mixtape 7 – גלית קורני 11/12/24	https://zerockradio.com/episodes/mixtape-111224/	https://zerockradio.com/wp-admin/post.php?post=12865&action=edit
+12858	2024-12-11	The Drop 89 – טל אופיר 11/12/24	https://zerockradio.com/episodes/drop-111224/	https://zerockradio.com/wp-admin/post.php?post=12858&action=edit
+12851	2024-12-10	המטריה 1 – דורית אורן 10/12/24	https://zerockradio.com/episodes/mitria-101224/	https://zerockradio.com/wp-admin/post.php?post=12851&action=edit
+12837	2024-12-09	מסע הצלב של איתמר ענברי – 9/12/24	https://zerockradio.com/episodes/crusade-091224/	https://zerockradio.com/wp-admin/post.php?post=12837&action=edit
+12820	2024-12-05	טופ אוף דה רוק – טל סיוון ובר קציר 5/12/24	https://zerockradio.com/episodes/toprock-051224/	https://zerockradio.com/wp-admin/post.php?post=12820&action=edit
+12817	2024-12-04	On Air 44 – רועי קופרמן 4/12/24	https://zerockradio.com/episodes/on-air-041224/	https://zerockradio.com/wp-admin/post.php?post=12817&action=edit
+12813	2024-12-04	פירוק לגורמים 3 – נופר נירן 4/12/24	https://zerockradio.com/episodes/piruk-041224/	https://zerockradio.com/wp-admin/post.php?post=12813&action=edit
+12801	2024-12-02	מסע הצלב של איתמר ענברי 94 – 2/12/24	https://zerockradio.com/episodes/crusade-021224/	https://zerockradio.com/wp-admin/post.php?post=12801&action=edit
+12799	2024-12-02	זה פרוג – ערן הר-פז 2/12/24	https://zerockradio.com/episodes/prog-021224/	https://zerockradio.com/wp-admin/post.php?post=12799&action=edit
+12784	2024-11-28	טופ אוף דה רוק – טל סיוון ובר קציר 28/11/24	https://zerockradio.com/episodes/toprock-281124/	https://zerockradio.com/wp-admin/post.php?post=12784&action=edit
+12780	2024-11-27	On Air 43 – רועי קופרמן 27/11/24	https://zerockradio.com/episodes/on-air-271124/	https://zerockradio.com/wp-admin/post.php?post=12780&action=edit
+12777	2024-11-27	פירוק לגורמים 2 – נופר נירן 27/11/24	https://zerockradio.com/episodes/piruk-271124/	https://zerockradio.com/wp-admin/post.php?post=12777&action=edit
+12782	2024-11-27	The Drop 88 – טל אופיר 27/11/24	https://zerockradio.com/episodes/the-drop-271124/	https://zerockradio.com/wp-admin/post.php?post=12782&action=edit
+12767	2024-11-25	מסע הצלב של איתמר ענברי – 25/11/24	https://zerockradio.com/episodes/crusade-251124/	https://zerockradio.com/wp-admin/post.php?post=12767&action=edit
+12746	2024-11-20	On Air 42 – רועי קופרמן 20/11/24	https://zerockradio.com/episodes/on-air-201124/	https://zerockradio.com/wp-admin/post.php?post=12746&action=edit
+12745	2024-11-20	פירוק לגורמים 1 – נופר נירן 20/11/24	https://zerockradio.com/episodes/piruk-201124/	https://zerockradio.com/wp-admin/post.php?post=12745&action=edit
+12736	2024-11-18	מסע הצלב של איתמר ענברי 92 – 18/11/24	https://zerockradio.com/episodes/crusade-181124/	https://zerockradio.com/wp-admin/post.php?post=12736&action=edit
+12718	2024-11-14	טופ אוף דה רוק – טל סיון ובר קציר 14/11/24	https://zerockradio.com/episodes/toprock-141124/	https://zerockradio.com/wp-admin/post.php?post=12718&action=edit
+12713	2024-11-13	On Air 41 – רועי קופרמן 13/11/24	https://zerockradio.com/episodes/on-air-131124/	https://zerockradio.com/wp-admin/post.php?post=12713&action=edit
+12712	2024-11-13	The Drop 87 – טל אופיר 13/11/24	https://zerockradio.com/episodes/drop-131124/	https://zerockradio.com/wp-admin/post.php?post=12712&action=edit
+12689	2024-11-07	טופ אוף דה רוק – טל סיון ובר קציר 7/11/24	https://zerockradio.com/episodes/toprock-061124/	https://zerockradio.com/wp-admin/post.php?post=12689&action=edit
+12686	2024-11-06	On Air 40 – רועי קופרמן 6/11/24	https://zerockradio.com/episodes/on-air-061124/	https://zerockradio.com/wp-admin/post.php?post=12686&action=edit
+12675	2024-11-04	מסע הצלב של איתמר ענברי 91 – 4/11/24	https://zerockradio.com/episodes/crusade-041124/	https://zerockradio.com/wp-admin/post.php?post=12675&action=edit
+12656	2024-10-31	טופ אוף דה רוק – טל סיוון ובר קציר 31/10/24	https://zerockradio.com/episodes/toprock-311024/	https://zerockradio.com/wp-admin/post.php?post=12656&action=edit
+12654	2024-10-30	The Drop 86 – טל אופיר 30/10/24	https://zerockradio.com/episodes/drop-301024/	https://zerockradio.com/wp-admin/post.php?post=12654&action=edit
+12648	2024-10-29	Ze Rock Porto 90 – אלעד אביגן 29/10/24	https://zerockradio.com/episodes/ze-rock-porto-90-%d7%90%d7%9c%d7%a2%d7%93-%d7%90%d7%91%d7%99%d7%92%d7%9f-29-10-24/	https://zerockradio.com/wp-admin/post.php?post=12648&action=edit
+12646	2024-10-28	Mostly Harmless 68 – ירון הורינג 28/10/24	https://zerockradio.com/episodes/mostly-harmless-281024/	https://zerockradio.com/wp-admin/post.php?post=12646&action=edit
+12645	2024-10-28	מסע הצלב של איתמר ענברי 90 – 28/10/24	https://zerockradio.com/episodes/crusade-281024/	https://zerockradio.com/wp-admin/post.php?post=12645&action=edit
+12644	2024-10-28	זה פרוג – ערן הר-פז 28/10/24	https://zerockradio.com/episodes/prog-281024/	https://zerockradio.com/wp-admin/post.php?post=12644&action=edit
+12618	2024-10-15	Ze Rock Porto 89 – אלעד אביגן 15/10/24	https://zerockradio.com/episodes/zrp-89/	https://zerockradio.com/wp-admin/post.php?post=12618&action=edit
+12612	2024-10-14	מסע הצלב של איתמר ענברי 89 – 14/10/24	https://zerockradio.com/episodes/crusade-14q10q24/	https://zerockradio.com/wp-admin/post.php?post=12612&action=edit
+12608	2024-10-14	זה פרוג – ערן הר-פז 14/10/24	https://zerockradio.com/episodes/prog-141024/	https://zerockradio.com/wp-admin/post.php?post=12608&action=edit
+12597	2024-10-10	טופ אוף דה רוק – טל סיוון ובר קציר 10/10/24	https://zerockradio.com/episodes/toprock-101024/	https://zerockradio.com/wp-admin/post.php?post=12597&action=edit
+12591	2024-10-09	On Air 39 – רועי קופרמן 9/10/24	https://zerockradio.com/episodes/on-air-091024/	https://zerockradio.com/wp-admin/post.php?post=12591&action=edit
+12590	2024-10-09	The Drop 85 – טל אופיר 9/10/24	https://zerockradio.com/episodes/drop-091024/	https://zerockradio.com/wp-admin/post.php?post=12590&action=edit
+12576	2024-10-01	Ze Rock Porto 88 – אלעד אביגן 1/10/24	https://zerockradio.com/episodes/zrp-011024/	https://zerockradio.com/wp-admin/post.php?post=12576&action=edit
+12571	2024-09-30	מסע הצלב של איתמר ענברי 88 – 30/9/24	https://zerockradio.com/episodes/crusade-300924/	https://zerockradio.com/wp-admin/post.php?post=12571&action=edit
+12542	2024-09-25	On Air 38 – רועי קופרמן 25/8/24	https://zerockradio.com/episodes/on-air-250924/	https://zerockradio.com/wp-admin/post.php?post=12542&action=edit
+12541	2024-09-25	The Drop 84 – טל אופיר 25/9/24	https://zerockradio.com/episodes/drop-250924/	https://zerockradio.com/wp-admin/post.php?post=12541&action=edit
+12536	2024-09-24	Ze Rock Porto 87 – אלעד אביגן 24/9/24	https://zerockradio.com/episodes/zrp-240924/	https://zerockradio.com/wp-admin/post.php?post=12536&action=edit
+12528	2024-09-23	מסע הצלב של איתמר ענברי 86 – 23/9/24	https://zerockradio.com/episodes/crusade-230924/	https://zerockradio.com/wp-admin/post.php?post=12528&action=edit
+12508	2024-09-19	טופ אוף דה רוק – טל סיוון ובר קציר 19/9/24	https://zerockradio.com/episodes/toprock-190924/	https://zerockradio.com/wp-admin/post.php?post=12508&action=edit
+12504	2024-09-18	On Air 37 – רועי קופרמן 18/9/24	https://zerockradio.com/episodes/on-air-180924/	https://zerockradio.com/wp-admin/post.php?post=12504&action=edit
+12503	2024-09-18	The Drop 83 – טל אופיר 18/9/24	https://zerockradio.com/episodes/the-drop-180924/	https://zerockradio.com/wp-admin/post.php?post=12503&action=edit
+12498	2024-09-17	Ze Rock Porto 86 – אלעד אביגן 17/9/24	https://zerockradio.com/episodes/zrp-170924/	https://zerockradio.com/wp-admin/post.php?post=12498&action=edit
+12487	2024-09-16	מסע הצלב של איתמר ענברי 86 – 16/9/24	https://zerockradio.com/episodes/crusade-160924/	https://zerockradio.com/wp-admin/post.php?post=12487&action=edit
+12465	2024-09-12	טופ אוף דה רוק – טל סיוון ובר קציר 12/9/24	https://zerockradio.com/episodes/toprock-120924/	https://zerockradio.com/wp-admin/post.php?post=12465&action=edit
+12468	2024-09-11	Ze Rock Porto 85 – אלעד אביגן 11/9/24	https://zerockradio.com/episodes/zrp-110924/	https://zerockradio.com/wp-admin/post.php?post=12468&action=edit
+12462	2024-09-11	The Drop 82 – טל אופיר 11/9/24	https://zerockradio.com/episodes/drop-110924/	https://zerockradio.com/wp-admin/post.php?post=12462&action=edit
+12457	2024-09-09	Mostly Harmless 66 – ירון הורינג 9/9/24	https://zerockradio.com/episodes/mostly-harmless-090924/	https://zerockradio.com/wp-admin/post.php?post=12457&action=edit
+12446	2024-09-09	מסע הצלב של איתמר ענברי 85 – 9/9/24	https://zerockradio.com/episodes/crusade-090924/	https://zerockradio.com/wp-admin/post.php?post=12446&action=edit
+12449	2024-09-09	זה פרוג – ערן הר-פז 9/9/24	https://zerockradio.com/episodes/prog-090924/	https://zerockradio.com/wp-admin/post.php?post=12449&action=edit
+12433	2024-09-05	טופ אוף דה רוק – טל סיון ובר קציר 5/9/24	https://zerockradio.com/episodes/toprock-050924/	https://zerockradio.com/wp-admin/post.php?post=12433&action=edit
+12430	2024-09-04	On Air 36 – רועי קופרמן 4/9/24	https://zerockradio.com/episodes/on-air-040924/	https://zerockradio.com/wp-admin/post.php?post=12430&action=edit
+12429	2024-09-04	The Drop 81 – טל אופיר 4/9/24	https://zerockradio.com/episodes/drop-040924/	https://zerockradio.com/wp-admin/post.php?post=12429&action=edit
+12402	2024-08-29	טופ אוף דה רוק – טל סיוון ובר קציר 29/8/24	https://zerockradio.com/episodes/toprock-290824/	https://zerockradio.com/wp-admin/post.php?post=12402&action=edit
+12397	2024-08-28	On Air 35 – רועי קופרמן 28/8/24	https://zerockradio.com/episodes/on-air-280824/	https://zerockradio.com/wp-admin/post.php?post=12397&action=edit
+12394	2024-08-27	Ze Rock Porto 84 – אלעד אביגן 27/8/24	https://zerockradio.com/episodes/zrp-270824/	https://zerockradio.com/wp-admin/post.php?post=12394&action=edit
+12390	2024-08-26	Mostly Harmless 65 – ירון הורינג 26/8/24	https://zerockradio.com/episodes/mostly-harmless-260824/	https://zerockradio.com/wp-admin/post.php?post=12390&action=edit
+12380	2024-08-26	מסע הצלב של איתמר ענברי 84 – 26/8/24	https://zerockradio.com/episodes/crusade-260824/	https://zerockradio.com/wp-admin/post.php?post=12380&action=edit
+12365	2024-08-22	טופ אוף דה רוק – טל סיוון ובר קציר 22/8/24	https://zerockradio.com/episodes/toprock-220824/	https://zerockradio.com/wp-admin/post.php?post=12365&action=edit
+12358	2024-08-21	On Air 34 – רועי קופרמן 21/8/24	https://zerockradio.com/episodes/on-air-210824/	https://zerockradio.com/wp-admin/post.php?post=12358&action=edit
+12357	2024-08-21	The Drop 80 – טל אופיר 21/8/24	https://zerockradio.com/episodes/drop-210824/	https://zerockradio.com/wp-admin/post.php?post=12357&action=edit
+12352	2024-08-20	Ze Rock Porto 83 – אלעד אביגן 20/8/24	https://zerockradio.com/episodes/zrp-210824/	https://zerockradio.com/wp-admin/post.php?post=12352&action=edit
+12348	2024-08-19	Mostly Harmless 64 – ירון הורינג 19/8/24	https://zerockradio.com/episodes/mostly-harmless-190824/	https://zerockradio.com/wp-admin/post.php?post=12348&action=edit
+12344	2024-08-19	מסע הצלב של איתמר ענברי 83 – 19/8/24	https://zerockradio.com/episodes/crusade-190824/	https://zerockradio.com/wp-admin/post.php?post=12344&action=edit
+12323	2024-08-15	טופ אוף דה רוק – טל סיוון ובר קציר 15/8/24	https://zerockradio.com/episodes/toprock-150824/	https://zerockradio.com/wp-admin/post.php?post=12323&action=edit
+12317	2024-08-14	On Air 33 – רועי קופרמן 14/8/24	https://zerockradio.com/episodes/on-air-140824/	https://zerockradio.com/wp-admin/post.php?post=12317&action=edit
+12318	2024-08-14	The Drop 79 – טל אופיר 14/8/24	https://zerockradio.com/episodes/drop-140824/	https://zerockradio.com/wp-admin/post.php?post=12318&action=edit
+12310	2024-08-12	Mostly Harmless 63 – ירון הורינג 12/8/24	https://zerockradio.com/episodes/mostly-harmless-120824/	https://zerockradio.com/wp-admin/post.php?post=12310&action=edit
+12285	2024-08-07	On Air 32 – רועי קופרמן 7/8/24	https://zerockradio.com/episodes/on-air-070824/	https://zerockradio.com/wp-admin/post.php?post=12285&action=edit
+12282	2024-08-06	Ze Rock Porto 82 – אלעד אביגן 6/8/24	https://zerockradio.com/episodes/zrp-060824/	https://zerockradio.com/wp-admin/post.php?post=12282&action=edit
+12275	2024-08-05	מסע הצלב של איתמר ענברי 82 – 5/8/24	https://zerockradio.com/episodes/crusade-050824/	https://zerockradio.com/wp-admin/post.php?post=12275&action=edit
+12245	2024-07-31	On Air 31 – רועי קופרמן 31/7/24	https://zerockradio.com/episodes/on-air-310724/	https://zerockradio.com/wp-admin/post.php?post=12245&action=edit
+12248	2024-07-31	The Drop 78 – טל אופיר 31/7/24	https://zerockradio.com/episodes/drop-310724/	https://zerockradio.com/wp-admin/post.php?post=12248&action=edit
+12249	2024-07-30	Ze Rock Port 81 – אלעד אביגן 31/7/24	https://zerockradio.com/episodes/zrp-300724/	https://zerockradio.com/wp-admin/post.php?post=12249&action=edit
+12235	2024-07-29	מסע הצלב של איתמר ענברי 81 – 29/7/24	https://zerockradio.com/episodes/crusade-290724/	https://zerockradio.com/wp-admin/post.php?post=12235&action=edit
+12217	2024-07-25	טופ אוף דה רוק – טל סיוון ובר קציר 25/7/24	https://zerockradio.com/episodes/toprock-250724/	https://zerockradio.com/wp-admin/post.php?post=12217&action=edit
+12212	2024-07-24	On Air 30 – רועי קופרמן 24/7/24	https://zerockradio.com/episodes/on-air-240724/	https://zerockradio.com/wp-admin/post.php?post=12212&action=edit
+12211	2024-07-24	The Drop 77 – טל אופיר 24/7/24	https://zerockradio.com/episodes/drop-240724/	https://zerockradio.com/wp-admin/post.php?post=12211&action=edit
+12208	2024-07-23	זה רוק פורטו 80 – אלעד אביגן 23/07/2024	https://zerockradio.com/episodes/zrp-23072024/	https://zerockradio.com/wp-admin/post.php?post=12208&action=edit
+12202	2024-07-22	Mostly Harmless 62 – ירון הורינג 22/7/24	https://zerockradio.com/episodes/mostly-harmless-220724/	https://zerockradio.com/wp-admin/post.php?post=12202&action=edit
+12199	2024-07-22	מסע הצלב עם איתמר ענברי – 22/7/24	https://zerockradio.com/episodes/crusade-220724/	https://zerockradio.com/wp-admin/post.php?post=12199&action=edit
+12188	2024-07-19	פותחים את הצ׳אקרוק 32 – אסף לב וליאור ארליך 18/7/24	https://zerockradio.com/episodes/chakrock-180724/	https://zerockradio.com/wp-admin/post.php?post=12188&action=edit
+12177	2024-07-18	טופ אוף דה רוק – טל סיון ובר קציר 18/7/24	https://zerockradio.com/episodes/toprock-180724/	https://zerockradio.com/wp-admin/post.php?post=12177&action=edit
+12173	2024-07-17	On Air 29 – רועי קופרמן 17/7/24	https://zerockradio.com/episodes/on-air-170724/	https://zerockradio.com/wp-admin/post.php?post=12173&action=edit
+12172	2024-07-17	The Drop 76 – טל אופיר 17/7/24	https://zerockradio.com/episodes/the-drop-170724/	https://zerockradio.com/wp-admin/post.php?post=12172&action=edit
+12169	2024-07-16	Ze Rock Porto 79 – אלעד אביגן 16/7/24	https://zerockradio.com/episodes/zrp-160724/	https://zerockradio.com/wp-admin/post.php?post=12169&action=edit
+12164	2024-07-15	Mostly Harmless 61 – ירון הורינג 15/7/24	https://zerockradio.com/episodes/mostly-harmless-150724/	https://zerockradio.com/wp-admin/post.php?post=12164&action=edit
+12161	2024-07-15	מסע הצלב של איתמר ענברי 79 – 15/7/24	https://zerockradio.com/episodes/crusade-150724/	https://zerockradio.com/wp-admin/post.php?post=12161&action=edit
+12142	2024-07-11	טופ אוף דה רוק – כוורת – טל סיון ובר קציר 11/07/2024	https://zerockradio.com/episodes/top-rock-11072024/	https://zerockradio.com/wp-admin/post.php?post=12142&action=edit
+12133	2024-07-10	The Drop 75 – טל אופיר 10/07/2024	https://zerockradio.com/episodes/drop-10072024/	https://zerockradio.com/wp-admin/post.php?post=12133&action=edit
+12125	2024-07-08	Mostly Harmless 60 – ירון הורינג 08/07/2024	https://zerockradio.com/episodes/mostly-harmless-08072024/	https://zerockradio.com/wp-admin/post.php?post=12125&action=edit
+12123	2024-07-08	מסע הצלב של איתמר ענברי 78 – 08/07/2024	https://zerockradio.com/episodes/crusade-08072024/	https://zerockradio.com/wp-admin/post.php?post=12123&action=edit
+12101	2024-07-04	טופ אוף דה רוק – טל סיוון ובר קציר 4/7/24	https://zerockradio.com/episodes/toprock-040724/	https://zerockradio.com/wp-admin/post.php?post=12101&action=edit
+12093	2024-07-03	On Air 28 – רועי קופרמן 3/7/24	https://zerockradio.com/episodes/on-air-030724/	https://zerockradio.com/wp-admin/post.php?post=12093&action=edit
+12090	2024-07-03	The Drop 74 – טל אופיר 3/7/24	https://zerockradio.com/episodes/drop-030724/	https://zerockradio.com/wp-admin/post.php?post=12090&action=edit
+12085	2024-07-02	Ze Rock Porto 78 – אלעד אביגן 2/7/24	https://zerockradio.com/episodes/zrp-020724/	https://zerockradio.com/wp-admin/post.php?post=12085&action=edit
+12080	2024-07-01	מסע הצלב של איתמר ענברי 77 – 1/7/24	https://zerockradio.com/episodes/crusade-010724/	https://zerockradio.com/wp-admin/post.php?post=12080&action=edit
+12081	2024-07-01	זה פרוג – ערן הר-פז 1/7/24	https://zerockradio.com/episodes/prog-010724/	https://zerockradio.com/wp-admin/post.php?post=12081&action=edit
+12067	2024-06-27	טופ אוף דה רוק – טל סיוון ובר קציר 27/6/24	https://zerockradio.com/episodes/toprock-270624/	https://zerockradio.com/wp-admin/post.php?post=12067&action=edit
+12055	2024-06-26	On Air 27 – רועי קופרמן 26/6/24	https://zerockradio.com/episodes/on-air-260624/	https://zerockradio.com/wp-admin/post.php?post=12055&action=edit
+12051	2024-06-25	זה רוק פורטו 77 – אלעד אביגן 25/06/2024	https://zerockradio.com/episodes/zrp-25062024/	https://zerockradio.com/wp-admin/post.php?post=12051&action=edit
+12044	2024-06-24	Mostly Harmless 59 – ירון הורינג 24/06/2024	https://zerockradio.com/episodes/mostly-harmless-24062024/	https://zerockradio.com/wp-admin/post.php?post=12044&action=edit
+12039	2024-06-24	מסע הצלב של איתמר ענברי 76 – 24/6/24	https://zerockradio.com/episodes/crusade-240624/	https://zerockradio.com/wp-admin/post.php?post=12039&action=edit
+12016	2024-06-20	טופ אוף דה רוקס – טל סיוון ובר קציר 20/6/24	https://zerockradio.com/episodes/toprock-200624/	https://zerockradio.com/wp-admin/post.php?post=12016&action=edit
+12011	2024-06-19	On Air 26 – רועי קופרמן 19/6/2	https://zerockradio.com/episodes/on-air-190624/	https://zerockradio.com/wp-admin/post.php?post=12011&action=edit
+12010	2024-06-19	The Drop 73 – טל אופיר 19/6/24	https://zerockradio.com/episodes/drop-190624/	https://zerockradio.com/wp-admin/post.php?post=12010&action=edit
+12005	2024-06-18	Ze Rock Porto 76 – אלעד אביגן 18/6/24	https://zerockradio.com/episodes/zrp-180624/	https://zerockradio.com/wp-admin/post.php?post=12005&action=edit
+12000	2024-06-17	Mostly Harmless 58 – ירון הורינג 17/06/2024	https://zerockradio.com/episodes/mostly-harmless-17062024/	https://zerockradio.com/wp-admin/post.php?post=12000&action=edit
+11998	2024-06-17	מסע הצלב של איתמר ענברי 75 – 17/06/2024	https://zerockradio.com/episodes/crusade-17062024/	https://zerockradio.com/wp-admin/post.php?post=11998&action=edit
+11995	2024-06-17	זה פרוג – ערן הר-פז 17/6/24	https://zerockradio.com/episodes/prog-170624/	https://zerockradio.com/wp-admin/post.php?post=11995&action=edit
+11968	2024-06-10	Mostly Harmless 57 – ירון הורינג 10/6/24	https://zerockradio.com/episodes/mostly-harmless-100624/	https://zerockradio.com/wp-admin/post.php?post=11968&action=edit
+11965	2024-06-10	מסע הצלב של איתמר ענברי 74 – 10/6/24	https://zerockradio.com/episodes/crusade-100624/	https://zerockradio.com/wp-admin/post.php?post=11965&action=edit
+11950	2024-06-07	פותחים את הצ'אקרוק 31 – אסף לב וליאור אררייך – 06/06/2024	https://zerockradio.com/episodes/chackrock-06062024/	https://zerockradio.com/wp-admin/post.php?post=11950&action=edit
+11939	2024-06-05	טופ אוף דה רוק – טל סיון ובר קציר 6/6/24	https://zerockradio.com/episodes/toprock-060624/	https://zerockradio.com/wp-admin/post.php?post=11939&action=edit
+11933	2024-06-05	On Air 25 – רועי קופרמן 5/6/24	https://zerockradio.com/episodes/on-air-050624/	https://zerockradio.com/wp-admin/post.php?post=11933&action=edit
+11932	2024-06-05	The Drop 72 – טל אופיר 5/6/24	https://zerockradio.com/episodes/drop-050624/	https://zerockradio.com/wp-admin/post.php?post=11932&action=edit
+11929	2024-06-04	Ze Rock Porto 75 – אלעד אביגן 4/6/24	https://zerockradio.com/episodes/zrp-040624/	https://zerockradio.com/wp-admin/post.php?post=11929&action=edit
+11921	2024-06-03	מסע הצלב של איתמר ענברי 73 – 3/6/24	https://zerockradio.com/episodes/crusade-030624/	https://zerockradio.com/wp-admin/post.php?post=11921&action=edit
+11919	2024-06-03	זה פרוג – ערן הר-פז 3/6/24	https://zerockradio.com/episodes/prog-030624/	https://zerockradio.com/wp-admin/post.php?post=11919&action=edit
+11906	2024-05-30	טופ אוף דה רוק – טל סיון ובר קציר 30/5/24	https://zerockradio.com/episodes/toprock-300524/	https://zerockradio.com/wp-admin/post.php?post=11906&action=edit
+11897	2024-05-29	On Air 24 – רועי קופרמן 29/5/24	https://zerockradio.com/episodes/on-air-290524/	https://zerockradio.com/wp-admin/post.php?post=11897&action=edit
+11890	2024-05-27	Mostly Harmless 56 – ירון הורינג 27/05/2024	https://zerockradio.com/episodes/mostly-harmless-27052024/	https://zerockradio.com/wp-admin/post.php?post=11890&action=edit
+11889	2024-05-27	מסע הצלב של איתמר ענברי 72 – 27/05/2024	https://zerockradio.com/episodes/crusade-27052024/	https://zerockradio.com/wp-admin/post.php?post=11889&action=edit
+11864	2024-05-23	טופ אוף דה רוק – טל סיוון ובר קציר 23/5/24	https://zerockradio.com/episodes/toprock-230524/	https://zerockradio.com/wp-admin/post.php?post=11864&action=edit
+11860	2024-05-22	On Air 23 – רועי קופרמן 22/5/24	https://zerockradio.com/episodes/on-air-220524/	https://zerockradio.com/wp-admin/post.php?post=11860&action=edit
+11855	2024-05-22	Mixtape 5 – גלית קורני 22/05/2024	https://zerockradio.com/episodes/mixtape-522052024/	https://zerockradio.com/wp-admin/post.php?post=11855&action=edit
+11852	2024-05-21	Ze Rock Porto 74 – אלעד אביגן 21/5/24	https://zerockradio.com/episodes/zrp-210524/	https://zerockradio.com/wp-admin/post.php?post=11852&action=edit
+11846	2024-05-20	Mostly Harmless 55 – ירון הורינג 20/5/24	https://zerockradio.com/episodes/mostly-harmless-200524/	https://zerockradio.com/wp-admin/post.php?post=11846&action=edit
+11836	2024-05-20	זה פרוג – ערן הר-פז 20/5/24	https://zerockradio.com/episodes/prog-200524/	https://zerockradio.com/wp-admin/post.php?post=11836&action=edit
+11824	2024-05-16	טופ אוף דה רוק – טל סיוון ובר קציר 16/5/24	https://zerockradio.com/episodes/toprock-160524/	https://zerockradio.com/wp-admin/post.php?post=11824&action=edit
+11820	2024-05-15	On Air 22 – רועי קופרמן 15/5/24	https://zerockradio.com/episodes/on-air-150524/	https://zerockradio.com/wp-admin/post.php?post=11820&action=edit
+11818	2024-05-15	מיקסטייפ 4 – גלית קורני 15/05/2024	https://zerockradio.com/episodes/mixtape-15052024/	https://zerockradio.com/wp-admin/post.php?post=11818&action=edit
+11776	2024-05-08	On Air 21 – רועי קופרמן 8/5/24	https://zerockradio.com/episodes/on-air-080525/	https://zerockradio.com/wp-admin/post.php?post=11776&action=edit
+11781	2024-05-08	Mixtape 3- גלית קורני 08/05/2024	https://zerockradio.com/episodes/mixtape-08052024/	https://zerockradio.com/wp-admin/post.php?post=11781&action=edit
+11775	2024-05-08	The Drop – Eurockvision special Pt.2 – סיון פישמן 8/5/24	https://zerockradio.com/episodes/drop-08052024/	https://zerockradio.com/wp-admin/post.php?post=11775&action=edit
+11773	2024-05-07	The Drop – Eurockvision Special Pt. 1 – סיון פישמן 7/5/24	https://zerockradio.com/episodes/drop-070524/	https://zerockradio.com/wp-admin/post.php?post=11773&action=edit
+11747	2024-05-02	טופ אוף דה רוק – טל סיוון ובר קציר 2/5/24	https://zerockradio.com/episodes/toprock-020524/	https://zerockradio.com/wp-admin/post.php?post=11747&action=edit
+11742	2024-05-01	Mixtape 2 – גלית קורני 1/5/24	https://zerockradio.com/episodes/mixtape-010524/	https://zerockradio.com/wp-admin/post.php?post=11742&action=edit
+11727	2024-04-30	On Air 20 – רועי קופרמן 24/4/24	https://zerockradio.com/episodes/on-air-240424/	https://zerockradio.com/wp-admin/post.php?post=11727&action=edit
+11720	2024-04-30	Ze Rock Porto 71 – אלעד אביגן	https://zerockradio.com/episodes/zrp-300424/	https://zerockradio.com/wp-admin/post.php?post=11720&action=edit
+11700	2024-04-18	טופ אוף דה רוק – טל סיון ובר קציר 18/4/24	https://zerockradio.com/episodes/toprock-180424/	https://zerockradio.com/wp-admin/post.php?post=11700&action=edit
+11690	2024-04-17	On Air 19 – רועי קופרמן 17/4/24	https://zerockradio.com/episodes/on-air-170424/	https://zerockradio.com/wp-admin/post.php?post=11690&action=edit
+11697	2024-04-17	Mixtape – תכנית הבכורה! – גלית קורני 17/04/2024	https://zerockradio.com/episodes/mixtape-17042024/	https://zerockradio.com/wp-admin/post.php?post=11697&action=edit
+11682	2024-04-16	The Drop 71 – טל אופיר 16/4/24	https://zerockradio.com/episodes/drop-160424/	https://zerockradio.com/wp-admin/post.php?post=11682&action=edit
+11677	2024-04-15	Mostly Harmless 54 – ירון הורינג 15/4/24	https://zerockradio.com/episodes/mostly-harmless-150424/	https://zerockradio.com/wp-admin/post.php?post=11677&action=edit
+11675	2024-04-15	מסע הצלב של איתמר ענברי 71 – 15/04/2024	https://zerockradio.com/episodes/crusade-15042024/	https://zerockradio.com/wp-admin/post.php?post=11675&action=edit
+11671	2024-04-15	זה פרוג – ערן הר-פז 15/4/24	https://zerockradio.com/episodes/prog-150424/	https://zerockradio.com/wp-admin/post.php?post=11671&action=edit
+11653	2024-04-11	טופ אוף דה רוק – טל סיון ובר קציר 11/4/24	https://zerockradio.com/episodes/toprock-110424/	https://zerockradio.com/wp-admin/post.php?post=11653&action=edit
+11648	2024-04-10	On Air 18 – רועי קופרמן 10/4/24	https://zerockradio.com/episodes/on-air-100424/	https://zerockradio.com/wp-admin/post.php?post=11648&action=edit
+11651	2024-04-10	The Drop 70 – סיון פישמן 10/4/24	https://zerockradio.com/episodes/drop-100424/	https://zerockradio.com/wp-admin/post.php?post=11651&action=edit
+11639	2024-04-09	Ze Rock Porto 70 – אלעד אביגן 9/4/24	https://zerockradio.com/episodes/zrp-090424/	https://zerockradio.com/wp-admin/post.php?post=11639&action=edit
+11638	2024-04-09	The Drop 69 – טל אופיר 9/4/24	https://zerockradio.com/episodes/drop-090424/	https://zerockradio.com/wp-admin/post.php?post=11638&action=edit
+11634	2024-04-08	Mostly Harmless 53 – ירון הורינג 8/4/24	https://zerockradio.com/episodes/mostly-harmless-080424/	https://zerockradio.com/wp-admin/post.php?post=11634&action=edit
+11633	2024-04-08	מסע הצלב של איתמר ענברי 70 – 8/4/24	https://zerockradio.com/episodes/crusade-080424/	https://zerockradio.com/wp-admin/post.php?post=11633&action=edit
+11613	2024-04-04	טופ אוף דה רוק – טל סיון ובר קציר 4/4/24	https://zerockradio.com/episodes/toprock-040424/	https://zerockradio.com/wp-admin/post.php?post=11613&action=edit
+11603	2024-04-03	On Air 17 – רועי קופרמן 3/4/24	https://zerockradio.com/episodes/on-air-030424/	https://zerockradio.com/wp-admin/post.php?post=11603&action=edit
+11608	2024-04-03	הדרופ 68 – סיון פישמן 03/04/2024	https://zerockradio.com/episodes/drop-03042024/	https://zerockradio.com/wp-admin/post.php?post=11608&action=edit
+11599	2024-04-02	Ze Rock Porto 69 – אלעד אביגן 2/4/24	https://zerockradio.com/episodes/zrp-020424/	https://zerockradio.com/wp-admin/post.php?post=11599&action=edit
+11592	2024-04-01	Mostly Harmless 52 – ירון הורינג 1/4/24	https://zerockradio.com/episodes/mostly-harmless-010424/	https://zerockradio.com/wp-admin/post.php?post=11592&action=edit
+11589	2024-04-01	מסע הצלב של איתמר ענברי 69 – 1/4/24	https://zerockradio.com/episodes/crusade-010424/	https://zerockradio.com/wp-admin/post.php?post=11589&action=edit
+11587	2024-04-01	זה פרוג – ערן הר-פז 1/4/24	https://zerockradio.com/episodes/prog-010424/	https://zerockradio.com/wp-admin/post.php?post=11587&action=edit
+11573	2024-03-29	פותחים את הצ׳אקרוק 29 – 28/3/24	https://zerockradio.com/episodes/chakrock-280329/	https://zerockradio.com/wp-admin/post.php?post=11573&action=edit
+11567	2024-03-28	טופ אוף דה רוק – טל סיוון ובר קציר 28/3/24	https://zerockradio.com/episodes/toprock-280324/	https://zerockradio.com/wp-admin/post.php?post=11567&action=edit
+11558	2024-03-27	On Air 16 – רועי קופרמן 27/3/24	https://zerockradio.com/episodes/on-air-270324/	https://zerockradio.com/wp-admin/post.php?post=11558&action=edit
+11560	2024-03-27	The Drop 67 – סיון פישמן 27/3/24	https://zerockradio.com/episodes/drop-270324/	https://zerockradio.com/wp-admin/post.php?post=11560&action=edit
+11550	2024-03-26	The Drop 66 – טל אופיר 26/3/24	https://zerockradio.com/episodes/drop-260324/	https://zerockradio.com/wp-admin/post.php?post=11550&action=edit
+11511	2024-03-21	טופ אוף דה רוק – טל סיוון ובר קציר 21/3/24	https://zerockradio.com/episodes/toprock-210324/	https://zerockradio.com/wp-admin/post.php?post=11511&action=edit
+11502	2024-03-20	On Air 15 – רועי קופרמן 20/3/24	https://zerockradio.com/episodes/on-air-200324/	https://zerockradio.com/wp-admin/post.php?post=11502&action=edit
+11506	2024-03-20	The Drop 65 – סיון פישמן 20/3/24	https://zerockradio.com/episodes/drop-200324/	https://zerockradio.com/wp-admin/post.php?post=11506&action=edit
+11495	2024-03-19	זה רוק פורטו 68 – אלעד אביגן 19/3/24	https://zerockradio.com/episodes/zrp-190324/	https://zerockradio.com/wp-admin/post.php?post=11495&action=edit
+11494	2024-03-19	The Drop 64 – טל אופיר 19/3/24	https://zerockradio.com/episodes/drop-190324/	https://zerockradio.com/wp-admin/post.php?post=11494&action=edit
+11490	2024-03-18	Mostly Harmless 51 – ירון הורינג 18/3/24	https://zerockradio.com/episodes/mostly-harmless-180324/	https://zerockradio.com/wp-admin/post.php?post=11490&action=edit
+11486	2024-03-18	זה פרוג – ערן הר-פז 18/3/24	https://zerockradio.com/episodes/prog-180324/	https://zerockradio.com/wp-admin/post.php?post=11486&action=edit
+11469	2024-03-15	מיכאל קוגן – חצי מרתון 15/3/24	https://zerockradio.com/episodes/kogan-150324/	https://zerockradio.com/wp-admin/post.php?post=11469&action=edit
+11465	2024-03-14	טופ אוף דה רוק – טל סיון ובר קציר 14/3/24	https://zerockradio.com/episodes/toprock-140324/	https://zerockradio.com/wp-admin/post.php?post=11465&action=edit
+11460	2024-03-13	On Air 14 – רועי קופרמן 13/3/24	https://zerockradio.com/episodes/on-air-130324/	https://zerockradio.com/wp-admin/post.php?post=11460&action=edit
+11459	2024-03-13	The Drop 63 -סיון פישמן 13/3/24	https://zerockradio.com/episodes/drop-130324/	https://zerockradio.com/wp-admin/post.php?post=11459&action=edit
+11455	2024-03-12	זה רוק פורטו 67 – אלעד אביגן 12/3/24	https://zerockradio.com/episodes/zrp-120324/	https://zerockradio.com/wp-admin/post.php?post=11455&action=edit
+11451	2024-03-12	The Drop 62 – טל אופיר 12/3/24	https://zerockradio.com/episodes/drop-120324/	https://zerockradio.com/wp-admin/post.php?post=11451&action=edit
+11448	2024-03-11	Mostly Harmless 50 – ירון הורינג 11/3/24	https://zerockradio.com/episodes/mostlyharmless-110324/	https://zerockradio.com/wp-admin/post.php?post=11448&action=edit
+11443	2024-03-11	מסע הצלב של איתמר ענברי – 11/3/24	https://zerockradio.com/episodes/crusade-110324/	https://zerockradio.com/wp-admin/post.php?post=11443&action=edit
+11420	2024-03-06	On Air 13 – רועי קופרמן 6/3/24	https://zerockradio.com/episodes/on-air-060324/	https://zerockradio.com/wp-admin/post.php?post=11420&action=edit
+11412	2024-03-05	זה רוק פורטו 66 – אלעד אביגן 5/3/24	https://zerockradio.com/episodes/zrp-050324/	https://zerockradio.com/wp-admin/post.php?post=11412&action=edit
+11417	2024-03-05	The Drop 61 – טל אופיר 5/3/24	https://zerockradio.com/episodes/drop-050324/	https://zerockradio.com/wp-admin/post.php?post=11417&action=edit
+11410	2024-03-04	Mostly Harmless 49 – ירון הורינג 4/3/24	https://zerockradio.com/episodes/mostly-harmless-040324/	https://zerockradio.com/wp-admin/post.php?post=11410&action=edit
+11404	2024-03-04	מסע הצלב של איתמר ענברי 67 – 4/3/24	https://zerockradio.com/episodes/crusade-040324/	https://zerockradio.com/wp-admin/post.php?post=11404&action=edit
+11391	2024-02-29	פותחים את הצ׳אקרוק 32 – אסף לב וליאור אררייך 29/2/24	https://zerockradio.com/episodes/chakrock-290224/	https://zerockradio.com/wp-admin/post.php?post=11391&action=edit
+11382	2024-02-29	טופ אוף דה רוק – טל סיוון ובר קציר 29/2/24	https://zerockradio.com/episodes/toprock-290224/	https://zerockradio.com/wp-admin/post.php?post=11382&action=edit
+11378	2024-02-28	On Air 12 – רועי קופרמן 28/2/27	https://zerockradio.com/episodes/on-air-280224/	https://zerockradio.com/wp-admin/post.php?post=11378&action=edit
+11377	2024-02-28	The Drop – Jonny Hawkins 28/2/24	https://zerockradio.com/episodes/drop-280224/	https://zerockradio.com/wp-admin/post.php?post=11377&action=edit
+11370	2024-02-27	Ze Rock Porto 65 – אלעד אביגן 27/2/24	https://zerockradio.com/episodes/zrp-270224/	https://zerockradio.com/wp-admin/post.php?post=11370&action=edit
+11369	2024-02-26	Mostly Harmless 48 – ירון הורינג	https://zerockradio.com/episodes/mostly-harmless-260224/	https://zerockradio.com/wp-admin/post.php?post=11369&action=edit
+11364	2024-02-26	מסע הצלב של איתמר ענברי 66 – 26/2/24	https://zerockradio.com/episodes/crusade-260224/	https://zerockradio.com/wp-admin/post.php?post=11364&action=edit
+11349	2024-02-22	Top of the Rock – טל סיוון ובר קציר 22/2/24	https://zerockradio.com/episodes/toprock-220224/	https://zerockradio.com/wp-admin/post.php?post=11349&action=edit
+11342	2024-02-21	On Air 11 – רועי קופרמן 21/2/24	https://zerockradio.com/episodes/on-air-210224/	https://zerockradio.com/wp-admin/post.php?post=11342&action=edit
+11341	2024-02-21	The Drop 59 – טל אופיר 21/2/24	https://zerockradio.com/episodes/drop-210224/	https://zerockradio.com/wp-admin/post.php?post=11341&action=edit
+11332	2024-02-20	זה רוק פורטו 64 – אלעד אביגן	https://zerockradio.com/episodes/zrp-200224/	https://zerockradio.com/wp-admin/post.php?post=11332&action=edit
+11336	2024-02-20	The Drop 58 – סיון פישמן 20/2/24	https://zerockradio.com/episodes/drop-200224/	https://zerockradio.com/wp-admin/post.php?post=11336&action=edit
+11327	2024-02-19	Mostly Harmless 47 – ירון הורינג 19/2/24	https://zerockradio.com/episodes/mostly-harmless-19-2-24/	https://zerockradio.com/wp-admin/post.php?post=11327&action=edit
+11325	2024-02-19	מסע הצלב של איתמר ענברי 65 – 19/2/24	https://zerockradio.com/episodes/crusade-190224/	https://zerockradio.com/wp-admin/post.php?post=11325&action=edit
+11309	2024-02-15	Top of the Rock – טל סיוון ובר קציר 15/2/24	https://zerockradio.com/episodes/toprock-150224/	https://zerockradio.com/wp-admin/post.php?post=11309&action=edit
+11302	2024-02-14	On Air 10 – רועי קופרמן 14/2/24	https://zerockradio.com/episodes/on-air-140124/	https://zerockradio.com/wp-admin/post.php?post=11302&action=edit
+11297	2024-02-13	The Drop 57 – סיון פישמן 12/2/24	https://zerockradio.com/episodes/drop-130224/	https://zerockradio.com/wp-admin/post.php?post=11297&action=edit
+11293	2024-02-12	Mostly Harmless 46 – ירון הורינג 12/02/2024	https://zerockradio.com/episodes/mostly-harmless-12022024/	https://zerockradio.com/wp-admin/post.php?post=11293&action=edit
+11291	2024-02-12	מסע הצלב של איתמר ענברי 64 – 12/02/2024	https://zerockradio.com/episodes/crusade-12022024/	https://zerockradio.com/wp-admin/post.php?post=11291&action=edit
+11285	2024-02-12	זה פרוג – ערן הר-פז 12/2/24	https://zerockradio.com/episodes/prog-120224/	https://zerockradio.com/wp-admin/post.php?post=11285&action=edit
+11268	2024-02-08	Top of the Rock – טל סיון ובר קציר 8/2/24	https://zerockradio.com/episodes/toprock-080224/	https://zerockradio.com/wp-admin/post.php?post=11268&action=edit
+11261	2024-02-07	On Air 09 – רועי קופרמן 7/2/24	https://zerockradio.com/episodes/on-air-070224/	https://zerockradio.com/wp-admin/post.php?post=11261&action=edit
+11260	2024-02-07	The Drop 56 – טל אופיר 7/2/24	https://zerockradio.com/episodes/drop-070224/	https://zerockradio.com/wp-admin/post.php?post=11260&action=edit
+11257	2024-02-06	זה רוק פורטו 63 – אלעד אביגן 6/2/24	https://zerockradio.com/episodes/zrp-060224/	https://zerockradio.com/wp-admin/post.php?post=11257&action=edit
+11251	2024-02-05	מסע הצלב של איתמר ענברי 63 – 5/2/24	https://zerockradio.com/episodes/crusade-050224/	https://zerockradio.com/wp-admin/post.php?post=11251&action=edit
+11229	2024-02-01	Top of the Rock – טל סיוון ובר קציר 1/2/24	https://zerockradio.com/episodes/top-rock-010224/	https://zerockradio.com/wp-admin/post.php?post=11229&action=edit
+11222	2024-01-31	On Air 08 – רועי קופרמן 31/1/24	https://zerockradio.com/episodes/on-air-310124/	https://zerockradio.com/wp-admin/post.php?post=11222&action=edit
+11223	2024-01-31	The Drop – Dead Poet Society Special סיון פישמן 31/1/24	https://zerockradio.com/episodes/drop-310124/	https://zerockradio.com/wp-admin/post.php?post=11223&action=edit
+11218	2024-01-30	זה רוק פורטו 62 – אלעד אביגן 30/1/24	https://zerockradio.com/episodes/zrp-300124/	https://zerockradio.com/wp-admin/post.php?post=11218&action=edit
+11216	2024-01-30	The Drop 53 -טל אופיר 30/1/24	https://zerockradio.com/episodes/drop-300124/	https://zerockradio.com/wp-admin/post.php?post=11216&action=edit
+11211	2024-01-29	Mostly Harmless 45 – ירון הורינג 29/01/2024	https://zerockradio.com/episodes/mostly-harmless-29012024/	https://zerockradio.com/wp-admin/post.php?post=11211&action=edit
+11209	2024-01-29	מסע הצלב של איתמר ענברי 62 – 29/01/2024	https://zerockradio.com/episodes/crusade-29012024/	https://zerockradio.com/wp-admin/post.php?post=11209&action=edit
+11198	2024-01-27	פותחים את הצ׳אקרוק 31 – אסף לב וליאור אררייך – 25/01/2024	https://zerockradio.com/episodes/chackrock-25012024/	https://zerockradio.com/wp-admin/post.php?post=11198&action=edit
+11180	2024-01-25	Top of the Rock – טל סיון ובר קציר 25/1/24	https://zerockradio.com/episodes/toprock-250124/	https://zerockradio.com/wp-admin/post.php?post=11180&action=edit
+11156	2024-01-24	On Air 7 – רועי קופרמן 24/1/24	https://zerockradio.com/episodes/on-air-240124/	https://zerockradio.com/wp-admin/post.php?post=11156&action=edit
+11155	2024-01-24	The Drop 52 -טל אופיר 24/1/24	https://zerockradio.com/episodes/drop-240124/	https://zerockradio.com/wp-admin/post.php?post=11155&action=edit
+11154	2024-01-23	זה רוק פורטו 61 -אלעד אביגן 23/1/24	https://zerockradio.com/episodes/porto-230124/	https://zerockradio.com/wp-admin/post.php?post=11154&action=edit
+11152	2024-01-23	The Drop 51 – סיון פישמן 23/1/24	https://zerockradio.com/episodes/drop-230124/	https://zerockradio.com/wp-admin/post.php?post=11152&action=edit
+11147	2024-01-22	Mostly Harmless 44 – ירון הורינג 22/01/2024	https://zerockradio.com/episodes/mostly-harmless-22012024/	https://zerockradio.com/wp-admin/post.php?post=11147&action=edit
+11145	2024-01-22	מסע הצלב של איתמר ענברי 61 – 22/01/2024	https://zerockradio.com/episodes/crusade-22012024/	https://zerockradio.com/wp-admin/post.php?post=11145&action=edit
+11143	2024-01-22	זה פרוג – ערן הר-פז 22/01/2024	https://zerockradio.com/episodes/ze-prog-22012024/	https://zerockradio.com/wp-admin/post.php?post=11143&action=edit
+11119	2024-01-17	On Air 6 – רועי קופרמן 17/1/24	https://zerockradio.com/episodes/on-air-170124/	https://zerockradio.com/wp-admin/post.php?post=11119&action=edit
+11122	2024-01-17	The Drop 50 – טל אופיר 17/1/24	https://zerockradio.com/episodes/drop-170124/	https://zerockradio.com/wp-admin/post.php?post=11122&action=edit
+11113	2024-01-16	זה רוק פורטו 60 – אלעד אביגן 16/1/24	https://zerockradio.com/episodes/zrp-160124/	https://zerockradio.com/wp-admin/post.php?post=11113&action=edit
+11079	2024-01-11	טופ אוף דה רוק – טל סיון ובר קציר 11/1/24	https://zerockradio.com/episodes/totr-110124/	https://zerockradio.com/wp-admin/post.php?post=11079&action=edit
+11070	2024-01-10	On Air 5 – רועי קופרמן 10/1/24	https://zerockradio.com/episodes/on-air-100124/	https://zerockradio.com/wp-admin/post.php?post=11070&action=edit
+11069	2024-01-10	The Drop 49 – טל אופיר 10/1/24	https://zerockradio.com/episodes/the-drop-100124/	https://zerockradio.com/wp-admin/post.php?post=11069&action=edit
+11061	2024-01-09	The Drop 48 – סיון פישמן 9/1/24	https://zerockradio.com/episodes/the-drop-090124/	https://zerockradio.com/wp-admin/post.php?post=11061&action=edit
+11054	2024-01-08	Mostly Harmless 43 – ירון הורינג 8/1/24	https://zerockradio.com/episodes/mostly-harmless-080124/	https://zerockradio.com/wp-admin/post.php?post=11054&action=edit
+11052	2024-01-08	מסע הצלב של איתמר ענברי 60 -8/1/24	https://zerockradio.com/episodes/crusade-080124/	https://zerockradio.com/wp-admin/post.php?post=11052&action=edit
+11050	2024-01-08	זה פרוג – ערן הר-פז 8/1/24	https://zerockradio.com/episodes/ze-prog-080124/	https://zerockradio.com/wp-admin/post.php?post=11050&action=edit
+11027	2024-01-03	On Air 4- רועי קופרמן 3/1/24	https://zerockradio.com/episodes/on-air-030124/	https://zerockradio.com/wp-admin/post.php?post=11027&action=edit
+11026	2024-01-03	The Drop – טל אופיר 3/1/24	https://zerockradio.com/episodes/the-drop-tal-030124/	https://zerockradio.com/wp-admin/post.php?post=11026&action=edit
+11021	2024-01-02	The Drop 46 – סיון פישמן 02/01/2024	https://zerockradio.com/episodes/the-drop-02012024/	https://zerockradio.com/wp-admin/post.php?post=11021&action=edit
+11007	2023-12-31	טופ אוף דה רוק – טל סיון ובר קציר 28/12/23	https://zerockradio.com/episodes/top-rock-281223/	https://zerockradio.com/wp-admin/post.php?post=11007&action=edit
+11001	2023-12-31	On Air 3 – רועי קופרמן 27/12/23	https://zerockradio.com/episodes/on-air-271223/	https://zerockradio.com/wp-admin/post.php?post=11001&action=edit
+10986	2023-12-28	Mostly Harmless 42 – ירון הורינג 25/12/2023	https://zerockradio.com/episodes/mostly-harmless-25122023/	https://zerockradio.com/wp-admin/post.php?post=10986&action=edit
+10982	2023-12-28	מסע הצלב של איתמר ענברי – 25.12.23	https://zerockradio.com/episodes/crusade-251223/	https://zerockradio.com/wp-admin/post.php?post=10982&action=edit
+10977	2023-12-28	זה פרוג – ערן הר-פז 25.12.23	https://zerockradio.com/episodes/ze-prog-251223/	https://zerockradio.com/wp-admin/post.php?post=10977&action=edit
+10958	2023-12-24	On Air 2 – רועי קופרמן 20/12/2023	https://zerockradio.com/episodes/on-air-20122023/	https://zerockradio.com/wp-admin/post.php?post=10958&action=edit
+10954	2023-12-24	The Drop – סיכום 2023 – סיון פישמן וטל אופיר – 19/12/2023	https://zerockradio.com/episodes/drop-19122023/	https://zerockradio.com/wp-admin/post.php?post=10954&action=edit
+10953	2023-12-24	Ze Rock Porto – Songs of Hope and Freedom 7 – אלעד אביגן 19/12/2023	https://zerockradio.com/episodes/zrp-19122023/	https://zerockradio.com/wp-admin/post.php?post=10953&action=edit
+10945	2023-12-19	מסע הצלב של איתמר ענברי 58 – 18/12/2023	https://zerockradio.com/episodes/crusade-18122023/	https://zerockradio.com/wp-admin/post.php?post=10945&action=edit
+10930	2023-12-17	פותחים את הצ'אקרוק 30 – דצמבר 2023 – אסף לב וליאור אררייך 14/12/2023	https://zerockradio.com/episodes/chackrock-14122023/	https://zerockradio.com/wp-admin/post.php?post=10930&action=edit
+10924	2023-12-17	טופ אוף זה רוק – טל סיון ובר קציר 14/12/2023	https://zerockradio.com/episodes/top-rock-14122023/	https://zerockradio.com/wp-admin/post.php?post=10924&action=edit
+10920	2023-12-17	On Air – תכנית הבכורה! – רועי קופרמן 13/12/2023	https://zerockradio.com/episodes/on-air-13122023/	https://zerockradio.com/wp-admin/post.php?post=10920&action=edit
+10916	2023-12-17	The Drop 46 – סיון פישמן 12/12/2023	https://zerockradio.com/episodes/the-drop-12122023/	https://zerockradio.com/wp-admin/post.php?post=10916&action=edit
+10907	2023-12-13	Mostly Harmless 41 – ירון הורינג 11/12/2023	https://zerockradio.com/episodes/mostly-harmless-11-12-2023/	https://zerockradio.com/wp-admin/post.php?post=10907&action=edit
+10905	2023-12-13	מסע הצלב של איתמר ענברי 57 – 11/12/2023	https://zerockradio.com/episodes/crusade-11122023/	https://zerockradio.com/wp-admin/post.php?post=10905&action=edit
+10890	2023-12-12	טופ אוף דה רוק – כריס סטייפלטון – טל סיון ובר קציר 07/12/2023	https://zerockradio.com/episodes/top-rock-07122023/	https://zerockradio.com/wp-admin/post.php?post=10890&action=edit
+10882	2023-12-12	The Drop 45 – טל אופיר 05/12/2023	https://zerockradio.com/episodes/the-drop-05122023/	https://zerockradio.com/wp-admin/post.php?post=10882&action=edit
+10881	2023-12-12	Ze Rock Porto – Songs of Hope and Freedom 6 – אלעד אביגן 05/12/2023	https://zerockradio.com/episodes/zrp-05122023/	https://zerockradio.com/wp-admin/post.php?post=10881&action=edit
+10866	2023-12-05	Mostly Harmless 40 – ירון הורינג 04/12/2023	https://zerockradio.com/episodes/mostly-harmless-04122023/	https://zerockradio.com/wp-admin/post.php?post=10866&action=edit
+10864	2023-12-05	מסע הצלב של איתמר ענברי 56 – 04/12/2023	https://zerockradio.com/episodes/crusade-04122023/	https://zerockradio.com/wp-admin/post.php?post=10864&action=edit
+10850	2023-12-03	טופ אוף דה רוק – טל סיון ובר קציר – 30/11/2023	https://zerockradio.com/episodes/top-rock-30112023/	https://zerockradio.com/wp-admin/post.php?post=10850&action=edit
+10834	2023-11-28	The Drop 44 – סיון פישמן 28/11/2023	https://zerockradio.com/episodes/the-drop-28112023/	https://zerockradio.com/wp-admin/post.php?post=10834&action=edit
+10833	2023-11-28	Ze Rock Porto – אלעד אביגן 28/11/2023	https://zerockradio.com/episodes/zrp-28112023/	https://zerockradio.com/wp-admin/post.php?post=10833&action=edit
+10826	2023-11-28	Mostly Harmless 39 – ירון הורינג 27/11/2023	https://zerockradio.com/episodes/mostly-harmless-27112023/	https://zerockradio.com/wp-admin/post.php?post=10826&action=edit
+10824	2023-11-28	מסע הצלב של איתמר ענברי 55 – 27/11/2023	https://zerockradio.com/episodes/crusade-27112023/	https://zerockradio.com/wp-admin/post.php?post=10824&action=edit
+10823	2023-11-28	זה פרוג – ערן הר-פז 27/11/2023	https://zerockradio.com/episodes/ze-prog-27112023/	https://zerockradio.com/wp-admin/post.php?post=10823&action=edit
+10808	2023-11-25	טופ אוף דה רוק – טל סיון ובר קציר 23/11/2023	https://zerockradio.com/episodes/top-rock-23112023/	https://zerockradio.com/wp-admin/post.php?post=10808&action=edit
+10798	2023-11-25	The Drop 43 – טל אופיר 21/11/2-23	https://zerockradio.com/episodes/the-drop-21112023/	https://zerockradio.com/wp-admin/post.php?post=10798&action=edit
+10797	2023-11-25	Ze Rock Porto – אלעד אביגן 21/11/2023	https://zerockradio.com/episodes/zrp-21112023/	https://zerockradio.com/wp-admin/post.php?post=10797&action=edit
+10789	2023-11-23	Mostly Harmless 38 – ירון הורינג 20/11/2023	https://zerockradio.com/episodes/mostly-harmless-20112023/	https://zerockradio.com/wp-admin/post.php?post=10789&action=edit
+10788	2023-11-23	מסע הצלב של איתמר עינברי 54 – 20/11/2023	https://zerockradio.com/episodes/crusade-20112023/	https://zerockradio.com/wp-admin/post.php?post=10788&action=edit
+10755	2023-11-18	The Drop 42 – סיון פישמן 141//12023	https://zerockradio.com/episodes/the-drop-14112023/	https://zerockradio.com/wp-admin/post.php?post=10755&action=edit
+10753	2023-11-18	Ze Rock Porto – אלעד אביגן 14/11/2023	https://zerockradio.com/episodes/zrp-14112023/	https://zerockradio.com/wp-admin/post.php?post=10753&action=edit
+10748	2023-11-18	Mostly Harmless 37 – ירון הורינג 13/11/2023	https://zerockradio.com/episodes/mostly-harmless-13112023/	https://zerockradio.com/wp-admin/post.php?post=10748&action=edit
+10746	2023-11-18	מסע הצלב של איתמר ענברי 53 – 13/11/2023	https://zerockradio.com/episodes/crusade-13112023/	https://zerockradio.com/wp-admin/post.php?post=10746&action=edit
+10731	2023-11-14	טופ אוף דה רוק – טל סיון ובר קציר 09/11/2023	https://zerockradio.com/episodes/top-rock-09112023/	https://zerockradio.com/wp-admin/post.php?post=10731&action=edit
+10722	2023-11-14	The Drop 41 – טל אופיר 07/11/2023	https://zerockradio.com/episodes/the-drop-07112023/	https://zerockradio.com/wp-admin/post.php?post=10722&action=edit
+10710	2023-11-06	Mostly Harmless 36 – ירון הורינג 06/11/2023	https://zerockradio.com/episodes/mostly-harmless-06112023/	https://zerockradio.com/wp-admin/post.php?post=10710&action=edit
+10708	2023-11-06	מסע הצלב של איתמר ענברי 52 – 06/11/2023	https://zerockradio.com/episodes/crusade-06112023/	https://zerockradio.com/wp-admin/post.php?post=10708&action=edit
+10696	2023-11-04	טופ אוף דה רוק – טל סיון ובר קציר 02/11/2023	https://zerockradio.com/episodes/top-rock-02112023/	https://zerockradio.com/wp-admin/post.php?post=10696&action=edit
+10687	2023-11-04	The Drop 40 – סיון פישמן 31/10/2023	https://zerockradio.com/episodes/the-drop-31102023/	https://zerockradio.com/wp-admin/post.php?post=10687&action=edit
+10686	2023-11-04	Ze Rock Porto – אלעד אביגן 31/10/2023	https://zerockradio.com/episodes/zrp-31102023/	https://zerockradio.com/wp-admin/post.php?post=10686&action=edit
+10679	2023-11-04	Mostly Harmless 35 – ירון הורינג 30/10/2023	https://zerockradio.com/episodes/mostly-harmless-30102023/	https://zerockradio.com/wp-admin/post.php?post=10679&action=edit
+10667	2023-10-30	פותחים את הצ'אקרוק 29 – אסף לב וליאור אררייך 26/10/2023	https://zerockradio.com/episodes/chacrock-26102023/	https://zerockradio.com/wp-admin/post.php?post=10667&action=edit
+10656	2023-10-30	The Drop 39 – סיון פישמן 24/10/2023	https://zerockradio.com/episodes/the-drop-24102023/	https://zerockradio.com/wp-admin/post.php?post=10656&action=edit
+10655	2023-10-30	Ze Rock Porto – אלעד אביגן 24/10/2023	https://zerockradio.com/episodes/zrp-24102023/	https://zerockradio.com/wp-admin/post.php?post=10655&action=edit
+10646	2023-10-24	Mostly Harmless 34 – ירון הורינג 23/10/2023	https://zerockradio.com/episodes/mostly-harmless-23102023/	https://zerockradio.com/wp-admin/post.php?post=10646&action=edit
+10645	2023-10-24	מסע הצלב של איתמר ענברי 51 – 23/10/2023	https://zerockradio.com/episodes/crusade-23102023/	https://zerockradio.com/wp-admin/post.php?post=10645&action=edit
+10635	2023-10-23	טופ אוף דה רוק – טל סיון ובר קציר 19/10/2023	https://zerockradio.com/episodes/top-rock-19102023/	https://zerockradio.com/wp-admin/post.php?post=10635&action=edit
+10629	2023-10-23	The Drop – טל אופיר וסיון פישמן 17/10/2023	https://zerockradio.com/episodes/drop-17102023/	https://zerockradio.com/wp-admin/post.php?post=10629&action=edit
+10621	2023-10-19	Mostly Harmless 33 – ירון הורינג 16/10/2023	https://zerockradio.com/episodes/mostly-harmless-16102023/	https://zerockradio.com/wp-admin/post.php?post=10621&action=edit
+10620	2023-10-19	מסע הצלב של איתמר ענברי 50 – 16/10/2023	https://zerockradio.com/episodes/crusade-16102023/	https://zerockradio.com/wp-admin/post.php?post=10620&action=edit
+10598	2023-10-11	Mostly Harmless 32 – ירון הורינג 09/10/2023	https://zerockradio.com/episodes/mostly-harmless-09102023/	https://zerockradio.com/wp-admin/post.php?post=10598&action=edit
+10597	2023-10-11	מסע הצלב של איתמר ענברי 49 – 09/10/2023	https://zerockradio.com/episodes/crusade-09102023/	https://zerockradio.com/wp-admin/post.php?post=10597&action=edit
+10591	2023-10-11	טופ אוף דה רוק -לו ריד – טל סיון ובר קציר 05/10/2023	https://zerockradio.com/episodes/top-rock-06102023/	https://zerockradio.com/wp-admin/post.php?post=10591&action=edit
+10581	2023-10-11	The Drop 37 – סיון פישמן 03/10/2023	https://zerockradio.com/episodes/drop-03102023/	https://zerockradio.com/wp-admin/post.php?post=10581&action=edit
+10580	2023-10-11	ג'קי נקודה 2 – הנקמההה – תכנית 79 – ג'קי שרגא 03/10/2023	https://zerockradio.com/episodes/jake-2-03102023/	https://zerockradio.com/wp-admin/post.php?post=10580&action=edit
+10565	2023-10-03	מסע הצלב של איתמר ענברי 48 – 02/10/2023	https://zerockradio.com/episodes/crusade-02102023/	https://zerockradio.com/wp-admin/post.php?post=10565&action=edit
+10522	2023-09-14	Mostly Harmless 31 – ירון הורינג 11/09/2023	https://zerockradio.com/episodes/mostly-harmless-11092023/	https://zerockradio.com/wp-admin/post.php?post=10522&action=edit
+10520	2023-09-14	מסע הצלב של איתמר ענברי 46 – 11/09/2023	https://zerockradio.com/episodes/crusade-11092023/	https://zerockradio.com/wp-admin/post.php?post=10520&action=edit
+10508	2023-09-14	קוטגרוקנטוב 23 – אפרת קוטגרו ואלירן קטנוב 30/08/2023	https://zerockradio.com/episodes/kotegarokatanov-30082023/	https://zerockradio.com/wp-admin/post.php?post=10508&action=edit
+10504	2023-09-14	טופ אוף דה רוק – קצירולדת – 07/09/2023	https://zerockradio.com/episodes/top-rock-07092023/	https://zerockradio.com/wp-admin/post.php?post=10504&action=edit
+10494	2023-09-12	The Drop 33 – טל אופיר 05/09/2023	https://zerockradio.com/episodes/the-drop-05092023/	https://zerockradio.com/wp-admin/post.php?post=10494&action=edit
+10493	2023-09-12	ג'קי נקודה 2- הנקמההה תכנית 75 – ג'קי שרגא 05/09/2023	https://zerockradio.com/episodes/jake-2-05072023/	https://zerockradio.com/wp-admin/post.php?post=10493&action=edit
+10484	2023-09-10	Mostly Harmless30 – ירון הורינג – 4.9.23	https://zerockradio.com/episodes/mostly30-040923/	https://zerockradio.com/wp-admin/post.php?post=10484&action=edit
+10482	2023-09-10	מסע הצלב 45 – איתמר ענברי – 4.9.23	https://zerockradio.com/episodes/crusade45-040923/	https://zerockradio.com/wp-admin/post.php?post=10482&action=edit
+10464	2023-09-07	טופ אף דה רוק – ג'וני קאש חלק 4 – טל סיון ובר קציר 31/08/2023	https://zerockradio.com/episodes/top-rock-31082023/	https://zerockradio.com/wp-admin/post.php?post=10464&action=edit
+10451	2023-09-07	The Drop 32 – סיון פישמן 29/08/2023	https://zerockradio.com/episodes/the-drop-29082023/	https://zerockradio.com/wp-admin/post.php?post=10451&action=edit
+10450	2023-09-07	ג'קי נקודה 2 – הנקמההה – תכנית 74 – ג'קי שרגא 29/08/2023	https://zerockradio.com/episodes/jake-2-29082023/	https://zerockradio.com/wp-admin/post.php?post=10450&action=edit
+10449	2023-09-07	Ze Rock Porto 56 – אלעד אביגן 29/08/2023	https://zerockradio.com/episodes/zrp-29082023/	https://zerockradio.com/wp-admin/post.php?post=10449&action=edit
+10441	2023-09-07	מסע הצלב של איתמר ענברי 44 – 28/08/2023	https://zerockradio.com/episodes/crussade-28082023/	https://zerockradio.com/wp-admin/post.php?post=10441&action=edit
+10416	2023-08-24	טופ אוף דה רוק – ג'וני קש חלק 3 – טל סיון ובר קציר 24/08/2023	https://zerockradio.com/episodes/top-rock-24082023/	https://zerockradio.com/wp-admin/post.php?post=10416&action=edit
+10407	2023-08-24	The Drop 31 – טל אופיר 22/08/2023	https://zerockradio.com/episodes/the-drop-22082023/	https://zerockradio.com/wp-admin/post.php?post=10407&action=edit
+10406	2023-08-24	Ze Rock Porto 55 – אלעד אביגן 22/08/2023	https://zerockradio.com/episodes/zrp-22082023/	https://zerockradio.com/wp-admin/post.php?post=10406&action=edit
+10405	2023-08-24	ג'קי נקודה 2 – הנקמההה – תכנית 73 – ג'קי שרגא 22/08/2023	https://zerockradio.com/episodes/jake-22082023/	https://zerockradio.com/wp-admin/post.php?post=10405&action=edit
+10394	2023-08-22	מסע הצלב של איתמר ענברי – תכנית 43 – 21/08/2023	https://zerockradio.com/episodes/crusade-21082023/	https://zerockradio.com/wp-admin/post.php?post=10394&action=edit
+10380	2023-08-22	טופ אוף דה רוק – ג'וני קש חלק 2 – טל סיון ובר קציר 17/08/2023	https://zerockradio.com/episodes/top-rock-17082023/	https://zerockradio.com/wp-admin/post.php?post=10380&action=edit
+10333	2023-08-16	The Drop 30 – טל אופיר 15/08/2023	https://zerockradio.com/episodes/the-drop-15082023/	https://zerockradio.com/wp-admin/post.php?post=10333&action=edit
+10332	2023-08-16	ג'קי נקודה 2 – הנקמההה – תכנית 72 – ג'קי שרגא 15/08/2023	https://zerockradio.com/episodes/jake-2-15082023/	https://zerockradio.com/wp-admin/post.php?post=10332&action=edit
+10331	2023-08-16	זה רוק פורטו 54 – אלעד אביגן 15/08/2023	https://zerockradio.com/episodes/zrp-15082023/	https://zerockradio.com/wp-admin/post.php?post=10331&action=edit
+10324	2023-08-16	מסע הצלב של מסעאיתמר ענברי 42 – איתמר ענברי 14/08/2023	https://zerockradio.com/episodes/crusade-14082023/	https://zerockradio.com/wp-admin/post.php?post=10324&action=edit
+10307	2023-08-12	טופ אוף דה רוק – ג'וני קאש חלק 1 – טל סיון ובר קציר 10/08/2023	https://zerockradio.com/episodes/toprock-10082023/	https://zerockradio.com/wp-admin/post.php?post=10307&action=edit
+10299	2023-08-12	לבלוע את הרוק 178 – שי גרברז 09/08/2023	https://zerockradio.com/episodes/swallow-rock-09082023/	https://zerockradio.com/wp-admin/post.php?post=10299&action=edit
+10295	2023-08-12	The Drop 29 – טל אופיר 08/08/2023	https://zerockradio.com/episodes/the-drop-08082023/	https://zerockradio.com/wp-admin/post.php?post=10295&action=edit
+10294	2023-08-12	ג'קי נקודה 2 – הנקמההה – תכנית 71, ג'קי שרגא 08/08/2023	https://zerockradio.com/episodes/jake-2-08082023/	https://zerockradio.com/wp-admin/post.php?post=10294&action=edit
+10280	2023-08-08	Mostly Harmless 29 – ירון הורינג 07/08/2023	https://zerockradio.com/episodes/mostly-harmless-07082023/	https://zerockradio.com/wp-admin/post.php?post=10280&action=edit
+10279	2023-08-08	מסע הצלב של איתמר ענברי 41 – 07/08/2023	https://zerockradio.com/episodes/crusade-07082023/	https://zerockradio.com/wp-admin/post.php?post=10279&action=edit
+10253	2023-08-08	The Drop 28 – סיון פישמן 01/08/2023	https://zerockradio.com/episodes/the-drop-01082023/	https://zerockradio.com/wp-admin/post.php?post=10253&action=edit
+10246	2023-08-04	מסע הצלב של איתמר ענברי 40 – 31/07/2023	https://zerockradio.com/episodes/crusade-31072023/	https://zerockradio.com/wp-admin/post.php?post=10246&action=edit
+10230	2023-07-31	טופ אוף דה רוק – טל סיון ובר קציר 27/07/2023	https://zerockradio.com/episodes/top-rock-27072023/	https://zerockradio.com/wp-admin/post.php?post=10230&action=edit
+10223	2023-07-31	לבלוע את הרוק 177 – שי גרברז 26/07/2023	https://zerockradio.com/episodes/swallow-rock-26072023/	https://zerockradio.com/wp-admin/post.php?post=10223&action=edit
+10219	2023-07-31	The Drop 27 – טל אופיר 25/07/2023	https://zerockradio.com/episodes/the-drop-25072023/	https://zerockradio.com/wp-admin/post.php?post=10219&action=edit
+10218	2023-07-31	ג'קי נקודה 2 – הנקמההה – תכנית 70 – ג'קי שרגא 25/07/2023	https://zerockradio.com/episodes/jake-2-25072023/	https://zerockradio.com/wp-admin/post.php?post=10218&action=edit
+10208	2023-07-30	מסע הצלב של איתמר ענברי 39 – 24/07/2023	https://zerockradio.com/episodes/crusade-24072023/	https://zerockradio.com/wp-admin/post.php?post=10208&action=edit
+10174	2023-07-23	Top of the Rock – טל סיון ובר קציר 20/07/2023	https://zerockradio.com/episodes/top-rock-20072023/	https://zerockradio.com/wp-admin/post.php?post=10174&action=edit
+10166	2023-07-23	לבלוע את הרוק 176 – שי גרברז 19/07/2023	https://zerockradio.com/episodes/swallow-rock-19072023/	https://zerockradio.com/wp-admin/post.php?post=10166&action=edit
+10163	2023-07-23	The Drop 26 – סיון פישמן 18/07/2023	https://zerockradio.com/episodes/the-drop-18072023/	https://zerockradio.com/wp-admin/post.php?post=10163&action=edit
+10162	2023-07-23	ג'קי נקודה 2 – הנקמההה – תכנית 69 – ג'קי שרגא 18/07/2023	https://zerockradio.com/episodes/jake-2-18072023/	https://zerockradio.com/wp-admin/post.php?post=10162&action=edit
+10151	2023-07-18	Mostly Harmless 27 – ירון הורינג 17/07/2023	https://zerockradio.com/episodes/mostly-harmless-17072023/	https://zerockradio.com/wp-admin/post.php?post=10151&action=edit
+10149	2023-07-18	מסע הצלב של איתמר ענברי 38 – 17/07/2023	https://zerockradio.com/episodes/crusade-17072023/	https://zerockradio.com/wp-admin/post.php?post=10149&action=edit
+10115	2023-07-13	Top of the Rock – Dog of the Rock – טל סיון ובר קציר 13/07/2023	https://zerockradio.com/episodes/top-rock-13072023/	https://zerockradio.com/wp-admin/post.php?post=10115&action=edit
+10103	2023-07-13	The Drop 25 – טל אופיר 11/07/2023	https://zerockradio.com/episodes/the-drop-11072023/	https://zerockradio.com/wp-admin/post.php?post=10103&action=edit
+10102	2023-07-13	ג'קי נקודה 2 – הנקמההה – תכנית 68 – ג'קי שרגא 11/07/2023	https://zerockradio.com/episodes/jake-2-11072023/	https://zerockradio.com/wp-admin/post.php?post=10102&action=edit
+10096	2023-07-13	Mostly Harmless 26 – ירון הורינג 10/07/2023	https://zerockradio.com/episodes/mostly-harmless-10072023/	https://zerockradio.com/wp-admin/post.php?post=10096&action=edit
+10094	2023-07-13	מסע הצלב של איתמר ענברי 37 – 10/07/2023	https://zerockradio.com/episodes/crusade-10072023/	https://zerockradio.com/wp-admin/post.php?post=10094&action=edit
+10023	2023-07-10	Total Rock – City and Colour – אלעד אביגן 06/07/2023	https://zerockradio.com/episodes/total-rock-06072023/	https://zerockradio.com/wp-admin/post.php?post=10023&action=edit
+10022	2023-07-10	טופ אוף דה רוק – טל סיון ובר קציר 06/07/2023	https://zerockradio.com/episodes/top-rock-06072023/	https://zerockradio.com/wp-admin/post.php?post=10022&action=edit
+10011	2023-07-06	לבלוע את הרוק 175 – שי גרברז 05/07/2023	https://zerockradio.com/episodes/swallow-rock-05072023/	https://zerockradio.com/wp-admin/post.php?post=10011&action=edit
+10003	2023-07-05	The Drop 24 – סיון פישמן 04/07/2023	https://zerockradio.com/episodes/drop-04072023/	https://zerockradio.com/wp-admin/post.php?post=10003&action=edit
+10002	2023-07-05	ג'קי נקודה 2 – הנקמההה – תכנית 67 – ג'קי שרגא 04/07/2023	https://zerockradio.com/episodes/jake-2-04072023/	https://zerockradio.com/wp-admin/post.php?post=10002&action=edit
+9994	2023-07-05	Mostly Harmless 25 – ירון הורינג 03/07/2023	https://zerockradio.com/episodes/mostly-harmless-03072023/	https://zerockradio.com/wp-admin/post.php?post=9994&action=edit
+9992	2023-07-05	מסע הצלב של איתמר ענברי 36 – 03/07/2023	https://zerockradio.com/episodes/crusade-03072023/	https://zerockradio.com/wp-admin/post.php?post=9992&action=edit
+9987	2023-07-05	קוטגרוקטנוב 22 – אפרת קוטגרו ואלירן קטנוב – 2.7.23	https://zerockradio.com/episodes/kotegarockatanov22-020723/	https://zerockradio.com/wp-admin/post.php?post=9987&action=edit
+9965	2023-07-02	טופ אוף דה רוק – טל סיון ובר קציר 29/06/2023	https://zerockradio.com/episodes/top-rock-29062023/	https://zerockradio.com/wp-admin/post.php?post=9965&action=edit
+9950	2023-06-28	לבלוע את הרוק 174 – שי גרברז 28/06/2023	https://zerockradio.com/episodes/swallow-rock-28062023/	https://zerockradio.com/wp-admin/post.php?post=9950&action=edit
+9941	2023-06-28	ג'קי נקודה 2- הנקמההה, תכנית 66 – ג'קי שרגא 27/06/2023	https://zerockradio.com/episodes/jake-2-27062023/	https://zerockradio.com/wp-admin/post.php?post=9941&action=edit
+9932	2023-06-28	Mostly Harmless 24 – ירון הורינג – 26.6.23	https://zerockradio.com/episodes/mostlyharmless24-260626/	https://zerockradio.com/wp-admin/post.php?post=9932&action=edit
+9930	2023-06-28	מסע הצלב 35 – איתמר ענברי – 26.6.23	https://zerockradio.com/episodes/crusade35-260623/	https://zerockradio.com/wp-admin/post.php?post=9930&action=edit
+9870	2023-06-21	The Drop 22 – סיון פישמן 20/06/2023	https://zerockradio.com/episodes/the-drop-20062023/	https://zerockradio.com/wp-admin/post.php?post=9870&action=edit
+9869	2023-06-21	ג'קי נקודה 2 – הנקמההה – תכנית 65 – ג'קי שרגא 20/06/2023	https://zerockradio.com/episodes/jake-2-20062023/	https://zerockradio.com/wp-admin/post.php?post=9869&action=edit
+9861	2023-06-20	Mostly Harmless 23 – ירון הורינג 19/06/2023	https://zerockradio.com/episodes/mostly-harmless-19062023/	https://zerockradio.com/wp-admin/post.php?post=9861&action=edit
+9859	2023-06-20	מסע הצלב של איתמר ענברי 34 – 19/06/2023	https://zerockradio.com/episodes/crusade-19062023/	https://zerockradio.com/wp-admin/post.php?post=9859&action=edit
+9857	2023-06-20	זה פרוג, ערן הר-פז 19/06/2023	https://zerockradio.com/episodes/ze-prog-19062023/	https://zerockradio.com/wp-admin/post.php?post=9857&action=edit
+9843	2023-06-19	טופ אוף דה רוק – טריט ויליאמס – טל סיון בר קציר – 15.6.23	https://zerockradio.com/episodes/totr-trit-150623/	https://zerockradio.com/wp-admin/post.php?post=9843&action=edit
+9835	2023-06-18	לבלוע את הרוק 173 – שי גרברז 14/06/2023	https://zerockradio.com/episodes/swallow-rock-14062023/	https://zerockradio.com/wp-admin/post.php?post=9835&action=edit
+9817	2023-06-15	The Drop 21 – טל אופיר 13/06/2023	https://zerockradio.com/episodes/the-drop-13062023/	https://zerockradio.com/wp-admin/post.php?post=9817&action=edit
+9816	2023-06-15	Ze Rock Porto 53 – אלעד אביגן 13/06/2023	https://zerockradio.com/episodes/zrp-13062023/	https://zerockradio.com/wp-admin/post.php?post=9816&action=edit
+9815	2023-06-15	ג'קי נקודה 2 – הנקמההה – תכנית 64. ג'קי שרגא 13/06/2023	https://zerockradio.com/episodes/jake-2-13062023/	https://zerockradio.com/wp-admin/post.php?post=9815&action=edit
+9806	2023-06-14	Mostly Harmless 22 – ירון הורינג 12/06/2023	https://zerockradio.com/episodes/mostly-harmless-12062023/	https://zerockradio.com/wp-admin/post.php?post=9806&action=edit
+9805	2023-06-14	מסע הצלב של איתמר ענברי 33 – 12/06/2023	https://zerockradio.com/episodes/crusade-12062023/	https://zerockradio.com/wp-admin/post.php?post=9805&action=edit
+9772	2023-06-06	The Drop – episode 20 – סיון פישמן 06/06/2023	https://zerockradio.com/episodes/the-drop-06062023/	https://zerockradio.com/wp-admin/post.php?post=9772&action=edit
+9771	2023-06-06	ג'קי נקודה 2 – הנקמההה – תכנית 63, ג'קי שרגא 06/06/2023	https://zerockradio.com/episodes/jake-2-06062023/	https://zerockradio.com/wp-admin/post.php?post=9771&action=edit
+9725	2023-06-05	Mostly Harmless 21 – ירון הורינג 05/06/2023	https://zerockradio.com/episodes/mostly-harmless-05062023/	https://zerockradio.com/wp-admin/post.php?post=9725&action=edit
+9723	2023-06-05	מסע הצלב של איתמר ענברי 32 – 05/06/2023	https://zerockradio.com/episodes/crusade-05062023/	https://zerockradio.com/wp-admin/post.php?post=9723&action=edit
+9683	2023-06-01	top of the 36 – טופ אוף דה רוק -טל סיון בר קציר – 1.6.23	https://zerockradio.com/episodes/topoftherock-010623/	https://zerockradio.com/wp-admin/post.php?post=9683&action=edit
+9664	2023-06-01	THE DROP19 -טל אופיר – 30.5.23	https://zerockradio.com/episodes/drop19-300523/	https://zerockradio.com/wp-admin/post.php?post=9664&action=edit
+9663	2023-06-01	זה רוק פורטו 52 – אלעד אביגן – 30.5.23	https://zerockradio.com/episodes/zrp52-300523/	https://zerockradio.com/wp-admin/post.php?post=9663&action=edit
+9662	2023-06-01	ג'קי נקודה 2 הנקמה מס. 62 – ג'קי שרגא – 30.5.23	https://zerockradio.com/episodes/jake62-300523/	https://zerockradio.com/wp-admin/post.php?post=9662&action=edit
+9650	2023-05-29	מסע הצלב של איתמר ענברי 31 – 29/05/2023	https://zerockradio.com/episodes/crusade-29052023/	https://zerockradio.com/wp-admin/post.php?post=9650&action=edit
+9638	2023-05-29	זה פרוג – ערן הר-פז 29/05/2023	https://zerockradio.com/episodes/ze-prog-29052023/	https://zerockradio.com/wp-admin/post.php?post=9638&action=edit
+9620	2023-05-27	לבלוע את הרוק 171 – שי גרברז 24/05/2023	https://zerockradio.com/episodes/swollow-rock-25052023/	https://zerockradio.com/wp-admin/post.php?post=9620&action=edit
+9608	2023-05-24	THE DROP 18 – סיון פישמן -23/5/23	https://zerockradio.com/episodes/drop18-230523/	https://zerockradio.com/wp-admin/post.php?post=9608&action=edit
+9607	2023-05-24	ג'קי נקודה 2 – הנקמהה — ג'קי שרגא – 23.5.23	https://zerockradio.com/episodes/jakerevenge-230523/	https://zerockradio.com/wp-admin/post.php?post=9607&action=edit
+9599	2023-05-23	Mostly Harmless 20 – ירון הורינג 22/05/2023	https://zerockradio.com/episodes/mostly-harmless-22052023/	https://zerockradio.com/wp-admin/post.php?post=9599&action=edit
+9597	2023-05-23	מסע הצלב של איתמר ענברי 30 – 22/05/2023	https://zerockradio.com/episodes/crusade-22052023/	https://zerockradio.com/wp-admin/post.php?post=9597&action=edit
+9541	2023-05-19	טופ אוף דה רוק – טל סיון ובר קציר 18/05/2023	https://zerockradio.com/episodes/toprock-18052023/	https://zerockradio.com/wp-admin/post.php?post=9541&action=edit
+9520	2023-05-17	לבלוע את הרוק 170 – שי גרברז 17/05/2023	https://zerockradio.com/episodes/swallow-rock-17052023/	https://zerockradio.com/wp-admin/post.php?post=9520&action=edit
+9505	2023-05-17	THE DROP 17 – טל אופיר – 16.5.23	https://zerockradio.com/episodes/drop17-tal-160523/	https://zerockradio.com/wp-admin/post.php?post=9505&action=edit
+9504	2023-05-17	זה רוק פורטו 51 – אלעד אביגן – 16.5.23	https://zerockradio.com/episodes/zrp51-160523/	https://zerockradio.com/wp-admin/post.php?post=9504&action=edit
+9503	2023-05-17	ג'קי נקודה 2 – הנקמההה מס. 60 – ג'קי שרגא – 16.5.23	https://zerockradio.com/episodes/jake60-160523/	https://zerockradio.com/wp-admin/post.php?post=9503&action=edit
+9496	2023-05-16	Mostly Harmless 19 – ירון הורינג 15/05/2023	https://zerockradio.com/episodes/mostly-harmless-15052023/	https://zerockradio.com/wp-admin/post.php?post=9496&action=edit
+9494	2023-05-16	מסע הצלב של איתמר ענברי 29 – 15/05/2023	https://zerockradio.com/episodes/crusade-15052023/	https://zerockradio.com/wp-admin/post.php?post=9494&action=edit
+9492	2023-05-16	זה פרוג – ערן הר-פז 15/05/2023	https://zerockradio.com/episodes/ze-prog-15052023/	https://zerockradio.com/wp-admin/post.php?post=9492&action=edit
+9459	2023-05-12	טופ אוף דה רוק – wishbone ash – טל סיון ובר קציר – 11.5.23	https://zerockradio.com/episodes/totr-110523/	https://zerockradio.com/wp-admin/post.php?post=9459&action=edit
+9447	2023-05-11	לבלוע את הרוק 169 – שי גרברז 10/05/2023	https://zerockradio.com/episodes/swalow-rock-10052023/	https://zerockradio.com/wp-admin/post.php?post=9447&action=edit
+9443	2023-05-11	הדרופ 16 – סיון פישמן – 9.5.23	https://zerockradio.com/episodes/thedrop16-090523/	https://zerockradio.com/wp-admin/post.php?post=9443&action=edit
+9442	2023-05-10	זה רוק פורטו 50 – אלעד אביגן – 9.5.23	https://zerockradio.com/episodes/zrp50-090523/	https://zerockradio.com/wp-admin/post.php?post=9442&action=edit
+9439	2023-05-10	ג'קי נקודה 2 – הנקמההה – פרק 59 – ג'קי שרגא -9.5.23	https://zerockradio.com/episodes/jake2-090523/	https://zerockradio.com/wp-admin/post.php?post=9439&action=edit
+9432	2023-05-09	Mostly Harmless 18 – ירון הורינג 08/05/2023	https://zerockradio.com/episodes/mostly-harmless-08052023/	https://zerockradio.com/wp-admin/post.php?post=9432&action=edit
+9430	2023-05-09	מסע הצלב של איתמר ענברי 28 – 08/05/2023	https://zerockradio.com/episodes/crusade-08052023/	https://zerockradio.com/wp-admin/post.php?post=9430&action=edit
+9401	2023-05-06	טופ אוף דה רוק – יהונתן גפן – 04/05/2023	https://zerockradio.com/episodes/top-rock-04052023/	https://zerockradio.com/wp-admin/post.php?post=9401&action=edit
+9396	2023-05-06	לבלוע את הרוק 168 – שי גרברז 03/05/2023	https://zerockradio.com/episodes/swallow-rock-03052023/	https://zerockradio.com/wp-admin/post.php?post=9396&action=edit
+9390	2023-05-06	The Drop 15 – טל אופיר 02/05/2023	https://zerockradio.com/episodes/the-drop-02052023/	https://zerockradio.com/wp-admin/post.php?post=9390&action=edit
+9389	2023-05-06	Ze Rock Porto 49 – אלעד אביגן 02/05/2023	https://zerockradio.com/episodes/zrp-02052023/	https://zerockradio.com/wp-admin/post.php?post=9389&action=edit
+9388	2023-05-06	ג'קי נקודה 2 – הנקמההה – ג'קי שרגא 02/05/2023	https://zerockradio.com/episodes/jake-2-02052023/	https://zerockradio.com/wp-admin/post.php?post=9388&action=edit
+9379	2023-05-05	מסע הצלב של איתמר ענברי 27 – 01/05/2023	https://zerockradio.com/episodes/crusade-01052023/	https://zerockradio.com/wp-admin/post.php?post=9379&action=edit
+9376	2023-05-05	זה פרוג – ערן הר-פז 01/05/2023	https://zerockradio.com/episodes/ze-prog-01052023/	https://zerockradio.com/wp-admin/post.php?post=9376&action=edit
+9350	2023-04-28	פותחים את הצ'אקרוק 28 – אסף לב וליאור אררייך 27/04/2023	https://zerockradio.com/episodes/chackrock-27042023/	https://zerockradio.com/wp-admin/post.php?post=9350&action=edit
+9330	2023-04-28	מסע הצלב של איתמר ענברי 26 – 24/04/2023	https://zerockradio.com/episodes/crusade-24042023/	https://zerockradio.com/wp-admin/post.php?post=9330&action=edit
+9323	2023-04-28	The Drop 14 – סיון פישמן 23/04/2023	https://zerockradio.com/episodes/the-drop-23042023/	https://zerockradio.com/wp-admin/post.php?post=9323&action=edit
+9296	2023-04-22	קוטגרוקטנוב 21 – אפרת קוטגרו אלירן קטנוב – התוכנית המיתולוגית – 19.4.23	https://zerockradio.com/episodes/kotegarockatanov21-190423/	https://zerockradio.com/wp-admin/post.php?post=9296&action=edit
+9285	2023-04-22	Mostly Harmless 17 – ירון הורינג – 17.4.23	https://zerockradio.com/episodes/mostly-harmless-17-17-4-23/	https://zerockradio.com/wp-admin/post.php?post=9285&action=edit
+9283	2023-04-22	מסע הצלב של איתמר ענברי 25 – 17.4.23	https://zerockradio.com/episodes/crusader25-170423/	https://zerockradio.com/wp-admin/post.php?post=9283&action=edit
+9281	2023-04-22	זה פרוג – ערן הר-פז – 17.423	https://zerockradio.com/episodes/zeprog-170423/	https://zerockradio.com/wp-admin/post.php?post=9281&action=edit
+9276	2023-04-22	The Drop 13 – טל אופיר – 16.4.23	https://zerockradio.com/episodes/thedrop13-160423/	https://zerockradio.com/wp-admin/post.php?post=9276&action=edit
+9266	2023-04-22	טופ אוף דה רוק – top of the cut – טל סיון ובר קציר – 13.4.23	https://zerockradio.com/episodes/topoftherock-130423/	https://zerockradio.com/wp-admin/post.php?post=9266&action=edit
+9258	2023-04-21	THE DROP 12 – סיון פישמן – 11.4.23	https://zerockradio.com/episodes/thedrop12-sivan-110423/	https://zerockradio.com/wp-admin/post.php?post=9258&action=edit
+9249	2023-04-21	Mostly Harmless 16 – ירון הורינג – 10.4.23	https://zerockradio.com/episodes/mostly-harmless-1610-4-23/	https://zerockradio.com/wp-admin/post.php?post=9249&action=edit
+9247	2023-04-21	מסע הצלב עם איתמר ענברי 24 – 10.4.23	https://zerockradio.com/episodes/%d7%9e%d7%a1%d7%a2-%d7%94%d7%a6%d7%9c%d7%91-%d7%a2%d7%9d-%d7%90%d7%99%d7%aa%d7%9e%d7%a8-%d7%a2%d7%a0%d7%91%d7%a8%d7%99-24-10-4-23/	https://zerockradio.com/wp-admin/post.php?post=9247&action=edit
+9212	2023-04-08	The Drop 11 – טל אופיר 04/04/2023	https://zerockradio.com/episodes/the-drop-04042023/	https://zerockradio.com/wp-admin/post.php?post=9212&action=edit
+9211	2023-04-08	ג'קי נקודה 2 – הנקמההה – תכנית 57 – ג'קי שרגא 04/04/2023	https://zerockradio.com/episodes/jake-2-04042023/	https://zerockradio.com/wp-admin/post.php?post=9211&action=edit
+9202	2023-04-08	Mostly Harmless 15 – ירון הורינג 03/04/2023	https://zerockradio.com/episodes/mostly-harmless-03042023/	https://zerockradio.com/wp-admin/post.php?post=9202&action=edit
+9200	2023-04-08	מסע הצלב של איתמר ענברי 23 – 03/04/2023	https://zerockradio.com/episodes/crusade-03042023/	https://zerockradio.com/wp-admin/post.php?post=9200&action=edit
+9180	2023-04-01	טופ אוף דה רוק – טל סיון ובר קציר 30/03/2023	https://zerockradio.com/episodes/top-rock-30032023/	https://zerockradio.com/wp-admin/post.php?post=9180&action=edit
+9173	2023-04-01	לבלוע את הרוק 167 – שי גרברז 29/03/2023	https://zerockradio.com/episodes/swallow-rock-29032023/	https://zerockradio.com/wp-admin/post.php?post=9173&action=edit
+9171	2023-04-01	קוטגרוקטנוב 20 – אפרת קוטגרו ואלירן קטנוב 29/03/2023	https://zerockradio.com/episodes/kotegarokatanov-29032023/	https://zerockradio.com/wp-admin/post.php?post=9171&action=edit
+9168	2023-04-01	The Drop 10 – סיון פישמן 28/03/2023	https://zerockradio.com/episodes/the-drop-28032023/	https://zerockradio.com/wp-admin/post.php?post=9168&action=edit
+9167	2023-04-01	Ze Rock Porto 48 – אלעד אביגן 28/03/2023	https://zerockradio.com/episodes/zrp-28032023/	https://zerockradio.com/wp-admin/post.php?post=9167&action=edit
+9166	2023-04-01	ג'קי נקודה 2 – הנקמההה – תכנית 56 – ג'קי שרגא 28/03/2023	https://zerockradio.com/episodes/jake-2-28032023/	https://zerockradio.com/wp-admin/post.php?post=9166&action=edit
+9155	2023-03-29	פותחים את הצ'קרוק 27 – אסף לב וליאור אררייך 27/03/2023	https://zerockradio.com/episodes/chackrock-27032023/	https://zerockradio.com/wp-admin/post.php?post=9155&action=edit
+9140	2023-03-29	טופ אוף דה רוק – טל סיון ובר קציר 23/03/2023	https://zerockradio.com/episodes/rop-rock-23032023/	https://zerockradio.com/wp-admin/post.php?post=9140&action=edit
+9130	2023-03-29	The Drop 9 – טל אופיר 21/03/2023	https://zerockradio.com/episodes/the-drop-21032023/	https://zerockradio.com/wp-admin/post.php?post=9130&action=edit
+9128	2023-03-29	ג'קי נקודה 2 – הנקמההה, תכנית 55 – ג'קי שרגא 21/03/2023	https://zerockradio.com/episodes/jake-2-21032023/	https://zerockradio.com/wp-admin/post.php?post=9128&action=edit
+9034	2023-03-21	Mostly Harmless 14 – ירון הורינג 20/03/2023	https://zerockradio.com/episodes/mostly-harmless-20032023/	https://zerockradio.com/wp-admin/post.php?post=9034&action=edit
+9032	2023-03-21	מסע הצלב של איתמר ענברי 22 – 20/03/2023	https://zerockradio.com/episodes/crusade-20032023/	https://zerockradio.com/wp-admin/post.php?post=9032&action=edit
+9030	2023-03-21	זה פרוג – ערן הר-פז 20/03/2023	https://zerockradio.com/episodes/ze-prog-20032023/	https://zerockradio.com/wp-admin/post.php?post=9030&action=edit
+9010	2023-03-19	טופ אוף דה רוק – לינרד סקינרד – טל סיון ובר קציר 16/03/2023	https://zerockradio.com/episodes/top-rock-16032023/	https://zerockradio.com/wp-admin/post.php?post=9010&action=edit
+8996	2023-03-16	לבלוע את הרוק 166 – שי גרברז 15/03/2023	https://zerockradio.com/episodes/swallow-rock-15032023/	https://zerockradio.com/wp-admin/post.php?post=8996&action=edit
+8992	2023-03-16	The Drop 08 – סיון פישמן 14/03/2023	https://zerockradio.com/episodes/the-drop-14032023/	https://zerockradio.com/wp-admin/post.php?post=8992&action=edit
+8985	2023-03-15	Mostly Harmless 13 – ירון הורינג 13/03/2023	https://zerockradio.com/episodes/mostly-harmless-13032023/	https://zerockradio.com/wp-admin/post.php?post=8985&action=edit
+8983	2023-03-15	מסע הצלב של איתמר ענברי 21 – 13/03/2023	https://zerockradio.com/episodes/crusade-13032023/	https://zerockradio.com/wp-admin/post.php?post=8983&action=edit
+8967	2023-03-14	טופ אוף דה רוק – טל סיון ובר קציר 09/03/2023	https://zerockradio.com/episodes/top-rock-09032023/	https://zerockradio.com/wp-admin/post.php?post=8967&action=edit
+8958	2023-03-14	לבלוע את הרוק 165 – שי גרברז 08/03/2023	https://zerockradio.com/episodes/swallow-rock-08032023/	https://zerockradio.com/wp-admin/post.php?post=8958&action=edit
+8939	2023-03-09	קוטגרוקטנוב 19 – אפרת קוטגרו ואלירן קטנוב 28/02/2023	https://zerockradio.com/episodes/kotegarokatanov-28022023/	https://zerockradio.com/wp-admin/post.php?post=8939&action=edit
+8919	2023-03-07	The Drop 7 – סיון פישמן 06/03/2023	https://zerockradio.com/episodes/the-drop-03062023/	https://zerockradio.com/wp-admin/post.php?post=8919&action=edit
+8916	2023-03-07	Mostly Harmless 12 – ירון הורינג 06/03/2023	https://zerockradio.com/episodes/mostly-harmless-06032023/	https://zerockradio.com/wp-admin/post.php?post=8916&action=edit
+8914	2023-03-07	מסע הצלב של איתמר ענברי 20 – 06/03/2023	https://zerockradio.com/episodes/crusade-06032023/	https://zerockradio.com/wp-admin/post.php?post=8914&action=edit
+8912	2023-03-07	זה פרוג – ערן הר-פז 06/03/2023	https://zerockradio.com/episodes/ze-prog-06032023/	https://zerockradio.com/wp-admin/post.php?post=8912&action=edit
+8899	2023-03-07	Top of the Rock – טל סיון ובר קציר 02/03/2023	https://zerockradio.com/episodes/top-rock-02032023/	https://zerockradio.com/wp-admin/post.php?post=8899&action=edit
+8887	2023-03-07	The Drop 6 – טל אופיר 28/02/2023	https://zerockradio.com/episodes/the-drop-28022023/	https://zerockradio.com/wp-admin/post.php?post=8887&action=edit
+8886	2023-03-07	Ze Rock Porto 47 – אלעד אביגן 28/02/2023	https://zerockradio.com/episodes/zrp-28022023/	https://zerockradio.com/wp-admin/post.php?post=8886&action=edit
+8885	2023-03-07	ג'קי נקודה 2 – הנקמההה – ג'קי שרגא 28/02/2023	https://zerockradio.com/episodes/jake-2-28022023/	https://zerockradio.com/wp-admin/post.php?post=8885&action=edit
+8879	2023-03-07	פותחים את הצ'אקרוק 26 – אסף לב ונמרוד אררייך 27/02/2023	https://zerockradio.com/episodes/chackrock-27022023/	https://zerockradio.com/wp-admin/post.php?post=8879&action=edit
+8848	2023-02-27	Mostly Harmless 11 – ירון הורינג 27/02/2023	https://zerockradio.com/episodes/mostly-harmless-27022023/	https://zerockradio.com/wp-admin/post.php?post=8848&action=edit
+8846	2023-02-27	מסע הצלב של איתמר ענברי 19 – 27/02/2023	https://zerockradio.com/episodes/crusade-27022023/	https://zerockradio.com/wp-admin/post.php?post=8846&action=edit
+8824	2023-02-26	לבלוע את הרוק 164 – שי גרברז 22/02/2023	https://zerockradio.com/episodes/swallow-rock-22022023/	https://zerockradio.com/wp-admin/post.php?post=8824&action=edit
+8820	2023-02-26	The Drop 5 – טל אופיר 21/02/2023	https://zerockradio.com/episodes/the-drop-21022023/	https://zerockradio.com/wp-admin/post.php?post=8820&action=edit
+8819	2023-02-26	Ze Rock Porto 45 – אלעד אביגן 21/02/2023	https://zerockradio.com/episodes/zrp-21022023/	https://zerockradio.com/wp-admin/post.php?post=8819&action=edit
+8818	2023-02-26	ג'קי נקודה 2 – הנקמההה, תכנית 52 – ג'קי שרגא 21/02/2023	https://zerockradio.com/episodes/jake-2-21022023/	https://zerockradio.com/wp-admin/post.php?post=8818&action=edit
+8801	2023-02-21	Mostly Harmless 10 – ירון הורינג 20/02/2023	https://zerockradio.com/episodes/mostly-harmless-20022023/	https://zerockradio.com/wp-admin/post.php?post=8801&action=edit
+8799	2023-02-20	מסע הצלב של איתמר ענברי 18 – איתמר ענברי 20/02/2023	https://zerockradio.com/episodes/crusade-20022023/	https://zerockradio.com/wp-admin/post.php?post=8799&action=edit
+8797	2023-02-20	זה פרוג, ערן הר-פז 19/02/2023	https://zerockradio.com/episodes/prog-19022023/	https://zerockradio.com/wp-admin/post.php?post=8797&action=edit
+8768	2023-02-17	Top of the Rock – טל סיון ובר קציר 16/02/2023	https://zerockradio.com/episodes/top-rock-16022023/	https://zerockradio.com/wp-admin/post.php?post=8768&action=edit
+8759	2023-02-17	לבלוע את הרוק 163 – שי גרברז 15/02/2023	https://zerockradio.com/episodes/swallow-rock-15022023/	https://zerockradio.com/wp-admin/post.php?post=8759&action=edit
+8755	2023-02-17	The Drop 4 – מוזיקה בינלאומית חדשה – סיון פישמן 14/02/2023	https://zerockradio.com/episodes/the-drop-14022023/	https://zerockradio.com/wp-admin/post.php?post=8755&action=edit
+8754	2023-02-17	Ze Rock Porto 44 – אלעד אביגן 14/02/2023	https://zerockradio.com/episodes/zrp-14022023/	https://zerockradio.com/wp-admin/post.php?post=8754&action=edit
+8753	2023-02-17	ג'קי נקודה 2 – הנקמההה- ג'קי שרגא 14/02/2023	https://zerockradio.com/episodes/jake-2-14022023/	https://zerockradio.com/wp-admin/post.php?post=8753&action=edit
+8745	2023-02-17	Mostly Harmless 9 – ירון הורינג 13/02/2023	https://zerockradio.com/episodes/mostly-harmless-13022023/	https://zerockradio.com/wp-admin/post.php?post=8745&action=edit
+8743	2023-02-17	מסע הצלב של איתמר ענברי 17 – 13/02/2023	https://zerockradio.com/episodes/crusade-13022023/	https://zerockradio.com/wp-admin/post.php?post=8743&action=edit
+8708	2023-02-12	קוטגרוקטנוב 18 – אפרת קוטגרו ואלירן קטנוב 08/02/2023	https://zerockradio.com/episodes/kotegarockatanov-08022023/	https://zerockradio.com/wp-admin/post.php?post=8708&action=edit
+8697	2023-02-10	טופ אוף דה רוק – טל סיון ובר קציר 09/02/2023	https://zerockradio.com/episodes/top-rock-09022023/	https://zerockradio.com/wp-admin/post.php?post=8697&action=edit
+8687	2023-02-10	לבלוע את הרוק 162 – שי גרברז 08/02/2023	https://zerockradio.com/episodes/swallow-rock-08022023/	https://zerockradio.com/wp-admin/post.php?post=8687&action=edit
+8682	2023-02-10	The Drop – תכנית 3 – טל אופיר 07/02/2023	https://zerockradio.com/episodes/the-drop-07022023/	https://zerockradio.com/wp-admin/post.php?post=8682&action=edit
+8681	2023-02-10	זה רוק פורטו 43 – אלעד אביגן 07/02/2023	https://zerockradio.com/episodes/zrp-07022023/	https://zerockradio.com/wp-admin/post.php?post=8681&action=edit
+8651	2023-02-06	Mostly Harmless 8 – ירון הורינג 06/02/2023	https://zerockradio.com/episodes/mostly-harmless-06022023/	https://zerockradio.com/wp-admin/post.php?post=8651&action=edit
+8649	2023-02-06	מסע הצלב של איתמר ענברי 16 – 06/02/2023	https://zerockradio.com/episodes/crusade-06022023/	https://zerockradio.com/wp-admin/post.php?post=8649&action=edit
+8647	2023-02-06	זה פרוג – ערן הר-פז 06/02/2023	https://zerockradio.com/episodes/prog-06022023/	https://zerockradio.com/wp-admin/post.php?post=8647&action=edit
+8634	2023-02-06	טופ אוף דה רוק Rory Gallagher -טל סיון ובר קציר 02/02/2023	https://zerockradio.com/episodes/top-rock-02022023/	https://zerockradio.com/wp-admin/post.php?post=8634&action=edit
+8616	2023-02-03	The Drop 2 – סיון פישמן 31/01/2023	https://zerockradio.com/episodes/the-drop-31012023/	https://zerockradio.com/wp-admin/post.php?post=8616&action=edit
+8610	2023-02-03	פותחים את הצ'אקרוק 25 – אסף לב וליאור אררייך 30/01/2023	https://zerockradio.com/episodes/chackrock-30012023/	https://zerockradio.com/wp-admin/post.php?post=8610&action=edit
+8607	2023-02-03	Mostly Harmless 7 – ירון הורינג 30/01/2023	https://zerockradio.com/episodes/mostly-harmless-30012023/	https://zerockradio.com/wp-admin/post.php?post=8607&action=edit
+8605	2023-02-03	מסע הצלב של איתמר ענברי 15 – 30/01/2023	https://zerockradio.com/episodes/crusade-30012023/	https://zerockradio.com/wp-admin/post.php?post=8605&action=edit
+8587	2023-01-30	טופ אוף דה רוק – דיוויד קרוסבי – טל סיון ובר קציר 26/01/2023	https://zerockradio.com/episodes/top-rock-26012023/	https://zerockradio.com/wp-admin/post.php?post=8587&action=edit
+8551	2023-01-25	The Drop, תכנית 1 – סיון פישמן וטל אופיר – 24/01/2023	https://zerockradio.com/episodes/the-drop-24012023/	https://zerockradio.com/wp-admin/post.php?post=8551&action=edit
+8550	2023-01-25	Ze Rock Porto 42 – אלעד אביגן 24/01/2023	https://zerockradio.com/episodes/zrp-24012023/	https://zerockradio.com/wp-admin/post.php?post=8550&action=edit
+8549	2023-01-25	ג'קי נקודה 2 – הנקמההה – תכנית 49, ג'קי שרגא 24/01/2023	https://zerockradio.com/episodes/jake-2-24012023/	https://zerockradio.com/wp-admin/post.php?post=8549&action=edit
+8526	2023-01-23	מסע הצלב של איתמר ענברי – תכנית 14, 23/01/2023	https://zerockradio.com/episodes/crusade-23012023/	https://zerockradio.com/wp-admin/post.php?post=8526&action=edit
+8523	2023-01-23	זה פרוג – ערן הר-פז 23/01/2023	https://zerockradio.com/episodes/ze-prog-23012023/	https://zerockradio.com/wp-admin/post.php?post=8523&action=edit
+8507	2023-01-23	טופ אוף דה רוק – טל סיון ובר קציר 19/01/2023	https://zerockradio.com/episodes/top-rock-19012023/	https://zerockradio.com/wp-admin/post.php?post=8507&action=edit
+8499	2023-01-23	לבלוע את הרוק 161 – שי גרברז 18/01/2023	https://zerockradio.com/episodes/swallow-rock-18012023/	https://zerockradio.com/wp-admin/post.php?post=8499&action=edit
+8483	2023-01-22	Ze Rock Porto 41 – אלעד אביגן 17/01/2023	https://zerockradio.com/episodes/zrp-17012023/	https://zerockradio.com/wp-admin/post.php?post=8483&action=edit
+8482	2023-01-22	ג'קי נקודה 2 – הנקמההה – תכנית 48 – ג'קי שרגא 17/01/2023	https://zerockradio.com/episodes/jake-2-17012023/	https://zerockradio.com/wp-admin/post.php?post=8482&action=edit
+8424	2023-01-17	Mostly Harmless 6 – ירון הורינג 16/01/2023	https://zerockradio.com/episodes/mostly-harmless-16012023/	https://zerockradio.com/wp-admin/post.php?post=8424&action=edit
+8422	2023-01-17	מסע הצלב של איתמר ענברי – תכנית 13 16/01/2023	https://zerockradio.com/episodes/crusade-16012023/	https://zerockradio.com/wp-admin/post.php?post=8422&action=edit
+8386	2023-01-13	ג'קי נקודה 2 – הנקמההה – תכנית 47 ג'קי שרגא 10/01/2023	https://zerockradio.com/episodes/jake-2-10012023/	https://zerockradio.com/wp-admin/post.php?post=8386&action=edit
+8378	2023-01-13	Mostly Harmless 5 – ירון הורינג 09/01/2023	https://zerockradio.com/episodes/mostly-harmless-5/	https://zerockradio.com/wp-admin/post.php?post=8378&action=edit
+8376	2023-01-13	מסע הצלב של איתמר ענברי 12 – 09/01/2023	https://zerockradio.com/episodes/crusade-09012023/	https://zerockradio.com/wp-admin/post.php?post=8376&action=edit
+8374	2023-01-13	זה פרוג, ערן הר-פז 09/01/2023	https://zerockradio.com/episodes/ze-prog-09012023/	https://zerockradio.com/wp-admin/post.php?post=8374&action=edit
+8305	2023-01-09	טופ אוף דה רוק – טל סיון ובר קציר 05/01/2023	https://zerockradio.com/episodes/top-rock-05012023/	https://zerockradio.com/wp-admin/post.php?post=8305&action=edit
+8280	2023-01-05	Mish Mash 4 – איתי גואטה 04/01/2023	https://zerockradio.com/episodes/mish-mash-4/	https://zerockradio.com/wp-admin/post.php?post=8280&action=edit
+8274	2023-01-05	לבלוע את הרוק 160 – שי גרברז 04/01/2023	https://zerockradio.com/episodes/swallow-rock-04012023/	https://zerockradio.com/wp-admin/post.php?post=8274&action=edit
+8272	2023-01-05	קוטגרוקטנוב 17 – אפרת קוטגרו ואלירן קטנוב 04/01/2023	https://zerockradio.com/episodes/kotegarockatanov-04012023/	https://zerockradio.com/wp-admin/post.php?post=8272&action=edit
+8270	2023-01-05	Ze Rock Porto 40 – אלעד אביגן 03/01/2023	https://zerockradio.com/episodes/zrp-03012023/	https://zerockradio.com/wp-admin/post.php?post=8270&action=edit
+8269	2023-01-05	ג'קי נקודה 2 – הנקמההה, תכנית 46 – ג'קי שרגא 03/01/2023	https://zerockradio.com/episodes/jake-2-03012023/	https://zerockradio.com/wp-admin/post.php?post=8269&action=edit
+8262	2023-01-05	Mostly Harmless 4 – ירון הורינג 02/01/2023	https://zerockradio.com/episodes/mostly-harmless-02012023/	https://zerockradio.com/wp-admin/post.php?post=8262&action=edit
+8260	2023-01-05	מסע הצלב של איתמר ענברי – תכנית 11 – 02/01/2023	https://zerockradio.com/episodes/crussade-02012023/	https://zerockradio.com/wp-admin/post.php?post=8260&action=edit
+8246	2023-01-02	ותחים את הצ'אקרוק 24 – אסף לב וליאור אררייך 29/12/2022	https://zerockradio.com/episodes/chackrock-29122022/	https://zerockradio.com/wp-admin/post.php?post=8246&action=edit
+8243	2023-01-01	Ze Rock Porto 39 – אלעד אביגן 27/12/2022	https://zerockradio.com/episodes/zrp-27122022/	https://zerockradio.com/wp-admin/post.php?post=8243&action=edit
+8240	2022-12-29	טופ אוף דה רוק – טל סיון ובר קציר 29/12/2022	https://zerockradio.com/episodes/top-rock-29122022/	https://zerockradio.com/wp-admin/post.php?post=8240&action=edit
+8230	2022-12-29	ג'קי נקודה 2 – הנקמההה – תכנית 45. ג'קי שרגא, 27/12/2022	https://zerockradio.com/episodes/jake-2-27122022/	https://zerockradio.com/wp-admin/post.php?post=8230&action=edit
+8220	2022-12-27	Mostly Harmless 3 – ירון הורינג 26/12/2022	https://zerockradio.com/episodes/mostly-harmless-27122022/	https://zerockradio.com/wp-admin/post.php?post=8220&action=edit
+8218	2022-12-27	מסע הצלב של איתמר ענברי 10 – 26/12/2022	https://zerockradio.com/episodes/crussade-26122022/	https://zerockradio.com/wp-admin/post.php?post=8218&action=edit
+8216	2022-12-27	זה פרוג – ספיישל דרים ת'יאטר – ערן הר-פז 26/12/2022	https://zerockradio.com/episodes/ze-prog-26122022/	https://zerockradio.com/wp-admin/post.php?post=8216&action=edit
+8202	2022-12-26	טופ אוף דה רוק – ג'ו קוקר – טל סיון ובר קציר 22/12/2022	https://zerockradio.com/episodes/top-rock-22122022/	https://zerockradio.com/wp-admin/post.php?post=8202&action=edit
+8192	2022-12-26	ג'קי נקודה 2 – הנקמההה, תכנית 44 – ג'קי שרגא 20/12/2022	https://zerockradio.com/episodes/jake-2-20122022/	https://zerockradio.com/wp-admin/post.php?post=8192&action=edit
+8162	2022-12-19	Mostly Harmless 2 – ירון הורינג 19/12/2022	https://zerockradio.com/episodes/mostly-harmless-19122022/	https://zerockradio.com/wp-admin/post.php?post=8162&action=edit
+8160	2022-12-19	מסע הצלב של איתמר ענברי – תכנית 9 – 19/12/2022	https://zerockradio.com/episodes/crussade-19122022/	https://zerockradio.com/wp-admin/post.php?post=8160&action=edit
+8151	2022-12-19	טופ אוף דה רוק – קלפטר – טל סיון ובר קציר 15/12/2022	https://zerockradio.com/episodes/top-rock-15122022/	https://zerockradio.com/wp-admin/post.php?post=8151&action=edit
+8145	2022-12-19	לבלוע את הרוק 159 – שי גרברז 14/12/2022	https://zerockradio.com/episodes/swallow-rock-14122022/	https://zerockradio.com/wp-admin/post.php?post=8145&action=edit
+8140	2022-12-19	Ze Rock Porto 37 – אלעד אביגן 13/12/2022	https://zerockradio.com/episodes/zrp-13122022/	https://zerockradio.com/wp-admin/post.php?post=8140&action=edit
+8139	2022-12-19	ג'קי נקודה 2 – הנקמההה – תכנית 43 – גק'י שרגא 13/12/2022	https://zerockradio.com/episodes/jake-2-13122022/	https://zerockradio.com/wp-admin/post.php?post=8139&action=edit
+8099	2022-12-13	Mostly Harmless – תכנית הבכורה! -ירון הורינג 12/12/2022	https://zerockradio.com/episodes/mostly-harmless-12122022/	https://zerockradio.com/wp-admin/post.php?post=8099&action=edit
+8097	2022-12-13	מסע הצלב של איתמר ענברי 8 – 12/12/2022	https://zerockradio.com/episodes/crusade-12122022/	https://zerockradio.com/wp-admin/post.php?post=8097&action=edit
+8079	2022-12-11	טופ טוף דה רוק – טל סיון ובר קציר 08/12/2022	https://zerockradio.com/episodes/top-rock-08122022/	https://zerockradio.com/wp-admin/post.php?post=8079&action=edit
+8073	2022-12-11	לבלוע את הרוק 158 – שי גרברז 07/12/2022	https://zerockradio.com/episodes/swallow-rock-07122022/	https://zerockradio.com/wp-admin/post.php?post=8073&action=edit
+8068	2022-12-11	זה רוק פורטו 36 – אלעד אביגן 06/12/2022	https://zerockradio.com/episodes/zrp-06122022/	https://zerockradio.com/wp-admin/post.php?post=8068&action=edit
+8067	2022-12-11	ג'קי נקודה 2 – הנקמההה – ג'קי שרגא 06/12/2022	https://zerockradio.com/episodes/jake-2-06122022/	https://zerockradio.com/wp-admin/post.php?post=8067&action=edit
+8019	2022-12-05	מסע הצלב של איתמר ענברי 7 – איתמר ענברי 05/12/2022	https://zerockradio.com/episodes/crusade-05122022/	https://zerockradio.com/wp-admin/post.php?post=8019&action=edit
+8017	2022-12-05	זה פרוג – ערן הר-פז 05/12/2022	https://zerockradio.com/episodes/ze-prog-05122022/	https://zerockradio.com/wp-admin/post.php?post=8017&action=edit
+8000	2022-12-04	טופ אוף דה רוק – טל סיון ובר קציר 01/12/2022	https://zerockradio.com/episodes/top-rock-01122022/	https://zerockradio.com/wp-admin/post.php?post=8000&action=edit
+7990	2022-12-01	לבלוע את הרוק 157 – שי גרברז 30/11/2022	https://zerockradio.com/episodes/swallow-rock-30112022/	https://zerockradio.com/wp-admin/post.php?post=7990&action=edit
+7982	2022-12-01	ג'קי נקודה 2 – הנקמההה – תכנית 41 – ג'קי שרגא 29/11/2022	https://zerockradio.com/episodes/jake-2-29112022/	https://zerockradio.com/wp-admin/post.php?post=7982&action=edit
+7962	2022-11-28	מסע הצלב של איתמר ענברי 6 – 28/11/2022	https://zerockradio.com/episodes/crussade-28112022/	https://zerockradio.com/wp-admin/post.php?post=7962&action=edit
+7948	2022-11-28	פותחים את הצ'אקרוק 23 – אסף לב וליאור אררייך 24/11/2022	https://zerockradio.com/episodes/chackrock-24112022/	https://zerockradio.com/wp-admin/post.php?post=7948&action=edit
+7942	2022-11-28	טופ אוף דה רוק – טל סיון ובר קציר 24/11/2022	https://zerockradio.com/episodes/top-rock-24112022/	https://zerockradio.com/wp-admin/post.php?post=7942&action=edit
+7909	2022-11-23	לבלוע את הרוק 156 – 23/11/2022	https://zerockradio.com/episodes/swallow-rock-23112022/	https://zerockradio.com/wp-admin/post.php?post=7909&action=edit
+7903	2022-11-23	Ze Rock Porto 35 – אלעד אביגן 22/11/2022	https://zerockradio.com/episodes/zrp-22112022/	https://zerockradio.com/wp-admin/post.php?post=7903&action=edit
+7902	2022-11-23	ג'קי נקודה 2 – הנקמההה – תכנית 40 – ג'קי שרגא 22/11/2022	https://zerockradio.com/episodes/jake-2-22112022/	https://zerockradio.com/wp-admin/post.php?post=7902&action=edit
+7885	2022-11-22	מסע הצלב של איתמר ענברי 5 – 21/11/2022	https://zerockradio.com/episodes/crussade-21112022/	https://zerockradio.com/wp-admin/post.php?post=7885&action=edit
+7883	2022-11-22	זה פרוג – ערן הר-פז 21/11/2022	https://zerockradio.com/episodes/ze-prog-21112022/	https://zerockradio.com/wp-admin/post.php?post=7883&action=edit
+7864	2022-11-20	טופ אוף דה רוק – טל סיון ובר קציר 17/11/2022	https://zerockradio.com/episodes/top-rock-17112022/	https://zerockradio.com/wp-admin/post.php?post=7864&action=edit
+7856	2022-11-17	MishMash 3 – איתי גואטה 16/11/2022	https://zerockradio.com/episodes/mishmash-16112022/	https://zerockradio.com/wp-admin/post.php?post=7856&action=edit
+7851	2022-11-17	לבלוע את הרוק 155 – שי גרברז 16/11/2022	https://zerockradio.com/episodes/swallow-the-rock-16112022/	https://zerockradio.com/wp-admin/post.php?post=7851&action=edit
+7844	2022-11-16	ג'קי נקודה 2 – הנקמההה – תכנית 39 – ג'קי שרגא 15/11/2022	https://zerockradio.com/episodes/jake-2-15112022/	https://zerockradio.com/wp-admin/post.php?post=7844&action=edit
+7784	2022-11-10	טופ אוף דה רוק – טל סיון ובר קציר 10/11/2022	https://zerockradio.com/episodes/top-rock-10112022/	https://zerockradio.com/wp-admin/post.php?post=7784&action=edit
+7778	2022-11-10	לבלוע את הרוק 154 – שי גרברז 09/11/2022	https://zerockradio.com/episodes/swallow-rock-09112022/	https://zerockradio.com/wp-admin/post.php?post=7778&action=edit
+7772	2022-11-10	זה רוק פורטו 33 – אלעד אביגן 08/11/2022	https://zerockradio.com/episodes/zrp-08112022/	https://zerockradio.com/wp-admin/post.php?post=7772&action=edit
+7771	2022-11-10	ג'קי.2 הנקמההה, תכנית 38 – ג'קי שרגא 08/11/2022	https://zerockradio.com/episodes/jake-2-08112022/	https://zerockradio.com/wp-admin/post.php?post=7771&action=edit
+7762	2022-11-07	מסע הצלב של איתמר ענברי 4 – איתמר ענברי 07/11/2022	https://zerockradio.com/episodes/crussade-07112022/	https://zerockradio.com/wp-admin/post.php?post=7762&action=edit
+7760	2022-11-07	זה פרוג – ערן הר-פז 07/11/2022	https://zerockradio.com/episodes/ze-prog-07112022/	https://zerockradio.com/wp-admin/post.php?post=7760&action=edit
+7732	2022-11-04	טופ אוף דה רוק – ג’רי לי לואיס – טל סיון ובר קציר 03/11/2022	https://zerockradio.com/episodes/top-rock-03112022/	https://zerockradio.com/wp-admin/post.php?post=7732&action=edit
+7720	2022-11-04	Ze Rock Porto 32 – אלעד אביגן 01/11/2022	https://zerockradio.com/episodes/zrp-01112022/	https://zerockradio.com/wp-admin/post.php?post=7720&action=edit
+7719	2022-11-04	ג'קי.2 – הנקמההה- תכנית 37 – ג'קי שרגא 01/11/2022	https://zerockradio.com/episodes/jake-2-01112022/	https://zerockradio.com/wp-admin/post.php?post=7719&action=edit
+7714	2022-11-04	פותחים את הצ'אקרוק 22 – אסף לב וליאור אררייך 31/10/2022	https://zerockradio.com/episodes/chackrock-31102022/	https://zerockradio.com/wp-admin/post.php?post=7714&action=edit
+7670	2022-10-31	מסע הצלב של איתמר ענברי 3 – ספיישל האלווין – איתמר ענברי 31/10/2022	https://zerockradio.com/episodes/crussade-31102022/	https://zerockradio.com/wp-admin/post.php?post=7670&action=edit
+7614	2022-10-28	טופ אוף דה רוק – טל סיון ובר קציר 27/10/2022	https://zerockradio.com/episodes/top-rock-27102022/	https://zerockradio.com/wp-admin/post.php?post=7614&action=edit
+7607	2022-10-28	לבלוע את הרוק 152 – שי גרברז 26/10/2022	https://zerockradio.com/episodes/swallow-rock-26102022/	https://zerockradio.com/wp-admin/post.php?post=7607&action=edit
+7602	2022-10-28	Ze Rock Porto 31 – אלעד אביגן 25/10/2022	https://zerockradio.com/episodes/zrp-25102022/	https://zerockradio.com/wp-admin/post.php?post=7602&action=edit
+7601	2022-10-28	ג'קי נקודה 2 – הנקמההה – תכנית 36 – ג'קי שרגא 25/10/2022	https://zerockradio.com/episodes/jake-2-25102022/	https://zerockradio.com/wp-admin/post.php?post=7601&action=edit
+7596	2022-10-28	קוטגרוקטנוב 16 – אפרת קוטגרו ואלירן קטנוב 24/10/2022	https://zerockradio.com/episodes/kotegarockatanov-24102022/	https://zerockradio.com/wp-admin/post.php?post=7596&action=edit
+7566	2022-10-24	מסע הצלב של איתמר ענברי 2 – 24/10/2022	https://zerockradio.com/episodes/crusade-24102022/	https://zerockradio.com/wp-admin/post.php?post=7566&action=edit
+7564	2022-10-24	זה פרוג – ערן הר-פז 24/10/2022	https://zerockradio.com/episodes/ze-prog-24102022/	https://zerockradio.com/wp-admin/post.php?post=7564&action=edit
+7509	2022-10-19	Ze Rock Porto 30 – אלעד אביגן 18/10/2022	https://zerockradio.com/episodes/zrp-18102022/	https://zerockradio.com/wp-admin/post.php?post=7509&action=edit
+7508	2022-10-19	ג'קי נקודה 2 – הנקמההה – ג'קי שרגא – תכנית 35 18/10/2022	https://zerockradio.com/episodes/jake-2-18102022/	https://zerockradio.com/wp-admin/post.php?post=7508&action=edit
+7483	2022-10-15	טופ אוף דה רוק – טל סיון ובר קציר 13/10/2022	https://zerockradio.com/episodes/top-rock-13102022/	https://zerockradio.com/wp-admin/post.php?post=7483&action=edit
+7481	2022-10-15	Mish Mash 2 – איתי גואטה 12/10/2022	https://zerockradio.com/episodes/mish-mash-12102022/	https://zerockradio.com/wp-admin/post.php?post=7481&action=edit
+7432	2022-10-07	טופ אוף דה רוק – טל סיון ובר קציר 06/10/2022	https://zerockradio.com/episodes/top-rock-06102022/	https://zerockradio.com/wp-admin/post.php?post=7432&action=edit
+7397	2022-10-03	מסע הצלב של איתמר ענברי – תכנית ראשונה – איתמר ענברי 03/10/2022	https://zerockradio.com/episodes/crusade-03102022/	https://zerockradio.com/wp-admin/post.php?post=7397&action=edit
+7355	2022-09-30	פותחים את הצ'אקרוק 21 – ליאור אררייך ואסף לב 29/09/2022	https://zerockradio.com/episodes/chackrock-29092022/	https://zerockradio.com/wp-admin/post.php?post=7355&action=edit
+7351	2022-09-30	טופ אוף דה רוק – טל סיון ובר קציר 29/09/2022	https://zerockradio.com/episodes/top-rock-29092022/	https://zerockradio.com/wp-admin/post.php?post=7351&action=edit
+7272	2022-09-24	טופ אוף דה רוק – Coverdale – טל סיון ובר קציר 22/09/2022	https://zerockradio.com/episodes/top-pop-22092022/	https://zerockradio.com/wp-admin/post.php?post=7272&action=edit
+7260	2022-09-22	שעת הגראנג' 78 – יובל יוספסון 20/09/2022	https://zerockradio.com/episodes/grunge-hour-78-20092022/	https://zerockradio.com/wp-admin/post.php?post=7260&action=edit
+7259	2022-09-22	Ze Rock Porto 29 – אלעד אביגן 20/09/2022	https://zerockradio.com/episodes/zrp-20092022/	https://zerockradio.com/wp-admin/post.php?post=7259&action=edit
+7258	2022-09-22	ג'קי נקודה 2 – הנקמההה – תכנית  34 – ג'קי שרגא  20/09/2022	https://zerockradio.com/episodes/jake-2-20092022/	https://zerockradio.com/wp-admin/post.php?post=7258&action=edit
+7251	2022-09-22	קוטגרוקטנוב 15 -אפרת קוטגרו ואלירן קטנוב 19/09/2022	https://zerockradio.com/episodes/kotegarockatanov-19092022/	https://zerockradio.com/wp-admin/post.php?post=7251&action=edit
+7134	2022-09-14	Ze Rock Porto 28 – אלעד אביגן 13/09/2022	https://zerockradio.com/episodes/zrp-13092022/	https://zerockradio.com/wp-admin/post.php?post=7134&action=edit
+7133	2022-09-14	ג'קי נקודה 2 – הנקמההה – תכנית 33 – ג'קי שרגא 13/09/2022	https://zerockradio.com/episodes/jake-2-13092022/	https://zerockradio.com/wp-admin/post.php?post=7133&action=edit
+7064	2022-09-09	Top of the Rock – טל סיון ובר קציר 08/09/2022	https://zerockradio.com/episodes/top-rock-08092022/	https://zerockradio.com/wp-admin/post.php?post=7064&action=edit
+7061	2022-09-09	Mish Mash – תכנית ראשונה! – איתי גואטה 07/09/2022	https://zerockradio.com/episodes/mishmash-07092022/	https://zerockradio.com/wp-admin/post.php?post=7061&action=edit
+7043	2022-09-06	שעת הגראנג' 77 – יובל יוספסון 06/09/2022	https://zerockradio.com/episodes/grunge-06092022/	https://zerockradio.com/wp-admin/post.php?post=7043&action=edit
+7042	2022-09-06	ג'קי נקודה 2 – הנקמההה, תכנית 32  – ג'קי שרגא 06/09/2022	https://zerockradio.com/episodes/jake-2-06092022/	https://zerockradio.com/wp-admin/post.php?post=7042&action=edit
+6982	2022-09-02	טופ אוף דה רוק – טל סיון ובר קציר 01/09/2022	https://zerockradio.com/episodes/top-rock-01092022/	https://zerockradio.com/wp-admin/post.php?post=6982&action=edit
+6945	2022-08-31	Ze Rock Porto 27 – אלעד אביגן 30/08/2022	https://zerockradio.com/episodes/zrp-30082022/	https://zerockradio.com/wp-admin/post.php?post=6945&action=edit
+6944	2022-08-31	ג'קי נקודה 2 – הנקמההה – ג'קי שרגא 30/08/2022	https://zerockradio.com/episodes/jake-2-30082022/	https://zerockradio.com/wp-admin/post.php?post=6944&action=edit
+6865	2022-08-28	פותחים את הצ'אקרוק 20 – אנדרקאבר 2-  אסף לב וליאור אררייך – 24.8.22	https://zerockradio.com/episodes/chackrock20-24082022/	https://zerockradio.com/wp-admin/post.php?post=6865&action=edit
+6854	2022-08-27	טופ אוף דה רוק -Cake of the Birthday‏‏ – טל סיון ובר קציר – 25/8/22	https://zerockradio.com/episodes/topoftherock-25082022/	https://zerockradio.com/wp-admin/post.php?post=6854&action=edit
+6841	2022-08-27	ג'קי נקודה 2 הנקמה – ג'קי שרגא – 23/8/22	https://zerockradio.com/episodes/jakep2-30-2308222/	https://zerockradio.com/wp-admin/post.php?post=6841&action=edit
+6738	2022-08-22	קוטגרוקטנוב 14 – מסיבת נו מטאל – אפרת קוטגרו ואלירן קטנוב – 22.8.22	https://zerockradio.com/episodes/kotegarockatanov14-22082022/	https://zerockradio.com/wp-admin/post.php?post=6738&action=edit
+6733	2022-08-22	זה פרוג – ערן הר-פז 22/08/2022	https://zerockradio.com/episodes/prog-22082022/	https://zerockradio.com/wp-admin/post.php?post=6733&action=edit
+6681	2022-08-19	Top of the Rock – חנוך לוין – 18/08/2022	https://zerockradio.com/episodes/top-rock-18082022/	https://zerockradio.com/wp-admin/post.php?post=6681&action=edit
+6674	2022-08-19	לבלוע את הרוק 149 – שי גרברז 17/08/2022	https://zerockradio.com/episodes/swallow-rock-17082022/	https://zerockradio.com/wp-admin/post.php?post=6674&action=edit
+6668	2022-08-19	Ze Rock Porto 27 – אלעד אביגן 16/08/2022	https://zerockradio.com/episodes/zrp-16082022/	https://zerockradio.com/wp-admin/post.php?post=6668&action=edit
+6667	2022-08-19	ג'קי נקודה 2 – הנקמההה – תכנית 29 – ג'קי שרגא 16/08/2022	https://zerockradio.com/episodes/jake-2-16082022/	https://zerockradio.com/wp-admin/post.php?post=6667&action=edit
+6595	2022-08-14	Top of the Rock – Robin Williams – טל סיון ובר קציר 11/08/2022	https://zerockradio.com/episodes/top-rock-11082022/	https://zerockradio.com/wp-admin/post.php?post=6595&action=edit
+6566	2022-08-10	לבלוע את הרוק – שי גרברז 10/08/2022	https://zerockradio.com/episodes/swallow-rock-10082022/	https://zerockradio.com/wp-admin/post.php?post=6566&action=edit
+6561	2022-08-10	Ze Rock Porto 25 – אלעד אביגן 09/08/2022	https://zerockradio.com/episodes/zrp-09082022/	https://zerockradio.com/wp-admin/post.php?post=6561&action=edit
+6560	2022-08-10	ג'קי נקודה 2 – הנקמההה – תכנית 28 – ג'קי שרגא 09/08/2022	https://zerockradio.com/episodes/jake-2-09082022/	https://zerockradio.com/wp-admin/post.php?post=6560&action=edit
+6525	2022-08-05	Top of the Rock – טל סיון ובר קציר 04/08/2022	https://zerockradio.com/episodes/top-rock-04082022/	https://zerockradio.com/wp-admin/post.php?post=6525&action=edit
+6505	2022-08-03	Ze Rock Porto 24 – אלעד אביגן 02/08/2022	https://zerockradio.com/episodes/zrp-02082022/	https://zerockradio.com/wp-admin/post.php?post=6505&action=edit
+6504	2022-08-03	ג'קי נקודה 2 – הנקמההה – תכנית 27 – ג'קי שרגא 02/08/2022	https://zerockradio.com/episodes/jake-2-02082022/	https://zerockradio.com/wp-admin/post.php?post=6504&action=edit
+6437	2022-07-29	Top of the Rock – טל סיון ובר קציר 28/07/2022	https://zerockradio.com/episodes/top-rock-28072022/	https://zerockradio.com/wp-admin/post.php?post=6437&action=edit
+6430	2022-07-29	לבלוע את הרוק 147 – שי גרברז 27/07/2022	https://zerockradio.com/episodes/swallow-rock-27072022/	https://zerockradio.com/wp-admin/post.php?post=6430&action=edit
+6395	2022-07-27	זה רוק פורטו 22 – אלעד אביגן 26/07/2022	https://zerockradio.com/episodes/zrp26072022/	https://zerockradio.com/wp-admin/post.php?post=6395&action=edit
+6394	2022-07-27	ג'קי נקודה 2 – הנקמההה = ג'קי שרגא 26/07/2022	https://zerockradio.com/episodes/jake-2-26072022/	https://zerockradio.com/wp-admin/post.php?post=6394&action=edit
+6376	2022-07-26	פותחים את הצ'אקרוק 19 – אסף לב וליאור אררייך 25/07/2022	https://zerockradio.com/episodes/chackrock-25072022/	https://zerockradio.com/wp-admin/post.php?post=6376&action=edit
+6321	2022-07-22	Top of the Rock – Rocking on the moon 21/07/2022 – טל סיון ובר קציר	https://zerockradio.com/episodes/top-rock-21072022/	https://zerockradio.com/wp-admin/post.php?post=6321&action=edit
+6295	2022-07-20	לבלוע את הרוק 146 – שי גרברז 20/07/2022	https://zerockradio.com/episodes/swallow-rock-20072022/	https://zerockradio.com/wp-admin/post.php?post=6295&action=edit
+6287	2022-07-20	ג'קי נקודה 2 – הנקמההה – תכנית 25, ג'קי שרגא 19/07/2022	https://zerockradio.com/episodes/jake-2-19072022/	https://zerockradio.com/wp-admin/post.php?post=6287&action=edit
+6248	2022-07-19	קוטגרוקטנוב 13 – אפרת קוטגרו ואלירן קטנוב 18/07/2022	https://zerockradio.com/episodes/kotegarockatanov-18072022/	https://zerockradio.com/wp-admin/post.php?post=6248&action=edit
+6190	2022-07-15	טופ אוף דה רוק – Top of the Work – טל סיון ובר קציר 14/07/2022	https://zerockradio.com/episodes/top-rock-14072022/	https://zerockradio.com/wp-admin/post.php?post=6190&action=edit
+6155	2022-07-13	Ze Rock Porto 21 – אלעד אביגן 12/07/2022	https://zerockradio.com/episodes/zrp-12072022/	https://zerockradio.com/wp-admin/post.php?post=6155&action=edit
+6154	2022-07-13	ג'קי נקודה 2 – הנקמההה – תכנית 24 – ג'קי שרגא 12/07/2022	https://zerockradio.com/episodes/jake-2-12072022/	https://zerockradio.com/wp-admin/post.php?post=6154&action=edit
+5979	2022-07-07	Top of the Rock – Yardbirds – טל סיון ובר קציר 07/07/2022	https://zerockradio.com/episodes/top-rock-07072022/	https://zerockradio.com/wp-admin/post.php?post=5979&action=edit
+5971	2022-07-07	לבלוע את הרוק 144 – שי גרברז 06/07/2022	https://zerockradio.com/episodes/swallow-rock-06072022/	https://zerockradio.com/wp-admin/post.php?post=5971&action=edit
+5965	2022-07-05	זה רוק פורטו 20 – אלעד אביגן 05/07/2022	https://zerockradio.com/episodes/zrp-05072022/	https://zerockradio.com/wp-admin/post.php?post=5965&action=edit
+5964	2022-07-05	ג'קי נקודה 2 -הנקמההה – תכנית 23 – ג'קי שרגא 05/07/2022	https://zerockradio.com/episodes/jake-2-05072022/	https://zerockradio.com/wp-admin/post.php?post=5964&action=edit
+5917	2022-06-30	Ze Rock Porto 19 – אלעד אביגן 28/06/2022	https://zerockradio.com/episodes/zrp-28062022/	https://zerockradio.com/wp-admin/post.php?post=5917&action=edit
+5916	2022-06-30	ג'קי נקודה 2 – הנקמההה – תכנית 22 – ג'קי שרגא 28/06/2022	https://zerockradio.com/episodes/jake-2-28062022/	https://zerockradio.com/wp-admin/post.php?post=5916&action=edit
+5909	2022-06-29	פותחים את הצ'אקרוק 18 – אסף לב וליאור ארריך 27/06/2022	https://zerockradio.com/episodes/chackrock-18-27062022/	https://zerockradio.com/wp-admin/post.php?post=5909&action=edit
+5903	2022-06-27	זה פרוג – ערן הר-פז 27/06/2022	https://zerockradio.com/episodes/ze-prog-27062022/	https://zerockradio.com/wp-admin/post.php?post=5903&action=edit
+5876	2022-06-23	Top of the Rock – טל סיון ובר קציר 23/06/2022	https://zerockradio.com/episodes/top-rock-23062022/	https://zerockradio.com/wp-admin/post.php?post=5876&action=edit
+5868	2022-06-23	לבלוע את הרוק 143 – 22/06/2022	https://zerockradio.com/episodes/swallow-rock-22062022/	https://zerockradio.com/wp-admin/post.php?post=5868&action=edit
+5861	2022-06-21	Ze Rock Porto 18 – אלעד אביגן 21/06/2022	https://zerockradio.com/episodes/zrp-21062022/	https://zerockradio.com/wp-admin/post.php?post=5861&action=edit
+5860	2022-06-21	ג'קי.2 – הנקמההה – תכנית 20, ג'קי שרגא 21/06/2022	https://zerockradio.com/episodes/jake-2-21062022/	https://zerockradio.com/wp-admin/post.php?post=5860&action=edit
+5856	2022-06-21	קוטגרוקטנוב 12 – אפרת קוטגרו ואלירן קטנוב 20/06/2022	https://zerockradio.com/episodes/kotegarockatanov-20062022/	https://zerockradio.com/wp-admin/post.php?post=5856&action=edit
+5828	2022-06-19	טופ אוף דה רוק – זיגי סטרדסט – טל סיון ובר קציר 16/06/2022	https://zerockradio.com/episodes/top-rock-16062022/	https://zerockradio.com/wp-admin/post.php?post=5828&action=edit
+5809	2022-06-15	לבלוע את הרוק 142 – שי גרברז 15/06/2022	https://zerockradio.com/episodes/swallow-rock-1506022/	https://zerockradio.com/wp-admin/post.php?post=5809&action=edit
+5799	2022-06-15	Ze Rock Porto 17 – אלעד אביגן 14/06/2022	https://zerockradio.com/episodes/zrp-14062022/	https://zerockradio.com/wp-admin/post.php?post=5799&action=edit
+5798	2022-06-15	ג'קי.2 – הנקמההה – ג'קי שרגא 14/06/2022	https://zerockradio.com/episodes/jake-2-14062022/	https://zerockradio.com/wp-admin/post.php?post=5798&action=edit
+5787	2022-06-13	זה פרוג, ערן הר-פז 13/06/2022	https://zerockradio.com/episodes/ze-prog-13062022/	https://zerockradio.com/wp-admin/post.php?post=5787&action=edit
+5763	2022-06-09	טופ אוף דה רוק – טל סיון ובר קציר 09/06/2022	https://zerockradio.com/episodes/top-rock-09062022/	https://zerockradio.com/wp-admin/post.php?post=5763&action=edit
+5754	2022-06-08	לבלוע את הרוק 141 – שי גרברז 08/06/2022	https://zerockradio.com/episodes/swallow-tock-08062022/	https://zerockradio.com/wp-admin/post.php?post=5754&action=edit
+5745	2022-06-07	Ze Rock Porto 16 – אלעד אביגן 07/06/2022	https://zerockradio.com/episodes/zrp-07062022/	https://zerockradio.com/wp-admin/post.php?post=5745&action=edit
+5744	2022-06-07	ג’קי.2 – הנקמההה – ג’קי שרגא 07/06/2022	https://zerockradio.com/episodes/jake-2-07062022/	https://zerockradio.com/wp-admin/post.php?post=5744&action=edit
+5738	2022-06-06	פותחים את הצ'אקרוק 17 – אסף לב וליאור אררייך – 6.6.22	https://zerockradio.com/episodes/chackrok17-06062022/	https://zerockradio.com/wp-admin/post.php?post=5738&action=edit
+5703	2022-05-31	ג'קי.2 – הנקמההה – תכנית 18,ג'קי שרגא 31/05/2022	https://zerockradio.com/episodes/jake-2-31052022/	https://zerockradio.com/wp-admin/post.php?post=5703&action=edit
+5692	2022-05-30	זה פרוג – ערן הר-פז 30/05/2022	https://zerockradio.com/episodes/ze-prog-30052022/	https://zerockradio.com/wp-admin/post.php?post=5692&action=edit
+5671	2022-05-26	טופ אוף דה רוק – נואל גלאגר – טל סיון ובר קציר 26/05/2022	https://zerockradio.com/episodes/top-rock-26052022/	https://zerockradio.com/wp-admin/post.php?post=5671&action=edit
+5661	2022-05-25	לבלוע את הרוק 140 – שי גרברז 25/05/2022	https://zerockradio.com/episodes/swallow-rock-25052022/	https://zerockradio.com/wp-admin/post.php?post=5661&action=edit
+5654	2022-05-24	Ze Rock Porto 15 – אלעד אביגן 24/05/2022	https://zerockradio.com/episodes/zrp-24052022/	https://zerockradio.com/wp-admin/post.php?post=5654&action=edit
+5653	2022-05-24	ג'קי.2 – הנקמההה – תכנית 17. ג'קי שרגא 24/05/2022	https://zerockradio.com/episodes/jake-2-24052022/	https://zerockradio.com/wp-admin/post.php?post=5653&action=edit
+5610	2022-05-19	Top of the Rock – Pete Townsend – טל סיון ובר קציר 19/05/2022	https://zerockradio.com/episodes/top-rock-19052022/	https://zerockradio.com/wp-admin/post.php?post=5610&action=edit
+5602	2022-05-19	לבלוע את הרוק 139 – שי גרברז 18/05/2022	https://zerockradio.com/episodes/swallow-rock-18052022/	https://zerockradio.com/wp-admin/post.php?post=5602&action=edit
+5592	2022-05-17	Ze Rock Porto 15 – אלעד אביגן 17/05/2022	https://zerockradio.com/episodes/zrp-17052022/	https://zerockradio.com/wp-admin/post.php?post=5592&action=edit
+5591	2022-05-17	ג'קי.2 – הנקמההה – תכנית 16, ג'קי שרגא 17/05/2022	https://zerockradio.com/episodes/jake-2-17052022/	https://zerockradio.com/wp-admin/post.php?post=5591&action=edit
+5579	2022-05-16	זה פרוג – ערן הר-פז 16/05/2022	https://zerockradio.com/episodes/ze-prog-16052022/	https://zerockradio.com/wp-admin/post.php?post=5579&action=edit
+5558	2022-05-12	Top of the Rock -ג'ימי הנדריקס – טל סיון ובר קציר 12/05/2022	https://zerockradio.com/episodes/top-rock-12052022/	https://zerockradio.com/wp-admin/post.php?post=5558&action=edit
+5544	2022-05-10	Ze Rock Porto 13 – אלעד אביגן 10/05/2022	https://zerockradio.com/episodes/zrp-10052022/	https://zerockradio.com/wp-admin/post.php?post=5544&action=edit
+5543	2022-05-10	ג'קי.2 – הנקמההה – תכנית 15 – ג'קי שרגא 10/05/2022	https://zerockradio.com/episodes/jake-2-10052022/	https://zerockradio.com/wp-admin/post.php?post=5543&action=edit
+5488	2022-05-03	Ze Rock Porto -פלייליסט ליום הזיכרון, אלעד אביגן 03/05/2022	https://zerockradio.com/episodes/zrp-03052022/	https://zerockradio.com/wp-admin/post.php?post=5488&action=edit
+5487	2022-05-03	ג'קי.2 – הנקמההה – תכנית 14, ג'קי שרגא 03/05/2022	https://zerockradio.com/episodes/jake-2-03052022/	https://zerockradio.com/wp-admin/post.php?post=5487&action=edit
+5476	2022-05-02	קוטגרוקטנוב 11 – אפרת קוטגרו ואלירן קטנוב 02/05/2022	https://zerockradio.com/episodes/kotegarockatanov-02052022/	https://zerockradio.com/wp-admin/post.php?post=5476&action=edit
+5473	2022-05-02	זה פרוג – ערן הר-פז 02/05/2022	https://zerockradio.com/episodes/ze-prog-02052022/	https://zerockradio.com/wp-admin/post.php?post=5473&action=edit
+5452	2022-04-27	לבלוע את הרוק 138 – שי גרברז 27/04/2022	https://zerockradio.com/episodes/swallow-rock-27042022/	https://zerockradio.com/wp-admin/post.php?post=5452&action=edit
+5444	2022-04-26	Ze Rock Porto 12 – אלעד אביגן 26/04/2022	https://zerockradio.com/episodes/zrp-26042022/	https://zerockradio.com/wp-admin/post.php?post=5444&action=edit
+5443	2022-04-26	ג'קי.2 – הנקמההה – תכנית 13 – ג'קי שרגא 26/04/2022	https://zerockradio.com/episodes/jake-2-26042022/	https://zerockradio.com/wp-admin/post.php?post=5443&action=edit
+5437	2022-04-26	פותחים את הצ'אקרוק 16 – אסף לב וליאור ארריך 25/04/2022	https://zerockradio.com/episodes/chackrock-25042022/	https://zerockradio.com/wp-admin/post.php?post=5437&action=edit
+5396	2022-04-19	Ze Rock Porto 11 – אלעד אביגן 19/04/2022	https://zerockradio.com/episodes/zrp-19042022/	https://zerockradio.com/wp-admin/post.php?post=5396&action=edit
+5395	2022-04-19	ג'קי.2 – הנקמההה – תכנית 12, ג'קי שרגא 19/04/2022	https://zerockradio.com/episodes/jake-2-19042022/	https://zerockradio.com/wp-admin/post.php?post=5395&action=edit
+5351	2022-04-13	לבלוע את הרוק 137 – שי גרברז 13/04/2022	https://zerockradio.com/episodes/swallow-rock-13042022/	https://zerockradio.com/wp-admin/post.php?post=5351&action=edit
+5271	2022-04-12	Ze Rock Porto 10 – אלעד אביגן 12/04/2022	https://zerockradio.com/episodes/zrp-12042022/	https://zerockradio.com/wp-admin/post.php?post=5271&action=edit
+5270	2022-04-12	ג'קי.2 – הנקמההה 11 – ג'קי שרגא 12/04/2022	https://zerockradio.com/episodes/jake-2-12042022/	https://zerockradio.com/wp-admin/post.php?post=5270&action=edit
+5218	2022-04-10	קוטגרוקטנוב 10 – אפרת קוטגרו ואלירן קטנוב – 07/04/2022	https://zerockradio.com/episodes/kotrgarockatanov10-07042022/	https://zerockradio.com/wp-admin/post.php?post=5218&action=edit
+5144	2022-04-07	טופ אוף דה רוק – טל סיון ובר קציר 07/04/2022	https://zerockradio.com/episodes/top-rock-07042022/	https://zerockradio.com/wp-admin/post.php?post=5144&action=edit
+5130	2022-04-06	לבלוע את הרוק 136 – שי גרברז 06/04/2022	https://zerockradio.com/episodes/swallow-rock-06042022/	https://zerockradio.com/wp-admin/post.php?post=5130&action=edit
+5104	2022-04-05	זה רוק פורטו 9 – אלעד אביגן 05/04/2022	https://zerockradio.com/episodes/zrp-05042022/	https://zerockradio.com/wp-admin/post.php?post=5104&action=edit
+5101	2022-04-05	ג'קי.2 – הנקמההה – תכנית 9, ג'קי שרגא 05/04/2022	https://zerockradio.com/episodes/jake-2-05042022/	https://zerockradio.com/wp-admin/post.php?post=5101&action=edit
+5093	2022-04-05	שעת הגראנג' 76 – יום הגראנג' 5 – 5.4.22	https://zerockradio.com/episodes/grunge76-05042022/	https://zerockradio.com/wp-admin/post.php?post=5093&action=edit
+5058	2022-03-31	Top of the Rock – Phil Collins – טל סיון ובר קציר 31/03/2022	https://zerockradio.com/episodes/top-rock-31032022/	https://zerockradio.com/wp-admin/post.php?post=5058&action=edit
+5043	2022-03-30	לבלוע את הרוק 135 – שי גרברז 30/03/2022	https://zerockradio.com/episodes/swallow-the-rock-30032022/	https://zerockradio.com/wp-admin/post.php?post=5043&action=edit
+5034	2022-03-29	Ze Rock Porto 8 – אלעד אביגן 29/03/2022	https://zerockradio.com/episodes/zrp-29032022/	https://zerockradio.com/wp-admin/post.php?post=5034&action=edit
+5033	2022-03-29	ג'קי.2 – הנקמההה – 10,ג'קי שרגא 29/03/2022	https://zerockradio.com/episodes/jake-2-29032022/	https://zerockradio.com/wp-admin/post.php?post=5033&action=edit
+5017	2022-03-28	זה פרוג, ערן הר-פז – 28/03/2022	https://zerockradio.com/episodes/ze-prog-28032022/	https://zerockradio.com/wp-admin/post.php?post=5017&action=edit
+4976	2022-03-24	לבלוע את הרוק 135 – שי גרברז 23/03/2022	https://zerockradio.com/episodes/swallow-the-rock-23032022/	https://zerockradio.com/wp-admin/post.php?post=4976&action=edit
+4969	2022-03-22	Ze Rock Porto 7 – אלעד אביגן 22/03/2022	https://zerockradio.com/episodes/ze-rock-porto-22032022/	https://zerockradio.com/wp-admin/post.php?post=4969&action=edit
+4967	2022-03-22	ג'קי.2 – הנקמההה 8 – ג'קי שרגא 22/03/2022	https://zerockradio.com/episodes/jake-2-22032022/	https://zerockradio.com/wp-admin/post.php?post=4967&action=edit
+4899	2022-03-16	לבלוע את הרוק 134 – שי גרברז 16/03/2022	https://zerockradio.com/episodes/swallow-rock-16032022/	https://zerockradio.com/wp-admin/post.php?post=4899&action=edit
+4891	2022-03-15	זה רוק פורטו 6 – אלעד אביגן 15/03/2022	https://zerockradio.com/episodes/porto-15032022/	https://zerockradio.com/wp-admin/post.php?post=4891&action=edit
+4890	2022-03-15	ג'קי.2 – הנקמההה – תכנית 7, ג'קי שרגא 15/03/2022	https://zerockradio.com/episodes/jake-2-15032022/	https://zerockradio.com/wp-admin/post.php?post=4890&action=edit
+4874	2022-03-14	זה פרוג – ערן הר-פז 14/03/2022	https://zerockradio.com/episodes/ze-prog-14032022/	https://zerockradio.com/wp-admin/post.php?post=4874&action=edit
+4837	2022-03-10	טופ אוף דה רוק – טל סיון ובר קציר 10/03/2022	https://zerockradio.com/episodes/top-rock-10032022/	https://zerockradio.com/wp-admin/post.php?post=4837&action=edit
+4821	2022-03-09	לבלוע את הרוק 133 – 09/03/2022	https://zerockradio.com/episodes/swallow-the-rock-09032022/	https://zerockradio.com/wp-admin/post.php?post=4821&action=edit
+4801	2022-03-08	Ze Rock Porto 5 – אלעד אביגן 08/03/2022	https://zerockradio.com/episodes/porto-08032022/	https://zerockradio.com/wp-admin/post.php?post=4801&action=edit
+4800	2022-03-08	ג'קי.2 – הנקמההה – תכנית6 – ג'קי שרגא 08/03/2022	https://zerockradio.com/episodes/jake-2-08032022/	https://zerockradio.com/wp-admin/post.php?post=4800&action=edit
+4748	2022-03-03	top of the rock – טל סיון ובר קציר 03/03/2022	https://zerockradio.com/episodes/top-rock-03032022/	https://zerockradio.com/wp-admin/post.php?post=4748&action=edit
+4717	2022-03-01	זה רוק פורטו 4 – אלעד אביגן 01/03/2022	https://zerockradio.com/episodes/porto-01032022/	https://zerockradio.com/wp-admin/post.php?post=4717&action=edit
+4716	2022-03-01	ג'קי.2 – הנקמההה – ג'קי שרגא 01/03/2022	https://zerockradio.com/episodes/jake-2-01032022/	https://zerockradio.com/wp-admin/post.php?post=4716&action=edit
+4709	2022-03-01	פותחים את הצ'קרוק 15 – אסף לב וליאור ארריך 28/02/2022	https://zerockradio.com/episodes/chackrock-28022022/	https://zerockradio.com/wp-admin/post.php?post=4709&action=edit
+4703	2022-02-28	זה פרוג – ערן הר-פז 28/02/2022	https://zerockradio.com/episodes/ze-prog-28022022/	https://zerockradio.com/wp-admin/post.php?post=4703&action=edit
+4646	2022-02-23	לבלוע את הרוק 132 – שי גרברז 23/02/2022	https://zerockradio.com/episodes/swallow-the-rock-23022022/	https://zerockradio.com/wp-admin/post.php?post=4646&action=edit
+4630	2022-02-22	זה רוק פורטו 3 – אלעד אביגן 22/02/2022	https://zerockradio.com/episodes/porto-22022022/	https://zerockradio.com/wp-admin/post.php?post=4630&action=edit
+4629	2022-02-22	ג'קי.2 – הנקמההה – תכנית 4 – ג'קי שרגא 22/02/2022	https://zerockradio.com/episodes/jake-2-22022022/	https://zerockradio.com/wp-admin/post.php?post=4629&action=edit
+4605	2022-02-20	קוטגרוקטנוב 9 – אפרת קוטגרו ואלירן קטנוב 20/02/2022	https://zerockradio.com/episodes/kotegarockatanov-20022022/	https://zerockradio.com/wp-admin/post.php?post=4605&action=edit
+4587	2022-02-17	טופ אוף דה רוק – טל סיון ובר קציר 17/02/2022	https://zerockradio.com/episodes/top-rock-17022022/	https://zerockradio.com/wp-admin/post.php?post=4587&action=edit
+4579	2022-02-16	לבלוע את הרוק 131 – שי גרברז 16/02/2022	https://zerockradio.com/episodes/swallow-rock-16022022/	https://zerockradio.com/wp-admin/post.php?post=4579&action=edit
+4571	2022-02-16	זה רוק פורטו 2 – אלעד אביגן 15/02/2022	https://zerockradio.com/episodes/porto-15022022/	https://zerockradio.com/wp-admin/post.php?post=4571&action=edit
+4570	2022-02-15	ג'קי נקודה 2 – פרק 3 – ג'קי שרגא – 15.2.22	https://zerockradio.com/episodes/jake2-3-15022022/	https://zerockradio.com/wp-admin/post.php?post=4570&action=edit
+4558	2022-02-14	זה פרוג – ערן הר-פז 14/02/2022	https://zerockradio.com/episodes/ze-prog-14022022/	https://zerockradio.com/wp-admin/post.php?post=4558&action=edit
+4503	2022-02-10	Top of the Rock – טל סיון ובר קציר – 10/02/2022	https://zerockradio.com/episodes/top-rock-10022022/	https://zerockradio.com/wp-admin/post.php?post=4503&action=edit
+4484	2022-02-09	זה רוק פורטו, תכנית הבכורה – אלעד אביגן 08/02/2022	https://zerockradio.com/episodes/porto-08022022/	https://zerockradio.com/wp-admin/post.php?post=4484&action=edit
+4483	2022-02-08	ג'קי.2 – הנקמההה 2 – ג'קי שרגא 08/02/2022	https://zerockradio.com/episodes/jake-2-08022022/	https://zerockradio.com/wp-admin/post.php?post=4483&action=edit
+4442	2022-02-03	Top of the Rock – טל סיון ובר קציר 03/02/2022	https://zerockradio.com/episodes/top-rock-03022022/	https://zerockradio.com/wp-admin/post.php?post=4442&action=edit
+4434	2022-02-02	לבלוע את הרוק 130 – שי גרברז 02/02/2022	https://zerockradio.com/episodes/swallow-rock-02022022/	https://zerockradio.com/wp-admin/post.php?post=4434&action=edit
+4425	2022-02-01	ג’קי.2 – הנקמה – תכנית הבכורה – ג’קי שרגא, 01/02/2022	https://zerockradio.com/episodes/jake-2-01022022/	https://zerockradio.com/wp-admin/post.php?post=4425&action=edit
+4419	2022-01-31	פותחים את הצ'אקרוק 14 – מספרי הסיפורים – אסף לב וליאור אררייך – 31.1.22	https://zerockradio.com/episodes/chackrock14-31012022/	https://zerockradio.com/wp-admin/post.php?post=4419&action=edit
+4416	2022-01-31	המוש פיט, תכנית אחרונה – ברק מאיר 31/01/2022	https://zerockradio.com/episodes/mosh-pit-31012022/	https://zerockradio.com/wp-admin/post.php?post=4416&action=edit
+4414	2022-01-31	זה פרוג – ערן הר-פז 31/01/2022	https://zerockradio.com/episodes/ze-prog-31012022/	https://zerockradio.com/wp-admin/post.php?post=4414&action=edit
+4405	2022-01-30	קוטגרוקנטוב 8 – אפרת קוטגרו ואלירן קטנוב 30/01/2022	https://zerockradio.com/episodes/kotegarockatanov-30012022/	https://zerockradio.com/wp-admin/post.php?post=4405&action=edit
+4384	2022-01-29	Ze Rock's International Rock Chart 2 – Matan Bechor 29/01/2022	https://zerockradio.com/episodes/international-rock-chart-29012022/	https://zerockradio.com/wp-admin/post.php?post=4384&action=edit
+4379	2022-01-28	Black Star – ליאור פיק 27/01/2022	https://zerockradio.com/episodes/black-star-27012022/	https://zerockradio.com/wp-admin/post.php?post=4379&action=edit
+4371	2022-01-27	Top of the Rock – Meat Loaf – טל סיון ובר קציר 27/01/2022	https://zerockradio.com/episodes/top-rock-270182022/	https://zerockradio.com/wp-admin/post.php?post=4371&action=edit
+4326	2022-01-24	המוש פיט – ברק מאיר 24/01/2022	https://zerockradio.com/episodes/mosh-pit-24012022/	https://zerockradio.com/wp-admin/post.php?post=4326&action=edit
+4270	2022-01-20	לבלוע את הרוק 129 – שי גרברז 19/01/2022	https://zerockradio.com/episodes/swallow-rock-19012022/	https://zerockradio.com/wp-admin/post.php?post=4270&action=edit
+4256	2022-01-17	המוש פיט – ברק מאיר 17/01/2022	https://zerockradio.com/episodes/mosh-pit-17012022/	https://zerockradio.com/wp-admin/post.php?post=4256&action=edit
+4241	2022-01-16	Israel's International Rock Chart 1 – Matan Bechor 15/01/2022	https://zerockradio.com/episodes/international-chart-1-15012022/	https://zerockradio.com/wp-admin/post.php?post=4241&action=edit
+4220	2022-01-13	Top of the Rock – טל סיון ובר קציר 13/01/2022	https://zerockradio.com/episodes/top-rock-13012022/	https://zerockradio.com/wp-admin/post.php?post=4220&action=edit
+4199	2022-01-10	המוש פיט – ברק מאיר 10/01/2022	https://zerockradio.com/episodes/mosh-pit-10012022/	https://zerockradio.com/wp-admin/post.php?post=4199&action=edit
+4173	2022-01-06	Top of the Rock – טל סיון ובר קציר 06/01/2022	https://zerockradio.com/episodes/top-rock-06012022/	https://zerockradio.com/wp-admin/post.php?post=4173&action=edit
+4163	2022-01-05	לבלוע את הרוק 128 – שי גרברז 05/01/2022	https://zerockradio.com/episodes/swallow-rock-05012022/	https://zerockradio.com/wp-admin/post.php?post=4163&action=edit
+4144	2022-01-03	המוש פיט – ברק מאיר 03/01/2022	https://zerockradio.com/episodes/mosh-pit-03012022/	https://zerockradio.com/wp-admin/post.php?post=4144&action=edit
+4142	2022-01-03	זה פרוג – ערן הר-פז 03/01/2022	https://zerockradio.com/episodes/ze-prog-03012022/	https://zerockradio.com/wp-admin/post.php?post=4142&action=edit
+4098	2021-12-30	Top of the Rock – Patti Smith – טל סיוון ובר קציר 30/12/2021	https://zerockradio.com/episodes/top-tock-30122021/	https://zerockradio.com/wp-admin/post.php?post=4098&action=edit
+4090	2021-12-29	לבלוע את הרוק 127 – שי גרברז 29/12/2021	https://zerockradio.com/episodes/swallow-rock-29122021/	https://zerockradio.com/wp-admin/post.php?post=4090&action=edit
+4052	2021-12-27	המוש פיט – ברק מאיר 27/12/2021	https://zerockradio.com/episodes/mosh-pit-27122021/	https://zerockradio.com/wp-admin/post.php?post=4052&action=edit
+4038	2021-12-24	פותחים את הצ'אקרוק 13 – מועדונים – אסף לב וליאור אררייך – 23.12.21	https://zerockradio.com/episodes/chackrock13-23122021/	https://zerockradio.com/wp-admin/post.php?post=4038&action=edit
+4022	2021-12-22	לבלוע את הרוק 126 – שי גרברז 22/12/2021	https://zerockradio.com/episodes/swallow-rock-22122021/	https://zerockradio.com/wp-admin/post.php?post=4022&action=edit
+4006	2021-12-20	המוש פיט – ברק מאיר 20/12/2021	https://zerockradio.com/episodes/mosh-pit-20122021/	https://zerockradio.com/wp-admin/post.php?post=4006&action=edit
+4004	2021-12-20	זה פרוג – ערן הר-פז 20/11/2021	https://zerockradio.com/episodes/ze-prog-20122021/	https://zerockradio.com/wp-admin/post.php?post=4004&action=edit
+3958	2021-12-16	Top of the Rock – Billy Gibbons – טל סיון ובר קציר 16/12/2021	https://zerockradio.com/episodes/top-rock-16122021/	https://zerockradio.com/wp-admin/post.php?post=3958&action=edit
+3952	2021-12-15	לבלוע את הרוק 126 – שי גרברז 15/12/2021	https://zerockradio.com/episodes/swallow-rock-15122021/	https://zerockradio.com/wp-admin/post.php?post=3952&action=edit
+3935	2021-12-14	המוש פיט – ברק מאיר 13/12/2021	https://zerockradio.com/episodes/mosh-pit-13122021/	https://zerockradio.com/wp-admin/post.php?post=3935&action=edit
+3900	2021-12-09	טופ אף דה רוק – טל סיון ובר קציר 09/12/2021	https://zerockradio.com/episodes/top-rock-09122021/	https://zerockradio.com/wp-admin/post.php?post=3900&action=edit
+3893	2021-12-08	קוטגרוקטנוב 7 – אפרת קוטגרו ואלירן קטנוב 08/12/2021	https://zerockradio.com/episodes/kotegatockatanov-08122021/	https://zerockradio.com/wp-admin/post.php?post=3893&action=edit
+3875	2021-12-06	המוש פיט – ברק מאיר 06/12/2021	https://zerockradio.com/episodes/mosh-pit-06122021/	https://zerockradio.com/wp-admin/post.php?post=3875&action=edit
+3843	2021-12-01	לבלוע את הרוק 125 – שי גרברז 01/12/2021	https://zerockradio.com/episodes/swallow-the-rock-01122021/	https://zerockradio.com/wp-admin/post.php?post=3843&action=edit
+3827	2021-11-29	Angry Roni 11 – רוני טרה 29/11/2921	https://zerockradio.com/episodes/angry-roni-29112021/	https://zerockradio.com/wp-admin/post.php?post=3827&action=edit
+3825	2021-11-29	המוש פיט – ברק מאיר 29/11/2021	https://zerockradio.com/episodes/mosh-pit-29112021/	https://zerockradio.com/wp-admin/post.php?post=3825&action=edit
+3781	2021-11-24	לבלוע את הרוק 124 – שי גרברז 24/11/2021	https://zerockradio.com/episodes/swallow-the-rock-21112021/	https://zerockradio.com/wp-admin/post.php?post=3781&action=edit
+3771	2021-11-22	פותחים את הצ'אקרוק 12 – נפלו בעריכה – אסף לב ליאור אררייך – 22.11.21	https://zerockradio.com/episodes/chackrock12-22112021/	https://zerockradio.com/wp-admin/post.php?post=3771&action=edit
+3768	2021-11-22	המוש פיט – ברק מאיר 22/11/2021	https://zerockradio.com/episodes/mosh-pit-22112021/	https://zerockradio.com/wp-admin/post.php?post=3768&action=edit
+3722	2021-11-18	Top of the Rock – פרידה מאלעד – טל סיון ובר קציר 18/11/2021	https://zerockradio.com/episodes/top-of-the-rock-18112021/	https://zerockradio.com/wp-admin/post.php?post=3722&action=edit
+3712	2021-11-17	לבלוע את הרוק 123 – שי גרברז 17/11/2021	https://zerockradio.com/episodes/swallow-the-rock-17112021/	https://zerockradio.com/wp-admin/post.php?post=3712&action=edit
+3693	2021-11-15	המוש פיט – ברק מאיר 15/11/2021	https://zerockradio.com/episodes/mosh-pit-15112021/	https://zerockradio.com/wp-admin/post.php?post=3693&action=edit
+3680	2021-11-14	קוטגרוקטנוב 6 – אפרת קוטגרו ואלירן קטנוב – 14/11/2021	https://zerockradio.com/episodes/kotegarockatanov-14112021/	https://zerockradio.com/wp-admin/post.php?post=3680&action=edit
+3661	2021-11-11	טופ אוף דה רוק – ניל יאנג – טל סיון ובר קציר 11/11/2021	https://zerockradio.com/episodes/top-rock-11112021/	https://zerockradio.com/wp-admin/post.php?post=3661&action=edit
+3652	2021-11-10	לבלוע את הרוק 122 – שי גרברז 10/11/2021	https://zerockradio.com/episodes/swallow-the-rock-10112021/	https://zerockradio.com/wp-admin/post.php?post=3652&action=edit
+3626	2021-11-08	Angry Roni 9 – רוני טרה 08/11/2021	https://zerockradio.com/episodes/angry-roni-08112021/	https://zerockradio.com/wp-admin/post.php?post=3626&action=edit
+3625	2021-11-08	המוש פיט – ברק מאיר 08/11/2021	https://zerockradio.com/episodes/mosh-pit-08112021/	https://zerockradio.com/wp-admin/post.php?post=3625&action=edit
+3602	2021-11-04	TOP OF THE ROCK – יצחק רבין – טל סיוון ובר קציר – 4.11/21	https://zerockradio.com/episodes/toprock-rabin-04112021/	https://zerockradio.com/wp-admin/post.php?post=3602&action=edit
+3593	2021-11-03	לבלוע את הרוק 121- שי גרברז – 3.11.21	https://zerockradio.com/episodes/livloa121-03112021/	https://zerockradio.com/wp-admin/post.php?post=3593&action=edit
+3582	2021-11-02	שעת הגראנג' 75 – יובל יוספסון – 2.11.21	https://zerockradio.com/episodes/grunge-hour75-02112021/	https://zerockradio.com/wp-admin/post.php?post=3582&action=edit
+3571	2021-11-01	ANGRY RONI 8 – רוני טרה – 1.11.21	https://zerockradio.com/episodes/angryroni8-01112021/	https://zerockradio.com/wp-admin/post.php?post=3571&action=edit
+3570	2021-11-01	המוש פיט – ברק מאיר – 1.11.21	https://zerockradio.com/episodes/mosh-pit-01112021/	https://zerockradio.com/wp-admin/post.php?post=3570&action=edit
+3536	2021-10-28	טוטאל קריד – אלעד אביגן, אפרת  קוטגרו ואלירן קטנוב – 28.10.21	https://zerockradio.com/episodes/total-creed-28102021/	https://zerockradio.com/wp-admin/post.php?post=3536&action=edit
+3535	2021-10-28	טופ אוף דה רוק – 40Tallica – טל סיוןן ובר קציר – 28/10/21	https://zerockradio.com/episodes/top-rock-28102021/	https://zerockradio.com/wp-admin/post.php?post=3535&action=edit
+3528	2021-10-27	לבלוע את הרוק 120 – שי גרברז 27/10/2021	https://zerockradio.com/episodes/swallow-the-rock-27102021/	https://zerockradio.com/wp-admin/post.php?post=3528&action=edit
+3516	2021-10-26	פותחים את הצ'אקרוק 11 – אסף לב וליאור אררייך 25/10/2021	https://zerockradio.com/episodes/chackrock-25102021/	https://zerockradio.com/wp-admin/post.php?post=3516&action=edit
+3512	2021-10-25	ANGRY RONI 7 -רוני טרה – 25.10.21	https://zerockradio.com/episodes/angryroni7-25102021/	https://zerockradio.com/wp-admin/post.php?post=3512&action=edit
+3511	2021-10-25	המוש פיט – ברק מאיר 25/10/2021	https://zerockradio.com/episodes/mosh-pit-25102021/	https://zerockradio.com/wp-admin/post.php?post=3511&action=edit
+3485	2021-10-21	Total Rock – Total Chevelle – אלעד אביגן ואלירן קטנוב 21/10/2021	https://zerockradio.com/episodes/total-rock-total-chevelle/	https://zerockradio.com/wp-admin/post.php?post=3485&action=edit
+3484	2021-10-21	קוטגרוקטנוב 5 – אפרת קוטגרו ואלירן קטנוב 21/10/2021	https://zerockradio.com/episodes/kotegarokatanov-21102021/	https://zerockradio.com/wp-admin/post.php?post=3484&action=edit
+3457	2021-10-19	המוש פיט – ברק מאיר 18/10/2021	https://zerockradio.com/episodes/mosh-pit-18102021/	https://zerockradio.com/wp-admin/post.php?post=3457&action=edit
+3455	2021-10-18	זה פרוג – ערן הר-פז 18/10/2021	https://zerockradio.com/episodes/ze-prog-18102021/	https://zerockradio.com/wp-admin/post.php?post=3455&action=edit
+3433	2021-10-14	טוטאל רוק – טוטאל אינקיובוס- אלעד אביגן וטל אופיר 14/10/2021	https://zerockradio.com/episodes/total-rock-total-incubus/	https://zerockradio.com/wp-admin/post.php?post=3433&action=edit
+3432	2021-10-14	Top of the Rock – קינג קרימזון – טל סיון ובר קציר- 14/10/2021	https://zerockradio.com/episodes/top-rock-14102021/	https://zerockradio.com/wp-admin/post.php?post=3432&action=edit
+3424	2021-10-13	לבלוע את הרוק 119 – שי גרברז 13/10/2021	https://zerockradio.com/episodes/swallow-the-rock-13102021/	https://zerockradio.com/wp-admin/post.php?post=3424&action=edit
+3410	2021-10-11	Angry Roni 6 – רוני טרה 11/10/2021	https://zerockradio.com/episodes/angry-roni-11102021/	https://zerockradio.com/wp-admin/post.php?post=3410&action=edit
+3408	2021-10-11	המוש פיט – ברק מאיר 11/10/2021	https://zerockradio.com/episodes/mosh-pit-11102021/	https://zerockradio.com/wp-admin/post.php?post=3408&action=edit
+3382	2021-10-07	Total Rock – Total  KoЯn – אלעד אביגן ועדן גולן 07/10/2021	https://zerockradio.com/episodes/total-rock-total-korn/	https://zerockradio.com/wp-admin/post.php?post=3382&action=edit
+3362	2021-10-06	לבלוע את הרוק 118 – שי גרברז 06/10/2021	https://zerockradio.com/episodes/swallow-the-rock-06102021/	https://zerockradio.com/wp-admin/post.php?post=3362&action=edit
+3347	2021-10-05	Angry Roni 5 – רוני טרה 04/10/2021	https://zerockradio.com/episodes/angry-roni-04102021/	https://zerockradio.com/wp-admin/post.php?post=3347&action=edit
+3330	2021-10-04	המוש פיט – ברק מאיר 04/10/2021	https://zerockradio.com/episodes/mosh-pit-04102021/	https://zerockradio.com/wp-admin/post.php?post=3330&action=edit
+3305	2021-09-30	Top of the Rock – גרי אקשטיין – טל סיון ובר קציר 30/09/2021	https://zerockradio.com/episodes/top-of-the-rock-30092021/	https://zerockradio.com/wp-admin/post.php?post=3305&action=edit
+3301	2021-09-30	פותחים את הצ'קרוק 10 – אסף לב וליאור אררייך 29/09/2021	https://zerockradio.com/episodes/chackrock-29092021/	https://zerockradio.com/wp-admin/post.php?post=3301&action=edit
+3298	2021-09-29	לבלוע את הרוק 117 – שי גרברז 29/09/2021	https://zerockradio.com/episodes/swallow-the-rock-29092021/	https://zerockradio.com/wp-admin/post.php?post=3298&action=edit
+3274	2021-09-27	קוטגרוקטנוב 4 – אפרת קוטגרו ואלירן קטנוב – 26/09/2021	https://zerockradio.com/episodes/kotegarockatanov-2609-2021/	https://zerockradio.com/wp-admin/post.php?post=3274&action=edit
+3247	2021-09-23	טופ אוף דה רוק – ריצ'רד אשקרופט – טל סיון ובר קציר 23/09/2021	https://zerockradio.com/episodes/top-rock-23092021/	https://zerockradio.com/wp-admin/post.php?post=3247&action=edit
+3211	2021-09-22	לבלוע את הרוק 116 – שי גרברז 22/09/2021	https://zerockradio.com/episodes/swallow-the-rock-22092021/	https://zerockradio.com/wp-admin/post.php?post=3211&action=edit
+3122	2021-09-14	שעת הגראנג' 74 – יובל יוספסון – 14.9.21	https://zerockradio.com/episodes/grunge-hour74-14092021/	https://zerockradio.com/wp-admin/post.php?post=3122&action=edit
+3018	2021-09-02	טופ אוף דה רוק – קצירולדת – טל סיון ובר קציר 02/09/2021	https://zerockradio.com/episodes/top-rock-02092021/	https://zerockradio.com/wp-admin/post.php?post=3018&action=edit
+3011	2021-09-01	לבלוע את הרוק 115 – שי גרברז 01/09/2021	https://zerockradio.com/episodes/swallow-the-rock-01092021/	https://zerockradio.com/wp-admin/post.php?post=3011&action=edit
+2991	2021-08-31	פותחים את הצ'אקרוק 9 – רודטריפ ישראלי – אסף לב וליאור אררייך- 30.8.21	https://zerockradio.com/episodes/chackrock9-30082021/	https://zerockradio.com/wp-admin/post.php?post=2991&action=edit
+2987	2021-08-30	המוש פיט – ספיישל טומורוז ריין – ברק מאיר מארח את יגל כהן וישי שוורץ 30/08/2021	https://zerockradio.com/episodes/mosh-pit-30082021/	https://zerockradio.com/wp-admin/post.php?post=2987&action=edit
+2942	2021-08-27	Black Star 11 – ליאור פיק 26/08/2021	https://zerockradio.com/episodes/black-star-26082021/	https://zerockradio.com/wp-admin/post.php?post=2942&action=edit
+2935	2021-08-26	Top of the Rock – שלום חנוך – טל סיון ובר קציר 26/08/2021	https://zerockradio.com/episodes/top-rock-26082021/	https://zerockradio.com/wp-admin/post.php?post=2935&action=edit
+2930	2021-08-25	קוטגרוק 6 – אפרת קוטגרו ואלירן קטנוב 25/08/2021	https://zerockradio.com/episodes/kotegarock-25082021/	https://zerockradio.com/wp-admin/post.php?post=2930&action=edit
+2898	2021-08-23	המוש פיט – ברק מאיר 23/08/2021	https://zerockradio.com/episodes/mosh-pit-23082021/	https://zerockradio.com/wp-admin/post.php?post=2898&action=edit
+2858	2021-08-16	Angry Roni 4 – רוני טרה 16/08/2021	https://zerockradio.com/episodes/angry-roni-16082021/	https://zerockradio.com/wp-admin/post.php?post=2858&action=edit
+2857	2021-08-16	המוש פיט – ברק מאיר 16/08/2021	https://zerockradio.com/episodes/mosh-pit-16082021/	https://zerockradio.com/wp-admin/post.php?post=2857&action=edit
+2833	2021-08-12	טופ אוף דה רוק – Who – טל סיון ובר קציר 12/08/2021	https://zerockradio.com/episodes/top-rock-12082021/	https://zerockradio.com/wp-admin/post.php?post=2833&action=edit
+2814	2021-08-11	לבלוע את הרוק 114 – שי גרברז 11/08/2021	https://zerockradio.com/episodes/swallow-the-rock-11082021/	https://zerockradio.com/wp-admin/post.php?post=2814&action=edit
+2799	2021-08-10	כנסו להאזנה 3 – יובל יוספסון מארח את אופיר עמר – 9.8.21	https://zerockradio.com/episodes/kansu3-ofir-09082021/	https://zerockradio.com/wp-admin/post.php?post=2799&action=edit
+2793	2021-08-09	המוש פיט – ברק מאיר 09/08/2021	https://zerockradio.com/episodes/mosh-pit-09082021/	https://zerockradio.com/wp-admin/post.php?post=2793&action=edit
+2792	2021-08-09	זה פרוג 97 – ערן הר-פז 09/08/2021	https://zerockradio.com/episodes/ze-prog-09082021/	https://zerockradio.com/wp-admin/post.php?post=2792&action=edit
+2758	2021-08-05	Top of the Rock – Pink Floyd – טל סיון ובר קציר 05/08/2021	https://zerockradio.com/episodes/top-rock-05082021/	https://zerockradio.com/wp-admin/post.php?post=2758&action=edit
+2748	2021-08-04	לבלוע את הרוק 113 – שי גרברז 04/08/2021	https://zerockradio.com/episodes/swallow-the-rock-04082021/	https://zerockradio.com/wp-admin/post.php?post=2748&action=edit
+2742	2021-08-03	שעת הגראנג' 73 – יובל יוספסון 03/08/2021	https://zerockradio.com/episodes/grunge-03082021/	https://zerockradio.com/wp-admin/post.php?post=2742&action=edit
+2735	2021-08-03	פותחים את הצ'קרוק 8 – אמריקה – אסף לב וליאור אררייך 03/08/2021	https://zerockradio.com/episodes/chackrock-03082021/	https://zerockradio.com/wp-admin/post.php?post=2735&action=edit
+2720	2021-08-02	המוש פיט – ברק מאיר 02/08/2021	https://zerockradio.com/episodes/mosh-pit-02082021/	https://zerockradio.com/wp-admin/post.php?post=2720&action=edit
+2613	2021-07-29	Black Star 10 – ליאור פיק 29/07/2021	https://zerockradio.com/episodes/black-star-29072021/	https://zerockradio.com/wp-admin/post.php?post=2613&action=edit
+2608	2021-07-29	Top of the Rock – טל סיון ובר קציר 29/07/2021	https://zerockradio.com/episodes/top-rock-29072021/	https://zerockradio.com/wp-admin/post.php?post=2608&action=edit
+2598	2021-07-28	לבלוע את הרוק 112 – שי גרברז 28/07/2021	https://zerockradio.com/episodes/swallow-the-rock-28072021/	https://zerockradio.com/wp-admin/post.php?post=2598&action=edit
+2566	2021-07-26	Angry Roni 3 – רוני טרה 26/07/2021	https://zerockradio.com/episodes/angry-roni-3/	https://zerockradio.com/wp-admin/post.php?post=2566&action=edit
+2565	2021-07-26	המוש פיט – בחירות המאזינים – ברק מאיר 26/07/2021	https://zerockradio.com/episodes/mosh-pit-26072021/	https://zerockradio.com/wp-admin/post.php?post=2565&action=edit
+2533	2021-07-22	Total rock – Linkin Park – אלעד אביגן וסיון פישמן 22/07/2021	https://zerockradio.com/episodes/total-rock-total-linkin/	https://zerockradio.com/wp-admin/post.php?post=2533&action=edit
+2532	2021-07-22	טופ אוף דה רוק – איימי ויינהאוס – 22/07/2021	https://zerockradio.com/episodes/toprock-22072021/	https://zerockradio.com/wp-admin/post.php?post=2532&action=edit
+2525	2021-07-21	קוטגרוק  -אפרת קוטגרו ואלירן קטנוב – 21/07/2021	https://zerockradio.com/episodes/kotegarock-21072021/	https://zerockradio.com/wp-admin/post.php?post=2525&action=edit
+2505	2021-07-19	Angry Roni 2 – רוני טרה 19/07/2021	https://zerockradio.com/episodes/angry-roni-19072021/	https://zerockradio.com/wp-admin/post.php?post=2505&action=edit
+2499	2021-07-19	המוש פיט -ברק מאיר מארח את יותם דפיילר אבני 19/07/2021	https://zerockradio.com/episodes/mosh-pit-19072021/	https://zerockradio.com/wp-admin/post.php?post=2499&action=edit
+2467	2021-07-15	Top of the Rock – the Teller – טל סיון ובר קציר 15/07/2021	https://zerockradio.com/episodes/top-rock-1507-2021/	https://zerockradio.com/wp-admin/post.php?post=2467&action=edit
+2459	2021-07-14	לבלוע את הרוק 111 – שי גרברז – 14072021	https://zerockradio.com/episodes/swallow-the-rock-14072021/	https://zerockradio.com/wp-admin/post.php?post=2459&action=edit
+2435	2021-07-12	Angry Roni 1 – רוני טרה 12/07/2021	https://zerockradio.com/episodes/angry-roni-12072021/	https://zerockradio.com/wp-admin/post.php?post=2435&action=edit
+2434	2021-07-12	המוש פיט – ברק מאיר 12/07/2021	https://zerockradio.com/episodes/mosh-pit-12072021/	https://zerockradio.com/wp-admin/post.php?post=2434&action=edit
+2433	2021-07-12	זה פרוג 96 – ערן הר-פז 12/07/2021	https://zerockradio.com/episodes/ze-prog-12072021/	https://zerockradio.com/wp-admin/post.php?post=2433&action=edit
+2410	2021-07-08	Total Rock 125 – אלעד אביגן 08/07/2021	https://zerockradio.com/episodes/total-rock-08072021/	https://zerockradio.com/wp-admin/post.php?post=2410&action=edit
+2409	2021-07-08	Top of the Rock – Scot Rock – טל סיון ובר קציר – 08/07/2021	https://zerockradio.com/episodes/top-rock-08072021/	https://zerockradio.com/wp-admin/post.php?post=2409&action=edit
+2392	2021-07-07	לבלוע את הרוק 110 – שי גרברז 07/07/2021	https://zerockradio.com/episodes/swallow-the-rock-07072021/	https://zerockradio.com/wp-admin/post.php?post=2392&action=edit
+2373	2021-07-05	המוש פיט – ברק מאיר 05/07/2021	https://zerockradio.com/episodes/mosh-pit-05072021/	https://zerockradio.com/wp-admin/post.php?post=2373&action=edit
+2339	2021-07-01	טוטאל רוק – טוטאל קולד – 01/07/2021	https://zerockradio.com/episodes/total-rock-total-cold/	https://zerockradio.com/wp-admin/post.php?post=2339&action=edit
+2317	2021-06-28	פותחים את הצ'קרוק 7 – אסף לב וליאור אררייך 28/06/2021	https://zerockradio.com/episodes/chackrock-7/	https://zerockradio.com/wp-admin/post.php?post=2317&action=edit
+2314	2021-06-28	המוש פיט – ברק מאיר 28/06/2021	https://zerockradio.com/episodes/mosh-pit-28062021/	https://zerockradio.com/wp-admin/post.php?post=2314&action=edit
+2289	2021-06-24	טופ אוף דה רוק – ביטלס – טל סיון ובר קציר 24/06/2021	https://zerockradio.com/episodes/top-rock-24062021/	https://zerockradio.com/wp-admin/post.php?post=2289&action=edit
+2284	2021-06-23	לבלוע את הרוק 109 – שי גרברז 23/06/2021	https://zerockradio.com/episodes/swallow-rock-23062021/	https://zerockradio.com/wp-admin/post.php?post=2284&action=edit
+2248	2021-06-21	זה פרוג 95 – ערן הר-פז 21/06/2021	https://zerockradio.com/episodes/ze-prog-21062021/	https://zerockradio.com/wp-admin/post.php?post=2248&action=edit
+2222	2021-06-17	טופ אוף דה רוק – טל סיון ובר קציר 17/06/2021	https://zerockradio.com/episodes/top-rock-17062021/	https://zerockradio.com/wp-admin/post.php?post=2222&action=edit
+2211	2021-06-16	לבלוע את הרוק 108 – שי גרברז 16/06/2021	https://zerockradio.com/episodes/swallow-the-rock-16062021/	https://zerockradio.com/wp-admin/post.php?post=2211&action=edit
+2205	2021-06-15	שעת הגראנג' 72 – יובל יוספסון 15/06/2021	https://zerockradio.com/episodes/grunge-15062021/	https://zerockradio.com/wp-admin/post.php?post=2205&action=edit
+2194	2021-06-14	כנסו להאזנה 2 – יובל יוספסון מארח את ליאורה קריאף ונופר נירן 14/6/21	https://zerockradio.com/episodes/kansu2-14062021/	https://zerockradio.com/wp-admin/post.php?post=2194&action=edit
+2190	2021-06-14	המוש פיט – ברק מאיר 14/06/2021	https://zerockradio.com/episodes/mosh-pit-14062021/	https://zerockradio.com/wp-admin/post.php?post=2190&action=edit
+2135	2021-06-10	טוטאל רוק 122 – אלעד אביגן 10/06/2021	https://zerockradio.com/episodes/total-rock-10062021/	https://zerockradio.com/wp-admin/post.php?post=2135&action=edit
+2134	2021-06-10	Top of the Rock – Ray – טל סיון ובר קציר 10/06/2021	https://zerockradio.com/episodes/top-rock-10062021/	https://zerockradio.com/wp-admin/post.php?post=2134&action=edit
+2123	2021-06-09	לבלוע את הרוק 107 -שי גרברז 09/06/2021	https://zerockradio.com/episodes/swallow-the-rock-09062021/	https://zerockradio.com/wp-admin/post.php?post=2123&action=edit
+2105	2021-06-07	קוטגרוק – צרחות חלק 2 – אפרת קוטגרו מארחת את אלירן קטנוב 07/06/2021	https://zerockradio.com/episodes/kotegarock-07062021/	https://zerockradio.com/wp-admin/post.php?post=2105&action=edit
+2103	2021-06-07	המוש פיט – ברק מאיר 07/06/2021	https://zerockradio.com/episodes/mosh-pit-07062021/	https://zerockradio.com/wp-admin/post.php?post=2103&action=edit
+2100	2021-06-07	זה פרוג 94 – ערן הר-פז 07/06/2021	https://zerockradio.com/episodes/ze-prog-07062021/	https://zerockradio.com/wp-admin/post.php?post=2100&action=edit
+2074	2021-06-03	Total Rock 121 – אלעד אביגן 03/06/2021	https://zerockradio.com/episodes/total-rock-03062021/	https://zerockradio.com/wp-admin/post.php?post=2074&action=edit
+2073	2021-06-03	טופ אוף דה רוק -טל סיון ובר קציר – 03/06/2021	https://zerockradio.com/episodes/top-rock-03062021/	https://zerockradio.com/wp-admin/post.php?post=2073&action=edit
+2064	2021-06-02	לבלוע את הרוק 105 – שי גרברז 02/06/2021	https://zerockradio.com/episodes/swallow-the-rock-02062021/	https://zerockradio.com/wp-admin/post.php?post=2064&action=edit
+2040	2021-06-01	פותחים את הצ'קרוק 6 -אסף לב וליאור אררייך 31/05/2021	https://zerockradio.com/episodes/chackrock-6/	https://zerockradio.com/wp-admin/post.php?post=2040&action=edit
+2037	2021-05-31	קוטגרוק / אפרת קוטגרו מארחת את אלירן קטנוב / צרחות חלק א -31.5.21	https://zerockradio.com/episodes/kotegarok-31052021/	https://zerockradio.com/wp-admin/post.php?post=2037&action=edit
+2032	2021-05-31	המוש פיט – בחירות המטאל של המאזינים – ברק מאיר 31/05/2021	https://zerockradio.com/episodes/mosh-pit-31052021/	https://zerockradio.com/wp-admin/post.php?post=2032&action=edit
+2011	2021-05-28	Black Star 8 – ליאור פיק 27/05/2021	https://zerockradio.com/episodes/black-star-27052021/	https://zerockradio.com/wp-admin/post.php?post=2011&action=edit
+2005	2021-05-27	טוטאל רוק – טוטאל פילטר – אלעד אביגן 27/05/2021	https://zerockradio.com/episodes/total-rock-filter/	https://zerockradio.com/wp-admin/post.php?post=2005&action=edit
+2004	2021-05-27	טופ אוף דה רוק – יומולדת – טל סיון ובר קציר 27/05/2021	https://zerockradio.com/episodes/top-rock-27052021/	https://zerockradio.com/wp-admin/post.php?post=2004&action=edit
+1997	2021-05-26	לבלוע את הרוק 105 – שי גרברז 26/05/2021	https://zerockradio.com/episodes/swallow-the-rock-26052021/	https://zerockradio.com/wp-admin/post.php?post=1997&action=edit
+1969	2021-05-24	המוש פיט – ברק מאיר 24/05/2021	https://zerockradio.com/episodes/mosh-pit-24052021/	https://zerockradio.com/wp-admin/post.php?post=1969&action=edit
+1937	2021-05-20	טופ אוף דה רוק – טל סיון ובר קציר 20/05/2021	https://zerockradio.com/episodes/top-rock-20052021/	https://zerockradio.com/wp-admin/post.php?post=1937&action=edit
+1928	2021-05-19	לבלוע את הרוק 104 – שי גרברז 19/05/2021	https://zerockradio.com/episodes/swallow-the-rock-19052021/	https://zerockradio.com/wp-admin/post.php?post=1928&action=edit
+1882	2021-05-13	טופ אוף דה רוק – טל סיון ובר קציר 13/05/2021	https://zerockradio.com/episodes/top-rock-13052021/	https://zerockradio.com/wp-admin/post.php?post=1882&action=edit
+1874	2021-05-12	לבלוע את הרוק – יובל יוספסון 12/05/2021	https://zerockradio.com/episodes/swallow-rock-12052021/	https://zerockradio.com/wp-admin/post.php?post=1874&action=edit
+1864	2021-05-11	שעת הגראנג' 71 – יובל יוספסון 11/05/2021	https://zerockradio.com/episodes/grunge-11052021/	https://zerockradio.com/wp-admin/post.php?post=1864&action=edit
+1854	2021-05-11	כנסו להאזנה – יובל יוספסון מארח מאזינים בשידור חי – אורי ענבי – 10.5.21	https://zerockradio.com/episodes/kansu1-10052021/	https://zerockradio.com/wp-admin/post.php?post=1854&action=edit
+1846	2021-05-10	המוש פיט – ברק מאיר 10/05/2021	https://zerockradio.com/episodes/mosh-pit-10052021/	https://zerockradio.com/wp-admin/post.php?post=1846&action=edit
+1823	2021-05-06	Top of the Rock – Rage – טל סיון ובר קציר 06/05/2021	https://zerockradio.com/episodes/top-rock-06052021/	https://zerockradio.com/wp-admin/post.php?post=1823&action=edit
+1814	2021-05-05	לבלוע את הרוק 103 – שי גרברז 05/05/2021	https://zerockradio.com/episodes/swallow-rock-05052021/	https://zerockradio.com/wp-admin/post.php?post=1814&action=edit
+1793	2021-05-03	המוש פיט – ברק מאיר 03/05/2021	https://zerockradio.com/episodes/mosh-pit-03052021/	https://zerockradio.com/wp-admin/post.php?post=1793&action=edit
+1769	2021-04-29	טוטאל רוק 17 – אלעד אביגן 29/04/2021	https://zerockradio.com/episodes/total-rock-29042021/	https://zerockradio.com/wp-admin/post.php?post=1769&action=edit
+1768	2021-04-29	Top of the Rock- מאור כהן – טל סיון ובר קציר 29/04/2021	https://zerockradio.com/episodes/top-rock-29042021/	https://zerockradio.com/wp-admin/post.php?post=1768&action=edit
+1759	2021-04-28	לבלוע את הרוק 102 – שי גרברז 28/04/2021	https://zerockradio.com/episodes/swallow-the-rock-28042021/	https://zerockradio.com/wp-admin/post.php?post=1759&action=edit
+1749	2021-04-27	שעת הגראנג' 70 – יובל יוספסון 27/04/2021	https://zerockradio.com/episodes/grunge-70/	https://zerockradio.com/wp-admin/post.php?post=1749&action=edit
+1741	2021-04-26	פותחים את הצ׳קרוק 5 – אסף לב וליאור אררייך 26/04/2021	https://zerockradio.com/episodes/chakrock-5/	https://zerockradio.com/wp-admin/post.php?post=1741&action=edit
+1737	2021-04-26	המוש פיט – בחירות המאזינים – ברק מאיר 26/04/2021	https://zerockradio.com/episodes/mosh-pit-26042020/	https://zerockradio.com/wp-admin/post.php?post=1737&action=edit
+1712	2021-04-22	טוטאל רוק – טוטאל סקאנק אננסי – אלעד אביגן 22/04/2021	https://zerockradio.com/episodes/total-rock-22042021/	https://zerockradio.com/wp-admin/post.php?post=1712&action=edit
+1710	2021-04-22	טופ אוף דה רוק -Rock4 – טל סיון ובר קציר 22/04/2021	https://zerockradio.com/episodes/top-rock-22042021/	https://zerockradio.com/wp-admin/post.php?post=1710&action=edit
+1702	2021-04-21	לבלוע את הרוק 101 – שי גרברז 21/04/2021	https://zerockradio.com/episodes/swallow-the-rock-21042021/	https://zerockradio.com/wp-admin/post.php?post=1702&action=edit
+1676	2021-04-19	המוש פיט – מהדורה רגועה, ברק מאיר 19/04/2021	https://zerockradio.com/episodes/mosh-pit-1904202/	https://zerockradio.com/wp-admin/post.php?post=1676&action=edit
+1611	2021-04-14	לבלוע את הרוק 100 – יום הזיכרון תשפ"א – שי גרברז 14/04/2021	https://zerockradio.com/episodes/swallow-the-rock-14042021/	https://zerockradio.com/wp-admin/post.php?post=1611&action=edit
+1598	2021-04-12	ספיישל הדסטארט – שלומי שניידר 12/04/2021	https://zerockradio.com/episodes/guest-12042021/	https://zerockradio.com/wp-admin/post.php?post=1598&action=edit
+1597	2021-04-12	קוטגרוק 4 חלק ב – אפרת קוטגרו 12/04/2021	https://zerockradio.com/episodes/kotegarock-12042021/	https://zerockradio.com/wp-admin/post.php?post=1597&action=edit
+1594	2021-04-12	המוש פיט – ברק מאיר 12/04/2021	https://zerockradio.com/episodes/mosh-pit-12042021/	https://zerockradio.com/wp-admin/post.php?post=1594&action=edit
+1559	2021-04-09	Black Star6 – ליאור פיק 08/04/2021	https://zerockradio.com/episodes/black-star-06042021/	https://zerockradio.com/wp-admin/post.php?post=1559&action=edit
+1547	2021-04-07	לבלוע את הרוק 99 – שי גרברז 07/04/2021	https://zerockradio.com/episodes/swallow-rock-07042021/	https://zerockradio.com/wp-admin/post.php?post=1547&action=edit
+1526	2021-04-05	המוש פיט – יום הגראנג' 2021 – ברק מאיר 05/04/2021	https://zerockradio.com/episodes/mosh-pit-05042021/	https://zerockradio.com/wp-admin/post.php?post=1526&action=edit
+1519	2021-04-04	קוטגרוק 4א – אפרת קוטגרו 04/04/2021	https://zerockradio.com/episodes/kotegarock-04042021/	https://zerockradio.com/wp-admin/post.php?post=1519&action=edit
+1462	2021-03-30	שעת הגראנג' 69 – המהדורה האוסטרלית השנייה – יובל יוספסון – 30.3.21	https://zerockradio.com/episodes/grunge69-30032021/	https://zerockradio.com/wp-admin/post.php?post=1462&action=edit
+1445	2021-03-29	המוש פיט, מיקס פסח – ברק מאיר 29/03/2021	https://zerockradio.com/episodes/mosh-pit-29032021/	https://zerockradio.com/wp-admin/post.php?post=1445&action=edit
+1407	2021-03-25	טוטאל רוק 115 – אלעד אביגן 25/03/2021	https://zerockradio.com/episodes/total-rock-25032021/	https://zerockradio.com/wp-admin/post.php?post=1407&action=edit
+1406	2021-03-25	טופ אוף דה רוק – אלתרמן – טל סיון וברקציר 25/03/2021	https://zerockradio.com/episodes/top-rock-alterman/	https://zerockradio.com/wp-admin/post.php?post=1406&action=edit
+1390	2021-03-24	לבלוע את הרוק 98 – שי גרברז 24/03/2021	https://zerockradio.com/episodes/swallow-rock-24032021/	https://zerockradio.com/wp-admin/post.php?post=1390&action=edit
+1370	2021-03-23	פותחים את הצ'אקרוק 4 – ליאור אררייך ואסף לב – 22.3.21	https://zerockradio.com/episodes/chackrock4-22032021/	https://zerockradio.com/wp-admin/post.php?post=1370&action=edit
+1361	2021-03-22	המוש פיט – בחירות המאזינים – ברק מאיר 22/03/2021	https://zerockradio.com/episodes/mosh-pit-22032021/	https://zerockradio.com/wp-admin/post.php?post=1361&action=edit
+1324	2021-03-18	טופ אוף דה רוק – ג'רי קנטרל- טל סיון ובר קציר 18/03/2021	https://zerockradio.com/episodes/top-rock-18032021/	https://zerockradio.com/wp-admin/post.php?post=1324&action=edit
+1303	2021-03-18	שעת הגראנג' 68 – יובל יוספסון 16/03/2021	https://zerockradio.com/episodes/grunge-16032021/	https://zerockradio.com/wp-admin/post.php?post=1303&action=edit
+1294	2021-03-18	המוש פיט – ברק מאיר 15/03/2021	https://zerockradio.com/episodes/mosh-pit-15032021/	https://zerockradio.com/wp-admin/post.php?post=1294&action=edit
+1261	2021-03-11	אגדת גבריאלוב – טל סיון, בר קציר ואלעד אביגן 11/03/2021	https://zerockradio.com/episodes/gavrielov-11032021/	https://zerockradio.com/wp-admin/post.php?post=1261&action=edit
+1241	2021-03-09	שעת הגראנג' 67 – יובל יוספסון – 9.3.21	https://zerockradio.com/episodes/grunge67-09032021/	https://zerockradio.com/wp-admin/post.php?post=1241&action=edit
+1216	2021-03-08	המוש פיט – ברק מאיר 08/03/2021	https://zerockradio.com/episodes/mosh-pit-08032021/	https://zerockradio.com/wp-admin/post.php?post=1216&action=edit
+1113	2021-03-04	Total Rock – 3 Doors Down – אלעד אביגן ועופר פרוינד 04/03/2021	https://zerockradio.com/episodes/total-rock-3dd-04032021/	https://zerockradio.com/wp-admin/post.php?post=1113&action=edit
+1111	2021-03-04	top of the rock – top of the door – טל סיוון בר קציר – 04.03.21	https://zerockradio.com/episodes/toprock-04032021/	https://zerockradio.com/wp-admin/post.php?post=1111&action=edit
+1097	2021-03-03	לבלוע את הרוק 96 – שי גרברז 03/03/2021	https://zerockradio.com/episodes/swallow-rock-03032021/	https://zerockradio.com/wp-admin/post.php?post=1097&action=edit
+1078	2021-03-02	שעת הגראנג' 66 – יובל יוספסון – 2.3.21	https://zerockradio.com/episodes/grunge66/	https://zerockradio.com/wp-admin/post.php?post=1078&action=edit
+1043	2021-03-01	המוש פיט – ברק מאיר 01/03/2021	https://zerockradio.com/episodes/mosh-pit-01032021/	https://zerockradio.com/wp-admin/post.php?post=1043&action=edit
+1006	2021-02-26	זה טיון, תכנית ייעוץ למוזיקאים -רפי לבינסון, לירון בן שמעון ובר אלפנדרי – 25/02/2021	https://zerockradio.com/episodes/tune-25022021/	https://zerockradio.com/wp-admin/post.php?post=1006&action=edit
+996	2021-02-25	טוטאל רוק 113 – אלעד אביגן 25/02/2021	https://zerockradio.com/episodes/totalrock-25022021/	https://zerockradio.com/wp-admin/post.php?post=996&action=edit
+995	2021-02-25	טופ אוף דה רוק – טל סיון ובר קציר 25/02/2021	https://zerockradio.com/episodes/toprock-25022021/	https://zerockradio.com/wp-admin/post.php?post=995&action=edit
+987	2021-02-24	לבלוע את הרוק 96 – שי גרברז 24/02/2021	https://zerockradio.com/episodes/livloa-24022021/	https://zerockradio.com/wp-admin/post.php?post=987&action=edit
+971	2021-02-22	פותחים את הצ'אקרוק 3 – אסף לב וליאור ארייך מארחים את גלית קורני – 22.2.21	https://zerockradio.com/episodes/chakrock3/	https://zerockradio.com/wp-admin/post.php?post=971&action=edit
+969	2021-02-22	המוש פיט – בחירות המאזינים – 22.2.21	https://zerockradio.com/episodes/%d7%94%d7%9e%d7%95%d7%a9-%d7%a4%d7%99%d7%98-%d7%91%d7%97%d7%99%d7%a8%d7%95%d7%aa-%d7%94%d7%9e%d7%90%d7%96%d7%99%d7%a0%d7%99%d7%9d-22-2-21/	https://zerockradio.com/wp-admin/post.php?post=969&action=edit
+936	2021-02-18	טוטאל רוק 112 – אלעד אביגן 18/02/2021	https://zerockradio.com/episodes/total-rock-18022021/	https://zerockradio.com/wp-admin/post.php?post=936&action=edit
+935	2021-02-18	טופ אוף דה רוק – טל סיון ובר קציר 18/02/2021	https://zerockradio.com/episodes/toprock-18022021/	https://zerockradio.com/wp-admin/post.php?post=935&action=edit
+926	2021-02-17	לבלוע את הרוק 95 – שי גרברז 17/02/2021	https://zerockradio.com/episodes/swallow-170202021/	https://zerockradio.com/wp-admin/post.php?post=926&action=edit
+909	2021-02-15	המוש פיט – ברק מאיר 15/02/2021	https://zerockradio.com/episodes/mosh-pit-15022021/	https://zerockradio.com/wp-admin/post.php?post=909&action=edit
+855	2021-02-11	טופ אוף דה רוק – טל סיון ובר קציר 11/02/2021	https://zerockradio.com/episodes/toprock-11022021/	https://zerockradio.com/wp-admin/post.php?post=855&action=edit
+816	2021-02-09	שעת הגראנג' 65 – יובל יוספסון – מהדורה שקטה – 9.2.21	https://zerockradio.com/episodes/grungehour65/	https://zerockradio.com/wp-admin/post.php?post=816&action=edit
+803	2021-02-08	המוש פיט – ברק מאיר 08/02/2021	https://zerockradio.com/episodes/moshpit-08022021/	https://zerockradio.com/wp-admin/post.php?post=803&action=edit
+679	2021-02-04	טוטאל רוק 111 – אלעד אביגן 04/02/2021	https://zerockradio.com/episodes/totalrock-04022021/	https://zerockradio.com/wp-admin/post.php?post=679&action=edit
+678	2021-02-04	טופ אוף דה רוק – אל סיון ובר קציר 04/02/2021	https://zerockradio.com/episodes/toprock-04022021/	https://zerockradio.com/wp-admin/post.php?post=678&action=edit
+666	2021-02-03	לבלוע את הרוק 94 – שי גרברז 03/02/2021	https://zerockradio.com/episodes/swallow-rock-03022021/	https://zerockradio.com/wp-admin/post.php?post=666&action=edit
+642	2021-02-01	פותחים את הצ'אקרוק 2 – 01/02/2021	https://zerockradio.com/episodes/chakrock-01022021/	https://zerockradio.com/wp-admin/post.php?post=642&action=edit
+632	2021-02-01	המוש פיט – ברק מאיר 01/02/2021	https://zerockradio.com/episodes/mosh-pit-01022021/	https://zerockradio.com/wp-admin/post.php?post=632&action=edit
