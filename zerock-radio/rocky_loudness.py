@@ -43,6 +43,11 @@ PAIRS = [   # (plain playlist the app uses, Liquidsoap playlist with gains)
     (f"{PLAYLIST_DIR}/hebrew.m3u",  f"{PLAYLIST_DIR}/hebrew_liq.m3u"),
 ]
 
+try:                                    # smart transitions (optional: songs without analysis stay plain)
+    import rocky_transitions as _rocky_transitions
+except Exception:
+    _rocky_transitions = None
+
 _cache_lock = threading.Lock()
 
 
@@ -110,14 +115,23 @@ def gain_db(entry):
     return max(GAIN_MIN_DB, min(GAIN_MAX_DB, g))
 
 
-def liq_line(path, cache):
-    """Playlist line for one song: annotated with its gain when measured, else plain."""
+def liq_line(path, cache, tr_cache=None, tr_over=None):
+    """Playlist line for one song: annotated with its gain (and, when analysed, its transition tags),
+    else plain."""
     e = cache.get(path)
     key = _stat_key(path) if (e and e.get('lufs') is not None) else None
     if e and key and e.get('size') == key[0] and e.get('mtime') == key[1]:
         # annotate: uses ':' as a separator — leave paths that contain one un-annotated
         if ':' not in path and '"' not in path:
-            return f'annotate:liq_amplify="{gain_db(e):.2f} dB":{path}'
+            tags = f'liq_amplify="{gain_db(e):.2f} dB"'
+            if _rocky_transitions is not None and tr_cache is not None:
+                try:
+                    t = _rocky_transitions.tags_for(path, tr_cache, tr_over)
+                    if t:
+                        tags += ',' + t
+                except Exception:
+                    pass
+            return f'annotate:{tags}:{path}'
     return path
 
 
@@ -125,7 +139,15 @@ def write_liq_playlist(plain_path, liq_path, cache):
     """Atomically write liq_path from the plain playlist. Returns (total, annotated)."""
     with open(plain_path, 'r', encoding='utf-8') as f:
         tracks = [l.strip() for l in f if l.strip() and not l.startswith('#')]
-    lines = [liq_line(t, cache) for t in tracks]
+    tr_cache = tr_over = None
+    # transition tags are only written once smart transitions are switched on (flag file): the old
+    # rocky.liq would misread liq_cross_duration and overlap songs for far too long.
+    if _rocky_transitions is not None and os.path.exists(f"{RADIO_DIR}/rocky_transitions.enabled"):
+        try:
+            tr_cache, tr_over = _rocky_transitions.load_cache(), _rocky_transitions.load_overrides()
+        except Exception:
+            tr_cache = tr_over = None
+    lines = [liq_line(t, cache, tr_cache, tr_over) for t in tracks]
     d = os.path.dirname(liq_path) or '.'
     fd, tmp = tempfile.mkstemp(prefix='.liq_pl.', dir=d)
     with os.fdopen(fd, 'w', encoding='utf-8') as f:
