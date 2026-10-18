@@ -223,17 +223,21 @@ def rocky_level_xfade(a, b) =
     log.important(label="transition", "#{oe} -> #{ie}: overlap #{ov}s, b delay #{at}s (window #{window}s, a_sil #{a_end}, b_sil #{b_sil}), confidence #{conf} - level-triggered (#{why}): old song at #{lvl} dB, body #{body} dB, #{note}")
   end
 
+  low = ref(0)
+  # an early start (before the song's musical end) is only allowed for endings that really fade / ring out
+  natural = (oe == "fade" or oe == "decay") and oc >= 0.5
   a_watch = source.on_frame(meter, fun() -> begin
     n := n() + 1
     if not started() then
       lvl = dB_of_lin(meter.rms() + 0.000001)
+      if n() > 12 and lvl < body - trig then low := low() + 1 else low := 0 end
       rem = musical_rem()
       if skipped then
         fire(true, lvl, "manual skip")
-      elsif lvl < body - trig and rem <= maxov + b_sil then
+      elsif natural and low() >= 12 and rem <= maxov + b_sil then
         fire(false, lvl, "level fell " ^ string(trig) ^ " dB")
       elsif rem <= fade_len + b_sil then
-        fire(lvl >= body - trig, lvl, "end of the song reached")
+        fire(n() > 12 and lvl >= body - trig, lvl, "end of the song reached")
       end
     end
   end)

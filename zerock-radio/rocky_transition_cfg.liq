@@ -6,5 +6,5 @@
 #   abrupt_fade:  songs that do not fade out by themselves are crossfaded over this many seconds (0 = cut)
 tr_cfg_mode = "level"
 tr_cfg_trigger_db = 15.
-tr_cfg_max_overlap = 8.
+tr_cfg_max_overlap = 12.
 tr_cfg_abrupt_fade = 1.5
