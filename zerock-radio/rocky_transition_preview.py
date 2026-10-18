@@ -101,18 +101,21 @@ settings.log.file := false
 settings.log.level := 3
 settings.init.allow_root := true
 %include "{LIQ_FILE}"
-clock.assign_new(sync="none", [])
 src = playlist(mode="normal", loop=false, reload_mode="never", "{pl}")
 src = amplify(1., src)
 src = limit(attack=2., release=120., threshold=-3., src)
 x = cross(duration=5., rocky_smart_xfade, src)
-ends = ref(0)
-x = source.on_end(delay=0., x, fun(_, _) -> begin ends := ends() + 1
-  if ends() >= 2 then shutdown() end end)
-output.file(%wav, "{out_wav}", fallible=true, x)
+output.file(%wav, "{out_wav}", fallible=true, on_stop=fun() -> shutdown(), x)
 ''')
-        r = subprocess.run(['liquidsoap', script], capture_output=True, text=True, timeout=150)
-        log = (r.stdout or '') + (r.stderr or '')
+        try:
+            r = subprocess.run(['liquidsoap', script], capture_output=True, text=True, timeout=int(os.environ.get('TRPREV_TIMEOUT', '150')))
+            log = (r.stdout or '') + (r.stderr or '')
+        except subprocess.TimeoutExpired as te:
+            log = ((te.stdout or b'').decode('utf-8', 'replace') if isinstance(te.stdout, bytes) else (te.stdout or '')) + \
+                  ((te.stderr or b'').decode('utf-8', 'replace') if isinstance(te.stderr, bytes) else (te.stderr or ''))
+            if os.environ.get('TRPREV_DEBUG'):
+                print(log[-3000:])
+            raise RuntimeError('render timed out: ' + log[-1200:])
         m = re.findall(r'\[transition:\d\] (.*)', log)
         decision = m[-1] if m else None
         if not os.path.exists(out_wav) or os.path.getsize(out_wav) < 100000:
