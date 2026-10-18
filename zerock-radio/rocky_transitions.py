@@ -39,7 +39,7 @@ RADIO_DIR    = os.environ.get('ROCKY_RADIO_DIR', '/home/roy/zerock-radio')
 PLAYLIST_DIR = f"{RADIO_DIR}/playlists"
 CACHE_FILE   = f"{RADIO_DIR}/rocky_transitions.json"
 OVERRIDES_FILE = f"{RADIO_DIR}/rocky_transitions_overrides.json"
-ANALYSIS_VERSION = 3
+ANALYSIS_VERSION = 4
 
 SR       = 11025          # analysis sample rate (mono)
 HOP      = 0.01           # envelope resolution (s)
@@ -202,12 +202,14 @@ def analyze_start(pcm):
         return {'ie': 'unknown', 'ie_conf': 0.0, 'ie_sil': 0.0}
     sm = _smooth(env, 25)
     body = _pct([e for e in sm[first_any:] if e > -50], 0.85)
-    aud_floor = max(AUDIBLE_ABS_DB, body - 45.0)
-    first_aud = next((i for i in range(first_any, n) if env[i] > aud_floor), first_any)
+    # the music "starts" where the level first reaches body-30 dB and stays there (a lone click or a bit of
+    # pre-roll noise before an attack is treated as technical silence and trimmed)
+    aud_floor = max(AUDIBLE_ABS_DB, body - 30.0)
+    first_aud = next((i for i in range(first_any, n - 8) if env[i] > aud_floor and min(env[i:i + 8]) > aud_floor - 12), first_any)
     sil = first_aud * HOP                       # leading technical silence
 
     def t_after(k):
-        """seconds after the first audible frame at which the level first reaches body-k dB"""
+        """seconds after the music starts at which the level first reaches body-k dB"""
         for i in range(first_aud, n):
             if sm[i] >= body - k:
                 return (i - first_aud) * HOP
@@ -223,11 +225,11 @@ def analyze_start(pcm):
     mono = _mono_frac(sm, first_aud, min(n - 1, first_aud + int(max(t[6], 1.0) / HOP)), +1)
 
     kind, conf = 'unknown', 0.35
-    if lvl_early >= body - 9 and first_on is not None and (first_on - first_aud) <= 20:
-        kind, conf = 'hit', 0.9                           # full-level entrance with an immediate attack
+    if t[6] <= 0.4 and (lvl_early >= body - 12 or t[12] <= 0.25):
+        kind, conf = 'hit', 0.9                           # full-level entrance with a fast attack
     elif lvl_early >= body - 9:
         kind, conf = 'full', 0.7                          # already at body level, no clean attack (mid-phrase / loud start)
-    elif lvl_early <= body - 24 and t[6] - t[24] >= 1.0 and mono >= 0.7 and n_on_3s <= 2:
+    elif lvl_early <= body - 20 and t[6] >= 1.0 and mono >= 0.7 and n_on_3s <= 2:
         kind, conf = 'fade_in', 0.6 + 0.3 * mono
     elif n_on_3s <= 1 and first_on is not None and lvl_1s <= body - 15 and t[12] >= 2.0:
         kind, conf = 'single_note', 0.6
