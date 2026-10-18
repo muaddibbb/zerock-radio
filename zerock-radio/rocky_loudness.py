@@ -35,7 +35,7 @@ CACHE_FILE    = f"{RADIO_DIR}/rocky_loudness.json"
 TARGET_LUFS   = -13.0
 GAIN_MIN_DB   = -15.0      # never attenuate more than this
 GAIN_MAX_DB   = 12.0       # never boost more than this
-PEAK_CEILING_DB = 1.0      # a boost may not push a song's peak above this (dBFS)
+PEAK_CEILING_DB = -1.0     # a boost may not push a song's peak above this (dBFS); keeps loud songs from clipping in the mp3 stream
 MEASURE_SECS  = 600        # measure at most the first 10 minutes of a file
 
 PAIRS = [   # (plain playlist the app uses, Liquidsoap playlist with gains)

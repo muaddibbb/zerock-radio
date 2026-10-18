@@ -49,8 +49,7 @@ def tr_decide(am, bm, window) =
         # old song's ending (it is ~24 dB down or more there), never over its music
         t24 = tr_num(am, "tr_oe_t24", 0.)
         att = tr_num(am, "tr_oe_att", 99.)
-        o = t24 * 0.6
-        o = if o > 3. then 3. else o end
+        o = if t24 > 4. then 4. else t24 end
         o = if oe == "decay" and o > att - 0.6 then att - 0.6 else o end
         (if o > 0. then o else 0. end, "opening uncertain (#{ic}): enters only over the quietest tail of the old song")
       else
@@ -65,14 +64,15 @@ def tr_decide(am, bm, window) =
     elsif oe == "fade" or oe == "decay" then
       # the new song becomes audible when the old one is down to -18 dB (-24 dB when the opening is a full-level hit
       # or may carry vocals), earlier by the time the new opening needs to build up
-      lvl = if gradual then tr_num(am, "tr_oe_t18", 0.) else tr_num(am, "tr_oe_t24", 0.) end
+      # (a sparse ring-out has no singing in it, so a hit may come in a bit earlier over it than over a busy fade)
+      lvl = if gradual or oe == "decay" then tr_num(am, "tr_oe_t18", 0.) else tr_num(am, "tr_oe_t24", 0.) end
       o0 = lvl + (if gradual then (if build < 4. then build else 4. end) else 0. end)
       o1 = if o0 > 8. then 8. else o0 end
       att = tr_num(am, "tr_oe_att", 99.)
       if oe == "decay" and o1 > att - 0.6 then
         (if att - 0.6 > 0. then att - 0.6 else 0. end, "ring-out ending: keep the last note's attack, enter under its decay")
       else
-        (o1, "#{oe} ending, #{ie} opening: new song enters when the old one is ~#{if gradual then 18 else 24 end} dB down")
+        (o1, "#{oe} ending, #{ie} opening: new song enters when the old one is ~#{if gradual or oe == "decay" then 18 else 24 end} dB down")
       end
     else
       (0., "unknown ending - no overlap")
