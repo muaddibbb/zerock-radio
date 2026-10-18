@@ -39,7 +39,7 @@ RADIO_DIR    = os.environ.get('ROCKY_RADIO_DIR', '/home/roy/zerock-radio')
 PLAYLIST_DIR = f"{RADIO_DIR}/playlists"
 CACHE_FILE   = f"{RADIO_DIR}/rocky_transitions.json"
 OVERRIDES_FILE = f"{RADIO_DIR}/rocky_transitions_overrides.json"
-ANALYSIS_VERSION = 1
+ANALYSIS_VERSION = 3
 
 SR       = 11025          # analysis sample rate (mono)
 HOP      = 0.01           # envelope resolution (s)
@@ -141,7 +141,7 @@ def analyze_end(pcm):
                 return (last_aud - i) * HOP
         return EDGE_SECS
 
-    t = {k: t_before(k) for k in (3, 6, 12, 18, 24, 30)}
+    t = {k: t_before(k) for k in (3, 6, 12, 15, 18, 24, 30, 35)}
     span = t[6]
     ons = _onsets(env[:last_aud + 1], body - 30)
     last_on = max((i for i in ons if env[i] >= body - 12), default=None)
@@ -158,18 +158,26 @@ def analyze_end(pcm):
         run = run + 1 if env[i] <= SIL_ABS_DB else 0
         if run >= 150 and i < last_aud - 100:
             gap = True
+    end_lvl = sm[last_aud] - body              # level where the audible part stops, relative to the body
+    collapse = t[15] - t[35]                   # seconds it takes the music to fall from -15 dB to -35 dB
+    mend = 0.0
     kind, conf = 'unknown', 0.3
-    if span <= 0.35 and env[max(0, last_aud - 10)] >= body - 12:
-        kind, conf = 'abrupt', 0.9
-    elif span > 0.35:
-        fall = t[30] - t[6] if t[30] < EDGE_SECS else None
-        if dens >= 1.2 and mono >= 0.6 and span >= 1.5:
-            kind, conf = 'fade', 0.55 + 0.35 * min(1.0, mono)
-        elif dens < 1.0 and span >= 0.8 and mono >= 0.6:
-            # sparse tail that decays: a ring-out of a final note / chord (or a fade of sparse music)
-            kind = 'decay' if span < 6.0 else 'fade'
-            conf = 0.5 + 0.35 * min(1.0, mono)
-        elif span >= 3.0 and mono >= 0.5:
+    if end_lvl >= -15:
+        kind, conf = 'abrupt', 0.8             # the file stops while the music is still playing (cut)
+    elif collapse <= 0.8 and t[15] <= 6.0:
+        kind, conf = 'abrupt', 0.85            # music falls >20 dB in under 0.8 s: a hard stop (+ quiet dust after it)
+        mend = t[35]                           # the music itself ended this long before the "audible" end
+    elif t[6] - t[24] <= 0.8 and t[6] <= 6.0:
+        kind, conf = 'abrupt', 0.8             # -6 dB -> -24 dB in under 0.8 s: hard stop with a short ring / dust
+        mend = t[24]
+    else:
+        spread = t[6] - t[24]                  # seconds between "still at body level" and "24 dB down"
+        if span >= 1.5 and dens >= 1.2 and mono >= 0.55:
+            kind, conf = 'fade', 0.55 + 0.3 * min(1.0, mono)        # busy music that gets quieter: a real fade-out
+        elif spread >= 0.8 and dens < 1.2 and mono >= 0.5:
+            kind = 'decay' if spread < 6.0 else 'fade'             # sparse tail: ring-out of the last note / chord
+            conf = 0.5 + 0.3 * min(1.0, mono)
+        elif spread >= 3.0 and mono >= 0.45:
             kind, conf = 'fade', 0.5
         else:
             kind, conf = 'unknown', 0.35
@@ -177,7 +185,7 @@ def analyze_end(pcm):
         conf = min(conf, 0.3)
     if sil > 8.0:                               # more than 8 s of "dust" after the music: suspicious
         conf = min(conf, 0.4)
-    return {'oe': kind, 'oe_conf': round(conf, 2), 'oe_sil': round(sil, 2),
+    return {'oe': kind, 'oe_conf': round(conf, 2), 'oe_sil': round(sil, 2), 'oe_mend': round(mend, 2),
             'oe_t6': round(t[6], 2), 'oe_t12': round(t[12], 2), 'oe_t18': round(t[18], 2),
             'oe_t24': round(t[24], 2), 'oe_att': round(min(t_att, EDGE_SECS), 2),
             'oe_dens': round(dens, 2), 'oe_body': round(body, 1), 'oe_gap': gap}
@@ -343,7 +351,7 @@ def cross_window(a):
         w = min(MAX_WINDOW, max(5.0, float(a.get('oe_t18', 4)) + 6.0))
     else:
         w = 4.0
-    return round(w + float(a.get('oe_sil', 0)), 1)
+    return round(w + float(a.get('oe_sil', 0)) + float(a.get('oe_mend', 0) or 0), 1)
 
 
 def tags_for(path, cache=None, overrides=None):
@@ -351,7 +359,7 @@ def tags_for(path, cache=None, overrides=None):
     a = effective(path, cache, overrides)
     if not a:
         return ''
-    keys = ['oe', 'oe_conf', 'oe_sil', 'oe_t6', 'oe_t12', 'oe_t18', 'oe_t24', 'oe_att',
+    keys = ['oe', 'oe_conf', 'oe_sil', 'oe_mend', 'oe_t6', 'oe_t12', 'oe_t18', 'oe_t24', 'oe_att',
             'ie', 'ie_conf', 'ie_sil', 'ie_t12', 'out_curve', 'in_curve', 'out_fade', 'in_fade', 'no_overlap']
     parts = ['tr_v="1"', f'liq_cross_duration="{cross_window(a)}"']
     for k in keys:

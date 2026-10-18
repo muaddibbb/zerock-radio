@@ -32,7 +32,8 @@ def tr_decide(am, bm, window) =
   oc = tr_num(am, "tr_oe_conf", 0.)
   ic = tr_num(bm, "tr_ie_conf", 0.)
   conf = if oc < ic then oc else ic end
-  a_sil = tr_num(am, "tr_oe_sil", 0.)
+  # the music of an abruptly stopped song ended tr_oe_mend s before its "audible" end (quiet dust after it)
+  a_sil = tr_num(am, "tr_oe_sil", 0.) + tr_num(am, "tr_oe_mend", 0.)
   b_sil = tr_num(bm, "tr_ie_sil", 0.)
   gradual = ie == "fade_in" or ie == "quiet_intro" or ie == "single_note"
   build = tr_num(bm, "tr_ie_t12", 0.)
