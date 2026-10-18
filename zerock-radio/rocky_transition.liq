@@ -56,10 +56,13 @@ def tr_decide(am, bm, window) =
         (0., "low confidence (#{conf}) - protect both songs, no overlap")
       end
     elsif oe == "abrupt" then
-      if ie == "fade_in" and build >= 2. then
-        (0.5, "abrupt ending, gentle fade-in opening - 0.5 s overlap")
+      if gradual then
+        # a quiet / fading / single-note opening may start under the last moment of a hard stop (it is inaudible
+        # beneath the full-level end, and it removes the dead moment between the stop and the quiet start)
+        o = if build * 0.5 > 1.5 then 1.5 else build * 0.5 end
+        (o, "abrupt ending, soft opening: the new song's intro starts under the last moment of the old one")
       else
-        (0., "abrupt ending - tight cut, no overlap")
+        (0., "abrupt ending, strong opening - tight cut, no overlap")
       end
     elsif oe == "fade" or oe == "decay" then
       # the new song becomes audible when the old one is down to -18 dB (-24 dB when the opening is a full-level hit
