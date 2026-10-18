@@ -94,6 +94,7 @@ def render(path_a, path_b, out_mp3, overrides=None, pair_override=None):
             f.write(f'annotate:{tags_a}:{wa}\nannotate:{tags_b}:{wb}\n')
         out_wav = os.path.join(work, 'out.wav')
         script = os.path.join(work, 'prev.liq')
+        xf = 'rocky_xfade_legacy' if os.environ.get('TRPREV_LEGACY') else 'rocky_smart_xfade'
         with open(script, 'w', encoding='utf-8') as f:
             f.write(f'''
 settings.log.stdout := true
@@ -104,8 +105,11 @@ settings.init.allow_root := true
 src = playlist(mode="normal", loop=false, reload_mode="never", "{pl}")
 src = amplify(1., src)
 src = limit(attack=2., release=120., threshold=-3., src)
-x = cross(duration=5., rocky_smart_xfade, src)
+x = cross(duration=5., {xf}, src)
 x = clock(sync="none", x)
+fr = ref(0)
+x = source.on_frame(x, fun() -> fr := fr() + 1)
+x = source.on_metadata(x, fun(m) -> log.important(label="meta", "t=" ^ string(float_of_int(fr()) * 0.04) ^ " file=" ^ list.assoc(default="", "filename", m) ^ " amp=" ^ list.assoc(default="", "liq_amplify", m) ^ " oe=" ^ list.assoc(default="", "tr_oe", m) ^ " ie=" ^ list.assoc(default="", "tr_ie", m) ^ " title=" ^ list.assoc(default="", "title", m)))
 output.file(%wav, "{out_wav}", fallible=true, on_stop=fun() -> shutdown(), x)
 ''')
         try:
@@ -118,7 +122,7 @@ output.file(%wav, "{out_wav}", fallible=true, on_stop=fun() -> shutdown(), x)
                 print(log[-3000:])
             raise RuntimeError('render timed out: ' + log[-1200:])
         m = re.findall(r'\[transition:\d\] (.*)', log)
-        decision = m[-1] if m else None
+        decision = m[0] if m else None
         if not os.path.exists(out_wav) or os.path.getsize(out_wav) < 100000:
             raise RuntimeError('render failed: ' + log[-800:])
         subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-i', out_wav, '-c:a', 'libmp3lame', '-b:a', '128k', out_mp3],
