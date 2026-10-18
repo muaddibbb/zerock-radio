@@ -105,6 +105,7 @@ src = playlist(mode="normal", loop=false, reload_mode="never", "{pl}")
 src = amplify(1., src)
 src = limit(attack=2., release=120., threshold=-3., src)
 x = cross(duration=5., rocky_smart_xfade, src)
+x = clock(sync="none", x)
 output.file(%wav, "{out_wav}", fallible=true, on_stop=fun() -> shutdown(), x)
 ''')
         try:
@@ -126,7 +127,7 @@ output.file(%wav, "{out_wav}", fallible=true, on_stop=fun() -> shutdown(), x)
         window = float(T.cross_window(a_info))
         return {'decision': decision, 'a': a_info, 'b': b_info, 'a_gain_db': a_gain, 'b_gain_db': b_gain,
                 'len_a_cut': round(len_a, 2), 'total': round(total, 2), 'window': window,
-                'transition_at': round(max(0.0, len_a - window), 2), 'out': out_mp3, 'log': log[-1500:]}
+                'transition_at': round(max(0.0, len_a - window), 2), 'out': out_mp3, 'log': log[-20000:]}
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
