@@ -95,6 +95,23 @@ def tr_curve_type(s) =
   if s == "lin" or s == "sin" or s == "log" or s == "exp" then s else "sin" end
 end
 
+# cross() hands the OUTPUT the outgoing song's metadata at the start of every transition and never the incoming
+# song's (add() keeps the first source's metadata), so the "now playing" label (now_playing.txt, Icecast title, the
+# app) was always one song behind. This inserts the incoming song's metadata `at` seconds after the start of the
+# transition, i.e. when that song actually becomes audible.
+def tr_announce(at, m, s) =
+  s = insert_metadata(s)
+  n = ref(0)
+  sent = ref(false)
+  source.on_frame(s, fun() -> begin
+    n := n() + 1
+    if not sent() and float_of_int(n()) * 0.04 >= at then
+      sent := true
+      s.insert_metadata(m)
+    end
+  end)
+end
+
 # fade.out() cannot be used on the crossfade buffer when the cross window is longer than the fade (it starts fading at the
 # beginning of the buffer), so the end-of-song fade is an explicit gain ramp: it starts `start` seconds after the
 # beginning of the old song's buffered tail and lasts `dur` seconds (frames are 0.04 s).
@@ -146,7 +163,7 @@ def rocky_xfade_jingle(~a_end_sil, ~b_sil, ~ramp_a, window, a, b) =
   b_g = fade.in(duration=ov, b.source)
   b_d = if d < 0.01 then b_g else sequence(merge=true, [blank(duration=d), b_g]) end
   log.important(label="transition", "jingle crossfade #{ov}s (window #{window}s, outgoing silence #{a_end_sil}s, incoming silence #{b_sil}s)")
-  add(normalize=false, [a_g, b_d])
+  tr_announce(d + b_sil, b.metadata, add(normalize=false, [a_g, b_d]))
 end
 
 # Set (by rocky.liq) to time() right before it skips the background after a show ended. The background kept playing
@@ -159,7 +176,7 @@ def rocky_smart_xfade(a, b) =
   bm0 = b.metadata
   if time() - rocky_resume_skip_t() < 3. then
     log.important(label="transition", "after a show: dropping the stale tail of the background song, new song starts cleanly")
-    fade.in(duration=0.4, b.source)
+    tr_announce(0., bm0, fade.in(duration=0.4, b.source))
   elsif tr_str(am, "tr_v") != "1" then
     # the outgoing item is a jingle (or a song not analysed yet): 2 s crossfade
     rocky_xfade_jingle(a_end_sil=0., b_sil=tr_num(bm0, "tr_ie_sil", 0.), ramp_a=true, tr_window(a, am), a, b)
@@ -179,6 +196,6 @@ def rocky_smart_xfade(a, b) =
     a_g = if oc != "" and oc != "none" then tr_ramp_out(start=window - tr_num(am, "tr_out_fade", 3.), dur=tr_num(am, "tr_out_fade", 3.), kind=tr_curve_type(oc), a.source) else a.source end
     b_g = if ic != "" and ic != "none" then fade.in(duration=tr_num(bm, "tr_in_fade", 3.), type=tr_curve_type(ic), b.source) else b.source end
     b_d = if d.delay < 0.01 then b_g else sequence(merge=true, [blank(duration=d.delay), b_g]) end
-    add(normalize=false, [a_g, b_d])
+    tr_announce(d.delay + d.b_sil, bm0, add(normalize=false, [a_g, b_d]))
   end
 end
