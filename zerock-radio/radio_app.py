@@ -948,6 +948,11 @@ def _loudness_refresh_async(reason=''):
         try:
             n = _rocky_loudness.scan(_rocky_loudness._all_tracks(), workers=1,
                                      log=lambda m: print(m, flush=True))
+            try:                                  # ending/opening analysis for smart transitions (new songs only)
+                import rocky_transitions as _rt_scan
+                n += _rt_scan.scan(_rt_scan.all_tracks(), workers=1, log=lambda m: print(m, flush=True))
+            except Exception as e:
+                print(f"[Transitions] scan error: {e}", flush=True)
             if n:
                 _rocky_loudness.write_all()
                 print(f"[Loudness] {n} new song(s) measured, gain playlists updated ({reason})", flush=True)
