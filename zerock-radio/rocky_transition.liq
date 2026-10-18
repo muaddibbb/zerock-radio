@@ -218,7 +218,9 @@ def rocky_level_xfade(a, b) =
     if skipped then fl := 0.6 end
     rem = musical_rem()
     ov = if rem - b_sil > 0. then rem - b_sil else 0. end
-    log.important(label="transition", "#{oe} -> #{ie}: overlap #{ov}s, b delay #{now()}s (window #{window}s, a_sil #{a_end}, b_sil #{b_sil}), confidence #{conf} - level-triggered (#{why}): old song at #{lvl} dB, body #{body} dB, #{if is_forced then 'old song faded over ' ^ string(fl()) ^ ' s' else 'no fade needed'}")
+    note = if is_forced then "old song faded over " ^ string(fl()) ^ " s" else "no fade needed" end
+    at = now()
+    log.important(label="transition", "#{oe} -> #{ie}: overlap #{ov}s, b delay #{at}s (window #{window}s, a_sil #{a_end}, b_sil #{b_sil}), confidence #{conf} - level-triggered (#{why}): old song at #{lvl} dB, body #{body} dB, #{note}")
   end
 
   a_watch = source.on_frame(meter, fun() -> begin
