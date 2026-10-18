@@ -72,7 +72,7 @@ def _tags(path, a, gain, overrides, cache, cut_tags_only=True):
     return ','.join(parts)
 
 
-def render(path_a, path_b, out_mp3, overrides=None, pair_override=None):
+def render(path_a, path_b, out_mp3, overrides=None, pair_override=None, plain_b=False, skip_at=None):
     ov = T.load_overrides() if overrides is None else overrides
     cache = T.load_cache()
     for p in (path_a, path_b):
@@ -89,12 +89,17 @@ def render(path_a, path_b, out_mp3, overrides=None, pair_override=None):
         len_a = _duration(wa)
         tags_a = _tags(path_a, a_info, a_gain, ov, cache)
         tags_b = _tags(path_b, b_info, b_gain, ov, cache)
+        if plain_b:                       # e.g. a jingle: no analysis tags in the real playlist
+            tags_b = f'liq_amplify="{b_gain:.2f} dB"' if b_gain is not None else ''
         pl = os.path.join(work, 'pl.m3u')
         with open(pl, 'w', encoding='utf-8') as f:
             f.write(f'annotate:{tags_a}:{wa}\nannotate:{tags_b}:{wb}\n')
         out_wav = os.path.join(work, 'out.wav')
         script = os.path.join(work, 'prev.liq')
         xf = 'rocky_xfade_legacy' if os.environ.get('TRPREV_LEGACY') else 'rocky_smart_xfade'
+        skip_code = ''
+        if skip_at is not None:
+            skip_code = f'fr0 = ref(0)\nx = source.on_frame(x, fun() -> begin fr0 := fr0() + 1\n  if fr0() == {int(skip_at / 0.04)} then source.skip(x) end end)\n'
         with open(script, 'w', encoding='utf-8') as f:
             f.write(f'''
 settings.log.stdout := true
@@ -107,7 +112,7 @@ src = amplify(1., src)
 src = limit(attack=2., release=120., threshold=-3., src)
 x = cross(duration=5., {xf}, src)
 x = clock(sync="none", x)
-fr = ref(0)
+{skip_code}fr = ref(0)
 x = source.on_frame(x, fun() -> fr := fr() + 1)
 x = source.on_metadata(x, fun(m) -> log.important(label="meta", "t=" ^ string(float_of_int(fr()) * 0.04) ^ " file=" ^ list.assoc(default="", "filename", m) ^ " amp=" ^ list.assoc(default="", "liq_amplify", m) ^ " oe=" ^ list.assoc(default="", "tr_oe", m) ^ " ie=" ^ list.assoc(default="", "tr_ie", m) ^ " title=" ^ list.assoc(default="", "title", m)))
 output.file(%wav, "{out_wav}", fallible=true, on_stop=fun() -> shutdown(), x)
