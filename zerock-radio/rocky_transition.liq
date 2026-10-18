@@ -122,12 +122,15 @@ end
 
 def rocky_smart_xfade(a, b) =
   am = a.metadata
-  bm = b.metadata
-  if tr_str(am, "tr_v") != "1" or tr_str(bm, "tr_v") != "1" then
-    # jingle or a song that is not analysed yet: legacy fixed crossfade
-    log.important(label="transition", "legacy crossfade (no analysis for one of the songs)")
+  bm0 = b.metadata
+  if tr_str(am, "tr_v") != "1" then
+    # the outgoing item is a jingle or a song that is not analysed yet: classic 5 s crossfade (window-aware)
+    log.important(label="transition", "legacy crossfade (outgoing item has no analysis)")
     rocky_xfade_legacy_w(tr_num(am, "liq_cross_duration", 5.), a, b)
   else
+    # an incoming item without analysis (a jingle, a new song) is treated as an opening of unknown kind: it is let in
+    # only over the quietest tail of a fading/ringing-out song, or right at the end of an abrupt one
+    bm = if tr_str(bm0, "tr_v") == "1" then bm0 else [("tr_ie", "unknown"), ("tr_ie_conf", "0.35")] end
     window = tr_num(am, "liq_cross_duration", 5.)
     d = tr_decide(am, bm, window)
     log.important(label="transition", "#{d.oe} -> #{d.ie}: overlap #{d.overlap}s, b delay #{d.delay}s (window #{d.window}s, a_sil #{d.a_sil}, b_sil #{d.b_sil}), confidence #{d.conf} - #{d.why}")
