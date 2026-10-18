@@ -72,7 +72,7 @@ def _tags(path, a, gain, overrides, cache, cut_tags_only=True):
     return ','.join(parts)
 
 
-def render(path_a, path_b, out_mp3, overrides=None, pair_override=None, plain_b=False, skip_at=None):
+def render(path_a, path_b, out_mp3, overrides=None, pair_override=None, plain_b=False, plain_a=False, skip_at=None):
     ov = T.load_overrides() if overrides is None else overrides
     cache = T.load_cache()
     for p in (path_a, path_b):
@@ -88,6 +88,8 @@ def render(path_a, path_b, out_mp3, overrides=None, pair_override=None, plain_b=
         _cut(path_b, wb, False)
         len_a = _duration(wa)
         tags_a = _tags(path_a, a_info, a_gain, ov, cache)
+        if plain_a:
+            tags_a = f'liq_amplify="{a_gain:.2f} dB"' if a_gain is not None else ''
         tags_b = _tags(path_b, b_info, b_gain, ov, cache)
         if plain_b:                       # e.g. a jingle: no analysis tags in the real playlist
             tags_b = f'liq_amplify="{b_gain:.2f} dB"' if b_gain is not None else ''
@@ -110,7 +112,7 @@ settings.init.allow_root := true
 src = playlist(mode="normal", loop=false, reload_mode="never", "{pl}")
 src = amplify(1., src)
 src = limit(attack=2., release=120., threshold=-3., src)
-x = cross(duration=5., {xf}, src)
+x = cross(duration=2.5, {xf}, src)
 x = clock(sync="none", x)
 {skip_code}fr = ref(0)
 x = source.on_frame(x, fun() -> fr := fr() + 1)

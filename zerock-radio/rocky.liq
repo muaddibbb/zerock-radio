@@ -64,8 +64,8 @@ rocky_rotate = rotate([english1, english2, hebrew1, english3, hebrew2, jingle])
 # Transitions between Rocky background tracks. rocky_smart_xfade (rocky_transition.liq, same file the
 # /transitions preview page renders with) decides per PAIR of songs, from the ending/opening analysis tags in
 # english_liq.m3u / hebrew_liq.m3u, when the next song starts and how long the overlap is. A song without
-# analysis tags (jingles, songs not analysed yet) gets the classic 5-second crossfade, exactly as before.
-rocky = cross(duration=5., rocky_smart_xfade, rocky_rotate)
+# analysis tags (jingles, songs not analysed yet) gets a 2-second crossfade.
+rocky = cross(duration=2.5, rocky_smart_xfade, rocky_rotate)
 
 # Show queue - web app pushes: jingle_path -> show_path -> jingle_path
 # Also used for manual immediate playback

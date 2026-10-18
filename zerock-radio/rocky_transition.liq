@@ -122,18 +122,44 @@ def rocky_xfade_legacy_w(window, a, b) =
   add(normalize=false, [tr_ramp_out(start=window - 5., dur=5., kind="sin", a.source), b_d])
 end
 
+# The real length of the outgoing song's buffered tail. It is NOT always the window set by the tags: cross() only
+# overlaps as much as BOTH items can give, so a jingle shorter than the window shrinks it (and a skip does too).
+def tr_window(a, am) =
+  rem = source.remaining(a.source)
+  if rem > 0. and rem < 1000. then rem else tr_num(am, "liq_cross_duration", 2.5) end
+end
+
+# Crossfade used whenever a JINGLE is involved (one side has no analysis tags): 2 seconds, positioned on the
+# outgoing item's musical end (its technical silence is skipped). `ramp_a` fades the outgoing item over those
+# 2 s (needed for jingles and for songs that stop abruptly; a song that already fades or rings out is left alone).
+jingle_xfade_secs = 2.
+
+def rocky_xfade_jingle(~a_end_sil, ~b_sil, ~ramp_a, window, a, b) =
+  ov = jingle_xfade_secs
+  e = window - a_end_sil
+  d0 = e - ov - b_sil
+  d = if d0 < 0. then 0. else d0 end
+  a_g = if ramp_a then tr_ramp_out(start=e - ov, dur=ov, kind="sin", a.source) else a.source end
+  b_g = fade.in(duration=ov, b.source)
+  b_d = if d < 0.01 then b_g else sequence(merge=true, [blank(duration=d), b_g]) end
+  log.important(label="transition", "jingle crossfade #{ov}s (window #{window}s, outgoing silence #{a_end_sil}s, incoming silence #{b_sil}s)")
+  add(normalize=false, [a_g, b_d])
+end
+
 def rocky_smart_xfade(a, b) =
   am = a.metadata
   bm0 = b.metadata
   if tr_str(am, "tr_v") != "1" then
-    # the outgoing item is a jingle or a song that is not analysed yet: classic 5 s crossfade (window-aware)
-    log.important(label="transition", "legacy crossfade (outgoing item has no analysis)")
-    rocky_xfade_legacy_w(tr_num(am, "liq_cross_duration", 5.), a, b)
+    # the outgoing item is a jingle (or a song not analysed yet): 2 s crossfade
+    rocky_xfade_jingle(a_end_sil=0., b_sil=tr_num(bm0, "tr_ie_sil", 0.), ramp_a=true, tr_window(a, am), a, b)
+  elsif tr_str(bm0, "tr_v") != "1" then
+    # song -> jingle: the jingle comes in 2 s before the song's musical end
+    oe0 = tr_str(am, "tr_oe")
+    self_fading = (oe0 == "fade" or oe0 == "decay") and tr_num(am, "tr_oe_conf", 0.) >= 0.55
+    rocky_xfade_jingle(a_end_sil=tr_num(am, "tr_oe_sil", 0.) + tr_num(am, "tr_oe_mend", 0.), b_sil=0., ramp_a=not self_fading, tr_window(a, am), a, b)
   else
-    # an incoming item without analysis (a jingle, a new song) is treated as an opening of unknown kind: it is let in
-    # only over the quietest tail of a fading/ringing-out song, or right at the end of an abrupt one
-    bm = if tr_str(bm0, "tr_v") == "1" then bm0 else [("tr_ie", "unknown"), ("tr_ie_conf", "0.35")] end
-    window = tr_num(am, "liq_cross_duration", 5.)
+    bm = bm0
+    window = tr_window(a, am)
     d = tr_decide(am, bm, window)
     log.important(label="transition", "#{d.oe} -> #{d.ie}: overlap #{d.overlap}s, b delay #{d.delay}s (window #{d.window}s, a_sil #{d.a_sil}, b_sil #{d.b_sil}), confidence #{d.conf} - #{d.why}")
     # optional manual gain curves (otherwise both songs keep their own audio untouched)
