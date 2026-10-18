@@ -136,6 +136,7 @@ def _resume_background_fresh() =
     selected_id = source.id(null.get(selected))
     previous = last_main_selected()
     if previous == source.id(shows) and selected_id != source.id(shows) then
+      rocky_resume_skip_t := time()
       source.skip(background)
     end
     last_main_selected := selected_id

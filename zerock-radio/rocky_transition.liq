@@ -146,10 +146,18 @@ def rocky_xfade_jingle(~a_end_sil, ~b_sil, ~ramp_a, window, a, b) =
   add(normalize=false, [a_g, b_d])
 end
 
+# Set (by rocky.liq) to time() right before it skips the background after a show ended. The background kept playing
+# silently during the show and the closing jingle, so the transition that follows a skip would otherwise play the stale
+# tail of a song nobody heard the start of; for those few seconds we drop the old tail and start the new song cleanly.
+rocky_resume_skip_t = ref(-100.)
+
 def rocky_smart_xfade(a, b) =
   am = a.metadata
   bm0 = b.metadata
-  if tr_str(am, "tr_v") != "1" then
+  if time() - rocky_resume_skip_t() < 3. then
+    log.important(label="transition", "after a show: dropping the stale tail of the background song, new song starts cleanly")
+    fade.in(duration=0.4, b.source)
+  elsif tr_str(am, "tr_v") != "1" then
     # the outgoing item is a jingle (or a song not analysed yet): 2 s crossfade
     rocky_xfade_jingle(a_end_sil=0., b_sil=tr_num(bm0, "tr_ie_sil", 0.), ramp_a=true, tr_window(a, am), a, b)
   elsif tr_str(bm0, "tr_v") != "1" then
