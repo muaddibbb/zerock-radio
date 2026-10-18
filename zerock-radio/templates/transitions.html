@@ -44,6 +44,26 @@
   <div id="status" class="banner off">טוען…</div>
 
   <div class="card">
+    <h2>⚙️ הגדרות קרוספייד חכם (בסגנון SAM Broadcaster)</h2>
+    <div class="note" style="margin-bottom:8px">השיר הבא מתחיל לפי <b>עוצמת הקול האמיתית</b> של השיר היוצא, בזמן אמת: כשהיא יורדת מתחת לסף. שיר שנגמר בבת אחת (עדיין חזק) מקבל קרוספייד קצר. שינוי נכנס לתוקף מיד בשידור.</div>
+    <div class="grid">
+      <div>
+        <label>מצב (שינוי מצב נכנס בהפעלה הבאה של Rocky)</label>
+        <select id="cfg_mode"><option value="level">חכם – לפי עוצמה בזמן אמת (SAM)</option><option value="rules">חוקים לפי ניתוח מוקדם</option></select>
+        <label>סף: השיר הבא מתחיל כשהיוצא ירד ב-<span id="v_trig"></span> dB מתחת לעוצמת השיר</label>
+        <input type="range" id="cfg_trig" min="6" max="30" step="1" style="width:100%" oninput="v_trig.textContent=this.value">
+      </div>
+      <div>
+        <label>חפיפה מקסימלית: <span id="v_max"></span> שניות לפני סוף השיר</label>
+        <input type="range" id="cfg_max" min="4" max="20" step="1" style="width:100%" oninput="v_max.textContent=this.value">
+        <label>שיר שנגמר בבת אחת: קרוספייד של <span id="v_abr"></span> שניות (0 = חיתוך)</label>
+        <input type="range" id="cfg_abr" min="0" max="4" step="0.25" style="width:100%" oninput="v_abr.textContent=this.value">
+      </div>
+    </div>
+    <div class="row"><button onclick="saveCfg()">💾 שמור והחל</button><span class="note" id="cfgmsg"></span></div>
+  </div>
+
+  <div class="card">
     <h2>1. בחירת זוג שירים</h2>
     <div class="grid">
       <div>
@@ -217,6 +237,20 @@ async function resetOv(id){
   await j('/api/transitions/override?path=' + encodeURIComponent(song.path), {method:'DELETE'}); status(); preview();
 }
 status();
+async function loadCfg(){
+  try{ const c = await j('/api/transitions/settings');
+    $('cfg_mode').value = c.mode; $('cfg_trig').value = c.trigger_db; $('cfg_max').value = c.max_overlap; $('cfg_abr').value = c.abrupt_fade;
+    $('v_trig').textContent = c.trigger_db; $('v_max').textContent = c.max_overlap; $('v_abr').textContent = c.abrupt_fade;
+  }catch(e){ $('cfgmsg').textContent = 'שגיאה בטעינת ההגדרות: ' + e.message; }
+}
+async function saveCfg(){
+  try{
+    const r = await j('/api/transitions/settings', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({mode:$('cfg_mode').value, trigger_db:$('cfg_trig').value, max_overlap:$('cfg_max').value, abrupt_fade:$('cfg_abr').value})});
+    $('cfgmsg').textContent = 'נשמר ✔ ' + (r.note||'');
+  }catch(e){ $('cfgmsg').textContent = 'שגיאה: ' + e.message; }
+}
+loadCfg();
 </script>
 </body>
 </html>

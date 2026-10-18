@@ -18,7 +18,7 @@ from flask import jsonify, render_template, request, send_file
 import rocky_transitions as _rtr
 
 
-def register(app, RADIO_DIR, _rocky_loudness=None):
+def register(app, RADIO_DIR, _rocky_loudness=None, lq_send=None):
     _TR_PREVIEW_DIR = '/tmp/rocky_trans_prev'
     _tr_preview_lock = threading.Lock()
 
@@ -39,6 +39,73 @@ def register(app, RADIO_DIR, _rocky_loudness=None):
     def transitions_page():
         return render_template('transitions.html')
 
+
+
+    # ── crossfade settings (SAM-style level-triggered engine, see rocky_transition_cfg.liq) ─────────────────
+    _CFG_FILE = f"{RADIO_DIR}/rocky_transition_cfg.liq"
+    _CFG_KEYS = {  # name -> (liq variable, live variable, min, max)
+        'trigger_db':  ('tr_cfg_trigger_db',  'tr_trigger_db',  3.0, 40.0),
+        'max_overlap': ('tr_cfg_max_overlap', 'tr_max_overlap', 1.0, 20.0),
+        'abrupt_fade': ('tr_cfg_abrupt_fade', 'tr_abrupt_fade', 0.0, 6.0),
+    }
+
+    def _read_cfg():
+        out = {'mode': 'level', 'trigger_db': 15.0, 'max_overlap': 12.0, 'abrupt_fade': 1.5}
+        try:
+            txt = open(_CFG_FILE, encoding='utf-8').read()
+            m = re.search(r'^tr_cfg_mode\s*=\s*"(\w+)"', txt, re.M)
+            if m:
+                out['mode'] = m.group(1)
+            for k, (var, _live, _lo, _hi) in _CFG_KEYS.items():
+                m = re.search(r'^' + var + r'\s*=\s*(-?[\d.]+)', txt, re.M)
+                if m:
+                    out[k] = float(m.group(1).rstrip('.') or 0)
+        except FileNotFoundError:
+            pass
+        return out
+
+    def _write_cfg(c):
+        txt = ('# Tunables of Rocky\'s crossfade (written by the /transitions page; safe to edit by hand, takes effect on the\n'
+               '# next Liquidsoap start - the page also applies changes live without a restart).\n'
+               '#   mode:         "level" = SAM-style real-time level-triggered crossfade (default); "rules" = analysis-rules engine\n'
+               '#   trigger_db:   the next song starts when the outgoing song\'s level has fallen this many dB below its body level\n'
+               '#   max_overlap:  the next song never starts earlier than this many seconds before the outgoing song\'s musical end\n'
+               '#   abrupt_fade:  songs that do not fade out by themselves are crossfaded over this many seconds (0 = cut)\n'
+               f'tr_cfg_mode = "{c["mode"]}"\n'
+               f'tr_cfg_trigger_db = {c["trigger_db"]:.1f}\n'
+               f'tr_cfg_max_overlap = {c["max_overlap"]:.1f}\n'
+               f'tr_cfg_abrupt_fade = {c["abrupt_fade"]:.2f}\n')
+        tmp = _CFG_FILE + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            f.write(txt)
+        os.replace(tmp, _CFG_FILE)
+
+    @app.route('/api/transitions/settings', methods=['GET', 'POST'])
+    def api_transitions_settings():
+        if request.method == 'GET':
+            return jsonify(_read_cfg())
+        d = request.get_json(force=True, silent=True) or {}
+        c = _read_cfg()
+        if d.get('mode') in ('level', 'rules'):
+            c['mode'] = d['mode']
+        for k, (_var, _live, lo, hi) in _CFG_KEYS.items():
+            if k in d and d[k] not in (None, ''):
+                try:
+                    v = float(d[k])
+                except (TypeError, ValueError):
+                    return jsonify({'error': f'bad {k}'}), 400
+                if not (lo <= v <= hi):
+                    return jsonify({'error': f'{k} must be between {lo} and {hi}'}), 400
+                c[k] = v
+        _write_cfg(c)
+        live = []
+        if lq_send:
+            try:
+                resp = lq_send([f'var.set {live_name} = {c[k]:.2f}' for k, (_v, live_name, _l, _h) in _CFG_KEYS.items()])
+                live = (resp or '').strip()[:200]
+            except Exception as e:
+                live = f'live update failed: {e}'
+        return jsonify({'ok': True, 'settings': c, 'live': live, 'note': 'mode changes apply at the next Rocky restart'})
 
     @app.route('/api/transitions/status')
     def api_transitions_status():

@@ -24,6 +24,15 @@ def tr_str(m, k) =
   list.assoc(default="", k, m)
 end
 
+# ── tunables (see rocky_transition_cfg.liq; adjustable live from the /transitions page) ──
+%include "/home/roy/zerock-radio/rocky_transition_cfg.liq"
+tr_trigger_db = interactive.float("tr_trigger_db", tr_cfg_trigger_db)
+tr_max_overlap = interactive.float("tr_max_overlap", tr_cfg_max_overlap)
+tr_abrupt_fade = interactive.float("tr_abrupt_fade", tr_cfg_abrupt_fade)
+# set by the app (time()) right before a manual Skip: the old song then fades out quickly instead of playing on
+tr_skip_t = interactive.float("tr_skip_t", -100.)
+
+
 # Decision for one pair. am/bm = metadata of outgoing / incoming song. window = seconds of the
 # outgoing song the crossfade can use.
 def tr_decide(am, bm, window) =
@@ -155,11 +164,12 @@ end
 jingle_xfade_secs = 2.
 
 def rocky_xfade_jingle(~a_end_sil, ~b_sil, ~ramp_a, window, a, b) =
-  ov = jingle_xfade_secs
+  quick = time() - tr_skip_t() < 4.         # manual Skip: do not play on the old song's tail
+  ov = if quick then 0.6 else jingle_xfade_secs end
   e = window - a_end_sil
-  d0 = e - ov - b_sil
+  d0 = if quick then 0. else e - ov - b_sil end
   d = if d0 < 0. then 0. else d0 end
-  a_g = if ramp_a then tr_ramp_out(start=e - ov, dur=ov, kind="sin", a.source) else a.source end
+  a_g = if ramp_a or quick then tr_ramp_out(start=(if quick then 0. else e - ov end), dur=ov, kind="sin", a.source) else a.source end
   b_g = fade.in(duration=ov, b.source)
   b_d = if d < 0.01 then b_g else sequence(merge=true, [blank(duration=d), b_g]) end
   log.important(label="transition", "jingle crossfade #{ov}s (window #{window}s, outgoing silence #{a_end_sil}s, incoming silence #{b_sil}s)")
@@ -178,13 +188,6 @@ rocky_resume_skip_t = ref(-100.)
 # end. A song that is still loud when its end arrives (a hard stop) is crossfaded over `abrupt_fade` s instead.
 # Per-song analysis tags are only used for: the body level (tr_oe_body), the trailing silence to skip (tr_oe_sil +
 # tr_oe_mend) and the incoming song's leading silence (tr_ie_sil).
-%include "/home/roy/zerock-radio/rocky_transition_cfg.liq"
-tr_trigger_db = interactive.float("tr_trigger_db", tr_cfg_trigger_db)
-tr_max_overlap = interactive.float("tr_max_overlap", tr_cfg_max_overlap)
-tr_abrupt_fade = interactive.float("tr_abrupt_fade", tr_cfg_abrupt_fade)
-# set by the app (time()) right before a manual Skip: the old song then fades out quickly instead of playing on
-tr_skip_t = interactive.float("tr_skip_t", -100.)
-
 def rocky_level_xfade(a, b) =
   am = a.metadata
   bm = b.metadata
@@ -237,7 +240,7 @@ def rocky_level_xfade(a, b) =
       elsif natural and low() >= 12 and rem <= maxov + b_sil then
         fire(false, lvl, "level fell " ^ string(trig) ^ " dB")
       elsif rem <= fade_len + b_sil then
-        fire(n() > 12 and lvl >= body - trig, lvl, "end of the song reached")
+        fire(n() <= 12 or lvl >= body - trig, lvl, "end of the song reached")
       end
     end
   end)

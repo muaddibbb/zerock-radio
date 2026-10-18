@@ -4422,7 +4422,7 @@ def api_stream_external_stop():
 # (routes live in rocky_transitions_web.py so they can also be tested on their own)
 try:
     import rocky_transitions_web as _rtw
-    _rtw.register(app, RADIO_DIR, globals().get('_rocky_loudness'))
+    _rtw.register(app, RADIO_DIR, globals().get('_rocky_loudness'), lq_send)
 except Exception as _rtw_e:
     print(f"[Transitions] web routes unavailable: {_rtw_e}", flush=True)
 
@@ -6507,6 +6507,10 @@ def api_trigger_now(show_id):
 def api_skip():
     """Skip current track — uses direct socket (no shared lock) so it's instant."""
     global _np_last_path, _np_track_start
+    try:                                   # tell the crossfade this is a manual skip (old song fades out quickly)
+        lq_send_direct([f"var.set tr_skip_t = {time.time():.1f}"])
+    except Exception:
+        pass
     resp = lq_send_direct(["rocky_out.skip"])
     # Reset track tracking so the updater picks up the new track immediately
     _np_last_path   = ""
