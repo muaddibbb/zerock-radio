@@ -43,7 +43,18 @@ def tr_decide(am, bm, window) =
     if nov then
       (0., "manual: no overlap")
     elsif conf < 0.55 then
-      (0., "low confidence (#{conf}) - protect both songs, no overlap")
+      if (oe == "fade" or oe == "decay") and oc >= 0.55 then
+        # the ending is reliable but the opening is not: let the new song in only over the quietest part of the
+        # old song's ending (it is ~24 dB down or more there), never over its music
+        t24 = tr_num(am, "tr_oe_t24", 0.)
+        att = tr_num(am, "tr_oe_att", 99.)
+        o = t24 * 0.6
+        o = if o > 3. then 3. else o end
+        o = if oe == "decay" and o > att - 0.6 then att - 0.6 else o end
+        (if o > 0. then o else 0. end, "opening uncertain (#{ic}): enters only over the quietest tail of the old song")
+      else
+        (0., "low confidence (#{conf}) - protect both songs, no overlap")
+      end
     elsif oe == "abrupt" then
       if ie == "fade_in" and build >= 2. then
         (0.5, "abrupt ending, gentle fade-in opening - 0.5 s overlap")
