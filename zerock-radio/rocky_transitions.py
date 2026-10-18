@@ -361,7 +361,7 @@ def tags_for(path, cache=None, overrides=None):
     a = effective(path, cache, overrides)
     if not a:
         return ''
-    keys = ['oe', 'oe_conf', 'oe_sil', 'oe_mend', 'oe_t6', 'oe_t12', 'oe_t18', 'oe_t24', 'oe_att',
+    keys = ['oe', 'oe_conf', 'oe_sil', 'oe_mend', 'oe_body', 'oe_t6', 'oe_t12', 'oe_t18', 'oe_t24', 'oe_att',
             'ie', 'ie_conf', 'ie_sil', 'ie_t12', 'out_curve', 'in_curve', 'out_fade', 'in_fade', 'no_overlap']
     parts = ['tr_v="1"', f'liq_cross_duration="{cross_window(a)}"']
     for k in keys:

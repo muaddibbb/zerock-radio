@@ -171,6 +171,91 @@ end
 # tail of a song nobody heard the start of; for those few seconds we drop the old tail and start the new song cleanly.
 rocky_resume_skip_t = ref(-100.)
 
+# ── SAM-Broadcaster-style smart crossfade: driven by the REAL-TIME level of the outgoing song ────────────────────
+# Instead of deciding from a pre-computed table, the outgoing song's actual output level is metered while it plays
+# (250 ms RMS). The next song starts the moment that level has fallen `trigger_db` dB below the song's body level (a
+# fade-out / ring-out that has really become quiet), but never earlier than `max_overlap` s before the song's musical
+# end. A song that is still loud when its end arrives (a hard stop) is crossfaded over `abrupt_fade` s instead.
+# Per-song analysis tags are only used for: the body level (tr_oe_body), the trailing silence to skip (tr_oe_sil +
+# tr_oe_mend) and the incoming song's leading silence (tr_ie_sil).
+%include "/home/roy/zerock-radio/rocky_transition_cfg.liq"
+tr_trigger_db = interactive.float("tr_trigger_db", tr_cfg_trigger_db)
+tr_max_overlap = interactive.float("tr_max_overlap", tr_cfg_max_overlap)
+tr_abrupt_fade = interactive.float("tr_abrupt_fade", tr_cfg_abrupt_fade)
+# set by the app (time()) right before a manual Skip: the old song then fades out quickly instead of playing on
+tr_skip_t = interactive.float("tr_skip_t", -100.)
+
+def rocky_level_xfade(a, b) =
+  am = a.metadata
+  bm = b.metadata
+  oe = tr_str(am, "tr_oe")
+  ie = tr_str(bm, "tr_ie")
+  body = tr_num(am, "tr_oe_body", -18.)
+  a_end = tr_num(am, "tr_oe_sil", 0.) + tr_num(am, "tr_oe_mend", 0.)
+  b_sil = tr_num(bm, "tr_ie_sil", 0.)
+  oc = tr_num(am, "tr_oe_conf", 0.)
+  ic = tr_num(bm, "tr_ie_conf", 0.)
+  conf = if oc < ic then oc else ic end
+  trig = tr_trigger_db()
+  maxov = tr_max_overlap()
+  fade_len = tr_abrupt_fade()
+  skipped = time() - tr_skip_t() < 4.
+  window = tr_window(a, am)
+
+  meter = rms(duration=0.25, a.source)
+  started = ref(false)
+  forced = ref(false)
+  t0 = ref(0.)
+  fl = ref(fade_len)
+  n = ref(0)
+  now = fun() -> float_of_int(n()) * 0.04
+  musical_rem = fun() -> source.remaining(a.source) - a_end
+
+  def fire(is_forced, lvl, why) =
+    started := true
+    forced := is_forced
+    t0 := now()
+    if skipped then fl := 0.6 end
+    rem = musical_rem()
+    ov = if rem - b_sil > 0. then rem - b_sil else 0. end
+    log.important(label="transition", "#{oe} -> #{ie}: overlap #{ov}s, b delay #{now()}s (window #{window}s, a_sil #{a_end}, b_sil #{b_sil}), confidence #{conf} - level-triggered (#{why}): old song at #{lvl} dB, body #{body} dB, #{if is_forced then 'old song faded over ' ^ string(fl()) ^ ' s' else 'no fade needed'}")
+  end
+
+  a_watch = source.on_frame(meter, fun() -> begin
+    n := n() + 1
+    if not started() then
+      lvl = dB_of_lin(meter.rms() + 0.000001)
+      rem = musical_rem()
+      if skipped then
+        fire(true, lvl, "manual skip")
+      elsif lvl < body - trig and rem <= maxov + b_sil then
+        fire(false, lvl, "level fell " ^ string(trig) ^ " dB")
+      elsif rem <= fade_len + b_sil then
+        fire(lvl >= body - trig, lvl, "end of the song reached")
+      end
+    end
+  end)
+
+  def shape(u0) =
+    u = if u0 < 0. then 0. elsif u0 > 1. then 1. else u0 end
+    sin(u * 1.5707963)
+  end
+  a_gain = fun() -> if forced() then shape(1. - (now() - t0()) / fl()) else 1. end
+  b_gain = fun() -> if forced() then shape((now() - t0()) / fl()) else 1. end
+  a_amp = amplify(a_gain, a_watch)
+  b_amp = amplify(b_gain, b.source)
+  b_sw = switch(track_sensitive=false, [({started()}, b_amp)])
+
+  res = insert_metadata(add(normalize=false, [a_amp, b_sw]))
+  sent = ref(false)
+  source.on_frame(res, fun() -> begin
+    if started() and not sent() and now() >= t0() + b_sil then
+      sent := true
+      res.insert_metadata(bm)
+    end
+  end)
+end
+
 def rocky_smart_xfade(a, b) =
   am = a.metadata
   bm0 = b.metadata
@@ -185,6 +270,8 @@ def rocky_smart_xfade(a, b) =
     oe0 = tr_str(am, "tr_oe")
     self_fading = (oe0 == "fade" or oe0 == "decay") and tr_num(am, "tr_oe_conf", 0.) >= 0.55
     rocky_xfade_jingle(a_end_sil=tr_num(am, "tr_oe_sil", 0.) + tr_num(am, "tr_oe_mend", 0.), b_sil=0., ramp_a=not self_fading, tr_window(a, am), a, b)
+  elsif tr_cfg_mode == "level" and tr_str(am, "tr_no_overlap") != "true" and tr_str(bm0, "tr_no_overlap") != "true" and (tr_str(am, "tr_out_curve") == "" or tr_str(am, "tr_out_curve") == "none") and (tr_str(bm0, "tr_in_curve") == "" or tr_str(bm0, "tr_in_curve") == "none") then
+    rocky_level_xfade(a, b)
   else
     bm = bm0
     window = tr_window(a, am)
