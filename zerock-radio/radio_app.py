@@ -2698,6 +2698,18 @@ def _check_auto_reruns(schedule, now):
             continue
         if show_cfg.get('day') is None:
             continue
+        # A show that is hidden from the board is "prepared but not announced": never fill its
+        # slot with a stand-in rerun (2026-10-18: new forte_roy slot aired Ahiad's episode at
+        # 08:00 with nobody expecting it). Real uploads for it still work normally.
+        if show_cfg.get('board_hidden'):
+            continue
+        _hu = show_cfg.get('board_hidden_until')
+        if _hu:
+            try:
+                if now < datetime.fromisoformat(_hu):
+                    continue
+            except Exception:
+                pass
 
         next_bcast = _next_broadcast_dt(show_cfg)
         if next_bcast is None:
