@@ -1,0 +1,15 @@
+[
+  {
+    "stationuuid": "e77ab056-eda4-4438-8e0f-6e8522e75343",
+    "name": "Ze Rock Radio",
+    "url": "https://rocky.kupernet.com/stream",
+    "homepage": "https://zerockradio.com/",
+    "favicon": "https://zerockradio.com/favicon.ico",
+    "tags": "indy,metal,post punk,punk,rock",
+    "countrycode": "IL",
+    "iso_3166_2": "IL-Z",
+    "languagecodes": "EN,HE",
+    "geo_lat": 32.965577230293995,
+    "geo_long": 35.121488571167
+  }
+]
