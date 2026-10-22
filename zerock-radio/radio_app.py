@@ -107,6 +107,18 @@ _WP_SHOW_SLUGS = {
     'על הרוקר':            'al-harocker',
     'פטרוק לילה':          'patrock',
 }
+# Hosts that share a show name but need their own WP episode slug: (show name, broadcaster) -> (prefix, strftime format)
+_WP_SLUG_BY_HOST = {
+    ('זה רוק פורטה', 'ערן הר-פז'): ('forte-eran', '%d%m%Y'),     # forte-eran-DDMMYYYY
+}
+def _wp_episode_slug(show_name, broadcaster, dt):
+    """Canonical WP slug for an episode, or None when the show has no slug rule."""
+    ov = _WP_SLUG_BY_HOST.get((show_name, (broadcaster or '').strip()))
+    if ov:
+        return f"{ov[0]}-{dt.strftime(ov[1])}"
+    pfx = _WP_SHOW_SLUGS.get(show_name)
+    return f"{pfx}-{dt.strftime('%d%m%y')}" if pfx else None
+
 _WP_FEATURED_IMAGES = {
     'Beat-oN מקומי':          14326,
     'Black Parade':            375,
@@ -280,7 +292,8 @@ SMTP_FROM_ADDR    = os.environ.get('ZEROCK_SMTP_FROM', 'ZeRock Radio <radio@zero
 ZEROCK_PUBLIC_URL = os.environ.get('ZEROCK_PUBLIC_URL', 'http://zerock.kupernet.com:5000')
 
 # Shows excluded from the auto-rerun feature (no Podbean episodes to pull from)
-AUTO_RERUN_EXCLUDED = {'al_harocker', 'erev_albumim', 'matzad_harok'}
+# forte_eran: its slot must never be filled with another Forte host's episode (the auto-rerun picks the latest 'זה רוק פורטה' of ANY host)
+AUTO_RERUN_EXCLUDED = {'al_harocker', 'erev_albumim', 'matzad_harok', 'forte_eran'}
 # Shows that must NEVER be uploaded to Podbean or WordPress, regardless of submitted mode.
 # This is a hard override applied at every layer: upload ingestion, trigger, and WP publish.
 NEVER_UPLOAD_SHOWS = {'erev_albumim'}
@@ -344,34 +357,35 @@ SHOW_SCHEDULE = [
     {'key': 'al_harocker',          'name': 'על הרוקר',           'broadcaster': '',              'day': None, 'time': '07:00', 'upload_time': '08:00', 'rerun_days_offset': None, 'rerun_time': None,  'wp_show_id': ''},
     {'key': 'rocktrip',             'name': 'RockTrip',            'broadcaster': 'אלעד אביגן',   'day': 3,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '08:00','wp_show_id': ''},
     {'key': 'zifim',                'name': 'נגד כיוון הזיפים',   'broadcaster': 'אחיעד לוק',    'day': 6,    'time': '10:00', 'upload_time': '12:00', 'rerun_days_offset': 2,    'rerun_time': '11:00','wp_show_id': ''},
-    {'key': 'black_parade',         'name': 'Black Parade',        'broadcaster': 'מתן בכור',     'day': 6,    'time': '13:00', 'upload_time': '14:00', 'rerun_days_offset': 3,    'rerun_time': '09:00','wp_show_id': ''},
+    {'key': 'black_parade',         'name': 'Black Parade',        'broadcaster': 'מתן בכור',     'day': 6,    'time': '13:00', 'upload_time': '14:00', 'rerun_days_offset': 3,    'rerun_time': '10:00','wp_show_id': ''},
     {'key': 'pascal',               'name': 'אני לא בפסקול',      'broadcaster': 'שיר אסולין',   'day': 6,    'time': '17:00', 'upload_time': '19:00', 'rerun_days_offset': 3,    'rerun_time': '14:00','wp_show_id': ''},
     {'key': 'patrock_laila_eliran', 'name': 'פטרוק לילה',         'broadcaster': 'אלירן קטנוב',  'day': 1,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 4,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'patrock_laila_meir',   'name': 'פטרוק לילה',         'broadcaster': 'מאיר הוברמן',  'day': 2,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 3,    'rerun_time': '13:00','wp_show_id': ''},
     {'key': 'hashulter',            'name': 'השאלטר',              'broadcaster': 'דוד שאבי',     'day': 0,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '12:00','wp_show_id': ''},
-    {'key': 'oy_vavoy',             'name': 'Oy Vavoy',            'broadcaster': 'יותם "דפיילר" אבני', 'day': 0,    'time': '11:00', 'upload_time': '12:00', 'rerun_days_offset': 2,    'rerun_time': '11:00','wp_show_id': ''},
+    {'key': 'oy_vavoy',             'name': 'Oy Vavoy',            'broadcaster': 'יותם "דפיילר" אבני', 'day': 0,    'time': '11:00', 'upload_time': '12:00', 'rerun_days_offset': 2,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'san_patrock_assaf',    'name': 'סן פטרוק',            'broadcaster': 'אסף פלג',      'day': 0,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 5,    'rerun_time': '10:00','wp_show_id': ''},
     {'key': 'san_patrock_itamar',   'name': 'סן פטרוק',            'broadcaster': 'איתמר עדן',    'day': 0,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 5,    'rerun_time': '11:00','wp_show_id': ''},
     {'key': 'san_patrock_roi',      'name': 'סן פטרוק',            'broadcaster': 'רועי כנפו',    'day': 3,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 2,    'rerun_time': '14:00','wp_show_id': ''},
     {'key': 'san_patrock_rivka',    'name': 'סן פטרוק',            'broadcaster': 'רבקה סיגל',    'day': 1,    'time': '20:00', 'upload_time': '21:00', 'rerun_days_offset': 4,    'rerun_time': '16:00','wp_show_id': ''},
     {'key': 'time_warp',            'name': 'Time Warp',           'broadcaster': 'רועי קופרמן',  'day': 1,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '18:00','wp_show_id': ''},
-    {'key': 'breakdown',            'name': 'The Breakdown',       'broadcaster': 'עדן גולן',     'day': 1,    'time': '10:00', 'upload_time': '11:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': ''},
+    {'key': 'breakdown',            'name': 'The Breakdown',       'broadcaster': 'עדן גולן',     'day': 1,    'time': '10:00', 'upload_time': '11:00', 'rerun_days_offset': 1,    'rerun_time': '11:00','wp_show_id': ''},
     {'key': 'singles',              'name': 'סינגלס',              'broadcaster': 'יובל ביטון',   'day': 1,    'time': '13:00', 'upload_time': '14:00', 'rerun_days_offset': 2,    'rerun_time': '11:00','wp_show_id': ''},
-    {'key': 'haachot',              'name': 'האחות',               'broadcaster': 'אפרת קוטגרו',  'day': 2,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 6,    'rerun_time': '15:00','wp_show_id': ''},
+    {'key': 'haachot',              'name': 'האחות',               'broadcaster': 'אפרת קוטגרו',  'day': 2,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 6,    'rerun_time': '15:00','wp_show_id': ''},
     {'key': 'on_the_mend',          'name': 'On the Mend',         'broadcaster': 'נופר נירן',    'day': 2,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': ''},
     {'key': 'shabi',                'name': 'Shabi on the Rocks',  'broadcaster': 'דוד שאבי',     'day': 2,    'time': '19:00', 'upload_time': '20:00', 'rerun_days_offset': 5,    'rerun_time': '18:00','wp_show_id': ''},
     {'key': 'forte',                'name': 'זה רוק פורטה',        'broadcaster': 'אחיעד לוק',    'day': 3,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': ''},
     {'key': 'beat_on',              'name': 'Beat-oN מקומי',       'broadcaster': 'יובל ביטון',   'day': 3,    'time': '15:00', 'upload_time': '16:00', 'rerun_days_offset': 4,    'rerun_time': '10:00','wp_show_id': '317'},
     {'key': 'stage_dive',           'name': 'Stage Dive',          'broadcaster': 'עדן גולן',     'day': 3,    'time': '18:00', 'upload_time': '19:00', 'rerun_days_offset': 3,    'rerun_time': '12:00','wp_show_id': ''},
     {'key': 'erev_albumim',         'name': 'ערב של אלבומים',      'broadcaster': '',              'day': 4,    'time': '17:00', 'upload_time': '17:00', 'rerun_days_offset': None,  'rerun_time': None,  'wp_show_id': '', 'no_podbean': True},
-    {'key': 'matzad_harok',         'name': 'מצעד הרוק של ישראל', 'broadcaster': '',              'day': 3,    'time': '13:00', 'upload_time': '15:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': '', 'no_wp': True},
+    {'key': 'matzad_harok',         'name': 'מצעד הרוק של ישראל', 'broadcaster': '',              'day': 3,    'time': '13:00', 'upload_time': '15:00', 'rerun_days_offset': 1,    'rerun_time': '10:00','wp_show_id': '', 'no_wp': True, 'board_hidden': True},   # removed from the WP board 2026-10-22 (still airs / still runs the weekly poll)
 
     # ── Prepared but not yet announced (board_hidden) — upload links are live,
     # but these are excluded from the public WP weekly board until confirmed go-live ──
     {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
     {'key': 'forte_roy',            'name': 'זה רוק פורטה',        'broadcaster': 'רועי קופרמן',  'day': 6,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45', 'board_hidden': True},
+    {'key': 'forte_eran',           'name': 'זה רוק פורטה',        'broadcaster': 'ערן הר-פז',    'day': 2,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:00', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': '', 'board_hidden': True},
-    {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '16:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
+    {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '18:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
     {'key': 'ptzaim_haludim',       'name': 'Rusty Wounds - פצעים חלודים', 'broadcaster': 'יובל יוספסון', 'day': 1,    'time': '17:00', 'upload_time': '18:00', 'rerun_days_offset': 2,    'rerun_time': '17:00','wp_show_id': '327', 'board_hidden_until': '2026-10-11T13:00:00'},
 ]
 
@@ -1693,9 +1707,9 @@ def _create_wp_post_direct(show) -> tuple:
             # pub_dt is a naive local-time datetime; convert to UTC before sending as date_gmt
             body['date_gmt'] = datetime.utcfromtimestamp(pub_dt.timestamp()).strftime('%Y-%m-%dT%H:%M:%S')
 
-        slug_prefix = _WP_SHOW_SLUGS.get(show_name)
-        if slug_prefix:
-            body['slug'] = f"{slug_prefix}-{d}{m}{y[2:]}"
+        _slug_new = _wp_episode_slug(show_name, broadcaster, broadcast_dt)
+        if _slug_new:
+            body['slug'] = _slug_new
 
         featured = _WP_FEATURED_IMAGES.get(show_name)
         if featured:
@@ -1870,10 +1884,8 @@ def _verify_and_fix_wp_post(wp_post_id: int, show_name: str, broadcast_dt, podbe
 
         # ── 8. slug — set canonical prefix-DDMMYY if it looks wrong ─────────────
         if broadcast_dt:
-            _slug_pfx = _WP_SHOW_SLUGS.get(show_name)
-            if _slug_pfx:
-                _d, _m, _y = broadcast_dt.strftime('%d'), broadcast_dt.strftime('%m'), broadcast_dt.strftime('%Y')
-                _expected_slug = f"{_slug_pfx}-{_d}{_m}{_y[2:]}"
+            _expected_slug = _wp_episode_slug(show_name, broadcaster, broadcast_dt)
+            if _expected_slug:
                 _current_slug  = post.get('slug', '')
                 if _current_slug != _expected_slug:
                     fixes['slug'] = _expected_slug
@@ -4904,6 +4916,7 @@ _WP_SLUGS = {
     'forte':                'forte',
     'forte_tal':            'forte',
     'forte_roy':            'forte',
+    'forte_eran':           'forte',
     'od_yom':               'od-yom',
     'ptzaim_haludim':       'wounds',
     'beat_on':              'beat-on',
@@ -4921,7 +4934,7 @@ _SHOW_DURATIONS_H = {
     'san_patrock_rivka': 1, 'time_warp': 1, 'breakdown': 1, 'singles': 1,
     'haachot': 1, 'on_the_mend': 1, 'shabi': 1, 'forte': 1,
     'beat_on': 1, 'stage_dive': 1, 'erev_albumim': 7, 'matzad_harok': 2,
-    'forte_tal': 1, 'forte_roy': 1, 'rakevet_laila': 2, 'od_yom': 1, 'ptzaim_haludim': 1,
+    'forte_tal': 1, 'forte_roy': 1, 'forte_eran': 1, 'rakevet_laila': 2, 'od_yom': 1, 'ptzaim_haludim': 1,
 }
 
 # Broadcaster display prefix rules
@@ -5667,6 +5680,13 @@ def _sync_wp_board(force=False):
                     '}'
                     '#zerock-board .schedule-daygroup:first-child{'
                     'border-inline-end:1px solid rgba(255,255,255,.25);'
+                    '}'
+                    # Desktop only: every DAY gets the same width. The groups hold 2,2,2,1 days, so they
+                    # grow in proportion to their day count (the first one also carries the 52px hours
+                    # column). Without this Saturday's single column was as wide as two other days.
+                    '@media (min-width:701px){'
+                    '#zerock-board .schedule-daygroup{flex:var(--group-days) 1 0;min-width:0;}'
+                    '#zerock-board .schedule-daygroup:first-child{flex-basis:52px;}'
                     '}'
                     # Non-first groups keep the 52px hours-column TRACK (so day cells'
                     # grid-column:2/3 positions stay valid) but shrink it to 0 width and
