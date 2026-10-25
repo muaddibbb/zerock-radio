@@ -139,6 +139,7 @@ _WP_FEATURED_IMAGES = {
     'מצעד הרוק של ישראל':     389,
     'נגד כיוון הזיפים':       450,
     'עוד יום':                 15575,
+    'רכבת לילה':               15675,   # rakevet-laila.jpg (2026-10-25)
     'Rusty Wounds - פצעים חלודים': 15606,
     'סינגלס':                  374,
     'סן פטרוק':                389,
@@ -171,6 +172,7 @@ _WP_SHOW_ART_URLS = {
     'סינגלס':             'https://zerockradio.com/wp-content/uploads/2021/01/8718-2c2d-43c5-a2a0-184992764b9f.png',
     'סן פטרוק':           'https://zerockradio.com/wp-content/uploads/2021/01/San-Patrock-clean.png',
     'עוד יום':            'https://zerockradio.com/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-29-at-00.18.25-1.jpeg',
+    'רכבת לילה':          'https://zerockradio.com/wp-content/uploads/2026/10/rakevet-laila.jpg',
     'Rusty Wounds - פצעים חלודים': 'https://zerockradio.com/wp-content/uploads/2026/10/WhatsApp-Image-2026-10-05-at-23.15.06.jpeg',
     'על הרוקר':           'https://zerockradio.com/wp-content/uploads/2021/02/Al-Ha-rocker4.gif',
     'פטרוק לילה':         'https://zerockradio.com/wp-content/uploads/2021/01/Night-Patrock-v2.png',
