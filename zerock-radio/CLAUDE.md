@@ -12,7 +12,7 @@ Credentials live in Claude's private memory (`project_deployment`), not in the t
 |---|---|
 | `192.168.1.166` = `rocky.kupernet.com` | Main server. `zerock-icecast` (stream, :8000), `zerock-liquidsoap` (audio, `rocky.liq` + `rocky_transition*.liq`), `zerock-radio-web` (Flask `radio_app.py`, :5000), WhatsApp bridge (`~/whatsapp-bridge`, localhost:7733 only) |
 | `192.168.1.114` | Secondary: n8n (docker, :5678 HTTPS), Caddy (HTTPS front for rocky), the old uploader (:3001, publishes to Podbean + WordPress), stream monitor cron. Reach it via `ssh -J` through rocky |
-| NAS (DHCP, MAC `00:00:c0:06:98:bb`) | `/mnt/nas` music + show files. If its IP moves the stream dies; see `reference_radio_system` in memory |
+| NAS (MAC `00:00:c0:06:98:bb`, router DHCP reservation set 2026-10-26) | `/mnt/nas` music + show files. If its IP moves the stream dies; see `reference_radio_system` in memory |
 | zerockradio.com | WordPress. REST only (no SSH). Schedule board is injected by `_sync_wp_board` |
 
 Streams: main public stream is **https://rocky.kupernet.com/stream**. Also `https://icecast.live:8001/zerock`. Internal `http://192.168.1.166:8000/stream`.
@@ -59,5 +59,4 @@ Streams: main public stream is **https://rocky.kupernet.com/stream**. Also `http
 
 ## Known open items
 - Secrets are hard-coded in deploy scripts, `rocky.liq` and local settings. Fix before any real version control.
-- NAS has no DHCP reservation yet.
 - radio-browser.info merge request !424 pending; TuneIn re-validation pending.
