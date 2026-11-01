@@ -1,0 +1,3 @@
+begin
+  Queue.AddFile('C:\ZeRock\Episodes\test.mp3', 0);
+end

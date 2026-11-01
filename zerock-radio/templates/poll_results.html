@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% if poll %}תוצאות — {{ poll.title }}{% else %}תוצאות סקר{% endif %}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414; color: #f0f0f0; min-height: 100vh;
+      padding: 24px 16px;
+    }
+    .wrap {
+      max-width: 820px; margin: 0 auto;
+      background: #1e1e1e; border: 1px solid #2c2c2c; border-radius: 14px;
+      padding: 28px 24px; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    h1 { font-size: 1.45em; color: #e63946; margin-bottom: 4px; text-align: center; }
+    .subtitle {
+      color: #888; font-size: 0.88em; text-align: center; margin-bottom: 10px;
+    }
+    .staff-line {
+      color: #666; font-size: 0.78em; text-align: center;
+      margin-bottom: 18px; line-height: 1.5;
+    }
+    .staff-line strong { color: #999; }
+
+    /* summary bar */
+    .summary-bar {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 20px;
+    }
+    .summary-chip {
+      background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px;
+      padding: 8px 14px; font-size: 0.88em; color: #bbb; text-align: center;
+    }
+    .summary-chip strong { color: #f0f0f0; font-size: 1.1em; display: block; }
+
+    /* live badge */
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #1e3a1e; color: #4caf50; border: 1px solid #2d5a2d;
+      border-radius: 20px; padding: 4px 12px; font-size: 0.8em; font-weight: bold;
+      width: fit-content; margin: 0 auto 18px;
+    }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #4caf50;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .closed-badge {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: #2a1a1a; color: #e63946; border: 1px solid #5a2a2a;
+      border-radius: 20px; padding: 4px 14px; font-size: 0.8em; font-weight: bold;
+      width: fit-content; margin: 0 auto 18px;
+    }
+
+    /* result row */
+    .result-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 10px; margin-bottom: 5px;
+      background: #141414; border: 1px solid #2c2c2c; border-radius: 9px;
+      transition: border-color 0.15s;
+      position: relative; overflow: hidden;
+    }
+    .result-row.top3 { border-color: #3a3020; }
+
+    /* animated fill bar behind the row */
+    .fill-bar {
+      position: absolute; inset: 0; right: auto;
+      background: rgba(230,57,70,0.07);
+      border-radius: 9px 0 0 9px;
+      transition: width 0.6s ease;
+    }
+    .result-row.top3 .fill-bar { background: rgba(230,200,70,0.07); }
+
+    .rank {
+      flex-shrink: 0; width: 30px; text-align: center;
+      font-size: 0.9em; font-weight: bold; color: #888;
+      position: relative; z-index: 1;
+    }
+    .rank.gold   { color: #ffd700; font-size: 1.1em; }
+    .rank.silver { color: #c0c0c0; font-size: 1.05em; }
+    .rank.bronze { color: #cd7f32; font-size: 1.0em; }
+
+    /* movement indicator */
+    .movement {
+      flex-shrink: 0; width: 52px; text-align: center;
+      font-size: 0.78em; font-weight: bold;
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .mv-up   { color: #4caf50; }
+    .mv-down { color: #e63946; }
+    .mv-same { color: #666; font-size: 1.0em; }
+    .mv-new  {
+      color: #f0a500; font-size: 0.68em; line-height: 1.2;
+      white-space: nowrap; font-weight: bold;
+    }
+    .mv-palash {
+      color: #7ec8e3; font-size: 0.65em; line-height: 1.2;
+      white-space: nowrap; font-weight: bold;
+    }
+    .mv-arrow { font-size: 1.1em; line-height: 1; }
+    .mv-num   { font-size: 0.88em; }
+
+    .song-info {
+      flex: 1; min-width: 0; position: relative; z-index: 1;
+    }
+    .song-name {
+      font-size: 0.93em; word-break: break-word;
+    }
+    .special-badge {
+      display: inline-block; font-size: 0.62em; font-weight: 700;
+      padding: 1px 6px; border-radius: 4px; margin-right: 5px;
+      vertical-align: middle; white-space: nowrap; line-height: 1.6;
+    }
+    .badge-aliya  { background: rgba(76,175,80,0.18);  color: #4caf50; border: 1px solid rgba(76,175,80,0.35); }
+    .badge-yerida { background: rgba(230,57,70,0.15);  color: #e63946; border: 1px solid rgba(230,57,70,0.3); }
+    .badge-vatik  { background: rgba(180,140,60,0.18); color: #c8a84b; border: 1px solid rgba(180,140,60,0.35); }
+    .badge-lo-nicnas { background: rgba(100,100,100,0.15); color: #888; border: 1px solid rgba(100,100,100,0.3); }
+    .bar-track {
+      height: 4px; background: #2a2a2a; border-radius: 2px; margin-top: 5px;
+    }
+    .bar-fill {
+      height: 4px; background: #e63946; border-radius: 2px;
+      transition: width 0.6s ease; width: 0;
+    }
+    .result-row.top3 .bar-fill { background: #ffd700; }
+
+    .vote-count {
+      flex-shrink: 0; text-align: center; min-width: 48px;
+      position: relative; z-index: 1;
+    }
+    .vote-num {
+      font-size: 1.1em; font-weight: bold; color: #e63946;
+    }
+    .result-row.top3 .vote-num { color: #ffd700; }
+    .vote-label {
+      font-size: 0.7em; color: #666;
+    }
+
+    .listen-btn {
+      flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 6px;
+      text-decoration: none; font-size: 0.95em;
+      transition: transform 0.1s, opacity 0.1s;
+      position: relative; z-index: 1;
+    }
+    .listen-btn:hover { transform: scale(1.1); }
+    .listen-spotify { background: #1db954; color: #000; }
+    .listen-youtube { background: #ff0000; color: #fff; }
+
+    .no-votes { color: #555; font-size: 0.85em; text-align: center; padding: 14px 0; }
+
+    .footer-note {
+      margin-top: 20px; text-align: center; font-size: 0.78em; color: #555;
+    }
+    .footer-note a { color: #e63946; text-decoration: none; }
+    .footer-note a:hover { text-decoration: underline; }
+
+    /* edit button */
+    .edit-btn {
+      flex-shrink: 0; background: none; border: none; cursor: pointer;
+      color: #444; font-size: 0.85em; padding: 4px; border-radius: 4px;
+      position: relative; z-index: 1; transition: color .15s;
+      line-height: 1;
+    }
+    .edit-btn:hover { color: #c084fc; }
+
+    /* inline edit panel */
+    .edit-panel {
+      display: none; background: #1a1a2a; border: 1px solid #5a3a7a;
+      border-radius: 8px; padding: 12px 14px; margin: 3px 0 6px;
+      flex-direction: column; gap: 8px;
+    }
+    .edit-panel.open { display: flex; }
+    .edit-panel label { font-size: 0.72em; color: #888; display: block; margin-bottom: 2px; }
+    .edit-panel input {
+      width: 100%; background: #111; border: 1px solid #3a3a3a;
+      border-radius: 6px; padding: 6px 10px; color: #f0f0f0;
+      font-size: 0.85em; outline: none; direction: ltr;
+    }
+    .edit-panel input:focus { border-color: #7c3aed; }
+    .edit-panel-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 2px; }
+    .btn-save-song {
+      padding: 5px 16px; background: #5a3a7a; border: none; border-radius: 6px;
+      color: #f0e0ff; font-size: 0.82em; font-weight: 700; cursor: pointer;
+    }
+    .btn-save-song:hover { background: #7c3aed; }
+    .btn-cancel-song {
+      padding: 5px 12px; background: none; border: 1px solid #333; border-radius: 6px;
+      color: #888; font-size: 0.82em; cursor: pointer;
+    }
+    .save-status { font-size: 0.78em; color: #4caf50; align-self: center; }
+
+
+    /* countdown */
+    .countdown { color: #aaa; font-size: 0.82em; text-align: center; margin-bottom: 12px; }
+
+    /* state */
+    .state-icon { font-size: 3em; text-align: center; margin-bottom: 10px; }
+    .state-title { font-size: 1.3em; font-weight: bold; text-align: center; margin-bottom: 8px; }
+    .state-sub { color: #888; font-size: 0.9em; text-align: center; }
+
+    /* weeks badge */
+    .weeks-badge {
+      flex-shrink: 0; min-width: 36px; text-align: center;
+      position: relative; z-index: 1;
+    }
+    .weeks-num {
+      font-size: 0.92em; font-weight: bold; color: #aaa;
+      line-height: 1;
+    }
+    .weeks-label {
+      font-size: 0.62em; color: #555; white-space: nowrap;
+    }
+
+    /* legend */
+    .legend {
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      font-size: 0.74em; color: #666; margin-bottom: 16px;
+    }
+    .legend span { display: flex; align-items: center; gap: 4px; }
+
+    /* flagged votes admin section */
+    .flagged-section {
+      margin-top: 28px; border-top: 1px solid #3a2a1a; padding-top: 18px;
+    }
+    .flagged-header {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.9em; font-weight: 700; color: #e0a840;
+      margin-bottom: 12px;
+    }
+    .flagged-count {
+      background: #4a3010; color: #e0a840; border: 1px solid #7a5020;
+      border-radius: 12px; padding: 1px 8px; font-size: 0.85em;
+    }
+    .flagged-row {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: #1e1a14; border: 1px solid #4a3010; border-radius: 8px;
+      padding: 10px 12px; margin-bottom: 8px;
+    }
+    .flagged-row.resolved { opacity: 0.4; pointer-events: none; }
+    .flagged-info { flex: 1; min-width: 0; }
+    .flagged-name  { font-size: 0.92em; color: #f0f0f0; font-weight: 600; }
+    .flagged-email { font-size: 0.82em; color: #aaa; direction: ltr; text-align: right; }
+    .flagged-reason { font-size: 0.75em; color: #e0a840; margin-top: 3px; }
+    .flagged-songs  { font-size: 0.72em; color: #666; margin-top: 2px; direction: ltr; text-align: right; }
+    .flagged-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .btn-flag-approve {
+      padding: 5px 12px; background: #1a3a1a; border: 1px solid #2d5a2d;
+      border-radius: 6px; color: #4caf50; font-size: 0.8em; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn-flag-approve:hover { background: #1e4a1e; }
+    .btn-flag-reject {
+      padding: 5px 12px; background: #3a1a1a; border: 1px solid #5a2a2a;
+      border-radius: 6px; color: #e63946; font-size: 0.8em; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn-flag-reject:hover { background: #4a1a1a; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+{% if auth_required %}
+  <div style="text-align:center;margin-bottom:18px">
+    <img src="/static/logo.png" alt="ZeRock Radio" style="height:64px;width:auto;opacity:0.9">
+  </div>
+  <div style="font-size:1.2em;font-weight:700;color:#e63946;text-align:center;margin-bottom:6px">תוצאות ההצבעה</div>
+  <div style="color:#888;font-size:0.85em;text-align:center;margin-bottom:22px">הזן סיסמה כדי לצפות בתוצאות</div>
+  <form method="POST" style="display:flex;flex-direction:column;align-items:center;gap:12px">
+    <input type="password" name="password" autofocus
+           placeholder="סיסמה"
+           style="background:#141414;border:1px solid {% if auth_error %}#e63946{% else %}#3a3a3a{% endif %};
+                  border-radius:8px;padding:10px 16px;color:#f0f0f0;font-size:1em;
+                  width:260px;text-align:center;direction:ltr;outline:none">
+    {% if auth_error %}
+    <div style="color:#e63946;font-size:0.82em">סיסמה שגויה, נסה שוב</div>
+    {% endif %}
+    <button type="submit"
+            style="background:#e63946;border:none;color:#fff;padding:10px 32px;
+                   border-radius:8px;cursor:pointer;font-size:0.95em;font-weight:600;width:260px">
+      כניסה →
+    </button>
+  </form>
+
+{% elif invalid %}
+  <div class="state-icon">🔗</div>
+  <div class="state-title">סקר לא נמצא</div>
+  <div class="state-sub">הסקר לא קיים במערכת.</div>
+
+{% else %}
+  <h1>{{ poll.title }}</h1>
+  <div class="subtitle">תוצאות ההצבעה</div>
+  {% if poll.staff %}
+  <div class="staff-line"><strong>צוות המצעד:</strong> {{ poll.staff }}</div>
+  {% endif %}
+
+  {% if poll.open %}
+    <div class="live-badge"><div class="live-dot"></div> הצבעה פתוחה — תוצאות חיות</div>
+  {% else %}
+    <div class="closed-badge">🔴 ההצבעה נסגרה</div>
+  {% endif %}
+
+  <div class="summary-bar">
+    <div class="summary-chip"><strong id="total-voters">{{ total_voters }}</strong>מצביעים</div>
+    <div class="summary-chip"><strong>{{ total_songs }}</strong>שירים</div>
+    <div class="summary-chip"><strong>5</strong>בחירות לכל מצביע</div>
+    {% if poll.closes_at %}
+      <div class="summary-chip" id="close-chip">
+        <strong id="close-time">…</strong>
+        <span id="close-label">{% if poll.open %}נסגרת{% else %}נסגרה{% endif %}</span>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if poll.open and poll.closes_at %}
+    <div class="countdown" id="countdown-line">…</div>
+  {% endif %}
+
+  <!-- movement legend -->
+  {% if results and results[0].movement is defined %}
+  <div class="legend">
+    <span><span class="mv-up">▲</span> עלייה במצעד</span>
+    <span><span class="mv-down">▼</span> ירידה במצעד</span>
+    <span><span class="mv-same">━</span> אותו מקום</span>
+    <span><span class="mv-new" style="color:#f0a500">כניסה חדשה</span> חדש / מהפינה לשיפוטכם</span>
+    <span><span class="mv-palash">עלה מהפלש</span> עלה מהפינה לשיפוטכם</span>
+  </div>
+  {% endif %}
+
+  <div id="results-container">
+  {% for s in results %}
+  {% set pct = ((s.votes / max_votes_any * 100) | int) if max_votes_any > 0 else 0 %}
+  <div class="result-row {% if loop.index <= 3 %}top3{% endif %}"
+       data-pct="{{ pct }}" data-song-id="{{ s.id }}">
+    <div class="fill-bar" style="width:{{ pct }}%"></div>
+
+    <!-- rank -->
+    <div class="rank {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+      {% if loop.index == 1 %}🥇
+      {% elif loop.index == 2 %}🥈
+      {% elif loop.index == 3 %}🥉
+      {% else %}{{ loop.index }}{% endif %}
+    </div>
+
+    <!-- movement (positions 1-20 only) -->
+    {% if s.movement is defined and loop.index <= 20 %}
+    <div class="movement">
+      {% if s.movement == 'new' %}
+        <span class="mv-new">כניסה<br>חדשה</span>
+      {% elif s.movement == 'palash' %}
+        <span class="mv-palash">עלה<br>מהפלש</span>
+      {% elif s.movement == '0' %}
+        <span class="mv-same">━</span>
+      {% elif s.movement.startswith('+') %}
+        <span class="mv-up"><span class="mv-arrow">▲</span><span class="mv-num">{{ s.movement[1:] }}</span></span>
+      {% else %}
+        <span class="mv-down"><span class="mv-arrow">▼</span><span class="mv-num">{{ s.movement[1:] }}</span></span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- song info -->
+    <div class="song-info">
+      <div class="song-name">
+        <span class="song-label-text">{{ s.label }}</span>
+        {% set aliya_ids  = badge_aliya_ids  if badge_aliya_ids  is defined else ([badge_aliya_id]  if badge_aliya_id  else []) %}
+        {% set yerida_ids = badge_yerida_ids if badge_yerida_ids is defined else ([badge_yerida_id] if badge_yerida_id else []) %}
+        {% set vatik_ids  = badge_vatik_ids  if badge_vatik_ids  is defined else ([badge_vatik_id]  if badge_vatik_id  else []) %}
+        {% if s.id in aliya_ids %}<span class="special-badge badge-aliya">▲ העלייה הגבוהה</span>{% endif %}
+        {% if s.id in yerida_ids %}<span class="special-badge badge-yerida">▼ הירידה הגבוהה</span>{% endif %}
+        {% if s.id in vatik_ids %}<span class="special-badge badge-vatik">★ השיר הותיק</span>{% endif %}
+        {% if loop.index > 20 and not s.weeks %}<span class="special-badge badge-lo-nicnas">לא נכנס למצעד</span>{% endif %}
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:{{ pct }}%"></div></div>
+    </div>
+
+    <!-- Spotify / YouTube links -->
+    {% if s.spotify_url %}
+    <a class="listen-btn listen-spotify" href="{{ s.spotify_url }}" target="_blank"
+       title="Spotify" rel="noopener">🎵</a>
+    {% else %}
+    <span class="listen-btn" style="opacity:0.15;cursor:default" title="No Spotify link">🎵</span>
+    {% endif %}
+    {% if s.youtube_url %}
+    <a class="listen-btn listen-youtube" href="{{ s.youtube_url }}" target="_blank"
+       title="YouTube" rel="noopener">▶</a>
+    {% else %}
+    <span class="listen-btn" style="opacity:0.15;cursor:default" title="No YouTube link">▶</span>
+    {% endif %}
+
+    <!-- vote count -->
+    <div class="vote-count">
+      <div class="vote-num">{{ s.votes }}</div>
+      <div class="vote-label">קולות</div>
+    </div>
+
+    <!-- weeks on chart -->
+    <!-- Positions 21-25 (leaving the chart / palash zone) show ONE WEEK LESS:
+         the count excludes the current (leaving) week, i.e. how many weeks the
+         song was actually IN the chart. Positions 1-20 show the full count. -->
+    {% set disp_weeks = (s.weeks - 1) if (loop.index > 20 and s.weeks) else s.weeks %}
+    {% if disp_weeks and disp_weeks > 0 %}
+    <div class="weeks-badge">
+      <div class="weeks-num">{{ disp_weeks }}</div>
+      <div class="weeks-label">שבועות</div>
+    </div>
+    {% endif %}
+
+    <!-- edit button -->
+    <button class="edit-btn" title="ערוך שיר"
+            onclick="toggleEdit('{{ poll.id }}','{{ s.id }}',this)">✏️</button>
+
+  </div>
+
+  <!-- inline edit panel (outside the row, full width) -->
+  <div class="edit-panel" id="edit-{{ s.id }}">
+    <div>
+      <label>שם השיר</label>
+      <input type="text" id="lbl-{{ s.id }}" value="{{ s.label }}" dir="rtl">
+    </div>
+    <div>
+      <label>Spotify URL</label>
+      <input type="url" id="sp-{{ s.id }}" value="{{ s.spotify_url or '' }}" placeholder="https://open.spotify.com/track/…">
+    </div>
+    <div>
+      <label>YouTube URL</label>
+      <input type="url" id="yt-{{ s.id }}" value="{{ s.youtube_url or '' }}" placeholder="https://www.youtube.com/watch?v=…">
+    </div>
+    <div class="edit-panel-actions">
+      <span class="save-status" id="st-{{ s.id }}"></span>
+      <button class="btn-cancel-song" onclick="cancelEdit('{{ s.id }}')">ביטול</button>
+      <button class="btn-save-song" onclick="saveSong('{{ poll.id }}','{{ s.id }}')">שמור</button>
+    </div>
+  </div>
+
+  {% if loop.index == 20 %}
+  <div style="display:flex;align-items:center;gap:10px;margin:10px 0 8px">
+    <div style="flex:1;height:1px;background:#3a3a3a"></div>
+    <div style="font-size:0.72em;color:#555;white-space:nowrap;padding:0 6px">יצאו מהמצעד</div>
+    <div style="flex:1;height:1px;background:#3a3a3a"></div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if not any_votes %}
+    <div class="no-votes">אין קולות עדיין — היה הראשון להצביע!</div>
+  {% endif %}
+  </div>
+
+  {% if next_palash_info %}
+  <div style="margin-top:22px;border-top:1px solid #2c2c2c;padding-top:18px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="flex:1;height:1px;background:#2c2c2c"></div>
+      <div style="font-size:0.8em;color:#888;white-space:nowrap;padding:0 8px;font-weight:600">
+        🎵 הפינה לשיפוטכם — שבוע הבא
+      </div>
+      <div style="flex:1;height:1px;background:#2c2c2c"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      {% for item in next_palash_info %}
+      {% set cand = item.candidate %}
+      <div style="padding:10px 12px;background:#141414;border:1px solid #2c2c2c;border-radius:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:0.8em;color:#555;width:18px;text-align:center;flex-shrink:0">{{ loop.index }}</span>
+          <span style="font-size:0.9em;color:#ccc;flex:1">{{ item.label }}</span>
+          {% if cand %}
+          <span style="font-size:0.72em;color:{{ '#4ade80' if cand.submitted else '#f0a500' }}">
+            {{ 'הושלם ✓' if cand.submitted else 'ממתין למועמד/ת' }}
+          </span>
+          <button type="button" onclick="togglePalashLinks('{{ cand.token }}')"
+                  style="background:transparent;border:1px solid #3a3a3a;color:#888;border-radius:5px;
+                         padding:3px 10px;font-size:0.75em;cursor:pointer">📎 קבצים</button>
+          <button type="button" onclick="togglePalashEdit('{{ cand.token }}')"
+                  style="background:transparent;border:1px solid #3a3a3a;color:#888;border-radius:5px;
+                         padding:3px 10px;font-size:0.75em;cursor:pointer">עריכה</button>
+          {% endif %}
+        </div>
+        {% if cand %}
+        <div id="palash-links-{{ cand.token }}" style="display:none;margin-top:8px;padding-top:8px;
+             border-top:1px solid #232323;gap:16px;font-size:0.78em;flex-wrap:wrap">
+          <span>
+            🎵 שיר —
+            {% if item.mp3_path %}<a href="/static/{{ item.mp3_path }}" target="_blank" style="color:#4ade80">קיים</a>
+            {% else %}<span style="color:#666">אין</span>{% endif %}
+          </span>
+          <span>
+            📄 קומוניקט —
+            {% if cand.communique_path %}<a href="/static/{{ cand.communique_path }}" target="_blank" style="color:#4ade80">קיים</a>
+            {% else %}<span style="color:#666">אין</span>{% endif %}
+          </span>
+          <span>
+            🖼️ תמונה —
+            {% if cand.image_path %}<a href="/static/{{ cand.image_path }}" target="_blank" style="color:#4ade80">קיימת</a>
+            {% else %}<span style="color:#666">אין</span>{% endif %}
+          </span>
+        </div>
+        {% endif %}
+        {% if cand %}
+        <div id="palash-edit-{{ cand.token }}" style="display:none;margin-top:10px;padding-top:10px;
+             border-top:1px solid #232323">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <input type="text" id="pf-artist-{{ cand.token }}" value="{{ cand.artist_name or '' }}"
+                   placeholder="שם האמן"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;
+                          color:#eee;font-size:0.85em;direction:rtl">
+            <input type="text" id="pf-song-{{ cand.token }}" value="{{ cand.song_name or '' }}"
+                   placeholder="שם השיר"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;
+                          color:#eee;font-size:0.85em;direction:rtl">
+          </div>
+          <div style="display:flex;gap:14px;margin-bottom:8px;font-size:0.78em;color:#999">
+            <div style="flex:1">
+              <div style="margin-bottom:3px">תמונה{% if cand.image_path %} — <a href="/static/{{ cand.image_path }}" target="_blank" style="color:#4ade80">קיימת</a>{% endif %}</div>
+              <input type="file" id="pf-image-{{ cand.token }}" accept="image/png,image/jpeg,image/webp" style="font-size:0.8em;color:#aaa;width:100%">
+            </div>
+            <div style="flex:1">
+              <div style="margin-bottom:3px">קומוניקט{% if cand.communique_path %} — <a href="/static/{{ cand.communique_path }}" target="_blank" style="color:#4ade80">קיים</a>{% endif %}</div>
+              <input type="file" id="pf-communique-{{ cand.token }}" accept=".pdf,.doc,.docx" style="font-size:0.8em;color:#aaa;width:100%">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+            <input type="url" id="pf-instagram-{{ cand.token }}" value="{{ cand.instagram or '' }}" placeholder="אינסטגרם"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+            <input type="url" id="pf-facebook-{{ cand.token }}" value="{{ cand.facebook or '' }}" placeholder="פייסבוק"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+            <input type="url" id="pf-tiktok-{{ cand.token }}" value="{{ cand.tiktok or '' }}" placeholder="טיקטוק"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <input type="url" id="pf-youtube-{{ cand.token }}" value="{{ cand.youtube_url or '' }}" placeholder="יוטיוב"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+            <input type="url" id="pf-spotify-{{ cand.token }}" value="{{ cand.spotify_url or '' }}" placeholder="ספוטיפיי"
+                   style="background:#0d0d0d;border:1px solid #333;border-radius:6px;padding:6px 9px;color:#eee;font-size:0.8em;direction:ltr">
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button type="button" onclick="savePalashCandidate('{{ cand.token }}')"
+                    style="background:#e63946;border:none;color:#fff;padding:6px 16px;border-radius:6px;
+                           font-size:0.8em;font-weight:600;cursor:pointer">💾 שמירה</button>
+            <span id="pf-msg-{{ cand.token }}" style="font-size:0.78em"></span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <script>
+    function togglePalashEdit(token){
+      var el = document.getElementById('palash-edit-' + token);
+      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+    }
+    function togglePalashLinks(token){
+      var el = document.getElementById('palash-links-' + token);
+      el.style.display = (el.style.display === 'none' || !el.style.display) ? 'flex' : 'none';
+    }
+    function savePalashCandidate(token){
+      var msg = document.getElementById('pf-msg-' + token);
+      var artist = document.getElementById('pf-artist-' + token).value.trim();
+      var song   = document.getElementById('pf-song-' + token).value.trim();
+      if(!artist || !song){
+        msg.style.color = '#f87171'; msg.textContent = 'שם האמן ושם השיר הם שדות חובה';
+        return;
+      }
+      var fd = new FormData();
+      fd.append('artist_name', artist);
+      fd.append('song_name', song);
+      fd.append('instagram', document.getElementById('pf-instagram-' + token).value.trim());
+      fd.append('facebook', document.getElementById('pf-facebook-' + token).value.trim());
+      fd.append('tiktok', document.getElementById('pf-tiktok-' + token).value.trim());
+      fd.append('youtube_url', document.getElementById('pf-youtube-' + token).value.trim());
+      fd.append('spotify_url', document.getElementById('pf-spotify-' + token).value.trim());
+      var imgFile = document.getElementById('pf-image-' + token).files[0];
+      var comFile = document.getElementById('pf-communique-' + token).files[0];
+      if(imgFile) fd.append('image', imgFile);
+      if(comFile) fd.append('communique', comFile);
+      msg.style.color = '#888'; msg.textContent = 'שומר…';
+      fetch('/api/palash-form/' + token, {method:'POST', body: fd})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(d.ok){ msg.style.color = '#4ade80'; msg.textContent = '✓ נשמר'; setTimeout(function(){location.reload();}, 700); }
+          else{ msg.style.color = '#f87171'; msg.textContent = d.error || 'שגיאה'; }
+        })
+        .catch(function(){ msg.style.color = '#f87171'; msg.textContent = 'שגיאה בשמירה'; });
+    }
+  </script>
+  {% endif %}
+
+  <div class="footer-note">
+    {% if poll.open %}
+      רוצה להצביע? <a href="{{ vote_url }}">הצביע עכשיו →</a>
+      &nbsp;|&nbsp; מתרענן אוטומטית כל 30 שניות
+    {% else %}
+      ההצבעה נסגרה • שאלות? <a href="https://www.zerockradio.com">zerockradio.com</a>
+    {% endif %}
+  </div>
+
+  {% if flagged_votes %}
+  <div class="flagged-section">
+    <div class="flagged-header">
+      ⚠️ הצבעות הממתינות לבדיקה
+      <span class="flagged-count">{{ flagged_votes | length }}</span>
+    </div>
+    {% for v in flagged_votes %}
+    <div class="flagged-row" id="fv-{{ v.id or v.vote_id }}">
+      <div class="flagged-info">
+        <div class="flagged-name">{{ v.name or '(ללא שם)' }}</div>
+        <div class="flagged-email">{{ v.email }}</div>
+        <div class="flagged-reason">סיבה: {{ v.flag_reason or 'לא ידוע' }}</div>
+        <div class="flagged-songs">
+          {% if v.song_ids %}
+            {% for sid in v.song_ids %}
+              <div>• {{ song_map.get(sid, sid) }}</div>
+            {% endfor %}
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      <div class="flagged-actions">
+        <button class="btn-flag-approve"
+                onclick="reviewVote('{{ poll.id }}','{{ v.id or v.vote_id }}','approve',this)">✓ אשר</button>
+        <button class="btn-flag-reject"
+                onclick="reviewVote('{{ poll.id }}','{{ v.id or v.vote_id }}','reject',this)">✕ דחה</button>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if invalidated_votes %}
+  <div class="flagged-section" style="border-top-color:#3a1a1a">
+    <div class="flagged-header" style="color:#e08080">
+      🚫 הצבעות שנפסלו
+      <span class="flagged-count" style="background:#4a1010;color:#e08080;border-color:#7a2020">{{ invalidated_votes | length }}</span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:0.82em">
+      <thead>
+        <tr style="color:#666;font-size:0.9em">
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">שם</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">מייל</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">סטטוס</th>
+          <th style="text-align:right;padding:6px 8px;border-bottom:1px solid #2c2c2c">הצביע על</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in invalidated_votes %}
+        <tr style="border-bottom:1px solid #1e1e1e">
+          <td style="padding:7px 8px;color:#ccc;vertical-align:top">{{ v.name or '—' }}</td>
+          <td style="padding:7px 8px;color:#aaa;direction:ltr;text-align:right;vertical-align:top">{{ v.email }}</td>
+          <td style="padding:7px 8px;vertical-align:top">
+            {% if v.status == 'rejected' %}
+              <span style="color:#e63946;font-weight:700">נדחה</span>
+            {% else %}
+              <span style="color:#e0a840;font-weight:700">ממתין</span>
+            {% endif %}
+          </td>
+          <td style="padding:7px 8px;vertical-align:top">
+            {% if v.song_ids %}
+              {% for sid in v.song_ids %}
+                <div style="color:#888">{{ song_map.get(sid, sid) }}</div>
+              {% endfor %}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+{% endif %}
+</div>
+
+{% if poll and not invalid %}
+<script>
+{% if poll.closes_at %}
+(function() {
+  const closesAt = new Date("{{ poll.closes_at }}");
+  const heDate = d => d.toLocaleString('he-IL', {weekday:'short', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
+
+  function fmtRemaining(ms) {
+    const s = Math.max(0, Math.floor(ms/1000));
+    const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+    const parts = [];
+    if (d) parts.push(d + ' ימים');
+    if (h) parts.push(h + ' שעות');
+    if (m && !d) parts.push(m + ' דקות');
+    return parts.join(' ו') || 'פחות מדקה';
+  }
+
+  const closeTimeEl = document.getElementById('close-time');
+  const countdownEl = document.getElementById('countdown-line');
+
+  function tick() {
+    const now = new Date();
+    if (closeTimeEl) closeTimeEl.textContent = heDate(closesAt);
+    if (countdownEl) {
+      if (now < closesAt) {
+        countdownEl.textContent = '⏱ ההצבעה נסגרת בעוד ' + fmtRemaining(closesAt - now);
+      } else {
+        countdownEl.textContent = '🔴 ההצבעה נסגרה';
+      }
+    }
+  }
+  tick();
+  setInterval(tick, 30000);
+})();
+{% endif %}
+
+{% if poll.open %}
+// Auto-refresh results every 30s — full page reload for simplicity
+setTimeout(function autoRefresh() {
+  window.location.reload();
+  setTimeout(autoRefresh, 30000);
+}, 30000);
+{% endif %}
+
+// ── Inline song editor ────────────────────────────────────────────────────────
+function toggleEdit(pollId, songId, btn) {
+  const panel = document.getElementById('edit-' + songId);
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  // Close all open panels first
+  document.querySelectorAll('.edit-panel.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+
+function cancelEdit(songId) {
+  const panel = document.getElementById('edit-' + songId);
+  if (panel) panel.classList.remove('open');
+}
+
+// ── Flagged vote review ───────────────────────────────────────────────────────
+async function reviewVote(pollId, voteId, action, btn) {
+  const row = document.getElementById('fv-' + voteId);
+  if (btn) { btn.disabled = true; btn.textContent = action === 'approve' ? 'מאשר…' : 'דוחה…'; }
+  try {
+    const r = await fetch('/api/polls/' + pollId + '/votes/' + voteId + '/review', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action}),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+    if (row) {
+      row.classList.add('resolved');
+      row.querySelector('.flagged-actions').innerHTML =
+        action === 'approve'
+          ? '<span style="color:#4caf50;font-size:0.8em;font-weight:700">✓ אושר</span>'
+          : '<span style="color:#e63946;font-size:0.8em;font-weight:700">✕ נדחה</span>';
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = action === 'approve' ? '✓ אשר' : '✕ דחה'; }
+    alert('שגיאה: ' + e.message);
+  }
+}
+
+async function saveSong(pollId, songId) {
+  const lbl = document.getElementById('lbl-' + songId);
+  const sp  = document.getElementById('sp-'  + songId);
+  const yt  = document.getElementById('yt-'  + songId);
+  const st  = document.getElementById('st-'  + songId);
+  if (!lbl) return;
+
+  const body = {
+    label:        lbl.value.trim(),
+    spotify_url:  sp  ? sp.value.trim()  || null : undefined,
+    youtube_url:  yt  ? yt.value.trim()  || null : undefined,
+  };
+  // Remove undefined keys
+  Object.keys(body).forEach(k => body[k] === undefined && delete body[k]);
+
+  if (st) st.textContent = 'שומר…';
+  try {
+    const r = await fetch('/api/polls/' + pollId + '/songs/' + songId, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || r.status);
+
+    // Update the visible label in the row
+    const labelEl = document.querySelector(
+      '.result-row[data-song-id="' + songId + '"] .song-label-text'
+    );
+    if (labelEl && body.label) labelEl.textContent = body.label;
+
+    // Update Spotify link
+    const spBtn = document.querySelector(
+      '.result-row[data-song-id="' + songId + '"] .listen-spotify, ' +
+      '.result-row[data-song-id="' + songId + '"] .listen-btn:first-of-type'
+    );
+
+    if (st) { st.textContent = '✓ נשמר'; setTimeout(() => { st.textContent = ''; cancelEdit(songId); }, 1200); }
+  } catch(e) {
+    if (st) st.textContent = '✗ ' + e.message;
+    if (st) st.style.color = '#f44';
+  }
+}
+</script>
+{% endif %}
+</body>
+</html>

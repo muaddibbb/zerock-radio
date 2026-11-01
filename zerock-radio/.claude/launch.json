@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "thankyou-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "7788", "--directory", "/Users/rkuperman/Documents/Claude_Code/ZeRock_Uploader/zerock-radio"],
+      "port": 7788
+    }
+  ]
+}

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeRock – שידור חי</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #141414;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #1e1e1e;
+      border: 1px solid #2c2c2c;
+      border-radius: 16px;
+      padding: 48px 36px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+
+    .logo { font-size: 2.8em; margin-bottom: 12px; }
+
+    h1 {
+      font-size: 1.5em;
+      color: #e63946;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.88em;
+      margin-bottom: 48px;
+    }
+
+    /* Big toggle */
+    .toggle-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .toggle-label {
+      font-size: 1.4em;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      transition: color 0.3s;
+    }
+    .toggle-label.on  { color: #4caf50; }
+    .toggle-label.off { color: #e63946; }
+
+    /* iOS-style big toggle switch */
+    .switch {
+      position: relative;
+      width: 110px;
+      height: 58px;
+      cursor: pointer;
+    }
+    .switch input { display: none; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #3a3a3a;
+      border-radius: 58px;
+      transition: background 0.3s;
+    }
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 46px;
+      height: 46px;
+      top: 6px;
+      right: 6px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    input:checked + .slider { background: #4caf50; }
+    input:checked + .slider::before { transform: translateX(-52px); }
+
+    .status-desc {
+      font-size: 0.85em;
+      color: #666;
+      line-height: 1.6;
+      padding: 16px;
+      background: #181818;
+      border-radius: 10px;
+      border: 1px solid #2a2a2a;
+    }
+    .status-desc.on  { border-color: #2e5c2e; color: #aaa; }
+    .status-desc.off { border-color: #5c2e2e; color: #aaa; }
+
+    .spinner {
+      display: none;
+      width: 22px;
+      height: 22px;
+      border: 3px solid #444;
+      border-top-color: #e63946;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🎙️</div>
+  <h1>שידור חי</h1>
+  <div class="subtitle">ZeRock Radio — חיבור חיצוני</div>
+
+  <div class="toggle-wrap">
+    <div class="toggle-label {% if ext_active %}on{% else %}off{% endif %}" id="toggle-label">
+      {% if ext_active %}סטרים חיצוני פעיל{% else %}סטרים חיצוני כבוי{% endif %}
+    </div>
+
+    <label class="switch" id="switch-wrap" onclick="doToggle()">
+      <input type="checkbox" id="toggle-input" {% if ext_active %}checked{% endif %} disabled>
+      <span class="slider"></span>
+    </label>
+
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <div class="status-desc {% if ext_active %}on{% else %}off{% endif %}" id="status-desc">
+    {% if ext_active %}
+      רוקי משדר לזרם החיצוני.<br>
+      כיבוי יאפשר חיבור של מקור חי חיצוני.
+    {% else %}
+      הזרם החיצוני כבוי — רוקי לא משדר.<br>
+      ניתן להתחבר כמקור חי חיצוני.
+    {% endif %}
+  </div>
+</div>
+
+<script>
+let busy = false;
+
+async function doToggle() {
+  if (busy) return;
+  busy = true;
+
+  const input    = document.getElementById('toggle-input');
+  const label    = document.getElementById('toggle-label');
+  const desc     = document.getElementById('status-desc');
+  const spinner  = document.getElementById('spinner');
+  const sw       = document.getElementById('switch-wrap');
+
+  spinner.style.display = 'block';
+  sw.style.pointerEvents = 'none';
+
+  const currentlyOn = input.checked;
+  const url = currentlyOn
+    ? '/api/stream/external/stop'
+    : '/api/stream/external/start';
+
+  try {
+    const res  = await fetch(url, { method: 'POST' });
+    const data = await res.json();
+
+    if (data.success) {
+      const nowOn = !currentlyOn;
+      input.checked = nowOn;
+      if (nowOn) {
+        label.textContent = 'סטרים חיצוני פעיל';
+        label.className   = 'toggle-label on';
+        desc.className    = 'status-desc on';
+        desc.innerHTML    = 'רוקי משדר לזרם החיצוני.<br>כיבוי יאפשר חיבור של מקור חי חיצוני.';
+      } else {
+        label.textContent = 'סטרים חיצוני כבוי';
+        label.className   = 'toggle-label off';
+        desc.className    = 'status-desc off';
+        desc.innerHTML    = 'הזרם החיצוני כבוי — רוקי לא משדר.<br>ניתן להתחבר כמקור חי חיצוני.';
+      }
+    }
+  } catch(e) {
+    // silently fail — state unchanged
+  }
+
+  spinner.style.display  = 'none';
+  sw.style.pointerEvents = 'auto';
+  busy = false;
+}
+
+// Poll every 5s to stay in sync with server state
+async function poll() {
+  try {
+    const r = await fetch('/api/stream/external/status');
+    const d = await r.json();
+    if (!busy) {
+      const input = document.getElementById('toggle-input');
+      const label = document.getElementById('toggle-label');
+      const desc  = document.getElementById('status-desc');
+      input.checked = d.ext_active;
+      if (d.ext_active) {
+        label.textContent = 'סטרים חיצוני פעיל';
+        label.className   = 'toggle-label on';
+        desc.className    = 'status-desc on';
+        desc.innerHTML    = 'רוקי משדר לזרם החיצוני.<br>כיבוי יאפשר חיבור של מקור חי חיצוני.';
+      } else {
+        label.textContent = 'סטרים חיצוני כבוי';
+        label.className   = 'toggle-label off';
+        desc.className    = 'status-desc off';
+        desc.innerHTML    = 'הזרם החיצוני כבוי — רוקי לא משדר.<br>ניתן להתחבר כמקור חי חיצוני.';
+      }
+    }
+  } catch(_) {}
+}
+setInterval(poll, 5000);
+</script>
+</body>
+</html>

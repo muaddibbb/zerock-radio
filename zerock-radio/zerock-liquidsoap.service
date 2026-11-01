@@ -1,0 +1,17 @@
+[Unit]
+Description=ZeRock Radio - Liquidsoap (Rocky)
+After=network.target zerock-icecast.service
+Wants=zerock-icecast.service
+
+[Service]
+Type=simple
+User=roy
+WorkingDirectory=/home/roy/zerock-radio
+ExecStart=/usr/bin/liquidsoap /home/roy/zerock-radio/rocky.liq
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/home/roy/zerock-radio/logs/liquidsoap-stdout.log
+StandardError=append:/home/roy/zerock-radio/logs/liquidsoap-stderr.log
+
+[Install]
+WantedBy=multi-user.target

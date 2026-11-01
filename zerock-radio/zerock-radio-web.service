@@ -1,0 +1,16 @@
+[Unit]
+Description=ZeRock Radio - Web Interface
+After=network.target zerock-liquidsoap.service
+
+[Service]
+Type=simple
+User=roy
+WorkingDirectory=/home/roy/zerock-radio
+ExecStart=/usr/bin/python3 /home/roy/zerock-radio/radio_app.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/roy/zerock-radio/logs/web.log
+StandardError=append:/home/roy/zerock-radio/logs/web.log
+
+[Install]
+WantedBy=multi-user.target

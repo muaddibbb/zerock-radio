@@ -1,0 +1,4022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZeRock Radio</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0d0f14;
+      --surface:     #161920;
+      --surface2:    #1e2330;
+      --border:      #2a2f3d;
+      --accent:      #6c63ff;
+      --accent-dim:  #1e1b3a;
+      --success:     #34d399;
+      --success-dim: #0c2e22;
+      --warning:     #fbbf24;
+      --warning-dim: #2d2208;
+      --danger:      #f87171;
+      --danger-dim:  #2d0f0f;
+      --text:        #e2e8f0;
+      --text-muted:  #64748b;
+      --text-subtle: #94a3b8;
+      --radius:      10px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+    .logo span { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--danger); margin-left: auto;
+    }
+    .status-dot.live { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .status-label { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+    }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .card h2 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    /* ── Now Playing header ── */
+    .np-header {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .np-header::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* ── Now Playing ── */
+    .now-playing {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 20px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+    }
+    .np-icon {
+      width: 52px; height: 52px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      animation: spin 8s linear infinite;
+    }
+    .np-icon.paused { animation-play-state: paused; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .np-title { font-size: 1.05rem; font-weight: 600; color: var(--text); }
+    .np-artist { font-size: 0.85rem; color: var(--text-subtle); margin-top: 3px; }
+    .np-progress-wrap { margin-top: 10px; }
+    .np-timebar {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums;
+    }
+    .np-seek {
+      flex: 1; height: 4px; cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background: transparent; outline: none; padding: 0; margin: 0;
+      position: relative;
+    }
+    .np-seek::-webkit-slider-runnable-track {
+      height: 4px; border-radius: 2px;
+      background: linear-gradient(to right, var(--accent) var(--np-pct, 0%), var(--surface2) var(--np-pct, 0%));
+    }
+    .np-seek::-moz-range-track {
+      height: 4px; border-radius: 2px; background: var(--surface2);
+    }
+    .np-seek::-moz-range-progress {
+      height: 4px; border-radius: 2px; background: var(--accent);
+    }
+    .np-seek::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px;
+      border-radius: 50%; background: var(--accent);
+      margin-top: -4px; cursor: pointer; transition: transform 0.1s;
+    }
+    .np-seek::-webkit-slider-thumb:hover { transform: scale(1.4); }
+    .np-seek::-moz-range-thumb {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: var(--accent); border: none; cursor: pointer;
+    }
+    .np-seek:disabled { opacity: 0.4; cursor: default; }
+    .np-skip {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-subtle);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      flex-shrink: 0;
+    }
+    .np-skip:hover { border-color: var(--accent); color: var(--accent); }
+    .np-controls { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .btn-stream-stop  { background: var(--danger-dim);  color: var(--danger);  border: 1px solid var(--danger);  padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .btn-stream-start { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+    .btn-stream-stop:hover  { background: var(--danger);  color: #fff; }
+    .btn-stream-start:hover { background: var(--success); color: #000; }
+
+    /* ── Show schedule form ── */
+    .form-group { margin-bottom: 14px; }
+    label {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="datetime-local"], input[type="file"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 0.9rem;
+      outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    input[type="file"] { padding: 8px 10px; cursor: pointer; }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    /* ── Schedule lists ── */
+    .show-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .show-item:last-child { border-bottom: none; }
+    .show-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: var(--warning);
+    }
+    .show-dot.done { background: var(--success); }
+    .show-info { flex: 1; min-width: 0; }
+    .rerun-badge {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: normal;
+      margin-left: 4px;
+    }
+    .show-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .show-time { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .show-countdown {
+      font-size: 0.72rem;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .show-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-sm {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-play { background: var(--success-dim); color: var(--success); }
+    .btn-play:hover { background: var(--success); color: #000; }
+    .btn-del  { background: var(--danger-dim); color: var(--danger); }
+    .btn-del:hover  { background: var(--danger); color: #fff; }
+    .btn-reschedule { background: #1e2a1e; color: #6ee7b7; }
+    .btn-reschedule:hover { background: #6ee7b7; color: #000; }
+    .btn-download { background: #1e2235; color: #93c5fd; }
+    .btn-download:hover { background: #3b82f6; color: #fff; }
+
+    /* Reschedule modal */
+    #rescheduleOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    #rescheduleOverlay.open { display: flex; }
+    #rescheduleModal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 340px;
+      max-width: 95vw;
+    }
+    #rescheduleModal h3 { font-size: 1rem; margin-bottom: 16px; color: var(--text); }
+    #rescheduleModal label { font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 6px; }
+    #rescheduleModal input[type="datetime-local"] {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 9px 12px; color: var(--text); font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-actions button { flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    #rescheduleSave { background: var(--accent); color: #fff; }
+    #rescheduleCancel { background: var(--surface2); color: var(--text-muted); }
+
+    .empty-msg {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    /* ── Stream toggles ── */
+    .toggle-wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .toggle-wrap:last-child { border-bottom: none; }
+    .stream-label { font-size: 0.88rem; font-weight: 600; }
+    .stream-url   { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+    .stream-status { font-size: 0.72rem; margin-top: 3px; }
+    .stream-status.on  { color: var(--success); }
+    .stream-status.off { color: var(--text-muted); }
+    .toggle-slider {
+      position: relative; width: 44px; height: 24px; flex-shrink: 0;
+    }
+    .toggle-slider input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider-track {
+      position: absolute; inset: 0;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 24px; cursor: pointer; transition: background .2s;
+    }
+    .toggle-slider-track::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--text-muted);
+      top: 3px; left: 3px; transition: transform .2s, background .2s;
+    }
+    .toggle-slider input:checked + .toggle-slider-track { background: var(--success-dim); border-color: var(--success); }
+    .toggle-slider input:checked + .toggle-slider-track::before { transform: translateX(20px); background: var(--success); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-size: 0.85rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok  { border-color: var(--success); color: var(--success); }
+    #toast.err { border-color: var(--danger);  color: var(--danger);  }
+
+    /* ── Top-level page tabs (Home / Management) ── */
+    .page-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .page-tab {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 14px 22px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+      font-family: inherit;
+    }
+    .page-tab:hover { color: var(--text); }
+    .page-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* When in management mode, collapse to single column */
+    body.mode-home    #page-manage { display: none; }
+    body.mode-manage  #page-home   { display: none; }
+    body.mode-manage  main {
+      grid-template-columns: 1fr;
+      max-width: 820px;
+    }
+
+    /* ── Management subsection nav ── */
+    .mgmt-subnav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 22px;
+      padding: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .mgmt-subnav-btn {
+      flex: 1 1 auto;
+      min-width: 140px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 9px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 7px;
+      transition: background .15s, color .15s, border-color .15s;
+      font-family: inherit;
+      text-align: center;
+    }
+    .mgmt-subnav-btn:hover { color: var(--text); background: var(--surface2); }
+    .mgmt-subnav-btn.active {
+      color: var(--accent);
+      background: var(--accent-dim);
+      border-color: var(--accent);
+    }
+
+    /* Hide cards whose data-mgmt-section doesn't include the active subsection.
+       The .mgmt-active class is toggled by JS on each card. */
+    #page-manage [data-mgmt-section]:not(.mgmt-active) { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ZeRock Radio <span>/ Rocky</span></div>
+  <div class="status-dot {% if lq_running %}live{% endif %}" id="statusDot"></div>
+  <div class="status-label" id="statusLabel">{% if lq_running %}Live{% else %}Offline{% endif %}</div>
+</header>
+
+<!-- Page tabs: Home / Management -->
+<nav class="page-tabs">
+  <button type="button" class="page-tab" data-page="home"   onclick="switchPage('home')">Home</button>
+  <button type="button" class="page-tab" data-page="manage" onclick="switchPage('manage')">Management</button>
+</nav>
+
+<main>
+  <!-- Left column (Home page) -->
+  <div id="page-home">
+    <!-- Now Playing -->
+    <div class="np-header">Now Playing</div>
+    <div class="now-playing">
+      <div class="np-icon {% if not lq_running %}paused{% endif %}" id="npIcon">🎵</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="np-title" id="npTitle">Loading…</div>
+          <span id="zikaronBadge" style="display:none;font-size:0.7rem;background:#7f1d1d;color:#fca5a5;border-radius:4px;padding:2px 6px;white-space:nowrap">🕯 זיכרון</span>
+        </div>
+        <div class="np-artist" id="npArtist"></div>
+        <div class="np-progress-wrap" id="npProgressWrap" style="display:none">
+          <div class="np-timebar">
+            <span id="npElapsed">0:00</span>
+            <input type="range" class="np-seek" id="npSeek"
+                   min="0" max="100" step="0.1" value="0" disabled
+                   title="Drag to seek">
+            <span id="npRemaining">0:00</span>
+          </div>
+        </div>
+      </div>
+      <div class="np-controls">
+        <button class="np-skip" onclick="skipTrack()">⏭ Skip</button>
+        <button class="btn-stream-stop"  id="btnStop"  onclick="streamStop()"  style="display:none">⏹ Stop broadcast</button>
+        <button class="btn-stream-start" id="btnStart" onclick="streamStart()" style="display:none">▶ Resume broadcast</button>
+      </div>
+    </div>
+
+    <!-- Live queue -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Live Queue (next to play)</h2>
+      <div id="liveQueue"><div class="empty-msg">Loading...</div></div>
+    </div>
+
+    <!-- Play History (under the Live Queue; scrolls inside its card so the queue/upcoming stay in reach) -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Play History (last 48h)</h2>
+      <div id="historyList" style="max-height:420px;overflow-y:auto"><div class="empty-msg">Loading…</div></div>
+    </div>
+
+    <!-- Upcoming shows -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Upcoming Shows</h2>
+      <div id="upcomingList">
+        {% if upcoming %}
+          {% for s in upcoming %}
+          <div class="show-item" id="show-{{ s.id }}">
+            <div class="show-dot"></div>
+            <div class="show-info">
+              <div class="show-name">{{ s.name }}{% if s.get('is_rerun') %} <span class="rerun-badge">(rerun)</span>{% endif %}</div>
+              <div class="show-time">{{ s.scheduled_time | replace('T', ' ') }}</div>
+            </div>
+            <div class="show-countdown" data-time="{{ s.scheduled_time }}"></div>
+            <div class="show-actions">
+              <button class="btn-sm btn-play" onclick="triggerNow('{{ s.id }}')">▶ Now</button>
+              <button class="btn-sm btn-reschedule" onclick="openReschedule('{{ s.id }}','{{ s.scheduled_time }}')">📅</button>
+              <button class="btn-sm btn-download" onclick="downloadShow('{{ s.id }}')" title="Download audio">📥</button>
+              <button class="btn-sm btn-del" onclick="deleteShow('{{ s.id }}')">✕</button>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-msg">No shows scheduled</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Past shows -->
+    <div class="card" style="margin-bottom:20px">
+      <h2>Past Shows</h2>
+      <div id="pastShowsList">
+      {% if past %}
+        {% for s in past %}
+        <div class="show-item">
+          <div class="show-dot done"></div>
+          <div class="show-info">
+            <div class="show-name">{{ s.name }}</div>
+            <div class="show-time">
+              Played {{ s.get('triggered_at', '')[:16] | replace('T', ' ') }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-msg">No shows played yet</div>
+      {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right column (Management page) -->
+  <div id="page-manage">
+
+    <!-- Management subsection nav -->
+    <nav class="mgmt-subnav" role="tablist">
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="shows"   onclick="switchMgmt('shows')">📤 Shows upload</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="haroker" onclick="switchMgmt('haroker')">🎙️ Al Harocker uploads</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="album"   onclick="switchMgmt('album')">💿 ערב של אלבומים</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="matzad"  onclick="switchMgmt('matzad')">📊 מצעד הרוק של ישראל</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="rocky"     onclick="switchMgmt('rocky')">🎸 Rocky Rules</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="streams"   onclick="switchMgmt('streams')">📡 Streams</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="listeners" onclick="switchMgmt('listeners')">📻 Listeners</button>
+      <button type="button" class="mgmt-subnav-btn" data-mgmt="zikaron"   onclick="switchMgmt('zikaron')">🕯 ימי אבל</button>
+    </nav>
+
+    <!-- Listeners card -->
+    <div class="card" data-mgmt-section="listeners" style="margin-bottom:20px">
+      <h2>📻 Listeners</h2>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+
+        <!-- Local stream -->
+        <div style="background:#161616;border:1px solid #3a2a5a;border-radius:10px;padding:14px 16px">
+          <div style="font-size:0.7em;color:#888;font-weight:600;letter-spacing:.05em;margin-bottom:8px">🎙 LOCAL STREAM</div>
+          <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+            <div>
+              <div id="localListenerCount" style="font-size:3em;font-weight:900;color:#c084fc;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">listeners</div>
+            </div>
+            <div>
+              <div id="localListenerPeak" style="font-size:1.8em;font-weight:700;color:#8050b0;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">peak</div>
+            </div>
+          </div>
+          <div id="localListenerStatus" style="font-size:0.72em;color:#555;margin-top:6px">checking…</div>
+        </div>
+
+        <!-- External stream -->
+        <div style="background:#161616;border:1px solid #2a3a5a;border-radius:10px;padding:14px 16px">
+          <div style="font-size:0.7em;color:#888;font-weight:600;letter-spacing:.05em;margin-bottom:8px">📡 EXTERNAL STREAM</div>
+          <div style="display:flex;align-items:baseline;gap:14px;flex-wrap:wrap">
+            <div>
+              <div id="extListenerCount" style="font-size:3em;font-weight:900;color:#60a0fc;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">listeners</div>
+            </div>
+            <div>
+              <div id="extListenerPeak" style="font-size:1.8em;font-weight:700;color:#4070b0;line-height:1">–</div>
+              <div style="font-size:0.72em;color:#666;margin-top:2px">peak</div>
+            </div>
+          </div>
+          <div id="extListenerStatus" style="font-size:0.72em;color:#555;margin-top:6px">checking…</div>
+        </div>
+
+      </div>
+
+      <div id="listenerError" style="font-size:0.8em;color:#f44;margin-bottom:10px;display:none"></div>
+
+      <!-- Chart -->
+      <canvas id="listenersChart" height="130"
+              style="width:100%;border-radius:8px;background:#111;display:block"></canvas>
+      <div style="display:flex;justify-content:space-between;font-size:0.7em;color:#555;margin-top:4px">
+        <span id="listenerChartOldest"></span>
+        <span>now</span>
+      </div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:0.75em;color:#888">
+        <span><span style="display:inline-block;width:10px;height:3px;background:#c084fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>Local</span>
+        <span><span style="display:inline-block;width:10px;height:3px;background:#60a0fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>External</span>
+      </div>
+      <div style="font-size:0.75em;color:#555;margin-top:8px;text-align:center">Updates every 15 s</div>
+
+      <!-- ── Per-show listener rankings ──────────────────────────────────── -->
+      <hr style="border:none;border-top:1px solid #2a2a2a;margin:22px 0 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <span style="font-size:0.92em;color:#aaa;font-weight:600">🏆 Most Listeners per Show</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="showStatsMetric"
+                  style="background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:6px;padding:4px 8px;font-size:0.8em"
+                  onchange="loadShowStats()">
+            <option value="peak">Peak</option>
+            <option value="avg">Average</option>
+          </select>
+          <select id="showStatsDays"
+                  style="background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:6px;padding:4px 8px;font-size:0.8em"
+                  onchange="loadShowStats()">
+            <option value="30">30 days</option>
+            <option value="90" selected>90 days</option>
+            <option value="365">All time</option>
+          </select>
+          <span id="showStatsUpdated" style="font-size:0.72em;color:#555"></span>
+        </div>
+      </div>
+      <canvas id="showStatsChart"
+              style="width:100%;border-radius:8px;background:#111;display:block"></canvas>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:0.75em;color:#888">
+        <span><span style="display:inline-block;width:10px;height:3px;background:#c084fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>Local</span>
+        <span><span style="display:inline-block;width:10px;height:3px;background:#60a0fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>External</span>
+      </div>
+
+      <!-- ── Ratings History ──────────────────────────────────────────────── -->
+      <hr style="border:none;border-top:1px solid #2a2a2a;margin:22px 0 16px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <span style="font-size:0.92em;color:#aaa;font-weight:600">📊 Ratings History</span>
+        <input type="date" id="ratingsDate"
+               style="background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:6px;padding:5px 10px;font-size:0.83em;color-scheme:dark">
+        <select id="ratingsHour"
+                style="background:#1a1a1a;color:#eee;border:1px solid #444;border-radius:6px;padding:5px 10px;font-size:0.83em">
+          <option value="">כל היום</option>
+        </select>
+        <button onclick="loadRatingsHistory()"
+                style="background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:0.83em;cursor:pointer;font-weight:600">טען</button>
+      </div>
+      <div id="ratingsSummary" style="display:none;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <canvas id="ratingsChart" height="130"
+              style="width:100%;border-radius:8px;background:#111;display:block"></canvas>
+      <div style="display:flex;justify-content:space-between;font-size:0.7em;color:#555;margin-top:4px">
+        <span id="ratingsChartStart"></span>
+        <span id="ratingsChartEnd"></span>
+      </div>
+      <div id="ratingsNoData" style="display:none;text-align:center;color:#555;font-size:0.85em;padding:14px">אין נתונים לתקופה הנבחרת</div>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:0.75em;color:#888">
+        <span><span style="display:inline-block;width:10px;height:3px;background:#c084fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>Local</span>
+        <span><span style="display:inline-block;width:10px;height:3px;background:#60a0fc;vertical-align:middle;border-radius:2px;margin-right:4px"></span>External</span>
+      </div>
+    </div>
+
+    <!-- Rocky Rules card -->
+    <div class="card" data-mgmt-section="rocky" style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:18px">
+        <h2 style="margin:0">🎸 Rocky Rules</h2>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="rockyAuditStatus" style="font-size:0.8em;color:#666"></span>
+          <button onclick="startRockyAudit()"
+                  style="background:#7c3aed;color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:0.85em;font-weight:600;cursor:pointer">
+            🔍 Scan Now
+          </button>
+        </div>
+      </div>
+
+      <!-- Rules summary -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;font-size:0.82em">
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px">
+          <span style="color:#888">Min duration</span> <strong style="color:#4ade80">2:00</strong>
+        </div>
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px">
+          <span style="color:#888">Max duration</span> <strong style="color:#4ade80">10:00</strong>
+        </div>
+        <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px">
+          <span style="color:#888">Artist cooldown</span> <strong style="color:#4ade80">3 hours</strong>
+        </div>
+      </div>
+
+      <!-- Progress bar (scan) -->
+      <div id="rockyProgressWrap" style="display:none;margin-bottom:16px">
+        <div style="font-size:0.82em;color:#888;margin-bottom:6px">Scanning tracks…
+          <span id="rockyProgressText"></span>
+        </div>
+        <div style="background:#222;border-radius:4px;height:6px">
+          <div id="rockyProgressBar" style="background:#7c3aed;height:6px;border-radius:4px;width:0%;transition:width .3s"></div>
+        </div>
+      </div>
+
+      <!-- Duration violations -->
+      <div id="rockyViolationsWrap">
+        <h3 style="font-size:0.9em;color:#aaa;margin:0 0 10px">⏱ Duration Violations</h3>
+        <div id="rockyViolationsList" style="font-size:0.83em;color:#666;padding:8px 0">
+          Run a scan to check tracks.
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid #2a2a2a;margin:18px 0">
+
+      <!-- Artist cooldown -->
+      <div>
+        <h3 style="font-size:0.9em;color:#aaa;margin:0 0 10px">🎤 Artist Cooldown (last 3 h)</h3>
+        <div id="rockyCooldownList" style="font-size:0.83em;color:#666">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Streams card -->
+    <div class="card" data-mgmt-section="streams" style="margin-bottom:20px">
+      <h2>Streams</h2>
+      <div class="toggle-wrap">
+        <div>
+          <div class="stream-label">🎙 Local stream</div>
+          <div class="stream-url">https://rocky.kupernet.com/stream</div>
+          <div class="stream-status off" id="localStreamStatus">Checking…</div>
+        </div>
+        <label class="toggle-slider">
+          <input type="checkbox" id="localStreamToggle" onchange="toggleLocalStream(this)">
+          <span class="toggle-slider-track"></span>
+        </label>
+      </div>
+      <div class="toggle-wrap">
+        <div>
+          <div class="stream-label">📡 External stream</div>
+          <div class="stream-url">https://icecast.live:8001/zerock</div>
+          <div class="stream-status off" id="extStreamStatus">Off</div>
+        </div>
+        <label class="toggle-slider">
+          <input type="checkbox" id="extStreamToggle" onchange="toggleExternalStream(this)">
+          <span class="toggle-slider-track"></span>
+        </label>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div class="stream-label">🎵 Playlists</div>
+        <div class="stream-url">Rescan NAS music folders and rewrite the M3U files Liquidsoap uses</div>
+        <div class="stream-status off" id="playlistRebuildStatus" style="margin-bottom:10px"></div>
+        <button type="button" class="btn" id="btnRebuildPlaylists" onclick="rebuildPlaylists()"
+          style="width:auto;padding:8px 16px;margin-top:4px">Rebuild playlists</button>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div class="stream-label">⚙ Liquidsoap</div>
+        <div class="stream-url">Restart the encoder. The stream will drop for a few seconds.</div>
+        <div class="stream-status off" id="liquidsoapRestartStatus" style="margin-bottom:10px"></div>
+        <button type="button" class="btn" id="btnRestartLiquidsoap" onclick="restartLiquidsoap()"
+          style="width:auto;padding:8px 16px;margin-top:4px;background:var(--danger-dim);color:var(--danger)">Restart Liquidsoap</button>
+      </div>
+    </div>
+
+    <!-- Holocaust Day card -->
+    <div class="card" data-mgmt-section="zikaron" style="margin-bottom:16px;border-color:#4a3030">
+      <h2 style="color:#f87171">🕯 יום השואה</h2>
+      <div id="holocaustStatus" style="font-size:0.82rem;margin-bottom:14px;color:var(--text-muted)">Inactive</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">From</label>
+          <input type="datetime-local" id="holocaustFrom" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">Until</label>
+          <input type="datetime-local" id="holocaustUntil" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveZikaron('holocaust')" class="btn" style="background:#7f1d1d;border-color:#991b1b;flex:1">Set Schedule</button>
+        <button onclick="clearZikaron('holocaust')" class="btn" style="background:var(--surface2);border-color:var(--border);color:var(--text-muted)">Clear</button>
+      </div>
+    </div>
+
+    <!-- Memorial Day card -->
+    <div class="card" data-mgmt-section="zikaron" style="margin-bottom:20px;border-color:#4a3030">
+      <h2 style="color:#f87171">🕯 יום הזיכרון לחללי מערכות ישראל</h2>
+      <div id="memorialStatus" style="font-size:0.82rem;margin-bottom:14px;color:var(--text-muted)">Inactive</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">From</label>
+          <input type="datetime-local" id="memorialFrom" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px">Until</label>
+          <input type="datetime-local" id="memorialUntil" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:7px 10px;font-size:0.85rem">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="saveZikaron('memorial')" class="btn" style="background:#7f1d1d;border-color:#991b1b;flex:1">Set Schedule</button>
+        <button onclick="clearZikaron('memorial')" class="btn" style="background:var(--surface2);border-color:var(--border);color:var(--text-muted)">Clear</button>
+      </div>
+    </div>
+
+
+    <!-- Al HaRoker self-scheduling panel -->
+    <div class="card" data-mgmt-section="haroker" style="margin-bottom:20px;border-color:#3a2a4a">
+      <h2 style="color:#c084fc">🎙️ על הרוקר – הרשמות</h2>
+
+      <!-- Monthly calendar link -->
+      <div style="margin-bottom:14px">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">לינק הרשמה חודשי</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a href="{{ ah_calendar_url }}" target="_blank"
+             style="font-size:0.8rem;color:#c084fc;word-break:break-all;flex:1;
+                    background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;
+                    padding:7px 10px;text-decoration:none;display:block">
+            {{ ah_calendar_url }}
+          </a>
+          <button onclick="copyText('{{ ah_calendar_url }}', this)"
+                  style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;
+                         padding:7px 10px;cursor:pointer;font-size:0.78rem;white-space:nowrap">
+            העתק
+          </button>
+        </div>
+      </div>
+
+      <!-- Registered broadcasters -->
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px">
+        מגישים רשומים
+      </div>
+      {% if ah_upcoming %}
+        <div style="display:flex;flex-direction:column;gap:8px" id="ahBookingsList">
+        {% for b in ah_upcoming %}
+          {% set d = b.date %}
+          {% set upload_url = ah_upload_base + '/al-haroker-upload/' + b.token %}
+          <div style="background:var(--surface2);border:1px solid {% if b.uploaded %}#1a3a1a{% else %}#3a2a4a{% endif %};
+                      border-radius:8px;padding:10px 12px" id="ahb-{{ b.token[:12] }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
+              <div style="min-width:0;flex:1">
+                <span style="font-weight:600;font-size:0.88rem">{{ b.broadcaster }}</span>
+                <span style="color:var(--text-muted);font-size:0.75rem;margin-right:8px">
+                  {{ d[8:10] }}/{{ d[5:7] }}/{{ d[:4] }} 07:00
+                </span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+                {% if b.uploaded %}
+                  <span style="font-size:0.72rem;background:#1a3a1a;color:#4ade80;
+                               border-radius:4px;padding:2px 7px">✓ הועלה</span>
+                {% else %}
+                  <span style="font-size:0.72rem;background:#3a2a4a;color:#c084fc;
+                               border-radius:4px;padding:2px 7px">ממתין</span>
+                  <button onclick="ahReschedule('{{ b.token }}', '{{ d }}')"
+                          title="שנה תאריך"
+                          style="background:#2a2a3a;border:1px solid #3a3a5a;color:#a78bfa;
+                                 border-radius:5px;padding:3px 7px;cursor:pointer;font-size:0.75rem">
+                    📅
+                  </button>
+                {% endif %}
+                <button onclick="ahDelete('{{ b.token }}', '{{ b.broadcaster }}')"
+                        title="מחק הרשמה"
+                        style="background:#2a1a1a;border:1px solid #5a2a2a;color:#f87171;
+                               border-radius:5px;padding:3px 7px;cursor:pointer;font-size:0.75rem">
+                  ✕
+                </button>
+              </div>
+            </div>
+            {% if not b.uploaded %}
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+              <div style="font-size:0.72rem;color:var(--text-muted);
+                          overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"
+                   title="{{ upload_url }}">{{ upload_url }}</div>
+              <button onclick="copyText('{{ upload_url }}', this)"
+                      style="background:#3a2a4a;border:none;color:#c084fc;border-radius:5px;
+                             padding:4px 8px;cursor:pointer;font-size:0.72rem;flex-shrink:0">
+                העתק
+              </button>
+              <a href="{{ upload_url }}" target="_blank"
+                 style="background:#3a2a4a;color:#c084fc;border-radius:5px;
+                        padding:4px 8px;font-size:0.72rem;text-decoration:none;flex-shrink:0">
+                פתח
+              </a>
+            </div>
+            <!-- Inline reschedule form (hidden) -->
+            <div id="ahrs-{{ b.token[:12] }}" style="display:none;margin-top:8px;
+                 background:#1a1a2a;border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px">
+              <div style="font-size:0.75rem;color:#a78bfa;margin-bottom:6px">תאריך חדש (א׳–ה׳ בלבד)</div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="date" id="ahrs-date-{{ b.token[:12] }}"
+                       min="{{ now.strftime('%Y-%m-%d') if now is defined else '' }}"
+                       style="background:var(--surface2);border:1px solid #3a2a4a;color:var(--text);
+                              border-radius:5px;padding:5px 8px;font-size:0.82rem;flex:1">
+                <button onclick="ahDoReschedule('{{ b.token }}')"
+                        style="background:#5b21b6;border:none;color:#fff;border-radius:5px;
+                               padding:5px 10px;cursor:pointer;font-size:0.8rem">שמור</button>
+                <button onclick="document.getElementById('ahrs-{{ b.token[:12] }}').style.display='none'"
+                        style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);
+                               border-radius:5px;padding:5px 8px;cursor:pointer;font-size:0.8rem">ביטול</button>
+              </div>
+              <div id="ahrs-msg-{{ b.token[:12] }}" style="font-size:0.75rem;margin-top:4px"></div>
+            </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-msg" style="font-size:0.82rem" id="ahBookingsList">אין הרשמות עדיין לחודש הנוכחי</div>
+      {% endif %}
+    </div>
+
+    <!-- Poll links panel -->
+    {% set open_polls = active_polls | selectattr('open') | list %}
+    {% if open_polls %}
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px">
+      <h2>🗳 סקר הצבעה פעיל</h2>
+      {% for poll in open_polls %}
+      {% set vote_url  = zerock_public_url ~ '/poll/' ~ poll.id %}
+      {% set res_url   = zerock_public_url ~ '/poll/' ~ poll.id ~ '/results' %}
+      {% set is_open   = poll.open is defined and poll.open %}
+      <div style="background:var(--surface2);border:1px solid {% if is_open %}#2d5a2d{% else %}#3a3a3a{% endif %};
+                  border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          {% if is_open %}
+            <span style="display:inline-flex;align-items:center;gap:5px;background:#1e3a1e;color:#4caf50;
+                         border:1px solid #2d5a2d;border-radius:12px;padding:2px 10px;font-size:0.72em;font-weight:bold">
+              <span style="width:6px;height:6px;border-radius:50%;background:#4caf50;
+                           animation:pulse 1.5s infinite;display:inline-block"></span>
+              פתוח
+            </span>
+          {% else %}
+            <span style="background:#2a1a1a;color:#e63946;border:1px solid #5a2a2a;
+                         border-radius:12px;padding:2px 10px;font-size:0.72em;font-weight:bold">
+              סגור
+            </span>
+          {% endif %}
+          <span style="font-weight:600;font-size:0.9em;flex:1;min-width:0">{{ poll.title }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <!-- Voting link -->
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">🗳 לינק הצבעה</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:0.75rem;color:#e63946;background:var(--surface);
+                           border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                           flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                           direction:ltr;text-align:left">{{ vote_url }}</code>
+              <button onclick="copyText('{{ vote_url }}', this)"
+                      style="background:#2a1a1a;border:1px solid #5a2a2a;color:#e63946;
+                             border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                             white-space:nowrap;flex-shrink:0">העתק</button>
+              <a href="{{ vote_url }}" target="_blank"
+                 style="background:#2a1a1a;border:1px solid #5a2a2a;color:#e63946;
+                        border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                        text-decoration:none;flex-shrink:0">פתח ↗</a>
+            </div>
+          </div>
+          <!-- Results link -->
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">📊 לינק תוצאות</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:0.75rem;color:#f0a500;background:var(--surface);
+                           border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                           flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                           direction:ltr;text-align:left">{{ res_url }}</code>
+              <button onclick="copyText('{{ res_url }}', this)"
+                      style="background:#2a1a00;border:1px solid #5a4a00;color:#f0a500;
+                             border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                             white-space:nowrap;flex-shrink:0">העתק</button>
+              <a href="{{ res_url }}" target="_blank"
+                 style="background:#2a1a00;border:1px solid #5a4a00;color:#f0a500;
+                        border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                        text-decoration:none;flex-shrink:0">פתח ↗</a>
+            </div>
+          </div>
+          <!-- Permanent voting link -->
+          {% set perm_url = zerock_public_url ~ '/vote' %}
+          <div>
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">🔗 לינק קבוע להצבעה (מתעדכן שבועית)</div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:0.75rem;color:#60c060;background:var(--surface);
+                           border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                           flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                           direction:ltr;text-align:left">{{ perm_url }}</code>
+              <button onclick="copyText('{{ perm_url }}', this)"
+                      style="background:#0d2a0d;border:1px solid #2a5a2a;color:#60c060;
+                             border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                             white-space:nowrap;flex-shrink:0">העתק</button>
+              <a href="{{ perm_url }}" target="_blank"
+                 style="background:#0d2a0d;border:1px solid #2a5a2a;color:#60c060;
+                        border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                        text-decoration:none;flex-shrink:0">פתח ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not open_polls %}
+    {% set closed_polls = active_polls | rejectattr('open') | list %}
+    {% if closed_polls %}
+    {% set last_poll = closed_polls[0] %}
+    {% set res_url = zerock_public_url ~ '/poll/' ~ last_poll.id ~ '/results' %}
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px">
+      <h2>📊 תוצאות מצעד אחרון</h2>
+      <div style="font-size:0.82em;color:var(--text-muted);margin-bottom:12px">
+        {{ last_poll.title }}
+        {% if last_poll.closes_at %}— נסגר {{ last_poll.closes_at[:10] }}{% endif %}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <code style="font-size:0.75rem;color:#f0a500;background:var(--surface);
+                     border:1px solid var(--border);border-radius:5px;padding:4px 8px;
+                     flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                     direction:ltr;text-align:left">{{ res_url }}</code>
+        <button onclick="copyText('{{ res_url }}', this)"
+                style="background:#2a1a00;border:1px solid #5a3a00;color:#f0a500;
+                       border-radius:5px;padding:4px 9px;cursor:pointer;font-size:0.74rem;
+                       white-space:nowrap;flex-shrink:0">העתק</button>
+        <a href="{{ res_url }}" target="_blank"
+           style="background:#2a1a00;border:1px solid #5a3a00;color:#f0a500;
+                  border-radius:5px;padding:4px 9px;font-size:0.74rem;
+                  text-decoration:none;flex-shrink:0">פתח ↗</a>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if open_polls or active_polls %}
+    {% set palash_poll = open_polls[0] if open_polls else (active_polls | rejectattr('open') | list | first) %}
+    {% if palash_poll %}
+    <div class="card" data-mgmt-section="matzad" style="margin-bottom:20px" id="palash-card">
+      <h2>🎵 הפינה לשיפוטכם — שבוע הבא</h2>
+      <div style="font-size:0.82em;color:var(--text-muted);margin-bottom:14px">
+        5 השירים שיופיעו בטופס ההצבעה השבוע הבא
+        {% if not open_polls %}
+        <span style="color:#f0a500"> (נשמרים לסקר הבא שייפתח בחמישי)</span>
+        {% endif %}
+      </div>
+      <div id="palash-inputs" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+        {% for i in range(5) %}
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:0.8em;color:#888;width:16px;text-align:center;flex-shrink:0">{{ i+1 }}</span>
+            <input type="text" id="palash-{{ i }}"
+                   value="{{ palash_poll.next_palash[i] if palash_poll.next_palash is defined and palash_poll.next_palash|length > i else '' }}"
+                   placeholder="מבצע — שם השיר"
+                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                          padding:7px 10px;color:var(--text);font-size:0.9em;font-family:inherit;
+                          direction:rtl;text-align:right">
+            <button onclick="document.getElementById('palash-{{ i }}').value='';document.getElementById('palash-email-{{ i }}').value='';document.getElementById('palash-mp3-{{ i }}').value=''"
+                    title="נקה שורה"
+                    style="background:transparent;border:1px solid #3a3a3a;color:#666;
+                           width:28px;height:28px;border-radius:5px;cursor:pointer;
+                           font-size:0.85em;flex-shrink:0;line-height:1;padding:0">✕</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-right:24px">
+            <input type="email" id="palash-email-{{ i }}"
+                   value="{{ palash_poll.next_palash_emails[i] if palash_poll.next_palash_emails is defined and palash_poll.next_palash_emails|length > i else '' }}"
+                   placeholder="מייל של האמן (לשליחת ברכת הפלאש)"
+                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                          padding:5px 10px;color:var(--text);font-size:0.82em;font-family:inherit;
+                          direction:ltr;text-align:left;color:#aaa">
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding-right:24px">
+            <input type="file" id="palash-mp3-{{ i }}" accept=".mp3,audio/mpeg"
+                   style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+                          padding:4px 10px;color:var(--text);font-size:0.78em;font-family:inherit">
+            <span style="font-size:0.75em;color:#4caf50;white-space:nowrap">
+              {% if palash_poll.next_palash_mp3 is defined and palash_poll.next_palash_mp3|length > i and palash_poll.next_palash_mp3[i] %}✓ הועלה{% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="savePalash('{{ palash_poll.id }}')"
+                style="background:#e63946;border:none;color:#fff;padding:8px 20px;
+                       border-radius:6px;cursor:pointer;font-size:0.88em;font-weight:600">
+          💾 שמור הפינה לשיפוטכם
+        </button>
+        <button onclick="clearPalash('{{ palash_poll.id }}')"
+                style="background:transparent;border:1px solid #555;color:#888;padding:8px 16px;
+                       border-radius:6px;cursor:pointer;font-size:0.88em">
+          🗑 נקה הכל
+        </button>
+        <span id="palash-status" style="font-size:0.8em;color:#4caf50;display:none">✓ נשמר</span>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <!-- ── ערב של אלבומים — Registration calendar link ─────────────────── -->
+    <div class="card" data-mgmt-section="album" style="margin-bottom:20px;border-color:#5a3a7a">
+      <h2 style="color:#c084fc">💿 ערב של אלבומים – הרשמות</h2>
+      <div style="margin-bottom:4px">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">לינק הרשמה חודשי</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a href="{{ ea_calendar_url }}" target="_blank"
+             style="font-size:0.8rem;color:#c084fc;word-break:break-all;flex:1;
+                    background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;
+                    padding:7px 10px;text-decoration:none;display:block">
+            {{ ea_calendar_url }}
+          </a>
+          <button onclick="copyText('{{ ea_calendar_url }}', this)"
+                  style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;
+                         padding:7px 10px;cursor:pointer;font-size:0.78rem;white-space:nowrap">
+            העתק
+          </button>
+        </div>
+      </div>
+      <!-- ── registered broadcasters + personal album-choice links ── -->
+      <div style="margin-top:18px;border-top:1px solid #3a2a4a;padding-top:14px">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px">נרשמים — לינק אישי לבחירת אלבומים</div>
+        <div id="eaRegistrations" style="font-size:0.8rem;color:var(--text-muted)">טוען…</div>
+      </div>
+    </div>
+    <script>
+    (function(){
+      function loadEaRegs(){
+        var el=document.getElementById('eaRegistrations');
+        if(!el) return;
+        fetch('/api/erev-albumim/bookings').then(function(r){return r.json();}).then(function(list){
+          var today=new Date().toISOString().slice(0,10);
+          list=(list||[]).filter(function(b){return b.token && b.date>=today;})
+                         .sort(function(a,b){return a.date<b.date?-1:1;});
+          if(!list.length){el.innerHTML='<div style="color:var(--text-muted)">אין הרשמות עתידיות</div>';return;}
+          function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+          el.innerHTML=list.map(function(b){
+            var p=b.date.split('-'), disp=p[2]+'/'+p[1]+'/'+p[0];
+            var hasAlb=b.albums&&b.albums.length;
+            var albBlock;
+            if(hasAlb){
+              var items=b.albums.map(function(a){return '<li>'+esc(a)+'</li>';}).join('');
+              albBlock='<details style="margin:3px 0"><summary style="cursor:pointer;color:#4ade80;font-size:0.72rem">✓ '+b.albums.length+' אלבומים — לחצו להצגה</summary>'
+                +'<ol style="margin:6px 18px 2px 0;color:#ddd;font-size:0.75rem;line-height:1.8">'+items+'</ol></details>';
+            } else {
+              albBlock='<div style="font-size:0.72rem;color:var(--text-muted)">— טרם נבחרו אלבומים</div>';
+            }
+            return '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;background:var(--surface2);border:1px solid #3a2a4a;border-radius:6px;padding:8px 10px">'
+              +'<div style="flex:1;min-width:0">'
+              +'<div style="color:#f0f0f0"><strong>'+disp+'</strong> — '+esc(b.name)+'</div>'
+              +albBlock
+              +'<a href="'+b.choose_url+'" target="_blank" style="font-size:0.72rem;color:#c084fc;word-break:break-all">'+b.choose_url+'</a>'
+              +'</div>'
+              +'<button onclick="copyText(\''+b.choose_url+'\', this)" style="background:#3a2a4a;border:none;color:#c084fc;border-radius:6px;padding:6px 9px;cursor:pointer;font-size:0.74rem;white-space:nowrap">העתק</button>'
+              +'</div>';
+          }).join('');
+        }).catch(function(){el.innerHTML='<div style="color:#f87171">שגיאה בטעינת ההרשמות</div>';});
+      }
+      loadEaRegs();
+    })();
+    </script>
+
+    <!-- ── ערב של אלבומים — Cover Grid Generator ─────────────────────────── -->
+    <div class="card" data-mgmt-section="album" id="coverGridCard" style="margin-bottom:20px;border-color:#5a3a7a">
+      <h2>🎨 יצירת תמונת אלבומים</h2>
+      <p style="color:var(--text-muted);margin:0 0 16px;font-size:0.9em">
+        הזן עד 8 שמות אלבומים (אמן + שם אלבום). המערכת תמצא את עטיפות האלבומים
+        ותיצור תמונת 3×3 עם הלוגו של "ערב של אלבומים" במרכז.
+      </p>
+
+      <!-- Center logo (fixed — no upload needed) -->
+
+      <!-- Album name inputs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px" id="albumNameInputs">
+        {% set album_placeholders = [
+          'Pink Floyd - The Wall',
+          'Led Zeppelin - IV',
+          'Nirvana - Nevermind',
+          'AC/DC - Back in Black',
+          'Queen - A Night at the Opera',
+          'The Beatles - Abbey Road',
+          'Metallica - Black Album',
+          'David Bowie - Ziggy Stardust'
+        ] %}
+        {% for i in range(8) %}
+        <div>
+          <label style="font-size:0.8em;color:var(--text-muted)">אלבום {{ i + 1 }}</label>
+          <input type="text" class="album-name-input" data-idx="{{ i }}"
+                 placeholder="{{ album_placeholders[i] }}"
+                 style="width:100%;box-sizing:border-box">
+          <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+            <label style="cursor:pointer;flex-shrink:0">
+              <input type="file" class="album-cover-file" data-idx="{{ i }}"
+                     accept="image/*" style="display:none"
+                     onchange="onAlbumFileChange(this, {{ i }})">
+              <span class="album-upload-btn"
+                    style="display:inline-block;padding:3px 9px;background:#3a2a5a;border-radius:4px;
+                           font-size:0.75em;color:#c0a0e0;white-space:nowrap">
+                📁 העלה עטיפה
+              </span>
+            </label>
+            <img class="album-cover-thumb" data-idx="{{ i }}" src=""
+                 style="display:none;width:38px;height:38px;border-radius:4px;object-fit:cover;border:1px solid #5a3a7a">
+            <span class="album-cover-clear" data-idx="{{ i }}"
+                  style="display:none;font-size:0.8em;color:#f88;cursor:pointer;flex-shrink:0"
+                  onclick="clearAlbumFile({{ i }})">✕</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button type="button" onclick="generateCoverGrid()" id="generateGridBtn"
+                style="padding:9px 20px;background:#5a3a7a;border:none;border-radius:6px;color:#e0c0ff;cursor:pointer;font-size:0.95em;font-weight:600">
+          🎨 צור תמונה
+        </button>
+        <span id="gridGenerateStatus" style="font-size:0.85em;color:#b090d0"></span>
+      </div>
+
+      <!-- Result preview -->
+      <div id="gridResultSection" style="display:none;margin-top:18px">
+        <div style="font-size:0.85em;color:#b090d0;margin-bottom:8px">תצוגה מקדימה:</div>
+        <img id="gridPreviewImg" src="" alt="Album cover grid preview"
+             style="max-width:100%;border-radius:8px;border:2px solid #5a3a7a;display:block">
+        <div style="margin-top:10px;display:flex;gap:10px">
+          <a id="gridDownloadLink" href="#" download="erev_albumim_grid.png"
+             style="padding:7px 16px;background:#3a7a3a;border-radius:5px;color:#90d090;font-size:0.85em;text-decoration:none">
+            ⬇ הורד תמונה
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" data-mgmt-section="shows haroker album matzad">
+      <h2 id="scheduleFormTitle">Schedule a Show</h2>
+      <form id="scheduleForm" enctype="multipart/form-data">
+
+        <div class="form-group">
+          <label>Show</label>
+          <select name="show_key" id="showSelect" required onchange="onShowChange()">
+            <option value="">— Select show —</option>
+          </select>
+        </div>
+
+        <!-- Manual date: only shown for על הרוקר -->
+        <div class="form-group" id="manualDateGroup" style="display:none">
+          <label>Broadcast Date</label>
+          <input type="date" name="manual_date" id="manualDate" onchange="onShowChange()">
+        </div>
+
+        <!-- Broadcaster: only shown for על הרוקר -->
+        <div class="form-group" id="alHarokerBroadcasterGroup" style="display:none">
+          <label>עורך / Broadcaster</label>
+          <input type="text" name="al_haroker_broadcaster" id="alHarokerBroadcaster"
+                 placeholder="שם העורך" autocomplete="off">
+        </div>
+
+        <!-- Broadcaster: only shown for ערב של אלבומים -->
+        <div class="form-group" id="erevAlbumimBroadcasterGroup" style="display:none">
+          <label>עורך התוכנית / Broadcaster</label>
+          <input type="text" name="erev_albumim_broadcaster" id="erevAlbumimBroadcaster"
+                 placeholder="שם המגיש/ה" autocomplete="off" required>
+        </div>
+
+        <!-- Calculated schedule summary -->
+        <div id="scheduleSummary" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:0.83rem;line-height:2">
+        </div>
+
+        <!-- Manual schedule override -->
+        <div class="form-group" style="margin-bottom:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+            <input type="checkbox" id="useManualSchedule" name="manual_schedule"
+                   style="width:auto;margin:0" onchange="onManualScheduleChange()">
+            <span>Manual schedule <span style="color:var(--text-muted);font-size:0.78rem">(override automatic time — no rerun)</span></span>
+          </label>
+        </div>
+        <div id="manualScheduleGroup" style="display:none;margin-bottom:16px">
+          <label style="font-size:0.82rem;color:var(--text-muted);display:block;margin-bottom:4px">Broadcast date &amp; time</label>
+          <input type="datetime-local" name="manual_broadcast_time" id="manualBroadcastTime"
+                 style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);width:100%;box-sizing:border-box">
+        </div>
+
+        <div class="form-group" id="modeGroup">
+          <label>Mode</label>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+              <input type="radio" name="mode" value="queue_to_broadcast" checked style="width:auto;margin:0">
+              <span>Queue to Broadcast <span style="color:var(--text-muted);font-size:0.78rem">(+ upload to Podbean &amp; WordPress)</span></span>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+              <input type="radio" name="mode" value="queue_only" style="width:auto;margin:0">
+              <span>Queue only <span style="color:var(--text-muted);font-size:0.78rem">(skip Podbean &amp; WordPress)</span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Episode Number <span style="color:var(--text-muted);font-weight:normal">(optional)</span></label>
+          <input type="number" name="episode_num" placeholder="042" min="1" step="1" style="direction:ltr">
+        </div>
+
+        <div class="form-group">
+          <label>Playlist / Show Notes <span style="color:var(--text-muted);font-weight:normal">(optional)</span></label>
+          <textarea name="description" rows="3" placeholder="Song list, show notes..."
+            style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-size:0.85rem;resize:vertical;font-family:inherit"></textarea>
+        </div>
+
+        <!-- Single file input (hidden for album show) -->
+        <div class="form-group" id="singleFileGroup">
+          <label>Audio File</label>
+          <input type="file" name="file" id="singleFileInput" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac" required>
+        </div>
+
+        <!-- Album slots (ערב של אלבומים only) -->
+        <div id="albumUploadGroup" style="display:none">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6">
+            Upload 1–8 albums. Playback order: 🎵 Jingle → Album 1 → 🎵 Jingle → Album 2 → … → 🎵 Jingle
+          </div>
+          <div id="albumSlots"></div>
+        </div>
+
+        <!-- Matzad mode toggle: playlist (default) vs. prerecorded single-file -->
+        <div class="form-group" id="playlistModeGroup" style="display:none">
+          <label style="display:block;font-size:0.78rem;color:var(--text-muted);margin-bottom:6px">Episode source</label>
+          <div style="display:flex;gap:6px">
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+                          background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:0.82rem">
+              <input type="radio" name="matzadMode" value="playlist"
+                style="margin:0" onchange="onMatzadModeChange()">
+              🎶 Playlist (20 מקום + 5 פל״ש)
+            </label>
+            <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;
+                          background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:0.82rem">
+              <input type="radio" name="matzadMode" value="prerecorded" checked
+                style="margin:0" onchange="onMatzadModeChange()">
+              🎙 Prerecorded show
+            </label>
+          </div>
+          <!-- legacy hidden checkbox kept in sync; existing submit logic reads it -->
+          <input type="checkbox" id="playlistModeCheckbox" style="display:none">
+        </div>
+
+        <!-- Playlist slots (מצעד הרוק של ישראל playlist mode) -->
+        <div id="playlistFilesGroup" style="display:none;margin-bottom:14px">
+          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+            סדר ניגון: מקום 20, 19 … 1 ← פל״ש 1, 2, 3, 4, 5 (ג׳ינגל בהתחלה ובסוף) &nbsp;·&nbsp; שדות ריקים מדולגים.
+          </div>
+          <div id="playlistSlots"></div>
+        </div>
+
+        <button type="submit" class="btn" id="scheduleBtn">Schedule Show</button>
+      </form>
+    </div>
+
+    <!-- ── Past Charts ─────────────────────────────────────────────────── -->
+    <div class="card" data-mgmt-section="matzad" style="margin-top:20px" id="past-charts-card">
+      <h2>📜 מצעדים קודמים</h2>
+      <div id="past-charts-list" style="display:flex;flex-direction:column;gap:8px">
+        <div style="color:var(--text-muted);font-size:0.85em">טוען…</div>
+      </div>
+    </div>
+
+    <!-- New Hebrew Releases -->
+    <div class="card" data-mgmt-section="matzad" style="margin-top:20px">
+      <h2>🎵 שירים חדשים</h2>
+      <p style="color:var(--text-muted);font-size:0.9em;margin:0 0 14px">
+        שירים חדשים שנשלחו לרדיו — לבחירת שירי הפל״ש
+      </p>
+      <a href="https://rocky.kupernet.com/new-heb-releases" target="_blank"
+         style="display:inline-block;background:var(--accent);color:#fff;
+                padding:10px 22px;border-radius:7px;text-decoration:none;
+                font-weight:bold;font-size:0.95em">
+        פתח רשימת שירים חדשים ↗
+      </a>
+    </div>
+
+    <!-- Smart transitions review -->
+    <div class="card" data-mgmt-section="shows" style="margin-top:20px">
+      <h2>🎚️ מעברים חכמים ב-Rocky</h2>
+      <p style="color:var(--text-muted);font-size:0.9em;margin:0 0 14px">
+        שמיעה מקדימה של המעבר בין כל שני שירים, הצגת ההחלטה, ותיקון ידני של נקודות כניסה ועקומות עוצמה
+      </p>
+      <a href="/transitions" target="_blank"
+         style="display:inline-block;background:var(--accent);color:#fff;
+                padding:10px 22px;border-radius:7px;text-decoration:none;
+                font-weight:bold;font-size:0.95em">
+        פתח את מסך המעברים ↗
+      </a>
+    </div>
+
+    <!-- Manual play / queue -->
+    <div class="card" data-mgmt-section="shows" style="margin-top:20px">
+      <h2>Manual Play</h2>
+      <div style="margin-bottom:14px">
+        <label>Play file immediately (upload)</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input type="file" id="playNowFile" accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:0.85rem">
+          <button class="btn" style="width:auto;padding:8px 16px;margin-top:0" onclick="playNow()">▶ Play now</button>
+        </div>
+      </div>
+      <div>
+        <label>Queue NAS file path</label>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input type="text" id="nasPath" placeholder="/mnt/nas/Music/Music Reorganized/..."
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 12px;color:var(--text);font-size:0.85rem">
+          <button class="btn" style="width:auto;padding:9px 16px;margin-top:0" onclick="queuePath()">+ Queue</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- One-Time Upload Link -->
+    <div class="card" data-mgmt-section="shows" style="margin-top:20px">
+      <h2>🔗 One-Time Upload Link</h2>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;line-height:1.5">
+        Generate a single-use link that lets a broadcaster upload a file and pick their own broadcast time. Disregards the show's regular schedule. Link is removed after use.
+      </div>
+      <div style="display:flex;gap:8px;align-items:stretch">
+        <select id="oneTimeShowSelect"
+          style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:9px 10px;color:var(--text);font-size:0.85rem">
+          <option value="">— Select show —</option>
+        </select>
+        <button class="btn" style="width:auto;padding:9px 16px;margin-top:0" onclick="generateOneTimeLink()">+ Generate</button>
+      </div>
+      <div id="oneTimeLinks" style="display:flex;flex-direction:column;gap:6px;margin-top:12px;font-size:0.82rem;"></div>
+    </div>
+
+    <!-- Broadcaster Links -->
+    <div class="card" data-mgmt-section="shows" style="margin-top:20px">
+      <h2>Broadcaster Links</h2>
+      <div id="broadcasterLinks" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;font-size:0.82rem;"></div>
+    </div>
+
+    <!-- Stream info -->
+    <div class="card" data-mgmt-section="shows" style="margin-top:20px">
+      <h2>Stream Info</h2>
+      <div style="font-size:0.82rem; color:var(--text-subtle); line-height:1.8;">
+        <div>🎙 Stream: <code style="color:var(--accent)">https://rocky.kupernet.com/stream</code></div>
+        <div>📡 Icecast admin: <a href="http://admin:zerock2026@192.168.1.166:8000/admin/" target="_blank" style="color:var(--accent)">port 8000/admin</a> <span style="color:var(--text-muted);font-size:0.75rem">(user: admin)</span></div>
+        <div>🔑 Source / admin pass: <code style="color:var(--text-muted)">zerock2026</code></div>
+        <div style="margin-top:10px; color:var(--text-muted)">
+          Rocky pattern: E→E→H→E→Jingle ↺<br>
+          Shows interrupt at track boundary.
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ── Now playing + seek slider ─────────────────────────────────────────────────
+let npDuration    = 0;
+let npRemaining   = 0;
+let npLastPoll    = Date.now();
+let _npIsShow     = false;
+let _seekDragging = false;   // thumb is being held
+let _seekPending  = false;   // fetch in flight — freeze display
+let _seekOffset   = 0;       // added to elapsed after a successful seek
+let _currentNpPath = '';
+
+function fmtTime(secs) {
+  if (!isFinite(secs) || secs < 0) return '–:––';
+  const s = Math.floor(secs);
+  const m = Math.floor(s / 60);
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// Total apparent duration = file duration + seek offset we added
+function apparentDuration() { return npDuration + _seekOffset; }
+
+function updateProgressBar() {
+  if (npDuration <= 0) return;
+  if (_seekDragging || _seekPending) return;  // don't override user interaction
+
+  const secsSincePoll = (Date.now() - npLastPoll) / 1000;
+  const remaining  = Math.max(0, npRemaining - secsSincePoll);
+  const fileElapsed = npDuration - remaining;
+  const elapsed    = fileElapsed + _seekOffset;
+  const total      = apparentDuration();
+  const pct        = total > 0 ? Math.min(100, (elapsed / total) * 100) : 0;
+
+  document.getElementById('npElapsed').textContent  = fmtTime(elapsed);
+  document.getElementById('npRemaining').textContent = '-' + fmtTime(Math.max(0, total - elapsed));
+
+  const seek = document.getElementById('npSeek');
+  seek.value = pct;
+  seek.style.setProperty('--np-pct', pct + '%');
+}
+
+async function pollNowPlaying() {
+  try {
+    const d = await fetch('/api/nowplaying').then(r => r.json());
+    const newPath = d.full_path || d.filename || '';
+
+    // Reset seek offset when a genuinely new track starts
+    if (newPath && newPath !== _currentNpPath && !newPath.startsWith('_seek_')) {
+      _seekOffset = 0;
+    }
+    _currentNpPath = newPath;
+
+    const hasTime = d.duration > 0;
+    document.getElementById('npProgressWrap').style.display = hasTime ? 'block' : 'none';
+
+    const isShow = _currentNpPath.includes('ZeRock_Temp') || _currentNpPath.includes('/shows/');
+    const seek = document.getElementById('npSeek');
+    if (!_seekDragging && !_seekPending) {
+      seek.disabled = !isShow;
+    }
+    seek.title = isShow ? 'Drag to seek' : 'Seek not available for playlist tracks';
+    _npIsShow = isShow;
+
+    if (hasTime) {
+      npDuration  = d.duration;
+      npRemaining = d.remaining;
+      npLastPoll  = Date.now();
+      updateProgressBar();
+    }
+  } catch {}
+}
+
+// ── Seek interaction ──────────────────────────────────────────────────────────
+(function() {
+  const seek = document.getElementById('npSeek');
+
+  seek.addEventListener('mousedown',  () => { if (!seek.disabled) _seekDragging = true; });
+  seek.addEventListener('touchstart', () => { if (!seek.disabled) _seekDragging = true; }, {passive:true});
+
+  seek.addEventListener('input', () => {
+    if (!_seekDragging) return;
+    const pct = parseFloat(seek.value);
+    seek.style.setProperty('--np-pct', pct + '%');
+    const previewSec = (pct / 100) * apparentDuration();
+    document.getElementById('npElapsed').textContent  = fmtTime(previewSec);
+    document.getElementById('npRemaining').textContent = '-' + fmtTime(Math.max(0, apparentDuration() - previewSec));
+  });
+
+  async function doSeek() {
+    if (!_seekDragging) return;
+    _seekDragging = false;
+    if (!_npIsShow) return;
+
+    const pct      = parseFloat(seek.value);
+    const position = (pct / 100) * apparentDuration();  // position in original file
+
+    _seekPending  = true;
+    seek.disabled = true;
+
+    try {
+      const r = await fetch('/api/seek', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({position})
+      });
+      const data = await r.json();
+      if (data.ok) {
+        // The new file starts at 0 but represents content from `position` onward.
+        // Store offset so elapsed display continues from the right spot.
+        _seekOffset = position;
+        npRemaining = npDuration; // the new file's remaining = its full duration
+        npLastPoll  = Date.now();
+        // Keep slider at the sought position visually
+        seek.value = pct;
+        seek.style.setProperty('--np-pct', pct + '%');
+        document.getElementById('npElapsed').textContent  = fmtTime(position);
+        document.getElementById('npRemaining').textContent = '-' + fmtTime(Math.max(0, apparentDuration() - position));
+      } else {
+        console.warn('Seek failed:', data.error);
+      }
+    } catch(e) { console.warn('Seek error:', e); }
+    finally {
+      _seekPending  = false;
+      seek.disabled = false;
+    }
+  }
+
+  seek.addEventListener('mouseup',  doSeek);
+  seek.addEventListener('touchend', doSeek);
+  seek.addEventListener('keyup', e => {
+    if (['ArrowLeft','ArrowRight','Home','End'].includes(e.key)) {
+      _seekDragging = true; doSeek();
+    }
+  });
+})();
+
+// Poll every 1s (server responds instantly from cache); interpolate every second
+setInterval(pollNowPlaying, 1000);
+setInterval(updateProgressBar, 1000);
+pollNowPlaying();
+
+// ── Status poller ─────────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const d = await fetch('/api/status').then(r => r.json());
+    const dot   = document.getElementById('statusDot');
+    const label = document.getElementById('statusLabel');
+    const icon  = document.getElementById('npIcon');
+    const btnStop  = document.getElementById('btnStop');
+    const btnStart = document.getElementById('btnStart');
+
+    if (d.liquidsoap) {
+      if (d.stream_active) {
+        dot.classList.add('live');
+        label.textContent = 'Live';
+        icon.classList.remove('paused');
+        btnStop.style.display  = 'inline-block';
+        btnStart.style.display = 'none';
+      } else {
+        dot.classList.remove('live');
+        label.textContent = 'Broadcast paused';
+        icon.classList.add('paused');
+        btnStop.style.display  = 'none';
+        btnStart.style.display = 'inline-block';
+      }
+    } else {
+      dot.classList.remove('live');
+      label.textContent = 'Offline';
+      icon.classList.add('paused');
+      btnStop.style.display  = 'none';
+      btnStart.style.display = 'none';
+    }
+
+    // Sync stream toggles
+    const localToggle = document.getElementById('localStreamToggle');
+    const localStatus = document.getElementById('localStreamStatus');
+    if (localToggle && !localToggle._busy) {
+      localToggle.checked = !!d.stream_active;
+      localStatus.textContent = d.stream_active ? 'On air' : 'Off';
+      localStatus.className = 'stream-status ' + (d.stream_active ? 'on' : 'off');
+    }
+    const extToggle = document.getElementById('extStreamToggle');
+    const extStatus = document.getElementById('extStreamStatus');
+    if (extToggle && !extToggle._busy) {
+      extToggle.checked = !!d.external_stream_active;
+      extStatus.textContent = d.external_stream_active ? 'On air' : 'Off';
+      extStatus.className = 'stream-status ' + (d.external_stream_active ? 'on' : 'off');
+    }
+
+    // Sync zikaron status (holocaust, memorial)
+    const sched    = d.zikaron_schedule || {};
+    const zType    = d.zikaron_type || null;
+    ['holocaust', 'memorial'].forEach(type => {
+      const statusEl = document.getElementById(type + 'Status');
+      if (!statusEl) return;
+      const w        = (sched[type] || {});
+      const isActive = !!d.zikaron_active && zType === type;
+      if (isActive) {
+        const until = w.until ? fmtDt(w.until) : '';
+        statusEl.textContent = `🔴 Active — broadcasting until ${until}`;
+        statusEl.style.color = 'var(--danger)';
+      } else if (w.from) {
+        const f = new Date(w.from), u = new Date(w.until);
+        statusEl.textContent = `Scheduled: ${fmtDt(f.toISOString())} → ${fmtDt(u.toISOString())}`;
+        statusEl.style.color = 'var(--text-muted)';
+        const fEl = document.getElementById(type + 'From');
+        const uEl = document.getElementById(type + 'Until');
+        if (fEl && !fEl._dirty) fEl.value = w.from.slice(0,16);
+        if (uEl && !uEl._dirty) uEl.value = w.until.slice(0,16);
+      } else {
+        statusEl.textContent = 'Inactive — set a schedule below to activate automatically';
+        statusEl.style.color = 'var(--text-muted)';
+      }
+    });
+
+    // Show/hide zikaron badge
+    const badge = document.getElementById('zikaronBadge');
+    if (badge) {
+      badge.style.display = d.zikaron_active ? '' : 'none';
+      if (d.zikaron_active) {
+        badge.textContent = d.zikaron_type === 'holocaust' ? '🕯 יום השואה'
+                          : d.zikaron_type === 'oct7' ? '🕯 יום הזיכרון לאירועי 7 באוקטובר'
+                          : '🕯 יום הזיכרון';
+      }
+    }
+  } catch {}
+}
+setInterval(pollStatus, 8000);
+pollStatus();
+
+// ── Stream toggle functions ───────────────────────────────────────────────────
+async function toggleLocalStream(cb) {
+  cb._busy = true;
+  const status = document.getElementById('localStreamStatus');
+  status.textContent = 'Updating…'; status.className = 'stream-status off';
+  try {
+    await fetch(cb.checked ? '/api/stream/start' : '/api/stream/stop', { method: 'POST' });
+    toast(cb.checked ? 'Local stream started' : 'Local stream stopped', 'ok');
+  } catch {
+    toast('Failed to toggle local stream', 'err');
+    cb.checked = !cb.checked;
+  }
+  cb._busy = false;
+  pollStatus();
+}
+
+async function restartLiquidsoap() {
+  if (!confirm('Restart Liquidsoap? The stream will drop for a few seconds.')) return;
+  const btn = document.getElementById('btnRestartLiquidsoap');
+  const status = document.getElementById('liquidsoapRestartStatus');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = 'Restarting…';
+  status.textContent = 'Restarting encoder…';
+  status.className = 'stream-status off';
+  try {
+    const r = await fetch('/api/liquidsoap/restart', { method: 'POST' }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); status.textContent = r.error; return; }
+    status.textContent = r.status || 'Running';
+    status.className = 'stream-status on';
+    toast('Liquidsoap restarted', 'ok');
+    pollStatus();
+  } catch {
+    toast('Failed to restart Liquidsoap', 'err');
+    status.textContent = 'Restart failed';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+}
+
+async function rebuildPlaylists() {
+  const btn = document.getElementById('btnRebuildPlaylists');
+  const status = document.getElementById('playlistRebuildStatus');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = 'Rebuilding…';
+  status.textContent = 'Scanning NAS… this can take a minute';
+  status.className = 'stream-status off';
+  try {
+    const r = await fetch('/api/playlists/rebuild', { method: 'POST' }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); status.textContent = r.error; return; }
+    const c = r.counts || {};
+    const parts = ['english', 'hebrew', 'jingles', 'zikaron']
+      .filter(k => c[k] !== undefined)
+      .map(k => `${k}: ${c[k]}`);
+    status.textContent = parts.length ? parts.join(' · ') : 'Done';
+    status.className = 'stream-status on';
+    toast('Playlists rebuilt', 'ok');
+  } catch {
+    toast('Failed to rebuild playlists', 'err');
+    status.textContent = 'Rebuild failed';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+}
+
+async function toggleExternalStream(cb) {
+  if (cb.checked && !confirm('Activate external stream to icecast.live?')) {
+    cb.checked = false; return;
+  }
+  cb._busy = true;
+  const status = document.getElementById('extStreamStatus');
+  status.textContent = 'Updating…'; status.className = 'stream-status off';
+  try {
+    await fetch(cb.checked ? '/api/stream/external/start' : '/api/stream/external/stop', { method: 'POST' });
+    toast(cb.checked ? 'External stream started' : 'External stream stopped', 'ok');
+  } catch {
+    toast('Failed to toggle external stream', 'err');
+    cb.checked = !cb.checked;
+  }
+  cb._busy = false;
+  pollStatus();
+}
+
+// ── Zikaron mode ─────────────────────────────────────────────────────────────
+// Mark fields dirty when user edits them so pollStatus won't overwrite
+document.addEventListener('DOMContentLoaded', () => {
+  ['holocaustFrom','holocaustUntil','memorialFrom','memorialUntil'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { el._dirty = true; });
+  });
+});
+
+async function saveZikaron(type) {
+  const fromId  = type + 'From';
+  const untilId = type + 'Until';
+  const from    = document.getElementById(fromId).value;
+  const until   = document.getElementById(untilId).value;
+  if (!from || !until) { toast('Please set both From and Until dates', 'err'); return; }
+  try {
+    const r = await fetch('/api/zikaron', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type, from, until})
+    }).then(r => r.json());
+    if (r.error) { toast(r.error, 'err'); return; }
+    document.getElementById(fromId)._dirty  = false;
+    document.getElementById(untilId)._dirty = false;
+    const label = type === 'holocaust' ? 'יום השואה' : 'יום הזיכרון';
+    toast(r.active ? `🕯 ${label} mode is now ACTIVE` : `🕯 ${label} scheduled`, 'ok');
+    pollStatus();
+  } catch { toast('Failed to save zikaron schedule', 'err'); }
+}
+
+async function clearZikaron(type) {
+  try {
+    await fetch('/api/zikaron', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type, clear: true})
+    });
+    const fEl = document.getElementById(type + 'From');
+    const uEl = document.getElementById(type + 'Until');
+    if (fEl) { fEl.value = ''; fEl._dirty = false; }
+    if (uEl) { uEl.value = ''; uEl._dirty = false; }
+    const label = type === 'holocaust' ? 'יום השואה' : 'יום הזיכרון';
+    toast(`${label} schedule cleared`, 'ok');
+    pollStatus();
+  } catch { toast('Failed to clear zikaron', 'err'); }
+}
+
+// ── Countdown timers ──────────────────────────────────────────────────────────
+function updateCountdowns() {
+  document.querySelectorAll('[data-time]').forEach(el => {
+    const t = new Date(el.dataset.time);
+    const diff = Math.floor((t - Date.now()) / 1000);
+    if (diff < 0) {
+      el.textContent = 'overdue';
+      el.style.color = 'var(--danger)';
+    } else {
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
+      el.textContent = h > 0
+        ? `in ${h}h ${m}m`
+        : m > 0 ? `in ${m}m ${s}s` : `in ${s}s`;
+    }
+  });
+}
+setInterval(updateCountdowns, 1000);
+updateCountdowns();
+
+// ── Show selector ─────────────────────────────────────────────────────────────
+let _shows = [];
+
+async function loadShowList() {
+  try {
+    _shows = await fetch('/api/shows').then(r => r.json());
+    renderBroadcasterLinks();
+    populateOneTimeShowSelect();
+    refreshOneTimeLinks();
+    // Populate dropdown based on the active management subsection
+    applyMgmtSubsection();
+  } catch(e) { console.error('Failed to load shows', e); }
+}
+loadShowList();
+
+// ── One-Time Upload Links ─────────────────────────────────────────────────────
+const _ONE_TIME_EXCLUDE = new Set(['al_harocker']);  // al-haroker has its own flow
+
+function populateOneTimeShowSelect() {
+  const sel = document.getElementById('oneTimeShowSelect');
+  if (!sel || !_shows.length) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select show —</option>';
+  _shows.filter(s => !_ONE_TIME_EXCLUDE.has(s.key)).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.key;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  });
+  if (current) sel.value = current;
+}
+
+async function generateOneTimeLink() {
+  const sel = document.getElementById('oneTimeShowSelect');
+  const showKey = sel.value;
+  if (!showKey) { toast('Pick a show first'); return; }
+  try {
+    const res = await fetch('/api/one-time-link', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({show_key: showKey})
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { showToast(data.error || 'Error'); return; }
+    toast('Link generated');
+    sel.value = '';
+    refreshOneTimeLinks();
+  } catch(e) { toast('Network error'); }
+}
+
+async function refreshOneTimeLinks() {
+  try {
+    const res = await fetch('/api/one-time-link');
+    const links = await res.json();
+    renderOneTimeLinks(links || []);
+  } catch(e) { /* silent */ }
+}
+
+function renderOneTimeLinks(links) {
+  const container = document.getElementById('oneTimeLinks');
+  if (!container) return;
+  if (!links.length) {
+    container.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem">No active one-time links.</div>';
+    return;
+  }
+  container.innerHTML = links.map(l => {
+    const url = window.location.origin + '/one-time-upload/' + l.token;
+    const created = l.created_at ? new Date(l.created_at).toLocaleString() : '';
+    const broadcaster = l.broadcaster ? ' — ' + l.broadcaster : '';
+    return `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px">
+          <strong style="font-size:0.86rem">${escapeHtml(l.show_name)}${escapeHtml(broadcaster)}</strong>
+          <span style="font-size:0.72rem;color:var(--text-muted)">${escapeHtml(created)}</span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" readonly value="${escapeHtml(url)}"
+            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:0.75rem;font-family:monospace"
+            onclick="this.select()">
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem"
+            onclick="copyOneTimeLink('${l.token}', this)">📋 Copy</button>
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem;background:#5a2a2a"
+            onclick="revokeOneTimeLink('${l.token}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function copyOneTimeLink(token, btn) {
+  const url = window.location.origin + '/one-time-upload/' + token;
+  navigator.clipboard.writeText(url).then(() => {
+    const t = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => { btn.textContent = t; }, 1200);
+  }).catch(() => toast('Copy failed'));
+}
+
+async function revokeOneTimeLink(token) {
+  if (!confirm('Revoke this one-time link?')) return;
+  try {
+    const res = await fetch('/api/one-time-link/' + encodeURIComponent(token), {method: 'DELETE'});
+    if (res.ok) { toast('Revoked'); refreshOneTimeLinks(); }
+    else        { toast('Error'); }
+  } catch(e) { toast('Network error'); }
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Refresh active links when management page or shows subsection becomes visible
+setInterval(() => {
+  if (document.body.classList.contains('mode-manage')) {
+    const sub = document.querySelector('.mgmt-subnav-btn.active');
+    if (sub && sub.dataset.mgmt === 'shows') refreshOneTimeLinks();
+  }
+}, 30000);
+
+// ── Matzad Voting Polls ───────────────────────────────────────────────────────
+let _pollSongs = [];
+let _pollEpisodes = [];
+
+function _toLocalDatetimeInput(iso) {
+  // Convert ISO datetime → 'YYYY-MM-DDTHH:MM' for datetime-local input
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const pad = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate())
+       + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+async function _prefillVotingWindow() {
+  try {
+    const r = await fetch('/api/voting-window-default');
+    if (!r.ok) return;
+    const d = await r.json();
+    const o = document.getElementById('pollOpensAt');
+    const c = document.getElementById('pollClosesAt');
+    if (o && !o.value) o.value = _toLocalDatetimeInput(d.opens_at);
+    if (c && !c.value) c.value = _toLocalDatetimeInput(d.closes_at);
+  } catch(_) {}
+}
+
+async function loadPastCharts() {
+  const container = document.getElementById('past-charts-list');
+  if (!container) return;
+  try {
+    const history = await fetch('/api/polls/history').then(r => r.json());
+    if (!history.length) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85em">אין מצעדים קודמים</div>';
+      return;
+    }
+    container.innerHTML = '';
+    history.forEach((poll, idx) => {
+      if (poll.is_current) return; // active poll is shown in the active section above
+      const date = poll.closes_at ? new Date(poll.closes_at).toLocaleDateString('he-IL') : '';
+      const isCurrent = poll.is_current;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'border:1px solid var(--border);border-radius:8px;overflow:hidden';
+
+      // Header row (always visible)
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;' +
+        'background:var(--surface2);user-select:none';
+      header.innerHTML = `
+        <span style="font-size:1em">${isCurrent ? '🟢' : '📋'}</span>
+        <span style="flex:1;font-size:0.88em;font-weight:600">${poll.title || 'מצעד'}</span>
+        ${date ? `<span style="font-size:0.78em;color:var(--text-muted)">${date}</span>` : ''}
+        <span style="font-size:0.78em;color:var(--text-muted)">${poll.total_voters} מצביעים</span>
+        <span class="chevron" style="font-size:0.8em;color:#888;transition:transform 0.2s">▼</span>
+      `;
+
+      // Body (collapsible)
+      const body = document.createElement('div');
+      body.style.cssText = `display:none;padding:10px 14px`;
+
+      // Render rows — all songs in one ranked list (matches public results page)
+      const allResults = poll.results || [];
+      const maxVotes = Math.max(...allResults.map(s => s.votes || 0), 1);
+
+      function renderRow(song, rank) {
+          const pct   = Math.round((song.votes || 0) / maxVotes * 100);
+          const mv    = song.movement || '';
+          let mvHtml  = '';
+          if (mv === 'new')         mvHtml = '<span style="color:#f0a500;font-size:0.72em">✦ חדש</span>';
+          else if (mv === 'palash') mvHtml = '<span style="color:#c084fc;font-size:0.68em">עלה<br>מהפלש</span>';
+          else if (mv === '0')      mvHtml = '<span style="color:#555">—</span>';
+          else if (mv.startsWith('+')) mvHtml = `<span style="color:#4caf50">▲${mv.slice(1)}</span>`;
+          else if (mv.startsWith('-')) mvHtml = `<span style="color:#e63946">▼${mv.slice(1)}</span>`;
+          const medals = ['🥇','🥈','🥉'];
+          const rankDisp = rank <= 3 ? medals[rank-1] : `<span style="color:#888;font-size:0.88em">${rank}</span>`;
+          const barColor = rank <= 3 ? '#ffd700' : (song.group === 'palash' ? '#c084fc' : '#e63946');
+          const groupBadge = song.group === 'palash'
+              ? '<span style="font-size:0.65em;color:#c084fc;background:#1e1030;border:1px solid #5a3a8a;border-radius:3px;padding:1px 4px;margin-right:4px">פלש</span>'
+              : '';
+          return `
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #1e1e1e">
+              <div style="flex-shrink:0;width:28px;text-align:center">${rankDisp}</div>
+              <div style="flex-shrink:0;width:44px;text-align:center;font-size:0.75em;font-weight:bold">${mvHtml}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.88em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${groupBadge}${song.label || ''}</div>
+                <div style="height:3px;background:#2a2a2a;border-radius:2px;margin-top:4px">
+                  <div style="height:3px;background:${barColor};border-radius:2px;width:${pct}%"></div>
+                </div>
+              </div>
+              ${song.weeks ? `<div style="flex-shrink:0;text-align:center;font-size:0.72em;color:#888;min-width:30px">${song.weeks}<br>שב׳</div>` : '<div style="min-width:30px"></div>'}
+              <div style="flex-shrink:0;text-align:center;min-width:44px">
+                <span style="font-size:0.95em;font-weight:bold;color:${rank<=3?'#ffd700':(song.group==='palash'?'#c084fc':'#e63946')}">${song.votes}</span>
+                <div style="font-size:0.68em;color:#555">קולות</div>
+              </div>
+            </div>`;
+      }
+
+      let bodyHtml = `<div style="font-size:0.78em;color:var(--text-muted);margin-bottom:8px">תוצאות מצעד — מדורגים לפי קולות</div>`;
+      allResults.forEach((song, i) => { bodyHtml += renderRow(song, i + 1); });
+      body.innerHTML = bodyHtml;
+
+      // Toggle
+      header.addEventListener('click', () => {
+        const open = body.style.display !== 'none';
+        body.style.display = open ? 'none' : 'block';
+        header.querySelector('.chevron').textContent = open ? '▼' : '▲';
+      });
+
+      wrapper.appendChild(header);
+      wrapper.appendChild(body);
+      container.appendChild(wrapper);
+    });
+  } catch(e) {
+    container.innerHTML = `<div style="color:#e63946;font-size:0.85em">שגיאה בטעינת המצעדים: ${e.message}</div>`;
+  }
+}
+
+async function loadPollEpisodes() {
+  _prefillVotingWindow();
+  try {
+    _pollEpisodes = await fetch('/api/matzad-episodes').then(r => r.json());
+    const sel = document.getElementById('pollEpisodeSelect');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Select an uploaded matzad episode —</option>';
+    _pollEpisodes.forEach(ep => {
+      const opt = document.createElement('option');
+      opt.value = ep.id;
+      const dt = ep.scheduled_time ? new Date(ep.scheduled_time).toLocaleString() : '';
+      const epn = ep.episode_num ? ' (#' + ep.episode_num + ')' : '';
+      opt.textContent = `${dt}${epn} — ${ep.pl_count} מקום + ${ep.pa_count} פל״ש`;
+      sel.appendChild(opt);
+    });
+    const hint = document.getElementById('pollEpisodeHint');
+    if (hint) {
+      hint.textContent = _pollEpisodes.length
+        ? `${_pollEpisodes.length} matzad episode(s) available.`
+        : 'Episodes appear here once a matzad show is uploaded with its 20 מקום + 5 פל״ש tracks.';
+    }
+  } catch(e) { console.error('Failed to load matzad episodes', e); }
+}
+
+async function loadPollEpisodeSongs() {
+  const sel = document.getElementById('pollEpisodeSelect');
+  const showId = sel.value;
+  const editor = document.getElementById('pollSongsEditor');
+  const btn    = document.getElementById('pollGenerateBtn');
+  const titleInput = document.getElementById('pollTitle');
+
+  if (!showId) {
+    _pollSongs = [];
+    editor.style.display = 'none';
+    btn.disabled = true;
+    return;
+  }
+  try {
+    const res = await fetch('/api/matzad-episode/' + encodeURIComponent(showId) + '/songs');
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error', 'err'); return; }
+    _pollSongs = data.songs || [];
+
+    // Default title from episode date
+    const ep = _pollEpisodes.find(e => e.id === showId);
+    if (ep && !titleInput.value.trim()) {
+      const dt = ep.scheduled_time ? new Date(ep.scheduled_time) : null;
+      titleInput.value = dt ? `מצעד הרוק של ישראל — ${dt.toLocaleDateString('he-IL')}`
+                            : 'מצעד הרוק של ישראל';
+    }
+    renderPollSongsEditor();
+    editor.style.display = _pollSongs.length ? 'block' : 'none';
+    btn.disabled = !_pollSongs.length;
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+function renderPollSongsEditor() {
+  const list = document.getElementById('pollSongsList');
+  if (!list) return;
+  list.innerHTML = _pollSongs.map((s, i) => {
+    const groupLabel = s.group === 'matzad' ? 'מצעד' : 'פל״ש';
+    const slot = s.slot ? '#' + s.slot : '';
+    return `
+      <div style="display:flex;gap:8px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:6px 8px">
+        <span style="flex-shrink:0;font-size:0.72rem;color:var(--text-muted);min-width:60px">${escapeHtml(groupLabel)} ${escapeHtml(slot)}</span>
+        <input type="text" value="${escapeHtml(s.label)}" oninput="_pollSongs[${i}].label = this.value"
+          style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:5px 7px;color:var(--text);font-size:0.82rem">
+      </div>`;
+  }).join('');
+}
+
+async function generatePoll() {
+  const showId = document.getElementById('pollEpisodeSelect').value;
+  const title  = document.getElementById('pollTitle').value.trim();
+  if (!showId || !_pollSongs.length) { toast('Pick an episode first', 'err'); return; }
+
+  // Validate labels are non-empty
+  const empty = _pollSongs.filter(s => !s.label.trim());
+  if (empty.length) { toast('All song labels must be filled', 'err'); return; }
+
+  const opensAt  = document.getElementById('pollOpensAt').value;
+  const closesAt = document.getElementById('pollClosesAt').value;
+
+  try {
+    const res = await fetch('/api/polls', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        matzad_show_id: showId,
+        title,
+        songs: _pollSongs,
+        opens_at:  opensAt,
+        closes_at: closesAt,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) { toast(data.error || 'Error', 'err'); return; }
+    toast('Poll created', 'ok');
+    document.getElementById('pollEpisodeSelect').value = '';
+    document.getElementById('pollTitle').value = '';
+    document.getElementById('pollOpensAt').value = '';
+    document.getElementById('pollClosesAt').value = '';
+    _prefillVotingWindow();
+    _pollSongs = [];
+    document.getElementById('pollSongsEditor').style.display = 'none';
+    document.getElementById('pollGenerateBtn').disabled = true;
+    refreshPollList();
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+async function refreshPollList() {
+  try {
+    const res   = await fetch('/api/polls');
+    const polls = await res.json();
+    renderPollList(polls || []);
+  } catch(e) { /* silent */ }
+}
+
+function renderPollList(polls) {
+  const c = document.getElementById('pollList');
+  if (!c) return;
+  if (!polls.length) {
+    c.innerHTML = '<div style="color:var(--text-muted);font-size:0.78rem">No polls yet.</div>';
+    return;
+  }
+  c.innerHTML = polls.map(p => {
+    const url     = window.location.origin + '/poll/' + p.id;
+    const now     = new Date();
+    const opens   = p.opens_at  ? new Date(p.opens_at)  : null;
+    const closes  = p.closes_at ? new Date(p.closes_at) : null;
+    let status;
+    if (opens && now < opens)        status = '<span style="color:#7aa">⏳ Pre-open</span>';
+    else if (closes && now > closes) status = '<span style="color:#888">🔴 Closed</span>';
+    else                             status = '<span style="color:#4caf50">🟢 Open</span>';
+    const created = p.created_at ? new Date(p.created_at).toLocaleString() : '';
+    const songsCount = (p.songs || []).length;
+    const window = (opens && closes)
+      ? `${opens.toLocaleString('he-IL', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})} → ${closes.toLocaleString('he-IL', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}`
+      : '';
+    return `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:10px 12px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+          <strong style="font-size:0.88rem">${escapeHtml(p.title)}</strong>
+          <span style="font-size:0.74rem;color:var(--text-muted)">${status} · ${p.vote_count || 0} votes · ${songsCount} songs</span>
+        </div>
+        ${window ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:4px">🗓 ${escapeHtml(window)}</div>` : ''}
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:6px">Created ${escapeHtml(created)}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <input type="text" readonly value="${escapeHtml(url)}"
+            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:0.74rem;font-family:monospace"
+            onclick="this.select()">
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem"
+            onclick="copyPollLink('${p.id}', this)">📋</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem"
+            onclick="viewPollResults('${p.id}')">📊 Results</button>
+          ${p.open
+            ? `<button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem;background:#4a4a2a" onclick="closePoll('${p.id}')">⛔ Close</button>`
+            : `<button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem" onclick="reopenPoll('${p.id}')">🔓 Reopen</button>`}
+          <button class="btn" style="width:auto;padding:6px 10px;margin-top:0;font-size:0.78rem;background:#5a2a2a"
+            onclick="deletePoll('${p.id}')">🗑 Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function copyPollLink(id, btn) {
+  const url = window.location.origin + '/poll/' + id;
+  navigator.clipboard.writeText(url).then(() => {
+    const t = btn.textContent;
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = t; }, 1200);
+  }).catch(() => toast('Copy failed', 'err'));
+}
+
+async function closePoll(id) {
+  if (!confirm('Close voting for this poll?')) return;
+  const res = await fetch('/api/polls/' + encodeURIComponent(id) + '/close', {method: 'POST'});
+  if (res.ok) { toast('Closed', 'ok'); refreshPollList(); } else toast('Error', 'err');
+}
+
+async function reopenPoll(id) {
+  const res = await fetch('/api/polls/' + encodeURIComponent(id) + '/reopen', {method: 'POST'});
+  if (res.ok) { toast('Reopened', 'ok'); refreshPollList(); } else toast('Error', 'err');
+}
+
+async function deletePoll(id) {
+  if (!confirm('Delete this poll AND all its votes? Cannot be undone.')) return;
+  const res = await fetch('/api/polls/' + encodeURIComponent(id), {method: 'DELETE'});
+  if (res.ok) { toast('Deleted', 'ok'); refreshPollList(); } else toast('Error', 'err');
+}
+
+async function viewPollResults(id) {
+  try {
+    const res  = await fetch('/api/polls/' + encodeURIComponent(id) + '/results');
+    const data = await res.json();
+    if (!res.ok) { toast(data.error || 'Error', 'err'); return; }
+    showPollResultsModal(data);
+  } catch(e) { toast('Network error', 'err'); }
+}
+
+function showPollResultsModal(data) {
+  const total = data.total_voters || 0;
+  const rows = (data.results || []).map((s, i) => {
+    const pct = total ? Math.round(s.votes / total * 100) : 0;
+    const groupLabel = s.group === 'matzad' ? 'מצעד' : 'פל״ש';
+    const slot = s.slot ? '#' + s.slot : '';
+    return `
+      <tr>
+        <td style="padding:6px 8px;color:var(--text-muted);font-size:0.78rem;width:32px;text-align:center">${i + 1}</td>
+        <td style="padding:6px 8px;font-size:0.78rem;color:var(--text-muted);width:80px">${escapeHtml(groupLabel)} ${escapeHtml(slot)}</td>
+        <td style="padding:6px 8px;font-size:0.85rem">${escapeHtml(s.label)}</td>
+        <td style="padding:6px 8px;text-align:left;font-weight:bold;font-size:0.85rem">${s.votes} <span style="color:var(--text-muted);font-weight:normal;font-size:0.75rem">(${pct}%)</span></td>
+      </tr>`;
+  }).join('');
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;max-width:680px;width:100%;max-height:85vh;overflow:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0;font-size:1.05rem">${escapeHtml(data.poll.title)}</h3>
+        <button class="btn" style="width:auto;padding:6px 12px;margin:0" onclick="this.closest('[style*=\\'position:fixed\\']').remove()">✕</button>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px">${total} voter(s)</div>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);font-size:0.74rem">
+            <th style="padding:6px 8px;text-align:center">#</th>
+            <th style="padding:6px 8px;text-align:right">Group</th>
+            <th style="padding:6px 8px;text-align:right">Song</th>
+            <th style="padding:6px 8px;text-align:left">Votes</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ─── Auto-generate next chart from a poll ─────────────────────────────────────
+const _BADGE_LABELS = {
+  knisa_new: { he: 'כניסה חדשה', color: '#22c55e' },
+  knisa:     { he: 'הכניסה הגבוהה', color: '#16a34a' },
+  aliya:     { he: 'העליה הגבוהה', color: '#3b82f6' },
+  yerida:    { he: 'הירידה הגדולה', color: '#ef4444' },
+};
+
+async function loadNextChartPolls() {
+  const sel = document.getElementById('nextChartPollSelect');
+  if (!sel) return;
+  const cur = sel.value;
+  try {
+    const res   = await fetch('/api/polls');
+    const polls = await res.json();
+    sel.innerHTML = '<option value="">— Select a poll —</option>';
+    // Show all polls; highlight closed ones
+    (polls || []).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      const closedTag = p.open ? '🟢' : '🔴';
+      opt.textContent = `${closedTag} ${p.title} (${p.vote_count || 0} votes)`;
+      sel.appendChild(opt);
+    });
+    if (cur && (polls || []).some(p => p.id === cur)) sel.value = cur;
+  } catch(e) { /* silent */ }
+}
+
+async function loadNextChartPreview() {
+  const sel  = document.getElementById('nextChartPollSelect');
+  const prev = document.getElementById('nextChartPreview');
+  const palG = document.getElementById('nextChartPalashGroup');
+  const dtG  = document.getElementById('nextChartDateGroup');
+  const btn  = document.getElementById('ncCreateBtn');
+  const id   = sel.value;
+  if (!id) {
+    prev.style.display = 'none';
+    palG.style.display = 'none';
+    dtG.style.display  = 'none';
+    btn.disabled = true;
+    return;
+  }
+  try {
+    const res  = await fetch('/api/poll/' + encodeURIComponent(id) + '/next-chart');
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || 'Error loading preview', 'err');
+      prev.style.display = 'none';
+      btn.disabled = true;
+      return;
+    }
+    renderNextChartTable(data);
+    prev.style.display = '';
+    palG.style.display = '';
+    dtG.style.display  = '';
+    btn.disabled = false;
+  } catch(e) {
+    toast('Network error', 'err');
+  }
+}
+
+function renderNextChartTable(data) {
+  const tbl = document.getElementById('nextChartTable');
+  const hl  = document.getElementById('nextChartHighlights');
+  if (!tbl || !data.ranking) return;
+  const rows = data.ranking.map(e => {
+    const badgeHtml = (e.badges || []).map(b => {
+      const meta = _BADGE_LABELS[b];
+      return `<span style="display:inline-block;background:${meta?meta.color:'#666'};color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:8px;margin-right:3px">${meta?meta.he:b}</span>`;
+    }).join('');
+    let origin = '';
+    if (e.old_group === 'matzad') {
+      const d = e.delta;
+      let arr = '—';
+      if (d > 0) arr = `<span style="color:#22c55e">▲${d}</span>`;
+      else if (d < 0) arr = `<span style="color:#ef4444">▼${Math.abs(d)}</span>`;
+      else if (d === 0) arr = '<span style="color:var(--text-muted)">=</span>';
+      origin = `#${e.old_slot} ${arr}`;
+    } else if (e.old_group === 'palash') {
+      origin = `<span style="color:#22c55e">פל״ש ${e.palash_idx}</span>`;
+    }
+    return `
+      <tr>
+        <td style="padding:5px 8px;text-align:center;font-weight:bold;width:36px;font-size:0.82rem">#${e.new_slot}</td>
+        <td style="padding:5px 8px;font-size:0.82rem">${escapeHtml(e.label)}</td>
+        <td style="padding:5px 8px;font-size:0.74rem;color:var(--text-muted);width:90px;text-align:center">${origin}</td>
+        <td style="padding:5px 8px;font-size:0.78rem;text-align:center;width:48px">${e.votes}</td>
+        <td style="padding:5px 8px;width:auto">${badgeHtml}</td>
+      </tr>`;
+  }).join('');
+  tbl.innerHTML = `
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);color:var(--text-muted);font-size:0.7rem;text-align:right">
+          <th style="padding:5px 8px;text-align:center">New</th>
+          <th style="padding:5px 8px">Song</th>
+          <th style="padding:5px 8px;text-align:center">Last week</th>
+          <th style="padding:5px 8px;text-align:center">Votes</th>
+          <th style="padding:5px 8px">Badges</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  const h = data.highlights || {};
+  const findLabel = id => {
+    const e = (data.ranking || []).find(x => x.song_id === id);
+    return e ? e.label : '—';
+  };
+  const lines = [];
+  if (h.knisa)     lines.push(`🟢 <strong>הכניסה הגבוהה:</strong> ${escapeHtml(findLabel(h.knisa))} (#${(data.ranking.find(x => x.song_id === h.knisa) || {}).new_slot || '?'})`);
+  if (h.knisa_new && h.knisa_new.length) lines.push(`🆕 <strong>כניסות חדשות:</strong> ${h.knisa_new.length} שירים`);
+  if (h.aliya)     lines.push(`🔵 <strong>העליה הגדולה:</strong> ${escapeHtml(findLabel(h.aliya))}`);
+  if (h.yerida)    lines.push(`🔻 <strong>הירידה הגדולה:</strong> ${escapeHtml(findLabel(h.yerida))}`);
+  lines.push(`<span style="color:var(--text-muted)">${data.total_voters || 0} מצביעים</span>`);
+  hl.innerHTML = lines.join(' &nbsp;·&nbsp; ');
+}
+
+async function createChartFromPoll() {
+  const sel = document.getElementById('nextChartPollSelect');
+  const id  = sel.value;
+  if (!id) { toast('Select a poll first', 'err'); return; }
+
+  // Validate 5 files
+  const files = [];
+  for (let i = 0; i < 5; i++) {
+    const inp = document.getElementById('ncPalash' + i);
+    if (!inp || !inp.files || !inp.files[0]) {
+      toast(`Upload פל״ש song #${i + 1}`, 'err');
+      return;
+    }
+    files.push(inp.files[0]);
+  }
+
+  if (!confirm('Create the next מצעד episode from this poll? Top 20 audio is reused; 5 new פל״ש are added. Continue?')) return;
+
+  const fd = new FormData();
+  fd.append('poll_id', id);
+  const md = document.getElementById('ncManualDate').value;
+  if (md) fd.append('manual_date', md);
+  files.forEach((f, i) => fd.append('palash_' + i, f));
+
+  const btn = document.getElementById('ncCreateBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Creating…';
+  try {
+    const res = await fetch('/api/matzad-chart/create-from-poll', {method: 'POST', body: fd});
+    const data = await res.json();
+    if (!res.ok) {
+      toast(data.error || 'Error', 'err');
+      btn.disabled = false;
+      btn.textContent = '🚀 Create Next Chart';
+      return;
+    }
+    toast('הצ׳ארט החדש נוצר ✓', 'ok');
+    btn.textContent = '✓ Created';
+    // Reset palash inputs
+    for (let i = 0; i < 5; i++) {
+      const inp = document.getElementById('ncPalash' + i);
+      if (inp) inp.value = '';
+    }
+    document.getElementById('ncManualDate').value = '';
+    setTimeout(() => {
+      btn.textContent = '🚀 Create Next Chart';
+      btn.disabled = false;
+    }, 2000);
+    // Refresh schedule list (if visible)
+    if (typeof refreshSchedule === 'function') refreshSchedule();
+  } catch(e) {
+    toast('Network error', 'err');
+    btn.disabled = false;
+    btn.textContent = '🚀 Create Next Chart';
+  }
+}
+
+// Initial load + refresh while matzad subsection visible
+loadPollEpisodes();
+refreshPollList();
+loadNextChartPolls();
+loadPastCharts();
+setInterval(() => {
+  if (document.body.classList.contains('mode-manage')) {
+    const sub = document.querySelector('.mgmt-subnav-btn.active');
+    if (sub && sub.dataset.mgmt === 'matzad') {
+      loadPollEpisodes();
+      refreshPollList();
+      loadNextChartPolls();
+    }
+  }
+}, 30000);
+
+// ── Page tabs (Home / Management) ─────────────────────────────────────────────
+function switchPage(page) {
+  document.body.classList.toggle('mode-home',   page === 'home');
+  document.body.classList.toggle('mode-manage', page === 'manage');
+  document.querySelectorAll('.page-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+  try { localStorage.setItem('rocky.page', page); } catch(_) {}
+}
+
+// ── Management subsection (Shows / Al Harocker / Album / Matzad) ──────────────
+const _MGMT_KEYS_FOR_SUB = {
+  shows:   null,                   // null = all keys EXCEPT the special ones
+  haroker: ['al_harocker'],
+  album:   ['erev_albumim'],
+  matzad:  ['matzad_harok'],
+  streams: [],                     // schedule form hidden — no shows needed
+  zikaron: [],                     // schedule form hidden — no shows needed
+};
+const _SPECIAL_KEYS = new Set(['al_harocker', 'erev_albumim', 'matzad_harok']);
+
+function _currentMgmtSub() {
+  const active = document.querySelector('.mgmt-subnav-btn.active');
+  return active ? active.dataset.mgmt : 'shows';
+}
+
+function _populateShowSelect(allowedKeys, autoSelect) {
+  const sel = document.getElementById('showSelect');
+  if (!sel || !_shows.length) return;
+  const current = sel.value;
+  // Clear existing options (except the placeholder)
+  sel.innerHTML = '<option value="">— Select show —</option>';
+  const filtered = _shows.filter(s =>
+    allowedKeys ? allowedKeys.includes(s.key) : !_SPECIAL_KEYS.has(s.key)
+  );
+  filtered.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.key;
+    opt.textContent = s.label;
+    sel.appendChild(opt);
+  });
+  // Pre-select: if the user's previously-selected show is still in the list, keep it.
+  // Otherwise, if there's exactly one option (locked subsection), auto-select it.
+  if (current && filtered.some(s => s.key === current)) {
+    sel.value = current;
+  } else if (autoSelect && filtered.length === 1) {
+    sel.value = filtered[0].key;
+  } else {
+    sel.value = '';
+  }
+  if (typeof onShowChange === 'function') onShowChange();
+}
+
+function applyMgmtSubsection() {
+  const sub = _currentMgmtSub();
+  const allowed = _MGMT_KEYS_FOR_SUB[sub];   // null for 'shows'
+  // Toggle .mgmt-active on every card carrying data-mgmt-section
+  document.querySelectorAll('#page-manage [data-mgmt-section]').forEach(el => {
+    const sections = (el.getAttribute('data-mgmt-section') || '').split(/\s+/);
+    el.classList.toggle('mgmt-active', sections.includes(sub));
+  });
+  // Update form title + dropdown contents
+  const title = document.getElementById('scheduleFormTitle');
+  if (title) {
+    title.textContent =
+      sub === 'haroker' ? 'Schedule על הרוקר' :
+      sub === 'album'   ? 'Schedule ערב של אלבומים' :
+      sub === 'matzad'  ? 'Schedule מצעד הרוק של ישראל' :
+                          'Schedule a Show';
+  }
+  _populateShowSelect(allowed, /*autoSelect*/ sub !== 'shows');
+}
+
+// ─── Listener count chart ─────────────────────────────────────────────────────
+
+let _listenerTimer   = null;
+let _listenerHistory = [];   // [{ts, count}]
+
+function _drawListenersChart(history) {
+  const canvas = document.getElementById('listenersChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.clientWidth;
+  const H   = canvas.clientHeight;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!history || history.length < 2) {
+    ctx.fillStyle = '#444';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collecting data…', W / 2, H / 2);
+    return;
+  }
+
+  const allCounts = history.flatMap(h => [h.local ?? 0, h.ext ?? 0]);
+  const maxCount  = Math.max(...allCounts, 1);
+  const minTs     = history[0].ts;
+  const maxTs     = history[history.length - 1].ts;
+  const rangeTs   = maxTs - minTs || 1;
+
+  const pad = { top: 12, right: 8, bottom: 8, left: 30 };
+  const cW  = W - pad.left - pad.right;
+  const cH  = H - pad.top  - pad.bottom;
+
+  // Grid lines
+  const steps = 4;
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= steps; i++) {
+    const y = pad.top + cH - (i / steps) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    const label = Math.round((i / steps) * maxCount);
+    ctx.fillStyle = '#555';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(label, pad.left - 4, y + 3);
+  }
+
+  // Draw filled area + line for one series
+  const drawSeries = (key, fillColor, lineColor) => {
+    const pts = history.filter(h => h[key] != null);
+    if (pts.length < 1) return;
+
+    // Filled area
+    ctx.beginPath();
+    pts.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    const lastPt = pts[pts.length - 1];
+    ctx.lineTo(pad.left + ((lastPt.ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.lineTo(pad.left + ((pts[0].ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.closePath();
+    ctx.fillStyle = fillColor;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    pts.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth   = 2;
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+  };
+
+  const gradLocal = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+  gradLocal.addColorStop(0, 'rgba(192,132,252,0.40)');
+  gradLocal.addColorStop(1, 'rgba(192,132,252,0.03)');
+
+  const gradExt = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+  gradExt.addColorStop(0, 'rgba(96,160,252,0.35)');
+  gradExt.addColorStop(1, 'rgba(96,160,252,0.03)');
+
+  drawSeries('local', gradLocal, '#c084fc');
+  drawSeries('ext',   gradExt,   '#60a0fc');
+}
+
+// ── Rocky Rules ──────────────────────────────────────────────────────────────
+let _rockyAuditTimer = null;
+
+async function loadRockyAudit() {
+  try {
+    const r = await fetch('/api/rocky/audit', {cache: 'no-store'});
+    const d = await r.json();
+    _renderRockyViolations(d.audit || {});
+    _renderRockyCooldown(d.recent_artists || []);
+    _renderRockyScanState(d.scan_state || {});
+  } catch(e) { console.error('rocky audit error', e); }
+}
+
+async function startRockyAudit() {
+  await fetch('/api/rocky/audit/start', {method: 'POST'});
+  document.getElementById('rockyAuditStatus').textContent = 'Scan started…';
+  if (!_rockyAuditTimer) _rockyAuditTimer = setInterval(loadRockyAudit, 3000);
+}
+
+function _renderRockyScanState(state) {
+  const statusEl   = document.getElementById('rockyAuditStatus');
+  const progressWr = document.getElementById('rockyProgressWrap');
+  const progressBr = document.getElementById('rockyProgressBar');
+  const progressTx = document.getElementById('rockyProgressText');
+  if (state.state === 'running') {
+    progressWr.style.display = 'block';
+    const pct = state.total > 0 ? Math.round(state.progress / state.total * 100) : 0;
+    progressBr.style.width = pct + '%';
+    progressTx.textContent = `${state.progress} / ${state.total}`;
+    statusEl.textContent = 'Scanning…';
+  } else {
+    progressWr.style.display = 'none';
+    if (state.state === 'done') {
+      statusEl.textContent = `Last scan: ${(state.started || '').slice(0,16).replace('T',' ')}`;
+      if (_rockyAuditTimer) { clearInterval(_rockyAuditTimer); _rockyAuditTimer = null; }
+    }
+  }
+}
+
+function _renderRockyViolations(audit) {
+  const el = document.getElementById('rockyViolationsList');
+  const vs = audit.violations || [];
+  if (!audit.scanned_at) { el.innerHTML = '<span style="color:#555">Run a scan to check tracks.</span>'; return; }
+  if (!vs.length) { el.innerHTML = '<span style="color:#4ade80">✓ No violations found</span>'; return; }
+
+  const tooLong  = vs.filter(v => v.type === 'too_long');
+  const tooShort = vs.filter(v => v.type === 'too_short');
+
+  let html = '';
+  if (tooLong.length) {
+    html += `<div style="color:#f97316;font-weight:600;margin-bottom:6px">⬆ Too long (&gt;10 min) — ${tooLong.length} tracks</div>`;
+    html += tooLong.map(v => _rockyViolationRow(v)).join('');
+  }
+  if (tooShort.length) {
+    html += `<div style="color:#facc15;font-weight:600;margin:10px 0 6px">⬇ Too short (&lt;2 min) — ${tooShort.length} tracks</div>`;
+    html += tooShort.map(v => _rockyViolationRow(v)).join('');
+  }
+  el.innerHTML = html;
+}
+
+function _rockyViolationRow(v) {
+  const mins = Math.floor(v.duration / 60);
+  const secs = Math.round(v.duration % 60);
+  const durStr = `${mins}:${String(secs).padStart(2,'0')}`;
+  const label = v.title ? `${v.artist || '?'} — ${v.title}` : (v.path.split('/').pop() || v.path);
+  return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #1a1a1a">
+    <span style="color:#ccc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${label}</span>
+    <span style="color:#888;min-width:38px;text-align:right">${durStr}</span>
+    <button onclick="rockyExclude('${v.path.replace(/'/g,"\\'")}', this)"
+            style="background:#7f1d1d;color:#fca5a5;border:none;border-radius:5px;padding:3px 10px;font-size:0.8em;cursor:pointer;white-space:nowrap">
+      Exclude
+    </button>
+  </div>`;
+}
+
+async function rockyExclude(path, btn) {
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    const r = await fetch('/api/rocky/exclude-violation', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({path})
+    });
+    const d = await r.json();
+    if (d.ok) btn.closest('div').style.opacity = '0.3';
+    else { btn.disabled = false; btn.textContent = 'Exclude'; }
+  } catch(e) { btn.disabled = false; btn.textContent = 'Exclude'; }
+}
+
+function _renderRockyCooldown(artists) {
+  const el = document.getElementById('rockyCooldownList');
+  if (!artists.length) {
+    el.innerHTML = '<span style="color:#555">No artists on cooldown right now.</span>';
+    return;
+  }
+  el.innerHTML = artists.map(a => {
+    const mins = a.cooldown_remaining_min;
+    const bar  = Math.round((1 - mins / (3 * 60)) * 100);
+    const lastDt = a.last_played ? a.last_played.slice(11,16) : '';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid #1a1a1a">
+      <span style="color:#ccc;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.artist}</span>
+      <span style="color:#888;font-size:0.85em">played ${lastDt}</span>
+      <span style="color:${mins > 0 ? '#f97316' : '#4ade80'};min-width:55px;text-align:right;font-size:0.85em">
+        ${mins > 0 ? mins + ' min left' : '✓ clear'}
+      </span>
+    </div>`;
+  }).join('');
+}
+
+// ── Ratings History ──────────────────────────────────────────────────────────
+function initRatingsControls() {
+  const today = new Date().toISOString().slice(0, 10);
+  const dateEl = document.getElementById('ratingsDate');
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  const hourSel = document.getElementById('ratingsHour');
+  if (hourSel && hourSel.options.length === 1) {
+    for (let h = 0; h < 24; h++) {
+      const opt = document.createElement('option');
+      opt.value = h;
+      opt.textContent = String(h).padStart(2, '0') + ':00';
+      hourSel.appendChild(opt);
+    }
+  }
+}
+
+async function loadRatingsHistory() {
+  const date = (document.getElementById('ratingsDate') || {}).value || '';
+  const hour = (document.getElementById('ratingsHour') || {}).value;
+  if (!date) return;
+  let url = `/api/listener-stats/history?date=${date}`;
+  if (hour !== '') url += `&hour=${hour}`;
+  try {
+    const r = await fetch(url, {cache: 'no-store'});
+    const d = await r.json();
+    const records = d.records || [];
+    _drawRatingsChart(records);
+    _updateRatingsSummary(records);
+    document.getElementById('ratingsNoData').style.display = records.length ? 'none' : 'block';
+  } catch(e) { console.error('Ratings fetch error', e); }
+}
+
+function _drawRatingsChart(records) {
+  const canvas = document.getElementById('ratingsChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.clientWidth;
+  const H   = canvas.clientHeight;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, H);
+
+  if (!records || records.length < 1) {
+    ctx.fillStyle = '#444'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('אין נתונים', W / 2, H / 2); return;
+  }
+
+  const pts = records.map(r => ({
+    ts: new Date(r.ts).getTime(), local: r.local, ext: r.ext
+  }));
+  const minTs    = pts[0].ts;
+  const maxTs    = pts[pts.length - 1].ts;
+  const rangeTs  = maxTs - minTs || 1;
+  const allVals  = pts.flatMap(p => [p.local ?? 0, p.ext ?? 0]);
+  const maxCount = Math.max(...allVals, 1);
+  const pad = { top: 12, right: 8, bottom: 8, left: 30 };
+  const cW  = W - pad.left - pad.right;
+  const cH  = H - pad.top  - pad.bottom;
+
+  const steps = 4;
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+  for (let i = 0; i <= steps; i++) {
+    const y = pad.top + cH - (i / steps) * cH;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cW, y); ctx.stroke();
+    ctx.fillStyle = '#555'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText(Math.round((i / steps) * maxCount), pad.left - 4, y + 3);
+  }
+
+  const drawSeries = (key, fill0, fill1, line) => {
+    const valid = pts.filter(p => p[key] != null);
+    if (valid.length < 1) return;
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + cH);
+    grad.addColorStop(0, fill0); grad.addColorStop(1, fill1);
+    ctx.beginPath();
+    valid.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    const last = valid[valid.length - 1];
+    ctx.lineTo(pad.left + ((last.ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.lineTo(pad.left + ((valid[0].ts - minTs) / rangeTs) * cW, pad.top + cH);
+    ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath();
+    valid.forEach((pt, i) => {
+      const x = pad.left + ((pt.ts - minTs) / rangeTs) * cW;
+      const y = pad.top  + cH - (pt[key] / maxCount) * cH;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = line; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+  };
+  drawSeries('local', 'rgba(192,132,252,0.40)', 'rgba(192,132,252,0.03)', '#c084fc');
+  drawSeries('ext',   'rgba(96,160,252,0.35)',  'rgba(96,160,252,0.03)',  '#60a0fc');
+
+  // Time labels on X axis (up to 6 ticks)
+  const tickCount = Math.min(6, pts.length);
+  ctx.fillStyle = '#555'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+  for (let i = 0; i < tickCount; i++) {
+    const idx = Math.round(i * (pts.length - 1) / Math.max(tickCount - 1, 1));
+    const x   = pad.left + ((pts[idx].ts - minTs) / rangeTs) * cW;
+    const lbl = records[idx].ts.slice(11, 16);
+    ctx.fillText(lbl, x, pad.top + cH - 2);
+  }
+
+  document.getElementById('ratingsChartStart').textContent = records[0].ts.slice(11, 16);
+  document.getElementById('ratingsChartEnd').textContent   = records[records.length - 1].ts.slice(11, 16);
+}
+
+function _updateRatingsSummary(records) {
+  const el = document.getElementById('ratingsSummary');
+  if (!records.length) { el.style.display = 'none'; return; }
+  const locals = records.map(r => r.local).filter(v => v != null);
+  const exts   = records.map(r => r.ext).filter(v => v != null);
+  const peakL  = locals.length ? Math.max(...locals) : '–';
+  const peakE  = exts.length   ? Math.max(...exts)   : '–';
+  const avgL   = locals.length ? Math.round(locals.reduce((a, b) => a + b, 0) / locals.length) : '–';
+  const avgE   = exts.length   ? Math.round(exts.reduce((a, b) => a + b, 0) / exts.length)     : '–';
+  el.style.display = 'flex';
+  el.innerHTML = `
+    <div style="background:#1a1a1a;border:1px solid #3a2a5a;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🟣 Local Peak</div>
+      <div style="color:#c084fc;font-size:1.5em;font-weight:700;line-height:1.2">${peakL}</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #2a3a5a;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🔵 Ext Peak</div>
+      <div style="color:#60a0fc;font-size:1.5em;font-weight:700;line-height:1.2">${peakE}</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🟣 Local Avg</div>
+      <div style="color:#c084fc;font-size:1.2em;font-weight:600;line-height:1.2">${avgL}</div>
+    </div>
+    <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:8px 14px;min-width:80px">
+      <div style="color:#888;font-size:0.75em">🔵 Ext Avg</div>
+      <div style="color:#60a0fc;font-size:1.2em;font-weight:600;line-height:1.2">${avgE}</div>
+    </div>
+    <div style="color:#666;font-size:0.78em;align-self:center">${records.length} דגימות</div>`;
+}
+
+// ── Per-show listener rankings ────────────────────────────────────────────────
+let _showStatsTimer = null;
+
+async function loadShowStats() {
+  const days   = (document.getElementById('showStatsDays')   || {}).value || 90;
+  const metric = (document.getElementById('showStatsMetric') || {}).value || 'peak';
+  try {
+    const r = await fetch(`/api/listener-stats/by-show?days=${days}`, {cache: 'no-store'});
+    const d = await r.json();
+    _drawShowStatsChart(d.shows || [], metric);
+    const el = document.getElementById('showStatsUpdated');
+    if (el) el.textContent = 'עודכן ' + new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'});
+  } catch(e) { console.error('showStats error', e); }
+}
+
+function _drawShowStatsChart(shows, metric) {
+  const canvas = document.getElementById('showStatsChart');
+  if (!canvas) return;
+
+  const ROW_H  = 38;
+  const BAR_H  = 11;
+  const BAR_GAP = 4;
+  const PAD_L  = 140;
+  const PAD_R  = 44;
+  const PAD_T  = 10;
+  const PAD_B  = 10;
+
+  const N = shows.length;
+  const totalH = PAD_T + N * ROW_H + PAD_B;
+  const dpr = window.devicePixelRatio || 1;
+  const W   = canvas.clientWidth || 500;
+
+  canvas.style.height = totalH + 'px';
+  canvas.width  = W   * dpr;
+  canvas.height = totalH * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, totalH);
+  ctx.fillStyle = '#111';
+  ctx.fillRect(0, 0, W, totalH);
+
+  if (!shows.length) {
+    ctx.fillStyle = '#444'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText('אין נתונים עדיין — ייאסף בשידורים הבאים', W / 2, totalH / 2);
+    return;
+  }
+
+  const lKey = metric === 'avg' ? 'avg_local' : 'peak_local';
+  const eKey = metric === 'avg' ? 'avg_ext'   : 'peak_ext';
+  const maxVal = Math.max(...shows.flatMap(s => [s[lKey], s[eKey]]), 1);
+  const barW   = W - PAD_L - PAD_R;
+
+  // Vertical grid lines
+  const ticks = 4;
+  for (let i = 1; i <= ticks; i++) {
+    const x = PAD_L + (i / ticks) * barW;
+    ctx.strokeStyle = '#1e1e1e'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, PAD_T); ctx.lineTo(x, PAD_T + N * ROW_H); ctx.stroke();
+    ctx.fillStyle = '#444'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(Math.round((i / ticks) * maxVal), x, PAD_T + N * ROW_H + 12);
+  }
+
+  shows.forEach((s, i) => {
+    const rowY   = PAD_T + i * ROW_H;
+    const midY   = rowY + ROW_H / 2;
+    const localW = (s[lKey] / maxVal) * barW;
+    const extW   = (s[eKey] / maxVal) * barW;
+
+    // Zebra background
+    if (i % 2 === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.02)';
+      ctx.fillRect(0, rowY, W, ROW_H);
+    }
+
+    // Local bar
+    const localY = midY - BAR_GAP / 2 - BAR_H;
+    ctx.fillStyle = '#7c3aed';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(PAD_L, localY, localW, BAR_H, 3)
+                  : ctx.rect(PAD_L, localY, localW, BAR_H);
+    ctx.fill();
+
+    // Ext bar
+    const extY = midY + BAR_GAP / 2;
+    ctx.fillStyle = '#2563eb';
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(PAD_L, extY, extW, BAR_H, 3)
+                  : ctx.rect(PAD_L, extY, extW, BAR_H);
+    ctx.fill();
+
+    // Values
+    ctx.fillStyle = '#888'; ctx.font = '10px sans-serif'; ctx.textAlign = 'left';
+    if (s[lKey] > 0) ctx.fillText(s[lKey], PAD_L + localW + 4, localY + BAR_H - 2);
+    if (s[eKey] > 0) ctx.fillText(s[eKey], PAD_L + extW   + 4, extY   + BAR_H - 2);
+
+    // Show label
+    const label = s.show || '';
+    ctx.fillStyle = i === 0 ? '#e2c4ff' : '#ccc';
+    ctx.font      = i === 0 ? 'bold 11px sans-serif' : '11px sans-serif';
+    ctx.textAlign = 'right';
+    // Truncate to fit PAD_L - 8
+    let txt = label;
+    while (txt.length > 2 && ctx.measureText(txt).width > PAD_L - 8) txt = txt.slice(0, -1);
+    if (txt !== label) txt = txt.slice(0, -1) + '…';
+    ctx.fillText(txt, PAD_L - 6, midY + 4);
+
+    // Rank badge for top 3
+    if (i < 3) {
+      const badge = ['🥇','🥈','🥉'][i];
+      ctx.font = '13px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(badge, PAD_L - 6 - ctx.measureText(txt).width - 2, midY + 4);
+    }
+  });
+}
+
+async function refreshListeners() {
+  try {
+    const r  = await fetch('/api/listeners', {cache: 'no-store'});
+    const d  = await r.json();
+    const errEl    = document.getElementById('listenerError');
+    const oldestEl = document.getElementById('listenerChartOldest');
+
+    if (!d.ok) {
+      if (errEl) { errEl.textContent = 'Cannot reach Icecast'; errEl.style.display = 'block'; }
+      return;
+    }
+    if (errEl) errEl.style.display = 'none';
+
+    // Local stream
+    const lc = document.getElementById('localListenerCount');
+    const lp = document.getElementById('localListenerPeak');
+    const ls = document.getElementById('localListenerStatus');
+    if (d.local) {
+      if (lc) lc.textContent = d.local.listeners;
+      if (lp) lp.textContent = d.local.peak;
+      if (ls) ls.textContent = 'online';
+    } else {
+      if (lc) lc.textContent = '–';
+      if (lp) lp.textContent = '–';
+      if (ls) ls.style.color = '#f44', ls.textContent = 'offline';
+    }
+
+    // External stream
+    const ec = document.getElementById('extListenerCount');
+    const ep = document.getElementById('extListenerPeak');
+    const es = document.getElementById('extListenerStatus');
+    if (d.ext) {
+      if (ec) ec.textContent = d.ext.listeners;
+      if (ep) ep.textContent = d.ext.peak;
+      if (es) es.textContent = 'online';
+    } else {
+      if (ec) ec.textContent = '–';
+      if (ep) ep.textContent = '–';
+      if (es) es.style.color = '#f44', es.textContent = 'offline';
+    }
+
+    _listenerHistory = d.history || [];
+
+    if (oldestEl && _listenerHistory.length > 0) {
+      const ageS   = Math.round(Date.now() / 1000 - _listenerHistory[0].ts);
+      const ageMin = Math.floor(ageS / 60);
+      oldestEl.textContent = ageMin >= 1 ? ageMin + ' min ago' : 'just now';
+    }
+
+    _drawListenersChart(_listenerHistory);
+  } catch(e) {
+    const errEl = document.getElementById('listenerError');
+    if (errEl) { errEl.textContent = 'Fetch error: ' + e.message; errEl.style.display = 'block'; }
+  }
+}
+
+function _startListeners() {
+  refreshListeners();
+  if (!_listenerTimer) _listenerTimer = setInterval(refreshListeners, 15000);
+  loadShowStats();
+  if (!_showStatsTimer) _showStatsTimer = setInterval(loadShowStats, 60000);
+}
+function _stopListeners() {
+  if (_listenerTimer)   { clearInterval(_listenerTimer);   _listenerTimer   = null; }
+  if (_showStatsTimer)  { clearInterval(_showStatsTimer);  _showStatsTimer  = null; }
+}
+
+function switchMgmt(sub) {
+  document.querySelectorAll('.mgmt-subnav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mgmt === sub);
+  });
+  applyMgmtSubsection();
+  try { localStorage.setItem('rocky.mgmt', sub); } catch(_) {}
+  if (sub === 'listeners') { _startListeners(); initRatingsControls(); loadRatingsHistory(); }
+  else _stopListeners();
+  if (sub === 'rocky') loadRockyAudit();
+}
+
+// ── Initial state on load ─────────────────────────────────────────────────────
+(function _initPageTabs() {
+  let page = 'home', sub = 'shows';
+  try {
+    page = localStorage.getItem('rocky.page') || 'home';
+    sub  = localStorage.getItem('rocky.mgmt') || 'shows';
+  } catch(_) {}
+  // Set initial classes synchronously so the user never sees a flash.
+  document.body.classList.add(page === 'manage' ? 'mode-manage' : 'mode-home');
+  document.querySelectorAll('.page-tab').forEach(b => {
+    if (b.dataset.page === page) b.classList.add('active');
+  });
+  document.querySelectorAll('.mgmt-subnav-btn').forEach(b => {
+    if (b.dataset.mgmt === sub) b.classList.add('active');
+  });
+  // Cards' .mgmt-active toggle happens once _shows loads (via applyMgmtSubsection),
+  // but apply it now too for the static cards (which don't depend on _shows).
+  applyMgmtSubsection();
+  // Auto-start listener polling if that tab was active on last visit
+  if (page === 'manage' && sub === 'listeners') {
+    _startListeners();
+    initRatingsControls();
+    loadRatingsHistory();
+  }
+})();
+
+function renderBroadcasterLinks() {
+  const container = document.getElementById('broadcasterLinks');
+  if (!container) return;
+  const base = window.location.origin;
+  container.innerHTML = _shows.map(s => {
+    const url = `${base}/${s.slug_en}`;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)">
+      <span style="flex:1;color:var(--text-subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${s.label}">${s.label}</span>
+      <a href="${url}" target="_blank" style="color:var(--accent);font-size:0.78rem;white-space:nowrap;text-decoration:none;flex-shrink:0">${url.replace(window.location.origin,'')}</a>
+      <button onclick="copyLink('${url}',this)" style="background:var(--surface);border:1px solid var(--border);color:var(--text-muted);border-radius:5px;padding:2px 8px;font-size:0.72rem;cursor:pointer;flex-shrink:0">Copy</button>
+    </div>`;
+  }).join('');
+}
+
+function copyLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+  });
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ הועתק';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1800);
+  });
+}
+
+async function clearPalash(pollId) {
+  for (let i = 0; i < 5; i++) {
+    const el  = document.getElementById('palash-' + i);
+    const eel = document.getElementById('palash-email-' + i);
+    const fel = document.getElementById('palash-mp3-' + i);
+    if (el)  el.value  = '';
+    if (eel) eel.value = '';
+    if (fel) fel.value = '';
+  }
+  await savePalash(pollId);
+}
+
+async function savePalash(pollId) {
+  const songs  = [];
+  const emails = [];
+  const fd = new FormData();
+  for (let i = 0; i < 5; i++) {
+    const el  = document.getElementById('palash-' + i);
+    const eel = document.getElementById('palash-email-' + i);
+    const fel = document.getElementById('palash-mp3-' + i);
+    if (el)  songs.push(el.value.trim());
+    if (eel) emails.push(eel.value.trim().toLowerCase());
+    if (fel && fel.files && fel.files[0]) fd.append('song_mp3_' + i, fel.files[0]);
+  }
+  fd.append('data', JSON.stringify({songs, emails}));
+  try {
+    const res = await fetch('/api/polls/' + pollId + '/next-palash', {
+      method: 'PUT',
+      body: fd
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const st = document.getElementById('palash-status');
+    if (st) { st.style.display = 'inline'; setTimeout(() => st.style.display = 'none', 2500); }
+  } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
+}
+
+// ── Al HaRoker booking management ──────────────────────────────────────────
+function ahDelete(token, name) {
+  if (!confirm(`מחוק את ההרשמה של ${name}?`)) return;
+  fetch(`/api/al-haroker-booking/${token}`, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        const el = document.getElementById('ahb-' + token.slice(0, 12));
+        if (el) el.remove();
+        toast('ההרשמה נמחקה');
+      } else {
+        toast('שגיאה: ' + (d.error || 'unknown'));
+      }
+    })
+    .catch(() => toast('שגיאת תקשורת'));
+}
+
+function ahReschedule(token, currentDate) {
+  const panel = document.getElementById('ahrs-' + token.slice(0, 12));
+  const inp   = document.getElementById('ahrs-date-' + token.slice(0, 12));
+  if (!panel) return;
+  inp.value = currentDate;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function ahDoReschedule(token) {
+  const inp  = document.getElementById('ahrs-date-' + token.slice(0, 12));
+  const msg  = document.getElementById('ahrs-msg-' + token.slice(0, 12));
+  const date = inp ? inp.value : '';
+  if (!date) { if (msg) msg.textContent = 'נא לבחור תאריך'; return; }
+
+  // Client-side weekday check (Sun=0, Mon=1, Tue=2, Wed=3, Thu=4 are ok)
+  const [y, m, d] = date.split('-').map(Number);
+  const jsDay = new Date(y, m - 1, d).getDay();  // 0=Sun..6=Sat
+  if (jsDay === 5 || jsDay === 6) {
+    if (msg) msg.innerHTML = '<span style="color:#f87171">ניתן לבחור רק ימי א׳–ה׳</span>';
+    return;
+  }
+
+  try {
+    const r = await fetch(`/api/al-haroker-booking/${token}/reschedule`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ date })
+    });
+    const data = await r.json();
+    if (r.ok) {
+      toast('תאריך עודכן ל-' + date.split('-').reverse().join('/'));
+      setTimeout(() => location.reload(), 800);
+    } else if (data.error === 'date_taken') {
+      if (msg) msg.innerHTML = '<span style="color:#f87171">התאריך הזה כבר תפוס</span>';
+    } else if (data.error === 'already_uploaded') {
+      if (msg) msg.innerHTML = '<span style="color:#f87171">הקובץ כבר הועלה — לא ניתן לשנות תאריך</span>';
+    } else {
+      if (msg) msg.innerHTML = '<span style="color:#f87171">' + (data.error || 'שגיאה') + '</span>';
+    }
+  } catch(e) {
+    if (msg) msg.innerHTML = '<span style="color:#f87171">שגיאת תקשורת</span>';
+  }
+}
+
+function fmtDt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  const dd   = String(d.getDate()).padStart(2, '0');
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const hh   = String(d.getHours()).padStart(2, '0');
+  const min  = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+}
+
+function onManualScheduleChange() {
+  const checked = document.getElementById('useManualSchedule').checked;
+  document.getElementById('manualScheduleGroup').style.display = checked ? '' : 'none';
+  if (checked) {
+    document.getElementById('scheduleSummary').style.display = 'none';
+  } else {
+    onShowChange(); // restore auto summary
+  }
+}
+
+function initAlbumSlots() {
+  const container = document.getElementById('albumSlots');
+  if (!container || container.dataset.built === '1') return;
+  container.dataset.built = '1';
+  let html = '';
+  for (let i = 0; i < 8; i++) {
+    const req = i === 0
+      ? '<span style="color:var(--danger);font-size:0.75rem"> *</span>'
+      : ' <span style="color:var(--text-muted);font-weight:normal;font-size:0.78rem">(optional)</span>';
+    html += `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:0.82rem;font-weight:600;margin-bottom:8px">Album ${i + 1}${req}</div>
+        <input type="file" name="album_${i}" multiple accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+               style="display:block;width:100%;font-size:0.8rem;margin-bottom:6px"
+               onchange="updateAlbumSlot(${i})">
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:5px">— or select a folder —</div>
+        <input type="file" name="album_${i}" webkitdirectory multiple
+               style="display:block;width:100%;font-size:0.8rem"
+               onchange="updateAlbumSlot(${i})">
+        <div id="albumSlot${i}Count" style="font-size:0.78rem;color:var(--success);margin-top:6px;min-height:1em"></div>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function updateAlbumSlot(i) {
+  const inputs = document.querySelectorAll(`input[name="album_${i}"]`);
+  let total = 0;
+  inputs.forEach(inp => { total += inp.files ? inp.files.length : 0; });
+  const el = document.getElementById(`albumSlot${i}Count`);
+  if (el) el.textContent = total > 0 ? `✓ ${total} track${total !== 1 ? 's' : ''} selected` : '';
+}
+
+function buildPlaylistSlots() {
+  const container = document.getElementById('playlistSlots');
+  if (!container || container.dataset.built === '1') return;
+  container.dataset.built = '1';
+  let html = '';
+  const badges = [
+    { name: 'aliya',     label: 'העליה הגבוהה' },
+    { name: 'yerida',    label: 'הירידה הגבוהה' },
+    { name: 'knisa',     label: 'הכניסה הגבוהה' },
+    { name: 'knisa_new', label: 'כניסה חדשה' },
+  ];
+  for (let i = 0; i < 20; i++) {
+    const badgeHtml = badges.map(b =>
+      `<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.75rem;color:var(--text-muted);white-space:nowrap;font-weight:normal">
+        <input type="checkbox" name="pl_${i}_${b.name}" style="width:auto;margin:0;cursor:pointer">
+        ${b.label}
+      </label>`
+    ).join('');
+    html += `
+      <div style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span style="font-size:0.82rem;color:var(--text-muted);width:60px;text-align:right;flex-shrink:0;direction:rtl">מקום ${i + 1}</span>
+          <input type="file" name="playlist_${i}" class="playlist-file-input"
+            accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+            style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem">
+        </div>
+        <div style="margin-right:0;padding-right:70px;display:flex;flex-wrap:wrap;gap:4px 14px;direction:rtl">
+          ${badgeHtml}
+        </div>
+      </div>`;
+  }
+  html += `<div style="border-top:1px solid var(--border);margin:12px 0 10px"></div>`;
+  for (let i = 0; i < 5; i++) {
+    html += `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:0.82rem;color:var(--accent);width:60px;text-align:right;flex-shrink:0;direction:rtl">פל״ש ${i + 1}</span>
+        <input type="file" name="palash_${i}" class="playlist-file-input"
+          accept=".mp3,.wav,.ogg,.flac,.m4a,.aac"
+          style="flex:1;background:var(--surface2);border:1px solid var(--accent);border-radius:6px;padding:7px 10px;color:var(--text);font-size:0.82rem">
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+function onPlaylistModeChange(cb) {
+  const filesGroup  = document.getElementById('playlistFilesGroup');
+  const singleGroup = document.getElementById('singleFileGroup');
+  const fileInput   = document.getElementById('singleFileInput');
+  if (cb.checked) {
+    filesGroup.style.display  = '';
+    singleGroup.style.display = 'none';
+    fileInput.required = false;
+    buildPlaylistSlots();
+  } else {
+    filesGroup.style.display  = 'none';
+    singleGroup.style.display = '';
+    fileInput.required = true;
+  }
+}
+
+// Matzad-only mode toggle: 'playlist' (default — 20 מקום + 5 פל״ש) | 'prerecorded' (single file)
+function onMatzadModeChange() {
+  const radio = document.querySelector('input[name="matzadMode"]:checked');
+  const isPlaylist = !radio || radio.value === 'playlist';
+  const filesGroup  = document.getElementById('playlistFilesGroup');
+  const singleGroup = document.getElementById('singleFileGroup');
+  const fileInput   = document.getElementById('singleFileInput');
+  const cb          = document.getElementById('playlistModeCheckbox');
+  if (cb) cb.checked = isPlaylist;
+  filesGroup.style.display  = isPlaylist ? '' : 'none';
+  singleGroup.style.display = isPlaylist ? 'none' : '';
+  fileInput.required = !isPlaylist;
+  if (isPlaylist) buildPlaylistSlots();
+}
+
+function onShowChange() {
+  if (document.getElementById('useManualSchedule').checked) return;
+  const key  = document.getElementById('showSelect').value;
+  const show = _shows.find(s => s.key === key);
+  const manualGroup = document.getElementById('manualDateGroup');
+  const summary     = document.getElementById('scheduleSummary');
+
+  const isAlbum   = show && show.key === 'erev_albumim';
+  const isMatzad  = show && show.key === 'matzad_harok';
+  const noPodbean = show && show.no_podbean;
+
+  // Matzad: default to Prerecorded mode each time it's (re)selected.
+  if (isMatzad) {
+    const prerecordedRadio = document.querySelector('input[name="matzadMode"][value="prerecorded"]');
+    if (prerecordedRadio) prerecordedRadio.checked = true;
+    document.getElementById('playlistModeCheckbox').checked = false;
+  } else {
+    document.getElementById('playlistModeCheckbox').checked = false;
+  }
+
+  document.getElementById('albumUploadGroup').style.display              = isAlbum ? '' : 'none';
+  document.getElementById('erevAlbumimBroadcasterGroup').style.display  = isAlbum ? '' : 'none';
+  if (isAlbum) document.getElementById('erevAlbumimBroadcaster').required = true;
+  else { document.getElementById('erevAlbumimBroadcaster').required = false; document.getElementById('erevAlbumimBroadcaster').value = ''; }
+  document.getElementById('modeGroup').style.display        = (isAlbum || noPodbean) ? 'none' : '';
+  document.getElementById('playlistModeGroup').style.display = isMatzad ? '' : 'none';
+
+  if (isMatzad) {
+    // Apply playlist visibility based on the (default-playlist) radio
+    onMatzadModeChange();
+  } else {
+    document.getElementById('singleFileGroup').style.display = isAlbum ? 'none' : '';
+    document.getElementById('playlistFilesGroup').style.display = 'none';
+  }
+
+  if (isAlbum || noPodbean) {
+    document.querySelector('input[name="mode"][value="queue_only"]').checked = true;
+  }
+  if (isAlbum) {
+    initAlbumSlots();
+  }
+  document.getElementById('singleFileInput').required = !(isAlbum || (isMatzad && document.querySelector('input[name="matzadMode"]:checked')?.value === 'playlist'));
+
+  if (!show) { manualGroup.style.display='none'; summary.style.display='none'; return; }
+
+  const broadcasterGroup = document.getElementById('alHarokerBroadcasterGroup');
+  if (show.manual_date) {
+    manualGroup.style.display = '';
+    broadcasterGroup.style.display = '';
+    // Recalculate when date changes
+    const dateInput = document.getElementById('manualDate');
+    if (dateInput.value) {
+      refreshManualSummary(show, dateInput.value);
+    } else {
+      summary.style.display = 'none';
+    }
+  } else {
+    manualGroup.style.display = 'none';
+    broadcasterGroup.style.display = 'none';
+    summary.style.display = '';
+    summary.innerHTML =
+      `<div>📡 <strong>Broadcast:</strong> ${fmtDt(show.next_broadcast)}</div>` +
+      (!show.no_podbean ? `<div>⬆️ <strong>Upload (Podbean/WP):</strong> ${fmtDt(show.next_upload)}</div>` : '') +
+      (show.has_rerun ? `<div>🔄 <strong>Rerun:</strong> ${fmtDt(show.next_rerun)}</div>` : '');
+  }
+}
+
+function refreshManualSummary(show, dateStr) {
+  const summary = document.getElementById('scheduleSummary');
+  if (!dateStr) { summary.style.display='none'; return; }
+  // For manual shows, build basic summary (server calculates exact time)
+  summary.style.display = '';
+  const d = new Date(dateStr + 'T' + show.time);
+  summary.innerHTML = `<div>📡 <strong>Broadcast:</strong> ${fmtDt(d.toISOString())}</div>` +
+    (!show.no_podbean ? `<div>⬆️ <strong>Upload (Podbean/WP):</strong> same day at ${show.upload_time}</div>` : '');
+}
+
+document.getElementById('manualDate').addEventListener('change', function() {
+  const key  = document.getElementById('showSelect').value;
+  const show = _shows.find(s => s.key === key);
+  if (show && show.manual_date) refreshManualSummary(show, this.value);
+});
+
+// ── Schedule form ─────────────────────────────────────────────────────────────
+document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const key = document.getElementById('showSelect').value;
+  if (!key) { toast('Please select a show', 'err'); return; }
+  if (document.getElementById('useManualSchedule').checked &&
+      !document.getElementById('manualBroadcastTime').value) {
+    toast('Please enter a broadcast date and time', 'err'); return;
+  }
+  // Validate album show has at least one file in album 1
+  if (key === 'erev_albumim') {
+    const album0Inputs = document.querySelectorAll('input[name="album_0"]');
+    let total = 0;
+    album0Inputs.forEach(inp => { total += inp.files ? inp.files.length : 0; });
+    if (total === 0) {
+      toast('Please add files for Album 1 at minimum', 'err'); return;
+    }
+  }
+  // Validate playlist mode has at least one file
+  if (key === 'matzad_harok' && document.getElementById('playlistModeCheckbox').checked) {
+    const plInputs = document.querySelectorAll('.playlist-file-input');
+    let hasFile = false;
+    plInputs.forEach(inp => { if (inp.files && inp.files.length > 0) hasFile = true; });
+    if (!hasFile) { toast('הוסף לפחות טראק אחד', 'err'); return; }
+  }
+  const btn = document.getElementById('scheduleBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+  try {
+    const data = new FormData(e.target);
+    const r = await fetch('/api/schedule', { method: 'POST', body: data });
+    const j = await r.json();
+    if (j.success) {
+      const s = j.show;
+      const bcast = new Date(s.scheduled_time);
+      toast(`Scheduled: ${bcast.toLocaleString('en-IL',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})}`, 'ok');
+      e.target.reset();
+      document.getElementById('scheduleSummary').style.display = 'none';
+      document.getElementById('useManualSchedule').checked = false;
+      document.getElementById('manualScheduleGroup').style.display = 'none';
+      document.getElementById('albumUploadGroup').style.display = 'none';
+      document.getElementById('singleFileGroup').style.display = '';
+      document.getElementById('modeGroup').style.display = '';
+      document.getElementById('singleFileInput').required = true;
+      // Reset album slots (force rebuild next time)
+      const slotsContainer = document.getElementById('albumSlots');
+      if (slotsContainer) { slotsContainer.innerHTML = ''; slotsContainer.dataset.built = ''; }
+      // Reset playlist mode (will auto-re-enable next time matzad is selected)
+      document.getElementById('playlistModeGroup').style.display = 'none';
+      document.getElementById('playlistFilesGroup').style.display = 'none';
+      const plSlots = document.getElementById('playlistSlots');
+      if (plSlots) { plSlots.innerHTML = ''; plSlots.dataset.built = ''; }
+      setTimeout(() => location.reload(), 1200);
+    } else {
+      toast(j.error || 'Failed', 'err');
+    }
+  } catch(err) {
+    toast('Upload error: ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Schedule Show';
+  }
+});
+
+// ── Actions ───────────────────────────────────────────────────────────────────
+function downloadShow(id) {
+  // Trigger a browser download. Server picks single file vs ZIP automatically.
+  const url = '/api/schedule/' + encodeURIComponent(id) + '/download';
+  const a = document.createElement('a');
+  a.href = url;
+  a.rel = 'noopener';
+  // Let the server's Content-Disposition set the filename
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 500);
+}
+
+async function deleteShow(id) {
+  if (!confirm('Remove this show?')) return;
+  try {
+    await fetch('/api/schedule/' + id, { method: 'DELETE' });
+    const el = document.getElementById('show-' + id);
+    if (el) el.remove();
+    toast('Show removed', 'ok');
+  } catch { toast('Error', 'err'); }
+}
+
+async function triggerNow(id) {
+  if (!confirm('Play this show now? (Jingle → Show → Jingle)')) return;
+  try {
+    const r = await fetch('/api/trigger/' + id, { method: 'POST' });
+    const j = await r.json();
+    if (j.success) {
+      toast('Show queued!', 'ok');
+      setTimeout(() => location.reload(), 800);
+    } else {
+      toast('Failed to trigger', 'err');
+    }
+  } catch { toast('Error', 'err'); }
+}
+
+// Replay a past show. Same backend as triggerNow, but a different UX:
+// — different confirm string (so the user knows it's a replay, not a normal trigger)
+// — gentler reload (refresh schedule only, no full page reload mid-play)
+// — surfaces the backend error if the file is no longer on disk
+async function playAgain(id) {
+  if (!confirm('Play this show again now? (Jingle → Show → Jingle)')) return;
+  try {
+    const r = await fetch('/api/trigger/' + id, { method: 'POST' });
+    const j = await r.json();
+    if (j.success) {
+      toast('Show queued!', 'ok');
+      // Light refresh — the past list will resort with this show at the top
+      // (its triggered_at gets bumped to now). No full reload.
+      setTimeout(refreshSchedule, 1000);
+    } else {
+      toast(j.error || 'Failed — file may have been deleted', 'err');
+    }
+  } catch { toast('Error', 'err'); }
+}
+
+async function skipTrack() {
+  try {
+    const r = await fetch('/api/skip', { method: 'POST' });
+    const j = await r.json();
+    if (j.response && j.response.includes('ERROR')) {
+      toast('Skip failed', 'err');
+    } else {
+      toast('Skipped', 'ok');
+      setTimeout(pollNowPlaying, 1000);
+    }
+  } catch { toast('Error', 'err'); }
+}
+
+async function playNow() {
+  const file = document.getElementById('playNowFile').files[0];
+  if (!file) { toast('Select a file first', 'err'); return; }
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/play-now', { method: 'POST', body: fd });
+    const j = await r.json();
+    if (j.success) { toast('Playing now!', 'ok'); document.getElementById('playNowFile').value = ''; }
+    else { toast('Error: ' + j.error, 'err'); }
+  } catch { toast('Upload error', 'err'); }
+}
+
+async function queuePath() {
+  const path = document.getElementById('nasPath').value.trim();
+  if (!path) { toast('Enter a file path', 'err'); return; }
+  try {
+    const r = await fetch('/api/queue-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path })
+    });
+    const j = await r.json();
+    if (j.success) { toast('Queued!', 'ok'); document.getElementById('nasPath').value = ''; }
+    else { toast('Error: ' + (j.error || j.response), 'err'); }
+  } catch { toast('Error', 'err'); }
+}
+
+// ── Shows queue display ────────────────────────────────────────────────────────
+async function refreshQueue() {
+  try {
+    const r = await fetch('/api/queue-status').then(r => r.json());
+    const el = document.getElementById('liveQueue');
+    if (!el) return;
+    const queue      = r.queue       || [];
+    const nextTracks = r.next_tracks || [];
+    const onAir      = r.on_air;
+    let html = '';
+
+    // ── Sync Now Playing display from on_air (same source as live queue) ──
+    if (onAir) {
+      const npTitle  = document.getElementById('npTitle');
+      const npArtist = document.getElementById('npArtist');
+      if (npTitle)  npTitle.textContent  = onAir.label  || onAir.title  || '—';
+      if (npArtist) npArtist.textContent = onAir.artist || '';
+    }
+
+    // ── Currently on air ──────────────────────────────────────────
+    if (onAir) {
+      const typeLabel = onAir.show   ? 'On Air · Show'
+                      : onAir.jingle ? 'On Air · Jingle'
+                      :                'On Air · Rocky';
+      const dotColor  = onAir.show   ? 'var(--accent)'
+                      : onAir.jingle ? '#e69a2a'
+                      :                'var(--success)';
+      html += `<div class="show-item">
+                 <div class="show-dot" style="background:${dotColor};animation:pulse 1.2s ease-in-out infinite"></div>
+                 <div class="show-info">
+                   <div class="show-name">${onAir.label}</div>
+                   <div class="show-time">${typeLabel}</div>
+                 </div>
+               </div>`;
+    }
+
+    // ── Queued shows ──────────────────────────────────────────────
+    if (queue.length) {
+      html += queue.map((item, i) =>
+        `<div class="show-item">
+           <div class="show-dot" style="background:var(--accent)"></div>
+           <div class="show-info"><div class="show-name">${item}</div></div>
+           <div style="font-size:0.72rem;color:var(--text-muted)">Next show #${i+1}</div>
+         </div>`).join('');
+    }
+
+    // ── Next buffered Rocky / Jingle track ────────────────────────
+    nextTracks.forEach(t => {
+      const typeLabel = t.jingle ? 'Up Next · Jingle' : 'Up Next · Rocky';
+      html += `<div class="show-item" style="opacity:0.5">
+                 <div class="show-dot" style="background:var(--text-muted)"></div>
+                 <div class="show-info">
+                   <div class="show-name">${t.label}</div>
+                   <div class="show-time">${typeLabel}</div>
+                 </div>
+               </div>`;
+    });
+
+    if (!html) html = '<div class="empty-msg">Rocky is playing</div>';
+    el.innerHTML = html;
+  } catch {}
+}
+setInterval(refreshQueue, 3000);
+refreshQueue();
+
+async function streamStop() {
+  if (!confirm('Stop broadcasting to Icecast? Other sources can then connect.')) return;
+  try {
+    await fetch('/api/stream/stop', { method: 'POST' });
+    toast('Broadcast stopped', 'ok');
+    pollStatus();
+  } catch { toast('Error', 'err'); }
+}
+
+async function streamStart() {
+  try {
+    await fetch('/api/stream/start', { method: 'POST' });
+    toast('Broadcast resumed', 'ok');
+    pollStatus();
+  } catch { toast('Error', 'err'); }
+}
+
+// ── Schedule (live-refreshing) ────────────────────────────────────────────────
+function fmtScheduleTime(iso) {
+  return iso ? iso.replace('T', ' ') : '';
+}
+
+async function refreshSchedule() {
+  try {
+    const all = await fetch('/api/schedule').then(r => r.json());
+    const now = new Date();
+
+    const upcoming = all
+      .filter(s => !s.triggered && new Date(s.scheduled_time) > now)
+      .sort((a, b) => a.scheduled_time.localeCompare(b.scheduled_time));
+
+    const past = all
+      .filter(s => s.triggered)
+      .sort((a, b) => (b.triggered_at || '').localeCompare(a.triggered_at || ''))
+      .slice(0, 15);
+
+    const upEl = document.getElementById('upcomingList');
+    if (upEl) {
+      if (!upcoming.length) {
+        upEl.innerHTML = '<div class="empty-msg">No shows scheduled</div>';
+      } else {
+        upEl.innerHTML = upcoming.map(s => `
+          <div class="show-item" id="show-${s.id}">
+            <div class="show-dot"></div>
+            <div class="show-info">
+              <div class="show-name">${s.name}${s.broadcaster && !s.name.includes(s.broadcaster) ? ' — ' + s.broadcaster : ''}${s.is_rerun ? ' <span class="rerun-badge">(rerun)</span>' : ''}</div>
+              <div class="show-time">${fmtScheduleTime(s.scheduled_time)}</div>
+            </div>
+            <div class="show-countdown" data-time="${s.scheduled_time}"></div>
+            <div class="show-actions">
+              <button class="btn-sm btn-play" onclick="triggerNow('${s.id}')">▶ Now</button>
+              <button class="btn-sm btn-reschedule" onclick="openReschedule('${s.id}','${s.scheduled_time}')">📅</button>
+              <button class="btn-sm btn-download" onclick="downloadShow('${s.id}')" title="Download audio">📥</button>
+              <button class="btn-sm btn-del" onclick="deleteShow('${s.id}')">✕</button>
+            </div>
+          </div>`).join('');
+        updateCountdowns();
+      }
+    }
+
+    const pastEl = document.querySelector('#upcomingList')?.closest('.card')?.nextElementSibling?.nextElementSibling?.querySelector('div:last-child') || null;
+    const pastCard = document.getElementById('pastShowsList');
+    if (pastCard) {
+      if (!past.length) {
+        pastCard.innerHTML = '<div class="empty-msg">No shows played yet</div>';
+      } else {
+        pastCard.innerHTML = past.map(s => {
+          // "Play again" only makes sense if the show file is still on disk.
+          // Past shows whose temp file was cleaned up (file_deleted=true) get a
+          // muted disabled state so the user knows the audio is no longer there.
+          const fileGone = !!s.file_deleted;
+          const actionBtn = fileGone
+            ? `<button class="btn-sm" disabled title="File no longer on disk" style="opacity:0.4;cursor:not-allowed">▶ Again</button>`
+            : `<button class="btn-sm btn-play" onclick="playAgain('${s.id}')" title="Play this show again now (jingle → show → jingle)">▶ Again</button>`;
+          return `
+          <div class="show-item">
+            <div class="show-dot done"></div>
+            <div class="show-info">
+              <div class="show-name">${s.name}${s.broadcaster && !s.name.includes(s.broadcaster) ? ' — ' + s.broadcaster : ''}</div>
+              <div class="show-time">Played ${fmtScheduleTime((s.triggered_at || '').slice(0,16))}</div>
+            </div>
+            <div class="show-actions">${actionBtn}</div>
+          </div>`;
+        }).join('');
+      }
+    }
+  } catch {}
+}
+setInterval(refreshSchedule, 15000);
+refreshSchedule();
+
+// ── Play History ──────────────────────────────────────────────────────────────
+function fmtDateTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) +
+         ' · ' + d.toLocaleDateString([], {month:'short', day:'numeric'});
+}
+
+function trackTypeBadge(type) {
+  if (type === 'show')   return '<span style="background:var(--primary);color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">(Show)</span>';
+  if (type === 'jingle') return '<span style="background:#e69a2a;color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">(Jingle)</span>';
+  return '<span style="background:var(--success,#2a9d2a);color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:6px;vertical-align:middle">(Rocky)</span>';
+}
+
+// Tracks the user has excluded this session (also persisted in localStorage)
+const _excludedPaths = new Set(JSON.parse(localStorage.getItem('zerock_excluded') || '[]'));
+function _saveExcluded() {
+  try { localStorage.setItem('zerock_excluded', JSON.stringify([..._excludedPaths])); } catch {}
+}
+
+async function excludeTrack(path) {
+  if (!path) return;
+  try {
+    const r = await fetch('/api/exclude-track', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({path})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      _excludedPaths.add(path);
+      _saveExcluded();
+      // If this track is currently playing, skip it immediately
+      const isPlaying = _currentNpPath && (
+        _currentNpPath === path || _currentNpPath.endsWith('/' + path.split('/').pop())
+      );
+      if (isPlaying) {
+        await fetch('/api/skip', { method: 'POST' });
+        toast('Track excluded and skipped', 'ok');
+      } else {
+        toast('Track excluded — won\'t play again', 'ok');
+      }
+      loadHistory();
+    } else {
+      toast(j.error || 'Failed to exclude track', 'err');
+    }
+  } catch {
+    toast('Error contacting server', 'err');
+  }
+}
+
+async function loadHistory() {
+  try {
+    const items = await fetch('/api/history').then(r => r.json());
+    const el = document.getElementById('historyList');
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<div class="empty-msg">Nothing played yet</div>';
+      return;
+    }
+    el.innerHTML = items.map(e => {
+      const type = e.type || 'rocky';
+      const excludePath = e.full_path || e.filename || '';
+      const alreadyExcluded = _excludedPaths.has(excludePath);
+      const safeExcludePath = excludePath.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      const excludeBtn = (type === 'rocky' && excludePath)
+        ? alreadyExcluded
+          ? `<button disabled title="Already excluded"
+               style="margin-left:8px;padding:2px 7px;font-size:0.7rem;background:#c0392b;border:1px solid #c0392b;border-radius:4px;color:#fff;cursor:default;white-space:nowrap;vertical-align:middle;opacity:0.85">🚫 Don't play again</button>`
+          : `<button data-exclude-path="${safeExcludePath}" onclick="excludeTrack(this.dataset.excludePath)" title="Don't play again"
+               style="margin-left:8px;padding:2px 7px;font-size:0.7rem;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text-muted);cursor:pointer;white-space:nowrap;vertical-align:middle"
+               onmouseover="this.style.background='var(--danger,#c0392b)';this.style.color='#fff';this.style.borderColor='var(--danger,#c0392b)'"
+               onmouseout="this.style.background='transparent';this.style.color='var(--text-muted)';this.style.borderColor='var(--border)'">🚫 Don't play again</button>`
+        : '';
+      return `
+      <div class="show-item">
+        <div class="show-dot done"></div>
+        <div class="show-info">
+          <div class="show-name" style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">${e.title || e.filename || '—'}${trackTypeBadge(type)}${e.auto_rerun ? ' <span style="background:#7b4f9e;color:#fff;font-size:0.65rem;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px;vertical-align:middle">🤖 Automated Rerun</span>' : ''}${excludeBtn}</div>
+          <div class="show-time">${e.artist ? e.artist + ' · ' : ''}${fmtDateTime(e.played_at)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+setInterval(loadHistory, 30000);
+loadHistory();
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.className = '', 3000);
+}
+
+// ── Reschedule modal ──────────────────────────────────────────────────────────
+let _rescheduleId = null;
+
+function openReschedule(id, currentIso) {
+  _rescheduleId = id;
+  // Pre-fill with current time (strip seconds for datetime-local)
+  const dt = new Date(currentIso);
+  const pad = n => String(n).padStart(2,'0');
+  const local = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  document.getElementById('rescheduleInput').value = local;
+  document.getElementById('rescheduleOverlay').classList.add('open');
+}
+
+function closeReschedule() {
+  document.getElementById('rescheduleOverlay').classList.remove('open');
+  _rescheduleId = null;
+}
+
+async function saveReschedule() {
+  const newTime = document.getElementById('rescheduleInput').value;
+  if (!newTime || !_rescheduleId) return;
+  const btn = document.getElementById('rescheduleSave');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try {
+    const r = await fetch(`/api/schedule/${_rescheduleId}/reschedule`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ new_time: newTime })
+    });
+    const j = await r.json();
+    if (j.success) {
+      toast('Rescheduled ✓', 'ok');
+      closeReschedule();
+      setTimeout(loadSchedule, 300);
+    } else {
+      toast(j.error || 'Failed', 'err');
+    }
+  } catch { toast('Network error', 'err'); }
+  finally { btn.disabled = false; btn.textContent = 'Save'; }
+}
+
+// Close on overlay click
+document.getElementById('rescheduleOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('rescheduleOverlay')) closeReschedule();
+});
+
+// ── ערב של אלבומים — Cover Grid ───────────────────────────────────────────
+function onAlbumFileChange(input, idx) {
+  const file = input.files[0];
+  const thumb = document.querySelector(`.album-cover-thumb[data-idx="${idx}"]`);
+  const clear = document.querySelector(`.album-cover-clear[data-idx="${idx}"]`);
+  const btn   = input.closest('label').querySelector('.album-upload-btn');
+  if (!file) return;
+  thumb.src = URL.createObjectURL(file);
+  thumb.style.display = 'block';
+  clear.style.display = 'inline';
+  if (btn) { btn.textContent = '✓ עטיפה נבחרה'; btn.style.color = '#90d090'; }
+}
+
+function clearAlbumFile(idx) {
+  const fileInput = document.querySelector(`.album-cover-file[data-idx="${idx}"]`);
+  const thumb     = document.querySelector(`.album-cover-thumb[data-idx="${idx}"]`);
+  const clear     = document.querySelector(`.album-cover-clear[data-idx="${idx}"]`);
+  const btn       = fileInput ? fileInput.closest('label').querySelector('.album-upload-btn') : null;
+  if (fileInput) fileInput.value = '';
+  if (thumb)  { thumb.src = ''; thumb.style.display = 'none'; }
+  if (clear)  { clear.style.display = 'none'; }
+  if (btn)    { btn.textContent = '📁 העלה עטיפה'; btn.style.color = '#c0a0e0'; }
+}
+
+async function generateCoverGrid() {
+  const nameInputs = document.querySelectorAll('.album-name-input');
+  const fileInputs = document.querySelectorAll('.album-cover-file');
+
+  let hasAny = false;
+  nameInputs.forEach((inp, i) => {
+    const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+    if (inp.value.trim() || file) hasAny = true;
+  });
+  if (!hasAny) { toast('הזן לפחות שם אלבום אחד', 'err'); return; }
+
+  const btn = document.getElementById('generateGridBtn');
+  const status = document.getElementById('gridGenerateStatus');
+  btn.disabled = true;
+  btn.textContent = 'יוצר תמונה...';
+  status.textContent = 'מחפש עטיפות...';
+  status.style.color = '#b090d0';
+  document.getElementById('gridResultSection').style.display = 'none';
+
+  try {
+    // Multipart: album names + optional cover image per slot
+    const fd = new FormData();
+    nameInputs.forEach((inp, i) => {
+      fd.append(`album_${i}`, inp.value.trim());
+      const file = fileInputs[i] ? fileInputs[i].files[0] : null;
+      if (file) fd.append(`cover_${i}`, file);
+    });
+
+    const r = await fetch('/api/erev-albumim/generate-grid', { method: 'POST', body: fd });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || `HTTP ${r.status}`);
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    document.getElementById('gridPreviewImg').src = url;
+    document.getElementById('gridDownloadLink').href = url;
+    document.getElementById('gridResultSection').style.display = 'block';
+    status.textContent = '✓ תמונה נוצרה בהצלחה';
+    status.style.color = '#4caf50';
+  } catch(e) {
+    status.textContent = '✗ ' + e.message;
+    status.style.color = '#f44';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🎨 צור תמונה';
+  }
+}
+</script>
+
+<!-- Reschedule modal -->
+<div id="rescheduleOverlay">
+  <div id="rescheduleModal">
+    <h3>📅 Reschedule Show</h3>
+    <label>New broadcast date &amp; time</label>
+    <input type="datetime-local" id="rescheduleInput">
+    <div class="modal-actions">
+      <button id="rescheduleSave" onclick="saveReschedule()">Save</button>
+      <button id="rescheduleCancel" onclick="closeReschedule()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
