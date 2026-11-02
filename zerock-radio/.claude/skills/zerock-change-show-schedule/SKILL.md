@@ -15,9 +15,9 @@ Changing `SHOW_SCHEDULE` in `radio_app.py` only affects FUTURE entries. Entries 
 
 ## B. Queue (on rocky, `/home/roy/zerock-radio/schedule.json`)
 1. List entries: `curl -s localhost:5000/api/schedule` and filter by `show_key` and `scheduled_time >= now`.
-2. Broadcast time change: `POST /api/schedule/<id>/reschedule {"new_time":"YYYY-MM-DDTHH:MM"}`. It shifts the upload time and the paired rerun by the same delta and updates the WP post time.
+2. Broadcast time change: `POST /api/schedule/<id>/reschedule {"new_time":"YYYY-MM-DDTHH:MM"}`. It shifts the upload time by the same delta and updates the WP post time. It does NOT shift the paired rerun as of 2026-11-02 (a fix is in progress): move the rerun entry yourself with a second reschedule call.
 3. Upload-time-only change has no API: back up `schedule.json` (`cp schedule.json schedule.json.bak-<reason>-$(date +%s)`), edit the entry's `upload_time` with Python, write atomically (temp file + `os.replace`).
-4. Entries with no `rerun_id` (reruns created from a fixed rerun slot) do not shift when the primary moves: change their time separately if the rerun time changed.
+4. Reruns do not shift when the primary moves (no entry has a `rerun_id`; nothing stores it): reschedule the rerun entry separately. Find it by the same `show_key`, `is_rerun: true`, and `scheduled_time` equal to the primary's `rerun_time` (auto reruns: `auto_rerun_for_broadcast` equals the primary's old `scheduled_time`).
 5. Never edit entries that are `upload_in_progress` or already triggered.
 
 ## C. Deploy and verify

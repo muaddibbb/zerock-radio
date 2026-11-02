@@ -16,7 +16,7 @@ Show name (Hebrew, exact), host, broadcast day + time, upload time (when the fil
 2. `_WP_SLUGS[key]` (show term slug for the board link), `_SHOW_DURATIONS_H[key]` (hours on the board).
 3. Only for a NEW show name: `_WP_SHOW_IDS[name]` (WP `shows` term id; check `GET /wp-json/wp/v2/shows?per_page=100`, create the term if absent), `_WP_SHOW_SLUGS[name]` (episode slug prefix, post slug = `<prefix>-ddmmyy`), `_WP_FEATURED_IMAGES[name]` (media id) and `_WP_SHOW_ART_URLS[name]` (picture URL for the homepage widget). `name` must match `SHOW_SCHEDULE` exactly.
 4. Per-host episode slug (e.g. `forte-eran-DDMMYYYY`): `_WP_SLUG_BY_HOST[(name, broadcaster)] = (prefix, strftime_format)`. `_WP_BROADCASTER_IDS[host]` = WP broadcaster term id.
-5. Hosts that share a name with another host: add the new key to `AUTO_RERUN_EXCLUDED`, otherwise an empty slot is filled with the latest episode of the same NAME by another host.
+5. Hosts that share a name with another host: add the new key to `AUTO_RERUN_EXCLUDED`, otherwise an empty slot is filled with a random past episode of the same NAME, possibly by another host.
 6. `templates/show_form.html`: if the show has no episode numbers (Forte), add the key to the list that hides that field.
 7. Picture: upload to WP media (`POST /wp-json/wp/v2/media`, Basic auth with the app password that sits in the `zerock-radio-web` service environment: `systemctl show zerock-radio-web -p Environment`, never print it). Use an ASCII filename; set title/alt text. Put the returned id and `source_url` into the two picture dicts above.
 

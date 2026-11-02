@@ -5,7 +5,7 @@ This folder is the source of the radio server that runs on `rocky.kupernet.com`.
 
 **This repo is PUBLIC and auto-pushed to GitHub every 5 minutes (launchd `com.zerock.push`).**
 Never write passwords, API keys, app passwords or tokens into any file here, including this one.
-Credentials live in Claude's private memory (`project_deployment`), not in the tree.
+Known: some credentials ARE already hard-coded in tracked files here (`icecast.xml`, `rocky.liq`, `radio_app.py`). The owner decided on 2026-11-02 not to rotate or rewrite history, so do not add more and do not copy any into other files, logs or chat.
 
 ## What runs where
 | Host | Role |
@@ -41,8 +41,8 @@ Streams: main public stream is **https://rocky.kupernet.com/stream**. Also `http
 
 ## Show schedule facts
 - A show is an entry in `SHOW_SCHEDULE` (day 0=Mon..6=Sun, `time`, `upload_time`, `rerun_days_offset`, `rerun_time`, `wp_show_id`, optional `board_hidden`, `board_hidden_until`, `no_wp`).
-- **Queue entries in `schedule.json` override `SHOW_SCHEDULE`** on the board and keep their old times. After changing a show's time, move already-queued entries with `POST /api/schedule/<id>/reschedule {"new_time":"YYYY-MM-DDTHH:MM"}`. That API shifts upload time and the paired rerun but cannot change upload time alone (edit `schedule.json` for that).
-- Auto-rerun fills any slot without an upload with the latest Podbean episode of the same show NAME (any host). Add a show to `AUTO_RERUN_EXCLUDED` when that would air the wrong host. Hidden shows are never auto-filled.
+- **Queue entries in `schedule.json` override `SHOW_SCHEDULE`** on the board and keep their old times. After changing a show's time, move already-queued entries with `POST /api/schedule/<id>/reschedule {"new_time":"YYYY-MM-DDTHH:MM"}`. That API shifts the upload time but, as of 2026-11-02, does NOT shift the rerun (its `rerun_id` lookup never matches: nothing stores `rerun_id`); reschedule the rerun entry separately. A fix is in progress. It cannot change upload time alone (edit `schedule.json` for that).
+- Auto-rerun fills any slot without an upload with a RANDOM past Podbean episode of the same show NAME (any host); this is deliberate (`random_choice=True`), not "the latest". Add a show to `AUTO_RERUN_EXCLUDED` when that would air the wrong host. Hidden shows are never auto-filled.
 - Adding a show touches: `SHOW_SCHEDULE`, `_WP_SLUGS`, `_SHOW_DURATIONS_H`, `_WP_SHOW_IDS`, `_WP_FEATURED_IMAGES` (media id), `_WP_SHOW_ART_URLS` (homepage widget picture), `_WP_BROADCASTER_IDS`, optionally `_WP_SLUG_BY_HOST` for per-host episode slugs. The form is served at `/<show-slug>`.
 - Board changes (hiding, new times, CSS) need a restart plus `POST /api/wp-sync` (the restart helper does both).
 
@@ -58,5 +58,5 @@ Streams: main public stream is **https://rocky.kupernet.com/stream**. Also `http
 - Temp-file cleanup: only delete files in `shows/` or `/mnt/nas/Music/ZeRock_Temp` that no `schedule.json` entry references and are older than 14 days.
 
 ## Known open items
-- Secrets are hard-coded in deploy scripts, `rocky.liq` and local settings. Fix before any real version control.
+- Secrets are hard-coded in `icecast.xml`, `rocky.liq`, `radio_app.py` and local settings. Owner's decision 2026-11-02: no rotation, no private repo, no history rewrite.
 - radio-browser.info merge request !424 pending; TuneIn re-validation pending.
