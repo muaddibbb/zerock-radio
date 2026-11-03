@@ -34,6 +34,9 @@ FOOTER_TEXT = (
     "listeners, metadata-only players. Locations approximate. IP Geolocation by DB-IP."
 )
 
+OWN_LINE = ("Own network not excluded: own_public_ips is empty, so listeners behind the "
+            "station's own public address are counted.")
+
 GEO_ENTRIES = [
     ("203.0.113.0/25", "Israel", "Tel Aviv"),
     ("203.0.113.128/25", "Israel", None),
@@ -302,11 +305,11 @@ class WindowTests(BaseCase):
         self.assertFalse(os.path.exists(self.state))
 
     def test_force_bypasses_gate(self):
-        early = dt.datetime(2026, 11, 3, 20, 5, tzinfo=TZ).astimezone(UTC)
+        late = dt.datetime(2026, 11, 3, 22, 5, tzinfo=TZ).astimezone(UTC)  # hour 22: gate would skip
         send = FakeSend()
         with mock.patch("sys.stdout", new_callable=__import__("io").StringIO):
-            rc = lp.run_report(self.config("caddy_day1.jsonl"), END1, early, send, force=True)
-        # now (20:05) is the reference, newest line is 20:59:59: not stale, window start covered
+            rc = lp.run_report(self.config("caddy_day1.jsonl"), END1, late, send, force=True)
+        # window ended at 21:00 (a window that has not ended is refused), newest line 20:59:59
         self.assertEqual(rc, 0)
         self.assertEqual(len(send.calls), 1)
         self.assertIn("Sessions: 12", send.calls[0][0])
@@ -599,9 +602,12 @@ class ReportTextTests(BaseCase):
     def test_no_warning_at_7_days(self):
         conn = lp.open_state(self.state)
         with conn:
-            for day in range(26, 32):
+            for day in (27, 28, 29, 30, 31):
                 conn.execute("INSERT INTO windows(window_start_utc) VALUES(?)", (f"2026-10-{day}T19:00:00Z",))
+            conn.execute("INSERT INTO windows(window_start_utc) VALUES('2026-11-01T19:00:00Z')")
         conn.close()
+        with open(os.path.join(self.state, "salt"), "wb") as fh:
+            fh.write(b"s" * 32)
         _, send, _ = self.run_day(1)
         self.assertNotIn("HISTORY", send.calls[0][0])
         self.assertIn("Sessions: 12", send.calls[0][0])
@@ -622,6 +628,7 @@ class ReportTextTests(BaseCase):
             'HISTORY STARTS 2026-11-02 (1 of 7 days): "new" is overstated until 2026-11-09.',
             "--",
             FOOTER_TEXT,
+            OWN_LINE,
         ])
         self.assertEqual(send.calls[0][0], expected)
         self.assertEqual(send.calls[0][1], ["deliver", "wa"])
@@ -705,3 +712,267 @@ class PrivacyTests(BaseCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------- rework 1
+
+class RobustnessTests(BaseCase):
+    def entries(self):
+        return [log_entry(self.at(10 + i), f"203.0.113.{i + 1}") for i in range(40)]
+
+    def gz_log(self, truncate=0):
+        import gzip
+        cfg = self.custom_log(self.entries())
+        plain = os.path.join(self.logs, "custom.jsonl")
+        gz = os.path.join(self.logs, "custom.jsonl.gz")
+        with open(plain, "rb") as src, gzip.open(gz, "wb") as dst:
+            dst.write(src.read())
+        os.remove(plain)
+        if truncate:
+            with open(gz, "rb") as fh:
+                data = fh.read()
+            with open(gz, "wb") as fh:
+                fh.write(data[:-truncate])
+        self.touch(gz)
+        cfg["caddy_log_globs"] = [gz]
+        return cfg
+
+    def test_intact_gz_baseline(self):
+        rc, _, _ = self.run_day(1, cfg=self.gz_log())
+        self.assertEqual((rc, self.window_rows()[0]["sessions"]), (0, 40))
+
+    def test_truncated_gz_is_a_problem_not_a_lower_count(self):
+        send = FakeSend()
+        rc, _, _ = self.run_day(1, cfg=self.gz_log(truncate=40), send=send)
+        self.assertEqual(rc, 0)
+        text = send.calls[0][0]
+        self.assertIn("DATA SOURCE PROBLEM: log file unreadable: custom.jsonl.gz.", text)
+        self.assertNotIn("Sessions:", text)
+        self.assertEqual((self.count("windows"), self.count("sessions")), (0, 0))
+
+    def test_unreadable_file_is_a_problem(self):
+        cfg = self.custom_log(self.entries())
+        bad = os.path.join(self.logs, "broken.jsonl")
+        os.mkdir(bad)  # opening a directory as a file fails like a permission error
+        self.touch(bad)
+        cfg["caddy_log_globs"] = [os.path.join(self.logs, "*.jsonl")]
+        cfg["caddy_log_globs"].remove(cfg["caddy_log_globs"][0])
+        cfg["caddy_log_globs"] = [os.path.join(self.logs, "custom.jsonl"), bad]
+        send = FakeSend()
+        self.run_day(1, cfg=cfg, send=send)
+        self.assertIn("DATA SOURCE PROBLEM: log file unreadable: broken.jsonl.", send.calls[0][0])
+        self.assertEqual(self.count("windows"), 0)
+
+    def test_old_unreadable_file_still_reported(self):
+        # A file older than the window is skipped before opening; only a failure to stat is reported.
+        cfg = self.custom_log(self.entries())
+        dangling = os.path.join(self.logs, "gone.jsonl")
+        os.symlink(os.path.join(self.logs, "nowhere"), dangling)
+        cfg["caddy_log_globs"] = [os.path.join(self.logs, "custom.jsonl"), dangling]
+        send = FakeSend()
+        self.run_day(1, cfg=cfg, send=send)
+        self.assertIn("log file unreadable: nowhere", send.calls[0][0])
+
+    def test_future_window_refused(self):
+        early = dt.datetime(2026, 11, 3, 15, 0, tzinfo=TZ).astimezone(UTC)
+        send = FakeSend()
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO), \
+                mock.patch("sys.stderr", new_callable=__import__("io").StringIO) as err:
+            rc = lp.run_report(self.config("caddy_day1.jsonl"), END1, early, send, force=True)
+        self.assertNotEqual(rc, 0)
+        self.assertEqual(send.calls, [])
+        self.assertIn("has not ended", err.getvalue())
+        self.assertFalse(os.path.exists(self.state))
+
+    def test_future_window_dry_run_says_incomplete(self):
+        early = dt.datetime(2026, 11, 3, 15, 0, tzinfo=TZ).astimezone(UTC)
+        send = FakeSend()
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as out:
+            rc = lp.run_report(self.config("caddy_day1.jsonl"), END1, early, send, force=True, dry_run=True)
+        self.assertEqual((rc, send.calls), (0, []))
+        self.assertIn("INCOMPLETE WINDOW", out.getvalue())
+        self.assertFalse(os.path.exists(self.state))
+
+    def seed_history(self, days, salt=True):
+        conn = lp.open_state(self.state)
+        with conn:
+            for day in days:
+                conn.execute("INSERT INTO windows(window_start_utc) VALUES(?)",
+                             (day.strftime("%Y-%m-%dT19:00:00Z"),))
+        conn.close()
+        if salt:
+            with open(os.path.join(self.state, "salt"), "wb") as fh:
+                fh.write(b"s" * 32)
+
+    def test_gap_days_named_in_history_warning(self):
+        day = dt.date(2026, 10, 27)
+        self.seed_history([day + dt.timedelta(days=n) for n in (0, 1, 2, 5)])  # 10-30, 10-31 missing...
+        _, send, _ = self.run_day(1)
+        text = send.calls[0][0]
+        self.assertIn("MISSING DAYS: 2026-10-30, 2026-10-31, 2026-11-01 (no stored report):", text)
+        self.assertIn('"new" may be overstated.', text)
+
+    def test_no_gap_line_when_contiguous(self):
+        self.seed_history([dt.date(2026, 11, 1)])
+        _, send, _ = self.run_day(1)
+        self.assertNotIn("MISSING", send.calls[0][0])
+
+    def test_missing_salt_with_history_is_a_problem(self):
+        self.run_day(1)
+        os.remove(os.path.join(self.state, "salt"))
+        send = FakeSend()
+        rc, _, _ = self.run_day(2, send=send)
+        self.assertEqual(rc, 0)
+        self.assertIn("DATA SOURCE PROBLEM: salt file missing while history exists", send.calls[0][0])
+        self.assertNotIn("Sessions:", send.calls[0][0])
+        self.assertFalse(os.path.exists(os.path.join(self.state, "salt")))
+        self.assertEqual(self.count("windows"), 1)
+
+    def test_missing_salt_dry_run_reports_not_comparable(self):
+        self.run_day(1)
+        os.remove(os.path.join(self.state, "salt"))
+        rc, send, out = self.run_day(2, dry_run=True)
+        self.assertEqual((rc, send.calls), (0, []))
+        self.assertIn("not comparable", out)
+        self.assertFalse(os.path.exists(os.path.join(self.state, "salt")))
+
+    def test_empty_salt_file_is_a_problem(self):
+        os.makedirs(self.state, mode=0o700)
+        open(os.path.join(self.state, "salt"), "wb").close()
+        rc, send, _ = self.run_day(1)
+        self.assertEqual(rc, 0)
+        self.assertIn("DATA SOURCE PROBLEM: salt file empty", send.calls[0][0])
+        self.assertEqual(os.path.getsize(os.path.join(self.state, "salt")), 0)
+        self.assertEqual(self.count("windows"), 0)
+
+    def test_fresh_state_creates_salt(self):
+        self.run_day(1)
+        self.assertEqual(len(slurp(os.path.join(self.state, "salt"))), 32)
+
+    def window_text(self, end_local, count_hours):
+        start_local, end = lp.compute_window(end_local, TZ)
+        stamps = [start_local - dt.timedelta(minutes=1), start_local,
+                  start_local + dt.timedelta(hours=5), end - dt.timedelta(seconds=1), end,
+                  end + dt.timedelta(minutes=5)]
+        entries = [log_entry(w.astimezone(UTC), f"203.0.113.{i + 1}") for i, w in enumerate(stamps)]
+        entries.append(log_entry((start_local - dt.timedelta(minutes=2)).astimezone(UTC),
+                                 "198.51.100.1", method="HEAD"))
+        entries.append(log_entry((end + dt.timedelta(minutes=10)).astimezone(UTC),
+                                 "198.51.100.1", method="HEAD"))
+        path = os.path.join(self.logs, "dst.jsonl")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(json.dumps(r) for r in entries) + "\n")
+        self.touch(path)
+        cfg = self.config("dst.jsonl")
+        now = (end + dt.timedelta(minutes=15)).astimezone(UTC)
+        send = FakeSend()
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO):
+            rc = lp.run_report(cfg, end_local, now, send, force=True)
+        self.assertEqual(rc, 0)
+        return send.calls[0][0]
+
+    def test_dst_days_count_only_inside_window(self):
+        for end, hours in ((dt.datetime(2026, 3, 27, 21, 0), 23), (dt.datetime(2026, 10, 25, 21, 0), 25)):
+            with self.subTest(hours=hours):
+                shutil.rmtree(self.state, ignore_errors=True)
+                text = self.window_text(end, hours)
+                self.assertIn(f", {hours} h)", text)
+                self.assertIn("Sessions: 3\n", text)  # start (inclusive), mid, last second; not end
+
+    def test_truncated_mmdb_never_crashes(self):
+        blob = build_mmdb(GEO_ENTRIES)
+        for cut in (1, 10, 30, len(blob) // 2, len(blob) - 5, len(blob) - 60):
+            path = os.path.join(self.tmp, f"cut{cut}.mmdb")
+            with open(path, "wb") as fh:
+                fh.write(blob[:cut])
+            try:
+                reader = MmdbReader(path)
+            except ValueError:
+                continue
+            try:
+                for ip in ("203.0.113.7", "192.0.2.5", "2001:db8::1"):
+                    try:
+                        reader.lookup(ip)
+                    except ValueError:
+                        pass
+            finally:
+                reader.close()
+            _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=path), resend=True)
+            self.assertIn("Sessions: 12", send.calls[0][0])
+
+    def hostile(self, data_prefix, fill):
+        blob = bytearray(build_mmdb(GEO_ENTRIES))
+        probe_path = os.path.join(self.tmp, "probe.mmdb")
+        with open(probe_path, "wb") as fh:
+            fh.write(bytes(blob))
+        probe = MmdbReader(probe_path)
+        start, meta = probe._data_start, bytes(blob).rfind(b"\xab\xcdMaxMind.com".replace(b"\xcd", b"\xcd\xef"))
+        probe.close()
+        body = (data_prefix + fill * ((meta - start) // len(fill) + 1))[:meta - start]
+        blob[start:meta] = body
+        path = os.path.join(self.tmp, "hostile.mmdb")
+        with open(path, "wb") as fh:
+            fh.write(bytes(blob))
+        return path
+
+    def check_hostile(self, path):
+        reader = MmdbReader(path)
+        try:
+            for ip in ("203.0.113.7", "203.0.113.200", "192.0.2.5", "2001:db8::1"):
+                try:
+                    reader.lookup(ip)
+                except ValueError:
+                    pass
+        finally:
+            reader.close()
+        _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=path))
+        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertIn("Unique listeners: 9", send.calls[0][0])
+
+    def test_hostile_mmdb_pointer_loop(self):
+        self.check_hostile(self.hostile(b"", b"\x20\x00"))
+
+    def test_hostile_mmdb_huge_map(self):
+        self.check_hostile(self.hostile(b"\xff\xff\xff\xff", b"\x00"))
+
+    def test_duplicate_glob_paths_count_once(self):
+        cfg = self.custom_log([log_entry(self.at(10), "203.0.113.7")])
+        os.symlink(os.path.join(self.logs, "custom.jsonl"), os.path.join(self.logs, "custom_link.jsonl"))
+        cfg["caddy_log_globs"] = [os.path.join(self.logs, "custom.jsonl"),
+                                  os.path.join(self.logs, "custom_link.jsonl"),
+                                  os.path.join(self.logs, "custom*.jsonl")]
+        self.run_day(1, cfg=cfg)
+        self.assertEqual(self.window_rows()[0]["sessions"], 1)
+        self.assertEqual(self.count("sessions"), 1)
+
+    def test_run_lock_busy_does_nothing(self):
+        import fcntl
+        os.makedirs(self.state, mode=0o700)
+        fd = os.open(os.path.join(self.state, "run.lock"), os.O_WRONLY | os.O_CREAT, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            rc, send, out = self.run_day(1)
+        finally:
+            os.close(fd)
+        self.assertEqual((rc, send.calls), (0, []))
+        self.assertIn("another run is in progress", out)
+        self.assertFalse(os.path.exists(os.path.join(self.state, "state.db")))
+        rc, send, _ = self.run_day(1)
+        self.assertEqual(len(send.calls), 1)
+
+    def test_sent_at_uses_injected_clock(self):
+        self.run_day(1)
+        self.assertEqual(self.window_rows()[0]["sent_at_utc"], lp.utc_iso(NOW1))
+
+    def test_own_network_line_only_when_not_configured(self):
+        _, send, _ = self.run_day(1)
+        self.assertTrue(send.calls[0][0].endswith(OWN_LINE))
+        cfg = self.config("caddy_day1.jsonl", own_public_ips=["198.51.100.99"])
+        _, send, _ = self.run_day(1, cfg=cfg, resend=True)
+        self.assertNotIn("Own network not excluded", send.calls[0][0])
+
+    def test_narrow_bot_markers(self):
+        for ua in ("RoboticBotanist/1.0 (phone app)", "MyUptimeRadio/2"):
+            self.assertFalse(lp.is_bot(ua), ua)
+        for ua in ("Mozilla/5.0 (compatible; Googlebot/2.1)", "UptimeRobot/2.0", "Amazonbot/0.1"):
+            self.assertTrue(lp.is_bot(ua), ua)

@@ -11,7 +11,9 @@ HMAC device hashes plus country/city names.
 import argparse
 import base64
 import collections
+import contextlib
 import datetime as dt
+import fcntl
 import glob
 import gzip
 import hashlib
@@ -32,7 +34,9 @@ from mmdb_reader import MmdbReader
 BOT_MARKERS = (
     "amazonbot", "amplitudeairplaymonitor", "meta-externalagent", "curl/", "lavf/",
     "tunein-dirmon", "infrawatch", "censysinspect", "python-requests", "go-http-client",
-    "zgrab", "masscan", "nmap", "bot", "crawler", "spider", "uptime",
+    "zgrab", "masscan", "nmap", "crawler", "spider",
+    "googlebot", "bingbot", "yandexbot", "semrushbot", "ahrefsbot", "petalbot", "mj12bot",
+    "dotbot", "applebot", "uptimerobot", "uptime-kuma",
 )
 
 INTERNAL_NETWORKS = tuple(ipaddress.ip_network(n) for n in (
@@ -59,6 +63,14 @@ FOOTER = (
     "connections still open at 21:00 count in the next report. Not counted: icecast.live relay "
     "listeners, metadata-only players. Locations approximate. IP Geolocation by DB-IP."
 )
+
+OWN_NETWORK_LINE = ("Own network not excluded: own_public_ips is empty, so listeners behind the "
+                    "station's own public address are counted.")
+
+
+class SaltProblem(Exception):
+    """The device-hash salt cannot be used safely; the message is the data-source problem."""
+
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS windows(
@@ -215,10 +227,10 @@ def _english_name(node):
 
 def scan_logs(cfg, start_ts, end_ts, salt, reader):
     scan = {"files": 0, "unparsed": 0, "parsed": 0, "min_ts": None, "max_ts": None,
-            "internal": 0, "bot": 0, "no_ip": 0, "sessions": []}
+            "internal": 0, "bot": 0, "no_ip": 0, "sessions": [], "errors": []}
     paths = set()
     for pattern in cfg["caddy_log_globs"]:
-        paths.update(glob.glob(pattern))
+        paths.update(os.path.realpath(p) for p in glob.glob(pattern))
     for path in sorted(paths):
         try:
             if os.path.getmtime(path) < start_ts:
@@ -230,7 +242,8 @@ def scan_logs(cfg, start_ts, end_ts, salt, reader):
                 for line in fh:
                     _scan_line(line, cfg, start_ts, end_ts, salt, reader, scan)
         except (OSError, EOFError, zlib.error):
-            continue
+            # Unreadable or truncated: counts would be too low. Never hide it.
+            scan["errors"].append(os.path.basename(path))
     return scan
 
 
@@ -273,6 +286,8 @@ def _scan_line(line, cfg, start_ts, end_ts, salt, reader, scan):
 
 
 def coverage_problem(scan, start_ts, reference_ts, stale_seconds):
+    if scan["errors"]:
+        return "log file unreadable: " + ", ".join(scan["errors"])
     if scan["files"] == 0:
         return "missing"
     if scan["parsed"] == 0:
@@ -291,16 +306,26 @@ def ensure_state_dir(state_dir):
     os.chmod(state_dir, 0o700)
 
 
-def load_salt(state_dir, create):
-    """Return the salt bytes. When absent: create it (mode 0600) or, if create is False, use a throwaway one."""
+def load_salt(state_dir, create, has_history=False):
+    """Return the salt bytes.
+
+    An empty salt file, or a missing salt while history exists, raises SaltProblem: a new salt
+    would silently make every device "new". A missing salt with no history is created (mode
+    0600) or, if create is False, replaced by a throwaway one.
+    """
     path = os.path.join(state_dir, "salt")
     try:
         with open(path, "rb") as fh:
             data = fh.read()
         if data:
             return data
+        raise SaltProblem("salt file empty")
     except FileNotFoundError:
         pass
+    except OSError:
+        raise SaltProblem("salt file unreadable")
+    if has_history:
+        raise SaltProblem("salt file missing while history exists, new/returning not comparable")
     fresh = os.urandom(32)
     if not create:
         return fresh
@@ -329,6 +354,22 @@ def open_state_readonly(state_dir):
         return conn
     except sqlite3.Error:
         return None
+
+
+@contextlib.contextmanager
+def run_lock(state_dir):
+    """Exclusive non-blocking lock on state_dir/run.lock. Yields True when held, False when busy."""
+    ensure_state_dir(state_dir)
+    fd = os.open(os.path.join(state_dir, "run.lock"), os.O_WRONLY | os.O_CREAT, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            yield False
+            return
+        yield True
+    finally:
+        os.close(fd)  # closing releases the lock
 
 
 def log_failure(state_dir, now_utc, start_iso, kind, rc):
@@ -377,16 +418,30 @@ def render_problem(header, reason):
 
 def history_line(stored_starts, start_iso, tz):
     starts = set(stored_starts) | {start_iso}
-    if len(starts) >= HISTORY_DAYS:
-        return None
-    first = dt.datetime.strptime(min(starts), "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
-    first_day = first.astimezone(tz).date()
-    until = first_day + dt.timedelta(days=HISTORY_DAYS)
-    return (f"HISTORY STARTS {first_day:%Y-%m-%d} ({len(starts)} of {HISTORY_DAYS} days): "
-            f'"new" is overstated until {until:%Y-%m-%d}.')
+
+    def local_day(iso):
+        when = dt.datetime.strptime(iso, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=dt.timezone.utc)
+        return when.astimezone(tz).date()
+
+    days = {local_day(iso) for iso in starts}
+    first_day, today = min(days), local_day(start_iso)
+    lines = []
+    if len(starts) < HISTORY_DAYS:
+        until = first_day + dt.timedelta(days=HISTORY_DAYS)
+        lines.append(f"HISTORY STARTS {first_day:%Y-%m-%d} ({len(starts)} of {HISTORY_DAYS} days): "
+                     f'"new" is overstated until {until:%Y-%m-%d}.')
+    day = max(first_day, today - dt.timedelta(days=HISTORY_DAYS - 1))
+    missing = []
+    while day < today:
+        if day not in days:
+            missing.append(f"{day:%Y-%m-%d}")
+        day += dt.timedelta(days=1)
+    if missing:
+        lines.append(f'MISSING DAYS: {", ".join(missing)} (no stored report): "new" may be overstated.')
+    return "\n".join(lines) or None
 
 
-def render_report(header, res, history):
+def render_report(header, res, history, own_excluded=True):
     lines = [
         header,
         f"Sessions: {res['sessions']}",
@@ -407,6 +462,8 @@ def render_report(header, res, history):
         lines.append(history)
     lines.append("--")
     lines.append(FOOTER)
+    if not own_excluded:
+        lines.append(OWN_NETWORK_LINE)
     return "\n".join(lines)
 
 
@@ -433,12 +490,30 @@ def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=Fa
     tz = ZoneInfo(cfg["timezone"])
     if not force and now_utc.astimezone(tz).hour != cfg["report_hour"]:
         return 0
+    _, end_local = compute_window(window_end_local, tz)
+    if end_local.astimezone(dt.timezone.utc) > now_utc and not dry_run:
+        print("refused: the window has not ended yet; nothing stored or sent", file=sys.stderr)
+        return 3
+    if dry_run:
+        return _run_window(cfg, window_end_local, now_utc, send, dry_run, resend)
+    with run_lock(cfg["state_dir"]) as held:
+        if not held:
+            print("another run is in progress; nothing done")
+            return 0
+        return _run_window(cfg, window_end_local, now_utc, send, dry_run, resend)
+
+
+def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend):
+    tz = ZoneInfo(cfg["timezone"])
     start_local, end_local = compute_window(window_end_local, tz)
     start_utc = start_local.astimezone(dt.timezone.utc)
     end_utc = end_local.astimezone(dt.timezone.utc)
     start_iso, end_iso = utc_iso(start_utc), utc_iso(end_utc)
     state_dir = cfg["state_dir"]
     header = render_header(start_local, end_local, cfg["timezone"])
+    if end_utc > now_utc:  # reachable only in dry-run
+        header += ("\nINCOMPLETE WINDOW: it ends after the current time, so counts cover only part "
+                   "of it. Dry-run only: never stored, never sent.")
 
     conn = open_state_readonly(state_dir) if dry_run else open_state(state_dir)
     try:
@@ -449,7 +524,14 @@ def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=Fa
                 print("already sent")
                 return 0
 
-        salt = load_salt(state_dir, create=not dry_run)
+        try:
+            has_history = conn is not None and bool(
+                conn.execute("SELECT 1 FROM windows LIMIT 1").fetchone()
+                or conn.execute("SELECT 1 FROM sessions LIMIT 1").fetchone())
+            salt = load_salt(state_dir, create=not dry_run, has_history=has_history)
+        except SaltProblem as exc:
+            return _handle_problem(cfg, conn, header, str(exc), start_iso, now_utc, send,
+                                   dry_run, resend)
         reader, geo_status, geo_month = None, "ok", ""
         if not cfg["mmdb_path"]:
             geo_status = "unavailable (not configured)"
@@ -478,7 +560,8 @@ def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=Fa
 
         res = _summarize(scan, conn, start_iso, geo_status)
         stored = [r[0] for r in conn.execute("SELECT window_start_utc FROM windows")] if conn else []
-        text = render_report(header, res, history_line(stored, start_iso, tz))
+        text = render_report(header, res, history_line(stored, start_iso, tz),
+                           own_excluded=bool(cfg["own_public_ips"]))
         if dry_run:
             print(text)
             return 0
@@ -503,7 +586,7 @@ def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=Fa
             return 2
         with conn:
             conn.execute("UPDATE windows SET sent_at_utc=? WHERE window_start_utc=?",
-                         (utc_iso(dt.datetime.now(dt.timezone.utc)), start_iso))
+                         (utc_iso(now_utc), start_iso))
         print("report sent")
         return 0
     finally:
@@ -549,7 +632,7 @@ def _handle_problem(cfg, conn, header, reason, start_iso, now_utc, send, dry_run
         return 2
     with conn:
         conn.execute("INSERT OR REPLACE INTO notices VALUES(?,?,?)",
-                     (start_iso, reason, utc_iso(dt.datetime.now(dt.timezone.utc))))
+                     (start_iso, reason, utc_iso(now_utc)))
     print("problem notice sent")
     return 0
 
