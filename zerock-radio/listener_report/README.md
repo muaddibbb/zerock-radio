@@ -62,6 +62,8 @@ python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03
 python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03T21:00 --force --resend
 ```
 
+- Run it as `python3 /path/listener_report.py`. Do NOT use `python3 -I`: isolated mode cannot
+  import the sibling `mmdb_reader`.
 - `--dry-run` prints the report and writes and sends nothing (it reads existing history).
 - `--force` skips the hour-21 gate. `--window-end` is Jerusalem local time.
 - `--resend` rebuilds that window from the log and sends it again. Re-running a window never

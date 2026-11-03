@@ -92,11 +92,14 @@ CREATE TABLE IF NOT EXISTS notices(
 
 def parse_ip(value):
     """Parse an address string; IPv4-mapped IPv6 becomes IPv4. None when unusable."""
-    if not isinstance(value, str):
-        return None
-    try:
-        ip = ipaddress.ip_address(value.strip())
-    except ValueError:
+    if isinstance(value, (ipaddress.IPv4Address, ipaddress.IPv6Address)):
+        ip = value
+    elif isinstance(value, str):
+        try:
+            ip = ipaddress.ip_address(value.strip())
+        except ValueError:
+            return None
+    else:
         return None
     if ip.version == 6 and ip.ipv4_mapped is not None:
         return ip.ipv4_mapped

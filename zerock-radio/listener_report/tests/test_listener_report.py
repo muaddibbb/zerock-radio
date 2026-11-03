@@ -974,3 +974,84 @@ class RobustnessTests(BaseCase):
             self.assertFalse(lp.is_bot(ua), ua)
         for ua in ("Mozilla/5.0 (compatible; Googlebot/2.1)", "UptimeRobot/2.0", "Amazonbot/0.1"):
             self.assertTrue(lp.is_bot(ua), ua)
+
+
+# ---------------------------------------------------------------- real entry path (load_config / main)
+
+class FakeClockDt:
+    """Stand-in for the dt module inside listener_report, with a fixed 'now'."""
+
+    def __init__(self, now):
+        ns = dict(vars(dt))
+
+        class FixedDatetime(dt.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return now.astimezone(tz) if tz else now.replace(tzinfo=None)
+
+        ns["datetime"] = FixedDatetime
+        self.__dict__.update(ns)
+
+
+class RealPathTests(BaseCase):
+    def write_cfg(self, **overrides):
+        cfg = {"caddy_log_globs": [os.path.join(self.logs, "caddy_day1.jsonl")],
+               "site_host": "rocky.kupernet.com", "state_dir": self.state, "mmdb_path": "",
+               "own_public_ips": [], "stale_after_minutes": 30, "timezone": "Asia/Jerusalem",
+               "report_hour": 21, "delivery_argv": ["deliver", "wa"]}
+        cfg.update(overrides)
+        path = os.path.join(self.tmp, "config.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(cfg, fh)
+        return path
+
+    def main_dry(self, cfg_path):
+        argv = ["--config", cfg_path, "--window-end", "2026-11-03T21:00", "--force", "--dry-run"]
+        send = FakeSend()
+        with mock.patch.object(lp, "dt", FakeClockDt(NOW1)), \
+                mock.patch.object(lp, "send_via_command", send), \
+                mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as out:
+            rc = lp.main(argv)
+        return rc, send, out.getvalue()
+
+    def test_parse_ip_accepts_address_objects(self):
+        self.assertEqual(lp.parse_ip(ipaddress.ip_address("203.0.113.5")), ipaddress.ip_address("203.0.113.5"))
+        self.assertEqual(lp.parse_ip(ipaddress.ip_address("::ffff:203.0.113.5")),
+                         ipaddress.ip_address("203.0.113.5"))
+        self.assertIsNone(lp.parse_ip(5))
+
+    def test_normalize_config_idempotent(self):
+        once = lp.normalize_config({"caddy_log_globs": ["x"], "state_dir": "y",
+                                    "own_public_ips": ["203.0.113.5", "2001:db8::1"]})
+        twice = lp.normalize_config(once)
+        self.assertEqual(once["own_public_ips"], twice["own_public_ips"])
+
+    def test_load_config_ipv4_ipv6(self):
+        cfg = lp.load_config(self.write_cfg(own_public_ips=["203.0.113.5", "2001:db8::1"]))
+        self.assertEqual(cfg["own_public_ips"],
+                         [ipaddress.ip_address("203.0.113.5"), ipaddress.ip_address("2001:db8::1")])
+
+    def test_load_config_invalid_entry_raises(self):
+        with self.assertRaisesRegex(ValueError, "invalid entry in own_public_ips"):
+            lp.load_config(self.write_cfg(own_public_ips=["203.0.113.5", "not-an-ip"]))
+
+    def test_main_dry_run_with_own_ip_excludes_and_writes_nothing(self):
+        rc, send, base = self.main_dry(self.write_cfg())
+        self.assertEqual(rc, 0)
+        self.assertIn("Own network not excluded", base)
+        m = re.search(r"Excluded internal \(own systems, own network\): (\d+)", base)
+        self.assertIsNotNone(m)
+        rc, send, text = self.main_dry(self.write_cfg(own_public_ips=["198.51.100.20"]))
+        self.assertEqual(rc, 0)
+        self.assertNotIn("Own network not excluded", text)
+        m2 = re.search(r"Excluded internal \(own systems, own network\): (\d+)", text)
+        self.assertGreater(int(m2.group(1)), int(m.group(1)))
+        self.assertEqual(send.calls, [])
+        self.assertFalse(os.path.exists(self.state))
+
+    def test_main_full_production_keys_dry_run_never_sends(self):
+        path = self.write_cfg(own_public_ips=["203.0.113.5"])
+        rc, send, text = self.main_dry(path)
+        self.assertEqual(rc, 0)
+        self.assertIn("Window: 2026-11-02 21:00 -> 2026-11-03 21:00", text)
+        self.assertEqual(send.calls, [])
