@@ -1,0 +1,707 @@
+"""Tests for the daily listeners report. No network, no real state, no real delivery."""
+import datetime as dt
+import ipaddress
+import json
+import os
+import re
+import shutil
+import sqlite3
+import struct
+import sys
+import tempfile
+import unittest
+from unittest import mock
+from zoneinfo import ZoneInfo
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import listener_report as lp  # noqa: E402
+from mmdb_reader import MmdbReader  # noqa: E402
+
+FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+TZ = ZoneInfo("Asia/Jerusalem")
+UTC = dt.timezone.utc
+END1 = dt.datetime(2026, 11, 3, 21, 0)
+END2 = dt.datetime(2026, 11, 4, 21, 0)
+NOW1 = dt.datetime(2026, 11, 3, 21, 5, tzinfo=TZ).astimezone(UTC)
+NOW2 = dt.datetime(2026, 11, 4, 21, 5, tzinfo=TZ).astimezone(UTC)
+START1 = dt.datetime(2026, 11, 2, 21, 0, tzinfo=TZ)
+
+FOOTER_TEXT = (
+    "Listener = IP + app/device type, not a person. One person on two devices counts twice; "
+    "a new IP counts as new. Session = one finished connection to rocky.kupernet.com/stream; "
+    "connections still open at 21:00 count in the next report. Not counted: icecast.live relay "
+    "listeners, metadata-only players. Locations approximate. IP Geolocation by DB-IP."
+)
+
+GEO_ENTRIES = [
+    ("203.0.113.0/25", "Israel", "Tel Aviv"),
+    ("203.0.113.128/25", "Israel", None),
+    ("192.0.2.0/24", "United States", "New York"),
+    ("2001:db8::/32", "Germany", "Berlin"),
+]
+BUILD_EPOCH = int(dt.datetime(2026, 10, 15, tzinfo=UTC).timestamp())
+
+
+# ---------------------------------------------------------------- synthetic mmdb writer
+
+class Ptr:
+    def __init__(self, offset):
+        self.offset = offset
+
+
+class U16:
+    def __init__(self, value):
+        self.value = value
+
+
+class U64:
+    def __init__(self, value):
+        self.value = value
+
+
+class Dbl:
+    def __init__(self, value):
+        self.value = value
+
+
+def _ctrl(ftype, size):
+    if size < 29:
+        sz, extra = size, b""
+    elif size < 285:
+        sz, extra = 29, bytes([size - 29])
+    elif size < 65821:
+        sz, extra = 30, (size - 285).to_bytes(2, "big")
+    else:
+        sz, extra = 31, (size - 65821).to_bytes(3, "big")
+    if ftype <= 7:
+        return bytes([(ftype << 5) | sz]) + extra
+    return bytes([sz, ftype - 7]) + extra
+
+
+def _uint(ftype, value):
+    raw = value.to_bytes(max(1, (value.bit_length() + 7) // 8), "big")
+    return _ctrl(ftype, len(raw)) + raw
+
+
+def encode(value):
+    if isinstance(value, Ptr):
+        if value.offset < 2048:
+            return bytes([0x20 | (value.offset >> 8), value.offset & 0xFF])
+        p = value.offset - 2048
+        return bytes([0x20 | 0x08 | (p >> 16)]) + (p & 0xFFFF).to_bytes(2, "big")
+    if isinstance(value, bool):
+        return _ctrl(14, int(value))
+    if isinstance(value, str):
+        raw = value.encode("utf-8")
+        return _ctrl(2, len(raw)) + raw
+    if isinstance(value, U16):
+        return _uint(5, value.value)
+    if isinstance(value, U64):
+        return _uint(9, value.value)
+    if isinstance(value, int):
+        return _uint(6, value)
+    if isinstance(value, Dbl):
+        return _ctrl(3, 8) + struct.pack(">d", value.value)
+    if isinstance(value, list):
+        return _ctrl(11, len(value)) + b"".join(encode(v) for v in value)
+    if isinstance(value, dict):
+        return _ctrl(7, len(value)) + b"".join(encode(k) + encode(v) for k, v in value.items())
+    raise TypeError(type(value))
+
+
+def build_mmdb(entries, record_size=24, ip_version=6):
+    data = bytearray()
+    names = {}
+
+    def intern(value):
+        offset = len(data)
+        data.extend(encode(value))
+        return offset
+
+    nodes = [[None, None]]
+    for net_text, country, city in entries:
+        net = ipaddress.ip_network(net_text)
+        names_for = {}
+        for label, name in (("country", country), ("city", city)):
+            if name is None:
+                continue
+            if name not in names:
+                names[name] = Ptr(intern({"en": name, "de": name}))
+            names_for[label] = {"names": names[name]}
+        names_for["location"] = {"latitude": Dbl(32.08), "accuracy_radius": U16(50)}
+        names_for["is_in_european_union"] = False
+        offset = intern(names_for)
+        bits = []
+        for byte in net.network_address.packed:
+            bits.extend((byte >> (7 - i)) & 1 for i in range(8))
+        bits = bits[:net.prefixlen]
+        if ip_version == 6 and net.version == 4:
+            bits = [0] * 96 + bits
+        node = 0
+        for i, bit in enumerate(bits):
+            if i == len(bits) - 1:
+                nodes[node][bit] = ("d", offset)
+                break
+            nxt = nodes[node][bit]
+            if nxt is None:
+                nodes.append([None, None])
+                nxt = len(nodes) - 1
+                nodes[node][bit] = nxt
+            node = nxt
+    count = len(nodes)
+
+    def value_of(child):
+        if child is None:
+            return count
+        if isinstance(child, int):
+            return child
+        return count + 16 + child[1]
+
+    tree = bytearray()
+    for left, right in nodes:
+        lv, rv = value_of(left), value_of(right)
+        if record_size == 24:
+            tree.extend(lv.to_bytes(3, "big") + rv.to_bytes(3, "big"))
+        elif record_size == 32:
+            tree.extend(lv.to_bytes(4, "big") + rv.to_bytes(4, "big"))
+        else:
+            tree.extend((lv & 0xFFFFFF).to_bytes(3, "big")
+                        + bytes([((lv >> 24) << 4) | (rv >> 24)])
+                        + (rv & 0xFFFFFF).to_bytes(3, "big"))
+    meta = {
+        "binary_format_major_version": U16(2), "binary_format_minor_version": U16(0),
+        "build_epoch": U64(BUILD_EPOCH), "database_type": "Synthetic",
+        "description": {"en": "synthetic test database"}, "ip_version": U16(ip_version),
+        "languages": ["en"], "node_count": count, "record_size": U16(record_size),
+    }
+    return bytes(tree) + b"\x00" * 16 + bytes(data) + b"\xab\xcd\xefMaxMind.com" + encode(meta)
+
+
+# ---------------------------------------------------------------- helpers
+
+class FakeSend:
+    def __init__(self, rc=0):
+        self.rc = rc
+        self.calls = []
+
+    def __call__(self, text, argv):
+        self.calls.append((text, list(argv)))
+        return self.rc
+
+
+def slurp(path, mode="rb"):
+    with open(path, mode, **({} if "b" in mode else {"encoding": "utf-8"})) as fh:
+        return fh.read()
+
+
+def parse_counts(line):
+    result = {}
+    for part in line.split(": ", 1)[1].split(", "):
+        name, count = part.rsplit(" ", 1)
+        result[name] = int(count)
+    return result
+
+
+def log_entry(when, ip, ua="Mozilla/5.0 Test", method="GET", uri="/stream", status=200):
+    req = {"method": method, "host": "rocky.kupernet.com", "uri": uri,
+           "headers": {"User-Agent": [ua]}, "remote_ip": ip}
+    return {"ts": when.timestamp(), "request": req, "status": status}
+
+
+class BaseCase(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="lr-test-")
+        self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
+        patcher = mock.patch.object(lp.subprocess, "run",
+                                    side_effect=AssertionError("tests must never run a command"))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.logs = os.path.join(self.tmp, "logs")
+        os.makedirs(self.logs)
+        for name in ("caddy_day1.jsonl", "caddy_day2.jsonl"):
+            target = os.path.join(self.logs, name)
+            shutil.copy(os.path.join(FIXTURES, name), target)
+            self.touch(target)
+        self.mmdb = os.path.join(self.tmp, "geo.mmdb")
+        with open(self.mmdb, "wb") as fh:
+            fh.write(build_mmdb(GEO_ENTRIES))
+        self.state = os.path.join(self.tmp, "state")
+
+    @staticmethod
+    def touch(path):
+        stamp = dt.datetime(2026, 11, 20, tzinfo=UTC).timestamp()
+        os.utime(path, (stamp, stamp))
+
+    def config(self, glob_name, **overrides):
+        cfg = {"caddy_log_globs": [os.path.join(self.logs, glob_name)], "state_dir": self.state,
+               "mmdb_path": self.mmdb, "own_public_ips": [], "delivery_argv": ["deliver", "wa"]}
+        cfg.update(overrides)
+        return cfg
+
+    def run_day(self, day, send=None, cfg=None, **kwargs):
+        send = send if send is not None else FakeSend()
+        cfg = cfg or self.config(f"caddy_day{day}.jsonl")
+        end, now = (END1, NOW1) if day == 1 else (END2, NOW2)
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as out:
+            rc = lp.run_report(cfg, end, now, send, **kwargs)
+        return rc, send, out.getvalue()
+
+    def window_rows(self):
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.row_factory = sqlite3.Row
+        try:
+            return [dict(r) for r in conn.execute("SELECT * FROM windows ORDER BY window_start_utc")]
+        finally:
+            conn.close()
+
+    def count(self, table):
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        try:
+            return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        finally:
+            conn.close()
+
+    def custom_log(self, entries, anchors=True):
+        """Write a log with the given entries plus ignored HEAD anchors covering the whole window."""
+        end = dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ)
+        rows = list(entries)
+        if anchors:
+            rows.append(log_entry(START1, "198.51.100.1", method="HEAD"))
+            rows.append(log_entry(end - dt.timedelta(seconds=60), "198.51.100.1", method="HEAD"))
+        path = os.path.join(self.logs, "custom.jsonl")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(json.dumps(r) for r in rows) + "\n")
+        self.touch(path)
+        return self.config("custom.jsonl")
+
+    def at(self, minutes):
+        return START1 + dt.timedelta(minutes=minutes)
+
+    def summary(self, entries):
+        rc, _, _ = self.run_day(1, cfg=self.custom_log(entries))
+        self.assertEqual(rc, 0)
+        row = self.window_rows()[0]
+        return row
+
+
+# ---------------------------------------------------------------- window and gate
+
+class WindowTests(BaseCase):
+    def test_window_prev_day_21_to_21(self):
+        rc, _, out = self.run_day(1, dry_run=True)
+        self.assertEqual(rc, 0)
+        self.assertIn("Window: 2026-11-02 21:00 -> 2026-11-03 21:00 (Asia/Jerusalem, 24 h)", out)
+
+    def test_hour_gate_skips_non_21_hour(self):
+        early = dt.datetime(2026, 11, 3, 20, 5, tzinfo=TZ).astimezone(UTC)
+        send = FakeSend()
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as out:
+            rc = lp.run_report(self.config("caddy_day1.jsonl"), END1, early, send)
+        self.assertEqual((rc, out.getvalue(), send.calls), (0, "", []))
+        self.assertFalse(os.path.exists(self.state))
+
+    def test_force_bypasses_gate(self):
+        early = dt.datetime(2026, 11, 3, 20, 5, tzinfo=TZ).astimezone(UTC)
+        send = FakeSend()
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO):
+            rc = lp.run_report(self.config("caddy_day1.jsonl"), END1, early, send, force=True)
+        # now (20:05) is the reference, newest line is 20:59:59: not stale, window start covered
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(send.calls), 1)
+        self.assertIn("Sessions: 12", send.calls[0][0])
+
+    def test_dst_window_lengths(self):
+        for end, hours in ((dt.datetime(2026, 3, 27, 21, 0), 23), (dt.datetime(2026, 10, 25, 21, 0), 25),
+                           (dt.datetime(2026, 10, 26, 21, 0), 24)):
+            start_local, end_local = lp.compute_window(end, TZ)
+            header = lp.render_header(start_local, end_local, "Asia/Jerusalem")
+            self.assertIn(f", {hours} h)", header, end)
+
+
+# ---------------------------------------------------------------- fixture counting
+
+class FixtureTests(BaseCase):
+    def check_day(self, day, row, text):
+        exp = json.loads(slurp(os.path.join(FIXTURES, "expected.json"), "r"))[f"day{day}"]
+        got = {"sessions": row["sessions"], "unique": row["unique_n"], "new": row["new_n"],
+               "returning": row["returning_n"], "internal": row["excluded_internal"],
+               "bot": row["excluded_bot"], "no_ip": row["no_ip"], "unparsed": row["unparsed"]}
+        self.assertEqual(got, {k: exp[k] for k in got})
+        lines = {ln.split(":")[0]: ln for ln in text.splitlines()}
+        self.assertEqual(parse_counts(lines["Countries"]), exp["countries"])
+        self.assertEqual(parse_counts(lines["Cities (approx.)"]), exp["cities"])
+        self.assertEqual(row["window_end_local"], exp["window_end_local"])
+
+    def test_fixture_counts_match_expected(self):
+        rc, send1, _ = self.run_day(1)
+        self.assertEqual(rc, 0)
+        rc, send2, _ = self.run_day(2)
+        self.assertEqual(rc, 0)
+        rows = self.window_rows()
+        self.assertEqual(len(rows), 2)
+        self.check_day(1, rows[0], send1.calls[0][0])
+        self.check_day(2, rows[1], send2.calls[0][0])
+
+    def test_new_vs_returning_day2(self):
+        self.run_day(1)
+        _, send, _ = self.run_day(2)
+        self.assertIn("Unique listeners: 7 (new 3, returning 4)", send.calls[0][0])
+
+    def test_internal_and_bot_excluded_counted_separately(self):
+        _, send, _ = self.run_day(1)
+        text = send.calls[0][0]
+        self.assertIn("Excluded internal (own systems, own network): 4", text)
+        self.assertIn("Excluded bots and probes: 3", text)
+
+    def test_head_404_and_other_paths_ignored(self):
+        row = self.summary([
+            log_entry(self.at(10), "203.0.113.7", method="HEAD"),
+            log_entry(self.at(20), "203.0.113.7", status=404),
+            log_entry(self.at(30), "203.0.113.7", uri="/status-json.xsl"),
+            log_entry(self.at(40), "203.0.113.7", uri="/other"),
+        ])
+        self.assertEqual((row["sessions"], row["unique_n"], row["excluded_internal"],
+                          row["excluded_bot"], row["no_ip"]), (0, 0, 0, 0, 0))
+
+    def test_same_device_twice_one_unique(self):
+        row = self.summary([log_entry(self.at(10), "203.0.113.7"), log_entry(self.at(20), "203.0.113.7")])
+        self.assertEqual((row["sessions"], row["unique_n"]), (2, 1))
+
+    def test_ua_version_bump_same_device(self):
+        row = self.summary([
+            log_entry(self.at(10), "203.0.113.7", ua="App/1.2.3 (OS 26_6_2)"),
+            log_entry(self.at(20), "203.0.113.7", ua="App/1.2.4 (OS 26_6_3)"),
+        ])
+        self.assertEqual((row["sessions"], row["unique_n"]), (2, 1))
+
+    def test_same_ip_different_ua_two_devices(self):
+        row = self.summary([
+            log_entry(self.at(10), "203.0.113.7", ua="Alpha Player"),
+            log_entry(self.at(20), "203.0.113.7", ua="Beta Player"),
+        ])
+        self.assertEqual((row["sessions"], row["unique_n"]), (2, 2))
+
+    def test_ipv6_slash64_same_device(self):
+        row = self.summary([
+            log_entry(self.at(10), "2001:db8:1:1::10", ua="Alpha Player"),
+            log_entry(self.at(20), "2001:db8:1:1:ffff::9", ua="Alpha Player"),
+            log_entry(self.at(30), "2001:db8:1:2::10", ua="Alpha Player"),
+        ])
+        self.assertEqual((row["sessions"], row["unique_n"]), (3, 2))
+
+    def test_empty_ua_is_listener(self):
+        row = self.summary([log_entry(self.at(10), "203.0.113.7", ua="")])
+        self.assertEqual((row["sessions"], row["unique_n"], row["excluded_bot"]), (1, 1, 0))
+
+    def test_boundaries_start_inclusive_end_exclusive(self):
+        end = dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ)
+        row = self.summary([
+            log_entry(START1 - dt.timedelta(seconds=1), "203.0.113.1"),
+            log_entry(START1, "203.0.113.2"),
+            log_entry(end - dt.timedelta(seconds=1), "203.0.113.3"),
+            log_entry(end, "203.0.113.4"),
+        ])
+        self.assertEqual((row["sessions"], row["unique_n"]), (2, 2))
+
+    def test_proxy_client_ip_counted(self):
+        entry = log_entry(self.at(10), "192.168.1.50")
+        entry["request"]["client_ip"] = "192.0.2.10"
+        row = self.summary([entry])
+        self.assertEqual((row["sessions"], row["excluded_internal"]), (1, 0))
+
+    def test_both_internal_excluded(self):
+        entry = log_entry(self.at(10), "192.168.1.114")
+        entry["request"]["client_ip"] = "192.168.1.50"
+        row = self.summary([entry])
+        self.assertEqual((row["sessions"], row["excluded_internal"]), (0, 1))
+
+    def test_own_public_ip_excluded(self):
+        cfg = self.custom_log([log_entry(self.at(10), "203.0.113.5")])
+        cfg["own_public_ips"] = ["203.0.113.5"]
+        self.run_day(1, cfg=cfg)
+        row = self.window_rows()[0]
+        self.assertEqual((row["sessions"], row["excluded_internal"]), (0, 1))
+
+    def test_no_usable_ip_shown(self):
+        entry = log_entry(self.at(10), "not-an-ip")
+        row = self.summary([entry])
+        self.assertEqual((row["sessions"], row["no_ip"]), (0, 1))
+        _, send, _ = self.run_day(1, resend=True, cfg=self.custom_log([entry]))
+        self.assertIn("No usable client IP (not counted): 1", send.calls[0][0])
+
+    def test_gz_file_is_read(self):
+        import gzip
+        cfg = self.custom_log([log_entry(self.at(10), "203.0.113.7")])
+        plain = os.path.join(self.logs, "custom.jsonl")
+        gz = os.path.join(self.logs, "custom.jsonl.gz")
+        with open(plain, "rb") as src, gzip.open(gz, "wb") as dst:
+            dst.write(src.read())
+        os.remove(plain)
+        self.touch(gz)
+        cfg["caddy_log_globs"] = [gz]
+        self.run_day(1, cfg=cfg)
+        self.assertEqual(self.window_rows()[0]["sessions"], 1)
+
+
+# ---------------------------------------------------------------- geography
+
+class GeoTests(BaseCase):
+    def test_geo_counts_and_unknown(self):
+        _, send, _ = self.run_day(1)
+        self.assertIn("Countries: Israel 4, United States 3, Germany 1, unknown 1", send.calls[0][0])
+        self.assertIn("Cities (approx.): New York 3, Tel Aviv 3, Berlin 1, unknown 2", send.calls[0][0])
+
+    def test_city_label_approx(self):
+        _, send, _ = self.run_day(1)
+        self.assertIn("\nCities (approx.): ", send.calls[0][0])
+
+    def test_geo_unavailable_without_mmdb(self):
+        cfg = self.config("caddy_day1.jsonl", mmdb_path=os.path.join(self.tmp, "missing.mmdb"))
+        _, send, _ = self.run_day(1, cfg=cfg)
+        text = send.calls[0][0]
+        self.assertIn("Countries: unavailable (file not found)", text)
+        self.assertIn("Cities (approx.): unavailable (file not found)", text)
+        self.assertIn("Sessions: 12", text)
+        garbage = os.path.join(self.tmp, "bad.mmdb")
+        with open(garbage, "wb") as fh:
+            fh.write(b"not a database")
+        _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=garbage), resend=True)
+        self.assertIn("Countries: unavailable (invalid file)", send.calls[0][0])
+
+    def test_cities_capped_with_other(self):
+        counter = {f"City{i:02d}": 12 - i for i in range(12)}
+        counter["unknown"] = 3
+        text = lp.render_cities(counter)
+        self.assertTrue(text.startswith("City00 12, City01 11"))
+        self.assertIn("City09 3, other 3, unknown 3", text)
+        self.assertNotIn("City10", text)
+
+    def test_mmdb_reader_synthetic_lookup(self):
+        for size in (24, 28, 32):
+            path = os.path.join(self.tmp, f"synthetic{size}.mmdb")
+            with open(path, "wb") as fh:
+                fh.write(build_mmdb(GEO_ENTRIES, record_size=size))
+            reader = MmdbReader(path)
+            try:
+                self.assertEqual(reader.db_month, "2026-10")
+                rec = reader.lookup("203.0.113.7")
+                self.assertEqual(rec["country"]["names"]["en"], "Israel")
+                self.assertEqual(rec["city"]["names"]["en"], "Tel Aviv")
+                self.assertEqual(rec["location"], {"latitude": 32.08, "accuracy_radius": 50})
+                self.assertIs(rec["is_in_european_union"], False)
+                self.assertNotIn("city", reader.lookup("203.0.113.200"))
+                self.assertEqual(reader.lookup("2001:db8::1")["city"]["names"]["en"], "Berlin")
+                self.assertEqual(reader.lookup("::ffff:192.0.2.5")["country"]["names"]["en"], "United States")
+                self.assertIsNone(reader.lookup("198.51.100.1"))
+                self.assertIsNone(reader.lookup("2001:db9::1"))
+            finally:
+                reader.close()
+        v4 = os.path.join(self.tmp, "v4.mmdb")
+        with open(v4, "wb") as fh:
+            fh.write(build_mmdb([e for e in GEO_ENTRIES if ":" not in e[0]], ip_version=4))
+        reader = MmdbReader(v4)
+        self.assertEqual(reader.lookup("192.0.2.9")["country"]["names"]["en"], "United States")
+        self.assertIsNone(reader.lookup("2001:db8::1"))
+        reader.close()
+        empty = os.path.join(self.tmp, "empty.mmdb")
+        open(empty, "wb").close()
+        with self.assertRaises(ValueError):
+            MmdbReader(empty)
+
+
+# ---------------------------------------------------------------- data problems and idempotency
+
+class ProblemTests(BaseCase):
+    def assert_problem(self, cfg, reason):
+        rc, send, _ = self.run_day(1, cfg=cfg)
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(send.calls), 1)
+        text = send.calls[0][0]
+        self.assertIn(f"DATA SOURCE PROBLEM: {reason}. No counts shown; nothing stored for this window.", text)
+        self.assertNotIn("Sessions:", text)
+        self.assertNotIn("Unique listeners", text)
+        self.assertEqual((self.count("windows"), self.count("sessions")), (0, 0))
+        return send
+
+    def test_missing_source_problem(self):
+        self.assert_problem(self.config("nothing-here-*.jsonl"), "missing")
+
+    def test_empty_source_problem(self):
+        path = os.path.join(self.logs, "empty.jsonl")
+        open(path, "w").close()
+        self.touch(path)
+        self.assert_problem(self.config("empty.jsonl"), "empty")
+
+    def test_stale_source_problem(self):
+        cfg = self.custom_log([log_entry(self.at(60), "203.0.113.7")], anchors=False)
+        path = os.path.join(self.logs, "custom.jsonl")
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(log_entry(START1, "198.51.100.1", method="HEAD")) + "\n")
+        self.assert_problem(cfg, "stale")
+
+    def test_uncovered_start_problem(self):
+        end = dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ)
+        cfg = self.custom_log([log_entry(self.at(120), "203.0.113.7"),
+                               log_entry(end - dt.timedelta(minutes=1), "203.0.113.7")], anchors=False)
+        self.assert_problem(cfg, "not covering window start")
+
+    def test_problem_stores_nothing(self):
+        send = self.assert_problem(self.config("nothing-here-*.jsonl"), "missing")
+        self.assertEqual(self.count("notices"), 1)
+        rc, send2, out = self.run_day(1, cfg=self.config("nothing-here-*.jsonl"), send=send)
+        self.assertEqual((rc, len(send.calls), "already sent" in out), (0, 1, True))
+        self.assertEqual((self.count("windows"), self.count("sessions")), (0, 0))
+
+    def test_problem_dry_run_writes_nothing(self):
+        rc, send, out = self.run_day(1, cfg=self.config("nothing-here-*.jsonl"), dry_run=True)
+        self.assertEqual((rc, send.calls), (0, []))
+        self.assertIn("DATA SOURCE PROBLEM: missing", out)
+        self.assertFalse(os.path.exists(self.state))
+
+    def test_double_run_no_second_send(self):
+        send = FakeSend()
+        self.run_day(1, send=send)
+        rc, _, out = self.run_day(1, send=send)
+        self.assertEqual((rc, len(send.calls)), (0, 1))
+        self.assertIn("already sent", out)
+
+    def test_rerun_same_numbers_no_double_count(self):
+        send = FakeSend()
+        self.run_day(1, send=send)
+        first = self.window_rows()[0]
+        self.run_day(1, send=send, resend=True)
+        second = self.window_rows()[0]
+        self.assertEqual(len(send.calls), 2)
+        self.assertEqual(send.calls[0][0], send.calls[1][0])
+        self.assertEqual(self.count("sessions"), 12)
+        for key in ("sessions", "unique_n", "new_n", "returning_n", "excluded_internal", "excluded_bot"):
+            self.assertEqual(first[key], second[key])
+        self.assertIsNotNone(second["sent_at_utc"])
+
+    def test_dry_run_writes_nothing_and_sends_nothing(self):
+        rc, send, out = self.run_day(1, dry_run=True)
+        self.assertEqual((rc, send.calls), (0, []))
+        self.assertIn("Sessions: 12", out)
+        self.assertFalse(os.path.exists(self.state))
+
+
+# ---------------------------------------------------------------- history warning and golden text
+
+class ReportTextTests(BaseCase):
+    def test_history_warning_under_7_days(self):
+        _, send, _ = self.run_day(1)
+        self.assertIn('HISTORY STARTS 2026-11-02 (1 of 7 days): "new" is overstated until 2026-11-09.',
+                      send.calls[0][0])
+        _, send, _ = self.run_day(2)
+        self.assertIn("HISTORY STARTS 2026-11-02 (2 of 7 days)", send.calls[0][0])
+
+    def test_no_warning_at_7_days(self):
+        conn = lp.open_state(self.state)
+        with conn:
+            for day in range(26, 32):
+                conn.execute("INSERT INTO windows(window_start_utc) VALUES(?)", (f"2026-10-{day}T19:00:00Z",))
+        conn.close()
+        _, send, _ = self.run_day(1)
+        self.assertNotIn("HISTORY", send.calls[0][0])
+        self.assertIn("Sessions: 12", send.calls[0][0])
+
+    def test_report_text_golden(self):
+        _, send, _ = self.run_day(1)
+        expected = "\n".join([
+            "ZeRock Radio - Daily Listeners Report",
+            "Window: 2026-11-02 21:00 -> 2026-11-03 21:00 (Asia/Jerusalem, 24 h)",
+            "Sessions: 12",
+            "Unique listeners: 9 (new 9, returning 0)",
+            "Excluded internal (own systems, own network): 4",
+            "Excluded bots and probes: 3",
+            "No usable client IP (not counted): 1",
+            "Unparsed log lines (ignored): 2",
+            "Countries: Israel 4, United States 3, Germany 1, unknown 1",
+            "Cities (approx.): New York 3, Tel Aviv 3, Berlin 1, unknown 2",
+            'HISTORY STARTS 2026-11-02 (1 of 7 days): "new" is overstated until 2026-11-09.',
+            "--",
+            FOOTER_TEXT,
+        ])
+        self.assertEqual(send.calls[0][0], expected)
+        self.assertEqual(send.calls[0][1], ["deliver", "wa"])
+
+    def test_unparsed_line_hidden_when_zero(self):
+        self.run_day(1)
+        _, send, _ = self.run_day(2)
+        self.assertNotIn("Unparsed", send.calls[0][0])
+
+    def test_real_sender_appends_base64(self):
+        import base64
+        with mock.patch.object(lp.subprocess, "run") as fake_run:
+            fake_run.side_effect = None
+            fake_run.return_value = mock.Mock(returncode=0)
+            self.assertEqual(lp.send_via_command("héllo", ["deliver", "wa"]), 0)
+        argv = fake_run.call_args[0][0]
+        self.assertEqual(argv[:2], ["deliver", "wa"])
+        self.assertEqual(base64.b64decode(argv[2]).decode("utf-8"), "héllo")
+        self.assertEqual(fake_run.call_args[1]["timeout"], 60)
+        self.assertNotIn("shell", fake_run.call_args[1])
+
+
+# ---------------------------------------------------------------- privacy
+
+class PrivacyTests(BaseCase):
+    def fixture_ips(self):
+        found = set()
+        for name in ("caddy_day1.jsonl", "caddy_day2.jsonl"):
+            text = slurp(os.path.join(FIXTURES, name), "r")
+            found.update(re.findall(r'"(?:remote_ip|client_ip)": "([^"]+)"', text))
+        found.discard("not-an-ip")
+        return found
+
+    def test_no_raw_ip_in_db_or_message(self):
+        texts = []
+        for day in (1, 2):
+            _, send, out = self.run_day(day)
+            texts.extend([send.calls[0][0], out])
+        blob = slurp(os.path.join(self.state, "state.db"))
+        ips = self.fixture_ips()
+        self.assertGreater(len(ips), 10)
+        for ip in ips:
+            self.assertNotIn(ip.encode(), blob, ip)
+            for text in texts:
+                self.assertNotIn(ip, text, ip)
+        salt = slurp(os.path.join(self.state, "salt"))
+        self.assertEqual(len(salt), 32)
+        self.assertNotIn(salt, blob)
+        self.assertNotIn(salt.hex(), "".join(texts))
+
+    def test_salt_file_mode_0600(self):
+        self.run_day(1)
+        self.assertEqual(os.stat(os.path.join(self.state, "salt")).st_mode & 0o777, 0o600)
+        self.assertEqual(os.stat(os.path.join(self.state, "state.db")).st_mode & 0o777, 0o600)
+        self.assertEqual(os.stat(self.state).st_mode & 0o777, 0o700)
+        salt = slurp(os.path.join(self.state, "salt"))
+        self.run_day(1, resend=True)
+        self.assertEqual(slurp(os.path.join(self.state, "salt")), salt)
+
+    def test_send_failure_logs_no_ip(self):
+        send = FakeSend(rc=5)
+        rc, _, _ = self.run_day(1, send=send)
+        self.assertEqual(rc, 2)
+        log = slurp(os.path.join(self.state, "run.log"), "r")
+        self.assertEqual(len(log.splitlines()), 1)
+        self.assertIn("send_rc=5", log)
+        self.assertIn("2026-11-02T19:00:00Z", log)
+        for ip in self.fixture_ips():
+            self.assertNotIn(ip, log)
+        self.assertNotIn("Sessions", log)
+        self.assertIsNone(self.window_rows()[0]["sent_at_utc"])
+        # a later run in the same hour retries once and does not double count
+        send.rc = 0
+        rc, _, _ = self.run_day(1, send=send)
+        self.assertEqual(rc, 0)
+        self.assertEqual(len(send.calls), 2)
+        self.assertEqual(self.count("sessions"), 12)
+        self.assertIsNotNone(self.window_rows()[0]["sent_at_utc"])
+        self.assertEqual(os.stat(os.path.join(self.state, "run.log")).st_mode & 0o777, 0o600)
+
+
+if __name__ == "__main__":
+    unittest.main()
