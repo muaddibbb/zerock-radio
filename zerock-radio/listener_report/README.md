@@ -25,7 +25,8 @@ repo; this repo is public, so never put paths to private files, recipients or ke
 - Excluded internal: 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, ::1, fc00::/7
   and any address in `own_public_ips`. Checked before bots.
 - Excluded bots and probes: User-Agent contains (case-insensitive) one of
-  `BOT_MARKERS = ("amazonbot", "amplitudeairplaymonitor", "meta-externalagent", "curl/", "lavf/", "tunein-dirmon", "infrawatch", "censysinspect", "python-requests", "go-http-client", "zgrab", "masscan", "nmap", "bot", "crawler", "spider", "uptime")`.
+  `BOT_MARKERS = ("amazonbot", "amplitudeairplaymonitor", "meta-externalagent", "curl/", "lavf/", "tunein-dirmon", "infrawatch", "censysinspect", "python-requests", "go-http-client", "zgrab", "masscan", "nmap", "crawler", "spider", "googlebot", "bingbot", "yandexbot", "semrushbot", "ahrefsbot", "petalbot", "mj12bot", "dotbot", "applebot", "uptimerobot", "uptime-kuma")`.
+  The broad `bot` and `uptime` markers were removed so apps with those letters in their name are not dropped.
   An empty or unknown User-Agent is a listener.
 - Device ("listener"): HMAC-SHA256 with a random per-install salt over the IPv4 address (or
   the IPv6 /64) plus the User-Agent with digits replaced by `#`. So a browser or OS update
@@ -76,3 +77,23 @@ python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03
 ## Attribution
 
 IP Geolocation by DB-IP (https://db-ip.com), IP to City Lite database, licensed CC BY 4.0.
+
+## Data-source problems and safeguards
+
+- Caddy must log non-session traffic too (the whole site, or at least monitor requests), not
+  only `/stream`. Sessions are logged when they end, so on a quiet-stream day a log holding
+  only `/stream` can look stale or not covering the window and raise a notice.
+- A log file that cannot be read or is truncated (for example a cut `.gz`) raises
+  `DATA SOURCE PROBLEM: log file unreadable: <name>`; the program never reports a lower count.
+- A window that has not ended yet is refused (exit code 3, nothing stored or sent). With
+  `--dry-run` it is printed with an `INCOMPLETE WINDOW` line.
+- A missing salt file while history exists, or an empty salt file, is a data-source problem;
+  a new salt is never created over existing history.
+- The history warning also lists `MISSING DAYS` (no stored report) in the last 7 days: devices
+  heard on those days are unknown, so "new" may be overstated.
+- Log globs are de-duplicated by resolved path. Globs must still match disjoint files (an
+  uncompressed copy and its `.gz` would both be read).
+- `own_public_ips` should hold the station's own public address. When it is empty the report
+  ends with "Own network not excluded".
+- Only one run at a time: a lock file in the state directory; a second overlapping run exits 0
+  without doing anything.

@@ -755,8 +755,6 @@ class RobustnessTests(BaseCase):
         bad = os.path.join(self.logs, "broken.jsonl")
         os.mkdir(bad)  # opening a directory as a file fails like a permission error
         self.touch(bad)
-        cfg["caddy_log_globs"] = [os.path.join(self.logs, "*.jsonl")]
-        cfg["caddy_log_globs"].remove(cfg["caddy_log_globs"][0])
         cfg["caddy_log_globs"] = [os.path.join(self.logs, "custom.jsonl"), bad]
         send = FakeSend()
         self.run_day(1, cfg=cfg, send=send)
@@ -806,10 +804,10 @@ class RobustnessTests(BaseCase):
 
     def test_gap_days_named_in_history_warning(self):
         day = dt.date(2026, 10, 27)
-        self.seed_history([day + dt.timedelta(days=n) for n in (0, 1, 2, 5)])  # 10-30, 10-31 missing...
+        self.seed_history([day + dt.timedelta(days=n) for n in (0, 1, 2, 5)])
         _, send, _ = self.run_day(1)
         text = send.calls[0][0]
-        self.assertIn("MISSING DAYS: 2026-10-30, 2026-10-31, 2026-11-01 (no stored report):", text)
+        self.assertIn("MISSING DAYS: 2026-10-30, 2026-10-31 (no stored report):", text)
         self.assertIn('"new" may be overstated.', text)
 
     def test_no_gap_line_when_contiguous(self):
@@ -849,7 +847,7 @@ class RobustnessTests(BaseCase):
         self.run_day(1)
         self.assertEqual(len(slurp(os.path.join(self.state, "salt"))), 32)
 
-    def window_text(self, end_local, count_hours):
+    def window_text(self, end_local):
         start_local, end = lp.compute_window(end_local, TZ)
         stamps = [start_local - dt.timedelta(minutes=1), start_local,
                   start_local + dt.timedelta(hours=5), end - dt.timedelta(seconds=1), end,
@@ -875,7 +873,7 @@ class RobustnessTests(BaseCase):
         for end, hours in ((dt.datetime(2026, 3, 27, 21, 0), 23), (dt.datetime(2026, 10, 25, 21, 0), 25)):
             with self.subTest(hours=hours):
                 shutil.rmtree(self.state, ignore_errors=True)
-                text = self.window_text(end, hours)
+                text = self.window_text(end)
                 self.assertIn(f", {hours} h)", text)
                 self.assertIn("Sessions: 3\n", text)  # start (inclusive), mid, last second; not end
 
@@ -906,7 +904,7 @@ class RobustnessTests(BaseCase):
         with open(probe_path, "wb") as fh:
             fh.write(bytes(blob))
         probe = MmdbReader(probe_path)
-        start, meta = probe._data_start, bytes(blob).rfind(b"\xab\xcdMaxMind.com".replace(b"\xcd", b"\xcd\xef"))
+        start, meta = probe._data_start, bytes(blob).rfind(b"\xab\xcd\xefMaxMind.com")
         probe.close()
         body = (data_prefix + fill * ((meta - start) // len(fill) + 1))[:meta - start]
         blob[start:meta] = body
