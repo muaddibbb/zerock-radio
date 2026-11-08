@@ -49,6 +49,10 @@ repo; this repo is public, so never put paths to private files, recipients or ke
   total. An empty show name or the recorded name `Rocky` is printed as `Rocky rotation (no
   show)`; a repeated host segment ("A — B — B") prints once. Only shows with at least one
   listener are listed, highest first, then by name. Resolution is 15 minutes.
+  With a complete timeline one more line follows: `Heard at least one show: M of N
+  (rotation only: R)`, N = Unique listeners, M = distinct devices with a session overlapping
+  any non-rotation show sample, R = N - M. It is omitted when the timeline is UNAVAILABLE or
+  incomplete.
 - Per-show failure lines (the rest of the report is still sent and stored):
   `Per show: UNAVAILABLE (timeline fetch failed: <reason>)`,
   `Per show: UNAVAILABLE (no samples in window)`, `Per show: UNAVAILABLE (unreadable timeline)`;

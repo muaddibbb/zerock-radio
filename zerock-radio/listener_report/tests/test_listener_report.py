@@ -1234,6 +1234,163 @@ class DstAndRobustTimelineTests(unittest.TestCase):
         self.assertEqual(lines, ["Listeners per show:", "  A B  C: 2", "  \u05e9\u05d5 Show: 1"])
 
 
+class HeardAtLeastOneShowTests(unittest.TestCase):
+    SAMPLES = [sample("2026-11-02T22:00", "Show A"), sample("2026-11-02T22:15", "Rocky")]
+    # d1 in the show, d2 only in rotation, d3 in both
+    SESS = [(T(70), "d1", T(70)), (T(80), "d2", T(80)), (T(85), "d3", T(70))]
+
+    def per_show(self, **kw):
+        res = {"shows": lp.show_listeners(self.SESS, self.SAMPLES), "error": None,
+               "missing": 0, "expected": 96,
+               "heard_show": len(lp.show_heard_devices(self.SESS, self.SAMPLES))}
+        res.update(kw)
+        return res
+
+    def test_complete_with_rotation_only_listener(self):
+        self.assertEqual(len(lp.show_heard_devices(self.SESS, self.SAMPLES)), 2)
+        lines = lp.render_per_show(self.per_show(), 3)
+        self.assertEqual(lines, ["Listeners per show:", "  Rocky rotation (no show): 2",
+                                 "  Show A: 2",
+                                 "Heard at least one show: 2 of 3 (rotation only: 1)"])
+
+    def test_all_heard_a_show(self):
+        lines = lp.render_per_show(self.per_show(), 2)
+        self.assertEqual(lines[-1], "Heard at least one show: 2 of 2 (rotation only: 0)")
+
+    def test_omitted_when_heard_exceeds_unique(self):
+        lines = lp.render_per_show(self.per_show(heard_show=5), 3)
+        self.assertNotIn("Heard at least one show", "\n".join(lines))
+
+    def test_omitted_when_unique_zero(self):
+        lines = lp.render_per_show(self.per_show(heard_show=0), 0)
+        self.assertNotIn("Heard at least one show", "\n".join(lines))
+
+    def test_absent_when_unavailable(self):
+        lines = lp.render_per_show(self.per_show(error="no samples in window", shows=[],
+                                                 heard_show=None), 3)
+        self.assertEqual(lines, ["Per show: UNAVAILABLE (no samples in window)"])
+
+    def test_absent_when_incomplete(self):
+        lines = lp.render_per_show(self.per_show(missing=2), 3)
+        self.assertNotIn("Heard at least one show", "\n".join(lines))
+        self.assertIn("incomplete", lines[-1])
+
+
+REAL_HTTP_GET_JSON = lp._http_get_json  # captured before BaseCase patches it
+
+
+class Cycle2Tests(BaseCase):
+    START = dt.datetime(2026, 11, 2, 21, 0, tzinfo=TZ)
+    END = dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ)
+
+    def test_three_show_straddle_counted_once_each(self):
+        samples = [sample("2026-11-02T22:00", "Show A"), sample("2026-11-02T22:15", "Show B"),
+                   sample("2026-11-02T22:30", "Show C"), sample("2026-11-02T22:45", "Rocky")]
+        sess = [(T(110), "d1", T(70))]  # 22:10 -> 22:50 touches all four samples
+        self.assertEqual(dict(lp.show_listeners(sess, samples)),
+                         {"Show A": 1, "Show B": 1, "Show C": 1, lp.ROTATION_LABEL: 1})
+        self.assertEqual(len(lp.show_heard_devices(sess, samples)), 1)
+
+    def test_markdown_and_newline_names_one_line_each(self):
+        names = ["*Bold* show", "_it_ show", "~strike~ show", "`code` show", "Two\nLines"]
+        per_show = {"shows": [(n, 1) for n in names] + [("שלום עולם", 1)],
+                    "error": None, "missing": 0, "expected": 96, "heard_show": None}
+        lines = lp.render_per_show(per_show)
+        self.assertEqual(lines[0], "Listeners per show:")
+        self.assertEqual(len(lines), 1 + len(names) + 1)
+        self.assertEqual(lines[1:5], ["  *Bold* show: 1", "  _it_ show: 1", "  ~strike~ show: 1",
+                                      "  `code` show: 1"])
+        self.assertEqual(lines[5], "  Two Lines: 1")
+        self.assertEqual(lines[6], "  שלום עולם: 1")
+        self.assertTrue(all("\n" not in line for line in lines))
+
+    def test_mmdb_path_omitted_or_missing_file(self):
+        base = {"caddy_log_globs": [os.path.join(self.logs, "caddy_day1.jsonl")],
+                "site_host": "rocky.kupernet.com", "state_dir": self.state, "own_public_ips": [],
+                "stale_after_minutes": 30, "timezone": "Asia/Jerusalem", "report_hour": 21,
+                "delivery_argv": ["deliver", "wa"]}
+        variants = {"omitted": {}, "missing": {"mmdb_path": os.path.join(self.tmp, "nope.mmdb")}}
+        for label, extra in variants.items():
+            with self.subTest(label):
+                path = os.path.join(self.tmp, f"c_{label}.json")
+                with open(path, "w", encoding="utf-8") as fh:
+                    json.dump(dict(base, **extra), fh)
+                cfg = lp.load_config(path)
+                _, send, _ = self.run_day(1, cfg=cfg, dry_run=True, force=True,
+                                          timeline_fetch=make_fetch(window_payloads()))
+                self.assertTrue(send.calls == [])
+                with mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as out:
+                    rc = lp.run_report(cfg, END1, NOW1, FakeSend(), dry_run=True, force=True,
+                                       timeline_fetch=make_fetch(window_payloads()))
+                text = out.getvalue()
+                self.assertEqual(rc, 0)
+                self.assertIn("Unique listeners:", text)
+                self.assertNotRegex(text.lower(), r"countr|geo|city|error|traceback")
+
+    def _serve_redirect(self, location):
+        import http.server
+        import threading
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(302)
+                self.send_header("Location", location)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, *a):
+                pass
+        srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        self.addCleanup(srv.server_close)
+        self.addCleanup(srv.shutdown)
+        return f"http://127.0.0.1:{srv.server_address[1]}/timeline"
+
+    def test_redirect_to_non_http_scheme_rejected(self):
+        for target in ("ftp://127.0.0.1/x", "file:///etc/passwd"):
+            with self.subTest(target):
+                base = self._serve_redirect(target)
+                samples, err = lp.fetch_show_timeline(self.START, self.END, TZ,
+                                                      fetch=REAL_HTTP_GET_JSON, url_base=base)
+                # ftp:// reaches our handler; file:// is already refused by urllib (HTTP 302)
+                self.assertEqual(samples, [])
+                self.assertIn(err, ("unreadable timeline", "timeline fetch failed: HTTP 302"))
+                res = lp.per_show_result([], self.START, self.END, TZ,
+                                         fetch=REAL_HTTP_GET_JSON, url_base=base)
+                self.assertEqual(lp.render_per_show(res, 3),
+                                 [f"Per show: UNAVAILABLE ({err})"])
+
+    def report_text(self, payloads):
+        shutil.rmtree(self.state, ignore_errors=True)  # fresh state: the window is sent again
+        _, send, _ = self.run_day(1, timeline_fetch=make_fetch(payloads))
+        return send.calls[0][0]
+
+    def test_heard_line_end_to_end(self):
+        # a show on the first half of the window only; the rest is rotation
+        shows = {f"2026-11-02T{h:02d}:{m:02d}": "Show A" for h in (21, 22, 23) for m in (0, 15, 30, 45)}
+        text = self.report_text(window_payloads(shows))
+        n = int(re.search(r"Unique listeners: (\d+)", text).group(1))
+        m_ = re.search(r"Heard at least one show: (\d+) of (\d+) \(rotation only: (\d+)\)", text)
+        self.assertIsNotNone(m_, text)
+        heard, total, rot = map(int, m_.groups())
+        self.assertEqual((heard + rot, total), (total, n))
+        self.assertGreater(rot, 0)
+        self.assertGreater(heard, 0)
+
+    def test_heard_line_rotation_only_all(self):
+        text = self.report_text(window_payloads())
+        n = int(re.search(r"Unique listeners: (\d+)", text).group(1))
+        self.assertIn(f"Heard at least one show: 0 of {n} (rotation only: {n})", text)
+
+    def test_heard_line_absent_unavailable_and_incomplete(self):
+        text = self.report_text({"2026-11-02": OSError("x"), "2026-11-03": OSError("x")})
+        self.assertIn("Per show: UNAVAILABLE", text)
+        self.assertNotIn("Heard at least one show", text)
+        text = self.report_text(window_payloads({"2026-11-02T22:00": "Show A"}, drop=3))
+        self.assertIn("incomplete", text)
+        self.assertNotIn("Heard at least one show", text)
+
+
 class RealPathTests(BaseCase):
     def write_cfg(self, **overrides):
         cfg = {"caddy_log_globs": [os.path.join(self.logs, "caddy_day1.jsonl")],

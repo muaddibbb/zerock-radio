@@ -515,11 +515,27 @@ def show_listeners(sessions, samples):
     return sorted(((n, len(d)) for n, d in devices.items() if d), key=lambda kv: (-kv[1], kv[0]))
 
 
+def show_heard_devices(sessions, samples):
+    """Distinct devices with a session overlapping any non-rotation show sample."""
+    width = SAMPLE_MINUTES * 60
+    heard = set()
+    for t, show in samples:
+        if normalize_show(show) == ROTATION_LABEL:
+            continue
+        t0 = t.timestamp()
+        t1 = t0 + width
+        for ts, device, start in sessions:
+            if (start < t1 and ts > t0) or (start == ts and t0 <= ts < t1):
+                heard.add(device)
+    return heard
+
+
 def per_show_result(sessions, start_local, end_local, tz, fetch=None, url_base=None):
     step = SAMPLE_MINUTES * 60
     t0 = start_local.timestamp()
     expected = round((end_local.timestamp() - t0) / step)
-    result = {"shows": [], "error": None, "missing": 0, "expected": expected}
+    result = {"shows": [], "error": None, "missing": 0, "expected": expected,
+              "heard_show": None}
     try:
         samples, error = fetch_show_timeline(start_local, end_local, tz, fetch, url_base)
         if error:
@@ -528,6 +544,7 @@ def per_show_result(sessions, start_local, end_local, tz, fetch=None, url_base=N
             result["error"] = "no samples in window"
         else:
             result["shows"] = show_listeners(sessions, samples)
+            result["heard_show"] = len(show_heard_devices(sessions, samples))
             have = {round(t.timestamp()) for t, _s in samples}
             result["missing"] = sum(1 for k in range(expected) if round(t0 + k * step) not in have)
     except Exception:  # noqa: BLE001 - the rest of the report must still go out
@@ -580,8 +597,11 @@ def clean_name(name):
                    for c in name).strip()
 
 
-def render_per_show(per_show):
-    """Lines for the per-show section. per_show: {"shows", "error", "missing", "expected"}."""
+def render_per_show(per_show, unique=None):
+    """Lines for the per-show section. per_show: {"shows", "error", "missing", "expected"}.
+
+    The "Heard at least one show" line needs a complete timeline, the Unique listeners
+    number (unique) and per_show["heard_show"]; otherwise it is omitted."""
     if per_show["error"]:
         return [f"Per show: UNAVAILABLE ({per_show['error']})"]
     if per_show["shows"]:
@@ -591,6 +611,11 @@ def render_per_show(per_show):
     if per_show["missing"] > 0:
         lines.append(f"Per-show timeline incomplete: {per_show['missing']} of "
                      f"{per_show['expected']} samples missing")
+    elif (per_show.get("heard_show") is not None and unique is not None
+          and unique > 0 and per_show["heard_show"] <= unique):
+        heard = per_show["heard_show"]
+        lines.append(
+            f"Heard at least one show: {heard} of {unique} (rotation only: {unique - heard})")
     return lines
 
 
@@ -605,7 +630,7 @@ def render_report(header, res, history, own_excluded=True):
     ]
     if res["unparsed"] > 0:
         lines.append(f"Unparsed log lines (ignored): {res['unparsed']}")
-    lines.extend(render_per_show(res["per_show"]))
+    lines.extend(render_per_show(res["per_show"], res["unique"]))
     if history:
         lines.append(history)
     lines.append("--")
