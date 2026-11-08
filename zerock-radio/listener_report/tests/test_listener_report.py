@@ -1168,6 +1168,72 @@ class TimelineTests(BaseCase):
                       send.calls[0][0])
 
 
+class DstAndRobustTimelineTests(unittest.TestCase):
+    UTC = dt.timezone.utc
+
+    def payloads(self, start, end, skip=(), extra=()):
+        """Records every 15 real minutes in [start, end); local labels, grouped by local date."""
+        out, t = {}, start.timestamp()
+        while t < end.timestamp():
+            loc = dt.datetime.fromtimestamp(t, self.UTC).astimezone(TZ)
+            if loc.strftime("%Y-%m-%dT%H:%M") not in skip or loc.fold:
+                out.setdefault(f"{loc:%Y-%m-%d}", []).append(
+                    {"ts": f"{loc:%Y-%m-%dT%H:%M}", "show": "Show A"})
+            t += 900
+        for ts in extra:
+            out.setdefault(ts[:10], []).append({"ts": ts, "show": "Show A"})
+        return {d: {"records": r} for d, r in out.items()}
+
+    def check(self, day, expected):
+        start = dt.datetime(*day, 21, 0, tzinfo=TZ)
+        end = start + dt.timedelta(days=1)
+        end = dt.datetime(end.year, end.month, end.day, 21, 0, tzinfo=TZ)
+        res = lp.per_show_result([], start, end, TZ, make_fetch(self.payloads(start, end)))
+        self.assertEqual((res["expected"], res["missing"], res["error"]), (expected, 0, None))
+        self.assertNotIn("incomplete", "\n".join(lp.render_per_show(res)))
+
+    def test_spring_dst_complete_timeline(self):
+        self.check((2026, 3, 26), 92)
+
+    def test_fall_dst_complete_timeline(self):
+        self.check((2026, 10, 24), 100)
+
+    def test_fall_back_hour_keeps_both_occurrences(self):
+        recs = [{"ts": f"2026-10-25T01:{m:02d}", "show": "S"} for m in (0, 15, 30, 45)] * 2
+        out = lp._parse_samples({"records": recs}, TZ)
+        self.assertEqual(len(out), 8)
+        offs = sorted({t.utcoffset() for t, _ in out.values()})
+        self.assertEqual(len(offs), 2)
+
+    def test_unresolvable_duplicate_reported_incomplete(self):
+        recs = [{"ts": "2026-10-25T01:00", "show": "S"}] * 3
+        self.assertEqual(lp._parse_samples({"records": recs}, TZ), {})
+        recs = [{"ts": "2026-11-02T10:00", "show": "S"}] * 2
+        self.assertEqual(lp._parse_samples({"records": recs}, TZ), {})
+
+    def test_off_grid_sample_does_not_mask_missing(self):
+        start = dt.datetime(2026, 11, 2, 21, 0, tzinfo=TZ)
+        end = dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ)
+        pl = self.payloads(start, end, skip=("2026-11-02T22:00",), extra=("2026-11-02T22:07",))
+        res = lp.per_show_result([], start, end, TZ, make_fetch(pl))
+        self.assertEqual((res["expected"], res["missing"]), (96, 1))
+
+    def test_rejects_non_http_urls(self):
+        for url in ("file:///etc/passwd", "ftp://x/y"):
+            with self.assertRaises(lp._Unreadable):
+                lp._http_get_json(url)
+        _, err = lp.fetch_show_timeline(
+            dt.datetime(2026, 11, 2, 21, 0, tzinfo=TZ), dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ),
+            TZ, url_base="file:///etc/passwd")
+        self.assertEqual(err, "unreadable timeline")
+
+    def test_show_name_sanitised(self):
+        res = {"shows": [("A\nB\x00\x1bC", 2), ("\u05e9\u05d5 Show", 1)], "error": None,
+               "missing": 0, "expected": 96}
+        lines = lp.render_per_show(res)
+        self.assertEqual(lines, ["Listeners per show:", "  A B  C: 2", "  \u05e9\u05d5 Show: 1"])
+
+
 class RealPathTests(BaseCase):
     def write_cfg(self, **overrides):
         cfg = {"caddy_log_globs": [os.path.join(self.logs, "caddy_day1.jsonl")],

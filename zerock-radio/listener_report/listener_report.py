@@ -25,7 +25,9 @@ import re
 import sqlite3
 import subprocess
 import sys
+import unicodedata
 import urllib.error
+import urllib.parse
 import urllib.request
 import zlib
 from zoneinfo import ZoneInfo
@@ -376,8 +378,18 @@ class _Unreadable(Exception):
     """The timeline answer is not in the expected shape."""
 
 
+class _HttpOnlyRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        if urllib.parse.urlparse(newurl).scheme.lower() not in ("http", "https"):
+            raise _Unreadable()
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
 def _http_get_json(url):
-    with urllib.request.urlopen(url, timeout=5) as resp:
+    if urllib.parse.urlparse(url).scheme.lower() not in ("http", "https"):
+        raise _Unreadable()
+    opener = urllib.request.build_opener(_HttpOnlyRedirect)
+    with opener.open(url, timeout=5) as resp:
         body = resp.read(8 * 1024 * 1024)
     try:
         return json.loads(body.decode("utf-8"))
@@ -399,11 +411,15 @@ def _fail_reason(exc):
 
 
 def _parse_samples(payload, tz):
-    """Valid samples as {local datetime: show}. Malformed samples are skipped."""
+    """Valid samples as {epoch seconds: (local datetime, show)}. Malformed samples are skipped.
+
+    The repeated fall-back hour gets fold 0 then 1 by order of appearance. A local time that
+    appears more often than it can be resolved is dropped, so it counts as a missing sample.
+    """
     records = payload.get("records") if isinstance(payload, dict) else payload
     if not isinstance(records, list):
         raise _Unreadable()
-    out = {}
+    out, seen, conflicts = {}, {}, set()
     for rec in records:
         if not isinstance(rec, dict) or not isinstance(rec.get("ts"), str):
             continue
@@ -418,7 +434,17 @@ def _parse_samples(payload, tz):
                 naive = None
         if naive is None:
             continue
-        out[naive.replace(tzinfo=tz)] = show or ""
+        n = seen.get(naive, 0)
+        seen[naive] = n + 1
+        aware = naive.replace(tzinfo=tz)
+        ambiguous = aware.replace(fold=0).utcoffset() != aware.replace(fold=1).utcoffset()
+        if n >= (2 if ambiguous else 1):
+            conflicts.add(naive)
+            continue
+        aware = naive.replace(tzinfo=tz, fold=n if ambiguous else 0)
+        out[aware.timestamp()] = (aware, show or "")
+    for key in [k for k, (t, _s) in out.items() if t.replace(tzinfo=None) in conflicts]:
+        del out[key]
     return out
 
 
@@ -430,7 +456,7 @@ def fetch_show_timeline(start_local, end_local, tz, fetch=None, url_base=None):
     """
     fetch = fetch or _http_get_json
     url_base = url_base or DEFAULTS["show_timeline_url"]
-    samples, errors = {}, []
+    found, errors = {}, []
     day, last = start_local.date(), (end_local - dt.timedelta(microseconds=1)).date()
     try:
         while day <= last:
@@ -446,13 +472,14 @@ def fetch_show_timeline(start_local, end_local, tz, fetch=None, url_base=None):
                 errors.append(_fail_reason(failure))
             else:
                 try:
-                    samples.update(_parse_samples(payload, tz))
+                    found.update(_parse_samples(payload, tz))
                 except _Unreadable:
                     errors.append("unreadable timeline")
             day += dt.timedelta(days=1)
     except Exception:  # noqa: BLE001
         return [], "timeline fetch failed: error"
-    kept = sorted((t, show) for t, show in samples.items() if start_local <= t < end_local)
+    lo, hi = start_local.timestamp(), end_local.timestamp()
+    kept = sorted((t, show) for ts, (t, show) in found.items() if lo <= ts < hi)
     if not kept and errors:
         return [], errors[0]
     return kept, None
@@ -489,7 +516,9 @@ def show_listeners(sessions, samples):
 
 
 def per_show_result(sessions, start_local, end_local, tz, fetch=None, url_base=None):
-    expected = round((end_local - start_local).total_seconds() / (SAMPLE_MINUTES * 60))
+    step = SAMPLE_MINUTES * 60
+    t0 = start_local.timestamp()
+    expected = round((end_local.timestamp() - t0) / step)
     result = {"shows": [], "error": None, "missing": 0, "expected": expected}
     try:
         samples, error = fetch_show_timeline(start_local, end_local, tz, fetch, url_base)
@@ -499,7 +528,8 @@ def per_show_result(sessions, start_local, end_local, tz, fetch=None, url_base=N
             result["error"] = "no samples in window"
         else:
             result["shows"] = show_listeners(sessions, samples)
-            result["missing"] = max(0, expected - len(samples))
+            have = {round(t.timestamp()) for t, _s in samples}
+            result["missing"] = sum(1 for k in range(expected) if round(t0 + k * step) not in have)
     except Exception:  # noqa: BLE001 - the rest of the report must still go out
         result["error"] = "unreadable timeline"
     return result
@@ -544,12 +574,18 @@ def history_line(stored_starts, start_iso, tz):
     return "\n".join(lines) or None
 
 
+def clean_name(name):
+    """Control characters and line breaks become spaces so a name cannot split or reformat lines."""
+    return "".join(" " if unicodedata.category(c) in ("Cc", "Zl", "Zp") else c
+                   for c in name).strip()
+
+
 def render_per_show(per_show):
     """Lines for the per-show section. per_show: {"shows", "error", "missing", "expected"}."""
     if per_show["error"]:
         return [f"Per show: UNAVAILABLE ({per_show['error']})"]
     if per_show["shows"]:
-        lines = ["Listeners per show:"] + [f"  {name}: {count}" for name, count in per_show["shows"]]
+        lines = ["Listeners per show:"] + [f"  {clean_name(name)}: {count}" for name, count in per_show["shows"]]
     else:
         lines = ["Listeners per show: none"]
     if per_show["missing"] > 0:
