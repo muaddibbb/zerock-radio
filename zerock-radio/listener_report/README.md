@@ -2,12 +2,12 @@
 
 Every evening at 21:00 Asia/Jerusalem one WhatsApp message covers the previous 24 hours of
 listening on https://rocky.kupernet.com/stream: sessions, unique listeners, new versus
-returning, and where they connect from (country; city is approximate). Every number comes
-from the Caddy access log. If the log is missing, empty, stale or does not cover the window,
+returning, and unique listeners per show. Every listener number comes from the Caddy access
+log; show names and times come from rocky's recorded show timeline. If the log is missing, empty, stale or does not cover the window,
 the message says `DATA SOURCE PROBLEM: <reason>` and shows no counts.
 
-Files: `listener_report.py` (program), `mmdb_reader.py` (offline MaxMind DB reader, no
-dependencies), `listener_report.example.json` (config template), `tests/`.
+Files: `listener_report.py` (program), `mmdb_reader.py` (offline MaxMind DB reader, no longer
+used by the report; kept in the repo), `listener_report.example.json` (config template), `tests/`.
 Standard library only, Python 3.12. The config file and the state directory live outside the
 repo; this repo is public, so never put paths to private files, recipients or keys in it.
 
@@ -30,13 +30,30 @@ repo; this repo is public, so never put paths to private files, recipients or ke
   An empty or unknown User-Agent is a listener.
 - Device ("listener"): HMAC-SHA256 with a random per-install salt over the IPv4 address (or
   the IPv6 /64) plus the User-Agent with digits replaced by `#`. So a browser or OS update
-  does not make a new listener. Only the hash, the time, the country and the city are stored;
+  does not make a new listener. Only the hash and the time are stored;
   never the IP or the User-Agent.
 - New versus returning: a device is new in a window if it has no stored session in any earlier
   window. Returning = unique - new.
-- Geography: country and city from the offline DB-IP City Lite mmdb file (`mmdb_path`). A
-  device takes the place of its first session in the window that resolves a country; otherwise
-  "unknown". If the file is missing or unreadable the report says geography is unavailable.
+- Geography: removed. The report has no Countries or Cities line and never opens a geo
+  database. `mmdb_path` in an existing config is accepted and ignored. The state tables keep
+  their country/city columns, filled with `unknown` (and `geo_status` `off`).
+- Listeners per show: each session has an interval [end - Caddy `duration`, end]; without a
+  usable `duration` it is a point at its end time. The show timeline is fetched from
+  `show_timeline_url` (default `http://192.168.1.166:5000/api/listener-stats/history`, LAN, no
+  credentials) with `?date=YYYY-MM-DD` for both local dates the window touches (5 s timeout,
+  one retry). Samples are every 15 minutes, `ts` in Asia/Jerusalem local time, field `show`; a
+  sample at T means that show was on air during [T, T+15 min). A session counts for a show if
+  it overlaps any of that show's samples (touching an end does not count; a zero-length
+  session counts in the sample containing it). Listeners are distinct devices per show; a
+  listener present during two shows counts in both, so per-show numbers do not add up to the
+  total. An empty show name or the recorded name `Rocky` is printed as `Rocky rotation (no
+  show)`; a repeated host segment ("A — B — B") prints once. Only shows with at least one
+  listener are listed, highest first, then by name. Resolution is 15 minutes.
+- Per-show failure lines (the rest of the report is still sent and stored):
+  `Per show: UNAVAILABLE (timeline fetch failed: <reason>)`,
+  `Per show: UNAVAILABLE (no samples in window)`, `Per show: UNAVAILABLE (unreadable timeline)`;
+  with only some samples: the lines plus `Per-show timeline incomplete: N of 96 samples
+  missing` (the number is the window length in 15-minute samples). Nothing is guessed.
 - History: with fewer than 7 stored windows the report prints the history start date and warns
   that "new" is overstated until 7 days exist.
 
@@ -46,7 +63,7 @@ repo; this repo is public, so never put paths to private files, recipients or ke
 - Lavf (ffmpeg/ffplay) is treated as a bot, but may be a real player.
 - Listeners of the icecast.live relay and metadata-only players are not visible here.
 - Two phones of the same model behind one address merge into one listener.
-- City is approximate; mobile, VPN and carrier-grade NAT addresses are often wrong.
+- Per-show boundaries are approximate to 15 minutes.
 - The salted hash of an address plus User-Agent can be brute-forced by anyone holding both the
   salt and the database. Protection is the file mode (state dir 0700, files 0600).
 - Time zone: the program computes the window itself with `zoneinfo`, whatever the server clock
@@ -62,8 +79,7 @@ python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03
 python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03T21:00 --force --resend
 ```
 
-- Run it as `python3 /path/listener_report.py`. Do NOT use `python3 -I`: isolated mode cannot
-  import the sibling `mmdb_reader`.
+- Run it as `python3 /path/listener_report.py`.
 - `--dry-run` prints the report and writes and sends nothing (it reads existing history).
 - `--force` skips the hour-21 gate. `--window-end` is Jerusalem local time.
 - `--resend` rebuilds that window from the log and sends it again. Re-running a window never
@@ -75,10 +91,6 @@ python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03
   history follow; every listener will count as new until 7 days have been stored.
 - Tests: `python3 -m unittest discover -s listener_report/tests -v`. They use synthetic
   documentation-range addresses only and never send or touch real state.
-
-## Attribution
-
-IP Geolocation by DB-IP (https://db-ip.com), IP to City Lite database, licensed CC BY 4.0.
 
 ## Data-source problems and safeguards
 

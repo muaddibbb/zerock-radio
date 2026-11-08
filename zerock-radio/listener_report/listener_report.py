@@ -6,11 +6,10 @@ Reads Caddy JSON access logs, counts finished /stream sessions in a 24 h window
 delivery command. Standard library only. See README.md.
 
 No raw IP address is ever stored, printed or logged: sessions are kept as salted
-HMAC device hashes plus country/city names.
+HMAC device hashes.
 """
 import argparse
 import base64
-import collections
 import contextlib
 import datetime as dt
 import fcntl
@@ -26,10 +25,10 @@ import re
 import sqlite3
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 import zlib
 from zoneinfo import ZoneInfo
-
-from mmdb_reader import MmdbReader
 
 BOT_MARKERS = (
     "amazonbot", "amplitudeairplaymonitor", "meta-externalagent", "curl/", "lavf/",
@@ -50,18 +49,22 @@ DEFAULTS = {
     "timezone": "Asia/Jerusalem",
     "report_hour": 21,
     "delivery_argv": [],
-    "mmdb_path": "",
+    "mmdb_path": "",  # accepted and ignored: geography was removed from the report
+    "show_timeline_url": "http://192.168.1.166:5000/api/listener-stats/history",
 }
 REQUIRED = ("caddy_log_globs", "state_dir")
 
 HISTORY_DAYS = 7
-MAX_CITIES = 10
+SAMPLE_MINUTES = 15
+ROTATION_LABEL = "Rocky rotation (no show)"
+SHOW_SEPARATOR = " \u2014 "
 
 FOOTER = (
     "Listener = IP + app/device type, not a person. One person on two devices counts twice; "
     "a new IP counts as new. Session = one finished connection to rocky.kupernet.com/stream; "
     "connections still open at 21:00 count in the next report. Not counted: icecast.live relay "
-    "listeners, metadata-only players. Locations approximate. IP Geolocation by DB-IP."
+    "listeners, metadata-only players. Per-show numbers do not add up to the total (a listener "
+    "present during two shows counts in both); show boundaries are approximate to 15 minutes."
 )
 
 OWN_NETWORK_LINE = ("Own network not excluded: own_public_ips is empty, so listeners behind the "
@@ -209,26 +212,7 @@ def device_hash(salt, ip, user_agent):
     return hmac.new(salt, (ip_key + "\n" + ua_key).encode(), hashlib.sha256).hexdigest()
 
 
-def geo_lookup(reader, ip):
-    """Return (country, city); both "unknown" when unresolved. The IP does not leave this function."""
-    if reader is None:
-        return "unknown", "unknown"
-    try:
-        record = reader.lookup(str(ip))
-    except ValueError:
-        record = None
-    if not isinstance(record, dict):
-        return "unknown", "unknown"
-    return _english_name(record.get("country")), _english_name(record.get("city"))
-
-
-def _english_name(node):
-    names = node.get("names") if isinstance(node, dict) else None
-    name = names.get("en") if isinstance(names, dict) else None
-    return name if isinstance(name, str) and name else "unknown"
-
-
-def scan_logs(cfg, start_ts, end_ts, salt, reader):
+def scan_logs(cfg, start_ts, end_ts, salt):
     scan = {"files": 0, "unparsed": 0, "parsed": 0, "min_ts": None, "max_ts": None,
             "internal": 0, "bot": 0, "no_ip": 0, "sessions": [], "errors": []}
     paths = set()
@@ -243,14 +227,14 @@ def scan_logs(cfg, start_ts, end_ts, salt, reader):
             with opener(path, "rt", encoding="utf-8", errors="replace") as fh:
                 scan["files"] += 1
                 for line in fh:
-                    _scan_line(line, cfg, start_ts, end_ts, salt, reader, scan)
+                    _scan_line(line, cfg, start_ts, end_ts, salt, scan)
         except (OSError, EOFError, zlib.error):
             # Unreadable or truncated: counts would be too low. Never hide it.
             scan["errors"].append(os.path.basename(path))
     return scan
 
 
-def _scan_line(line, cfg, start_ts, end_ts, salt, reader, scan):
+def _scan_line(line, cfg, start_ts, end_ts, salt, scan):
     line = line.strip()
     if not line:
         return
@@ -284,8 +268,11 @@ def _scan_line(line, cfg, start_ts, end_ts, salt, reader, scan):
     if is_bot(user_agent):
         scan["bot"] += 1
         return
-    country, city = geo_lookup(reader, ip)
-    scan["sessions"].append((ts, device_hash(salt, ip, user_agent), country, city))
+    duration = entry.get("duration")
+    if (isinstance(duration, bool) or not isinstance(duration, (int, float))
+            or not math.isfinite(duration) or duration < 0):
+        duration = 0
+    scan["sessions"].append((ts, device_hash(salt, ip, user_agent), ts - duration))
 
 
 def coverage_problem(scan, start_ts, reference_ts, stale_seconds):
@@ -383,29 +370,142 @@ def log_failure(state_dir, now_utc, start_iso, kind, rc):
         fh.write(line)
 
 
+# ---------------------------------------------------------------- per-show timeline
+
+class _Unreadable(Exception):
+    """The timeline answer is not in the expected shape."""
+
+
+def _http_get_json(url):
+    with urllib.request.urlopen(url, timeout=5) as resp:
+        body = resp.read(8 * 1024 * 1024)
+    try:
+        return json.loads(body.decode("utf-8"))
+    except ValueError:
+        raise _Unreadable()
+
+
+def _fail_reason(exc):
+    if isinstance(exc, _Unreadable):
+        return "unreadable timeline"
+    if isinstance(exc, urllib.error.HTTPError):
+        return f"timeline fetch failed: HTTP {exc.code}"
+    reason = getattr(exc, "reason", exc)
+    if isinstance(exc, TimeoutError) or isinstance(reason, TimeoutError):
+        return "timeline fetch failed: timed out"
+    if isinstance(exc, OSError):
+        return "timeline fetch failed: connection error"
+    return "timeline fetch failed: error"
+
+
+def _parse_samples(payload, tz):
+    """Valid samples as {local datetime: show}. Malformed samples are skipped."""
+    records = payload.get("records") if isinstance(payload, dict) else payload
+    if not isinstance(records, list):
+        raise _Unreadable()
+    out = {}
+    for rec in records:
+        if not isinstance(rec, dict) or not isinstance(rec.get("ts"), str):
+            continue
+        show = rec.get("show")
+        if show is not None and not isinstance(show, str):
+            continue
+        for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S"):
+            try:
+                naive = dt.datetime.strptime(rec["ts"], fmt)
+                break
+            except ValueError:
+                naive = None
+        if naive is None:
+            continue
+        out[naive.replace(tzinfo=tz)] = show or ""
+    return out
+
+
+def fetch_show_timeline(start_local, end_local, tz, fetch=None, url_base=None):
+    """Return (samples, error). samples: sorted [(start datetime, show)] with window start <= T < end.
+
+    Never raises. error is a short reason string or None; it is set only when no date gave a
+    usable answer. A date that fails while another succeeds shows up as missing samples.
+    """
+    fetch = fetch or _http_get_json
+    url_base = url_base or DEFAULTS["show_timeline_url"]
+    samples, errors = {}, []
+    day, last = start_local.date(), (end_local - dt.timedelta(microseconds=1)).date()
+    try:
+        while day <= last:
+            url = f"{url_base}?date={day:%Y-%m-%d}"
+            payload, failure = None, None
+            for _attempt in range(2):
+                try:
+                    payload, failure = fetch(url), None
+                    break
+                except Exception as exc:  # noqa: BLE001 - never raise from the fetch
+                    failure = exc
+            if failure is not None:
+                errors.append(_fail_reason(failure))
+            else:
+                try:
+                    samples.update(_parse_samples(payload, tz))
+                except _Unreadable:
+                    errors.append("unreadable timeline")
+            day += dt.timedelta(days=1)
+    except Exception:  # noqa: BLE001
+        return [], "timeline fetch failed: error"
+    kept = sorted((t, show) for t, show in samples.items() if start_local <= t < end_local)
+    if not kept and errors:
+        return [], errors[0]
+    return kept, None
+
+
+def normalize_show(name):
+    """Rotation label for an empty or "Rocky" name; a repeated host segment is collapsed."""
+    name = (name or "").strip()
+    if not name or name.lower() == "rocky":
+        return ROTATION_LABEL
+    parts = name.split(SHOW_SEPARATOR)
+    if len(parts) >= 2 and parts[-1] == parts[-2]:
+        parts.pop()
+    return SHOW_SEPARATOR.join(parts)
+
+
+def show_listeners(sessions, samples):
+    """Distinct devices per show: [(name, count)] by count descending, then name.
+
+    A sample at T covers [T, T+15 min). A session (ts, device, start) overlaps it if
+    start < T+15m and ts > T; a zero-length session counts if T <= ts < T+15m.
+    """
+    width = SAMPLE_MINUTES * 60
+    devices = {}
+    for t, show in samples:
+        t0 = t.timestamp()
+        t1 = t0 + width
+        name = normalize_show(show)
+        bucket = devices.setdefault(name, set())
+        for ts, device, start in sessions:
+            if (start < t1 and ts > t0) or (start == ts and t0 <= ts < t1):
+                bucket.add(device)
+    return sorted(((n, len(d)) for n, d in devices.items() if d), key=lambda kv: (-kv[1], kv[0]))
+
+
+def per_show_result(sessions, start_local, end_local, tz, fetch=None, url_base=None):
+    expected = round((end_local - start_local).total_seconds() / (SAMPLE_MINUTES * 60))
+    result = {"shows": [], "error": None, "missing": 0, "expected": expected}
+    try:
+        samples, error = fetch_show_timeline(start_local, end_local, tz, fetch, url_base)
+        if error:
+            result["error"] = error
+        elif not samples:
+            result["error"] = "no samples in window"
+        else:
+            result["shows"] = show_listeners(sessions, samples)
+            result["missing"] = max(0, expected - len(samples))
+    except Exception:  # noqa: BLE001 - the rest of the report must still go out
+        result["error"] = "unreadable timeline"
+    return result
+
+
 # ---------------------------------------------------------------- rendering
-
-def _ordered(counter):
-    return sorted(counter.items(), key=lambda kv: (kv[0] == "unknown", -kv[1], kv[0]))
-
-
-def _join(items):
-    return ", ".join(f"{name} {count}" for name, count in items)
-
-
-def render_cities(cities):
-    items = _ordered(cities)
-    known = [kv for kv in items if kv[0] != "unknown"]
-    unknown = [kv for kv in items if kv[0] == "unknown"]
-    shown = known[:MAX_CITIES]
-    rest = sum(count for _, count in known[MAX_CITIES:])
-    parts = _join(shown)
-    if rest:
-        parts = (parts + ", " if parts else "") + f"other {rest}"
-    if unknown:
-        parts = (parts + ", " if parts else "") + _join(unknown)
-    return parts or "none"
-
 
 def render_header(start_local, end_local, tz_name):
     hours = round((end_local.astimezone(dt.timezone.utc)
@@ -444,6 +544,20 @@ def history_line(stored_starts, start_iso, tz):
     return "\n".join(lines) or None
 
 
+def render_per_show(per_show):
+    """Lines for the per-show section. per_show: {"shows", "error", "missing", "expected"}."""
+    if per_show["error"]:
+        return [f"Per show: UNAVAILABLE ({per_show['error']})"]
+    if per_show["shows"]:
+        lines = ["Listeners per show:"] + [f"  {name}: {count}" for name, count in per_show["shows"]]
+    else:
+        lines = ["Listeners per show: none"]
+    if per_show["missing"] > 0:
+        lines.append(f"Per-show timeline incomplete: {per_show['missing']} of "
+                     f"{per_show['expected']} samples missing")
+    return lines
+
+
 def render_report(header, res, history, own_excluded=True):
     lines = [
         header,
@@ -455,12 +569,7 @@ def render_report(header, res, history, own_excluded=True):
     ]
     if res["unparsed"] > 0:
         lines.append(f"Unparsed log lines (ignored): {res['unparsed']}")
-    if res["geo_status"] == "ok":
-        lines.append("Countries: " + (_join(_ordered(res["countries"])) or "none"))
-        lines.append("Cities (approx.): " + render_cities(res["cities"]))
-    else:
-        lines.append("Countries: " + res["geo_status"])
-        lines.append("Cities (approx.): " + res["geo_status"])
+    lines.extend(render_per_show(res["per_show"]))
     if history:
         lines.append(history)
     lines.append("--")
@@ -488,7 +597,8 @@ def send_via_command(text, argv):
 
 # ---------------------------------------------------------------- core
 
-def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=False, force=False):
+def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=False, force=False,
+               timeline_fetch=None):
     cfg = normalize_config(config)
     tz = ZoneInfo(cfg["timezone"])
     if not force and now_utc.astimezone(tz).hour != cfg["report_hour"]:
@@ -498,15 +608,15 @@ def run_report(config, window_end_local, now_utc, send, dry_run=False, resend=Fa
         print("refused: the window has not ended yet; nothing stored or sent", file=sys.stderr)
         return 3
     if dry_run:
-        return _run_window(cfg, window_end_local, now_utc, send, dry_run, resend)
+        return _run_window(cfg, window_end_local, now_utc, send, dry_run, resend, timeline_fetch)
     with run_lock(cfg["state_dir"]) as held:
         if not held:
             print("another run is in progress; nothing done")
             return 0
-        return _run_window(cfg, window_end_local, now_utc, send, dry_run, resend)
+        return _run_window(cfg, window_end_local, now_utc, send, dry_run, resend, timeline_fetch)
 
 
-def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend):
+def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend, timeline_fetch=None):
     tz = ZoneInfo(cfg["timezone"])
     start_local, end_local = compute_window(window_end_local, tz)
     start_utc = start_local.astimezone(dt.timezone.utc)
@@ -535,24 +645,7 @@ def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend):
         except SaltProblem as exc:
             return _handle_problem(cfg, conn, header, str(exc), start_iso, now_utc, send,
                                    dry_run, resend)
-        reader, geo_status, geo_month = None, "ok", ""
-        if not cfg["mmdb_path"]:
-            geo_status = "unavailable (not configured)"
-        else:
-            try:
-                reader = MmdbReader(cfg["mmdb_path"])
-                geo_month = reader.db_month
-            except FileNotFoundError:
-                geo_status = "unavailable (file not found)"
-            except ValueError:
-                geo_status = "unavailable (invalid file)"
-            except OSError:
-                geo_status = "unavailable (unreadable)"
-        try:
-            scan = scan_logs(cfg, start_utc.timestamp(), end_utc.timestamp(), salt, reader)
-        finally:
-            if reader is not None:
-                reader.close()
+        scan = scan_logs(cfg, start_utc.timestamp(), end_utc.timestamp(), salt)
 
         reference = min(now_utc, end_utc).timestamp()
         problem = coverage_problem(scan, start_utc.timestamp(), reference,
@@ -561,7 +654,9 @@ def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend):
             return _handle_problem(cfg, conn, header, problem, start_iso, now_utc, send,
                                    dry_run, resend)
 
-        res = _summarize(scan, conn, start_iso, geo_status)
+        res = _summarize(scan, conn, start_iso)
+        res["per_show"] = per_show_result(scan["sessions"], start_local, end_local, tz,
+                                          timeline_fetch, cfg["show_timeline_url"])
         stored = [r[0] for r in conn.execute("SELECT window_start_utc FROM windows")] if conn else []
         text = render_report(header, res, history_line(stored, start_iso, tz),
                            own_excluded=bool(cfg["own_public_ips"]))
@@ -574,13 +669,13 @@ def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend):
             conn.execute("DELETE FROM sessions WHERE window_start_utc=?", (start_iso,))
             conn.executemany(
                 "INSERT INTO sessions(window_start_utc, ts_utc, device, country, city) VALUES(?,?,?,?,?)",
-                [(start_iso, epoch_iso(ts), dev, country, city)
-                 for ts, dev, country, city in sorted(scan["sessions"])])
+                [(start_iso, epoch_iso(ts), dev, "unknown", "unknown")
+                 for ts, dev, _start in sorted(scan["sessions"])])
             conn.execute(
                 "INSERT OR REPLACE INTO windows VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)",
                 (start_iso, end_iso, f"{end_local:%Y-%m-%dT%H:%M}", res["sessions"], res["internal"],
                  res["bot"], res["no_ip"], res["unparsed"], res["unique"], res["new"],
-                 res["returning"], geo_status, geo_month, epoch_iso(scan["min_ts"]),
+                 res["returning"], "off", "", epoch_iso(scan["min_ts"]),
                  epoch_iso(scan["max_ts"]), built))
         rc = send(text, cfg["delivery_argv"])
         if rc != 0:
@@ -597,26 +692,16 @@ def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend):
             conn.close()
 
 
-def _summarize(scan, conn, start_iso, geo_status):
-    # A device's geography comes from its first session (by time) that resolves a country.
-    first_seen = {}
-    for _ts, dev, country, city in sorted(scan["sessions"]):
-        if dev not in first_seen:
-            first_seen[dev] = ("unknown", "unknown")
-        if first_seen[dev][0] == "unknown" and country != "unknown":
-            first_seen[dev] = (country, city)
-    devices = set(first_seen)
+def _summarize(scan, conn, start_iso):
+    devices = {dev for _ts, dev, _start in scan["sessions"]}
     earlier = set()
     if conn is not None and devices:
         earlier = {r[0] for r in conn.execute(
             "SELECT DISTINCT device FROM sessions WHERE window_start_utc < ?", (start_iso,))}
     new = len(devices - earlier)
-    countries = collections.Counter(c for c, _ in first_seen.values())
-    cities = collections.Counter(city for _, city in first_seen.values())
     return {"sessions": len(scan["sessions"]), "unique": len(devices), "new": new,
             "returning": len(devices) - new, "internal": scan["internal"], "bot": scan["bot"],
-            "no_ip": scan["no_ip"], "unparsed": scan["unparsed"], "countries": countries,
-            "cities": cities, "geo_status": geo_status}
+            "no_ip": scan["no_ip"], "unparsed": scan["unparsed"]}
 
 
 def _handle_problem(cfg, conn, header, reason, start_iso, now_utc, send, dry_run, resend):

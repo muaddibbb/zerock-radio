@@ -2,7 +2,7 @@
   "caddy_log_globs": ["/PATH/TO/CADDY_LOG_DIR/rocky-access*.log*"],
   "site_host": "rocky.kupernet.com",
   "state_dir": "/PATH/TO/STATE_DIR",
-  "mmdb_path": "/PATH/TO/dbip-city-lite-YYYY-MM.mmdb",
+  "show_timeline_url": "http://192.168.1.166:5000/api/listener-stats/history",
   "own_public_ips": [],
   "stale_after_minutes": 30,
   "timezone": "Asia/Jerusalem",

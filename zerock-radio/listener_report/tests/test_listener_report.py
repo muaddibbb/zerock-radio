@@ -31,7 +31,8 @@ FOOTER_TEXT = (
     "Listener = IP + app/device type, not a person. One person on two devices counts twice; "
     "a new IP counts as new. Session = one finished connection to rocky.kupernet.com/stream; "
     "connections still open at 21:00 count in the next report. Not counted: icecast.live relay "
-    "listeners, metadata-only players. Locations approximate. IP Geolocation by DB-IP."
+    "listeners, metadata-only players. Per-show numbers do not add up to the total (a listener "
+    "present during two shows counts in both); show boundaries are approximate to 15 minutes."
 )
 
 OWN_LINE = ("Own network not excluded: own_public_ips is empty, so listeners behind the "
@@ -226,9 +227,9 @@ class BaseCase(unittest.TestCase):
             target = os.path.join(self.logs, name)
             shutil.copy(os.path.join(FIXTURES, name), target)
             self.touch(target)
-        self.mmdb = os.path.join(self.tmp, "geo.mmdb")
-        with open(self.mmdb, "wb") as fh:
-            fh.write(build_mmdb(GEO_ENTRIES))
+        net = mock.patch.object(lp, "_http_get_json", side_effect=OSError("no network in tests"))
+        net.start()
+        self.addCleanup(net.stop)
         self.state = os.path.join(self.tmp, "state")
 
     @staticmethod
@@ -238,7 +239,7 @@ class BaseCase(unittest.TestCase):
 
     def config(self, glob_name, **overrides):
         cfg = {"caddy_log_globs": [os.path.join(self.logs, glob_name)], "state_dir": self.state,
-               "mmdb_path": self.mmdb, "own_public_ips": [], "delivery_argv": ["deliver", "wa"]}
+               "own_public_ips": [], "delivery_argv": ["deliver", "wa"]}
         cfg.update(overrides)
         return cfg
 
@@ -331,9 +332,6 @@ class FixtureTests(BaseCase):
                "returning": row["returning_n"], "internal": row["excluded_internal"],
                "bot": row["excluded_bot"], "no_ip": row["no_ip"], "unparsed": row["unparsed"]}
         self.assertEqual(got, {k: exp[k] for k in got})
-        lines = {ln.split(":")[0]: ln for ln in text.splitlines()}
-        self.assertEqual(parse_counts(lines["Countries"]), exp["countries"])
-        self.assertEqual(parse_counts(lines["Cities (approx.)"]), exp["cities"])
         self.assertEqual(row["window_end_local"], exp["window_end_local"])
 
     def test_fixture_counts_match_expected(self):
@@ -447,39 +445,9 @@ class FixtureTests(BaseCase):
         self.assertEqual(self.window_rows()[0]["sessions"], 1)
 
 
-# ---------------------------------------------------------------- geography
+# ---------------------------------------------------------------- mmdb reader (unit, kept) and ignored config
 
 class GeoTests(BaseCase):
-    def test_geo_counts_and_unknown(self):
-        _, send, _ = self.run_day(1)
-        self.assertIn("Countries: Israel 4, United States 3, Germany 1, unknown 1", send.calls[0][0])
-        self.assertIn("Cities (approx.): New York 3, Tel Aviv 3, Berlin 1, unknown 2", send.calls[0][0])
-
-    def test_city_label_approx(self):
-        _, send, _ = self.run_day(1)
-        self.assertIn("\nCities (approx.): ", send.calls[0][0])
-
-    def test_geo_unavailable_without_mmdb(self):
-        cfg = self.config("caddy_day1.jsonl", mmdb_path=os.path.join(self.tmp, "missing.mmdb"))
-        _, send, _ = self.run_day(1, cfg=cfg)
-        text = send.calls[0][0]
-        self.assertIn("Countries: unavailable (file not found)", text)
-        self.assertIn("Cities (approx.): unavailable (file not found)", text)
-        self.assertIn("Sessions: 12", text)
-        garbage = os.path.join(self.tmp, "bad.mmdb")
-        with open(garbage, "wb") as fh:
-            fh.write(b"not a database")
-        _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=garbage), resend=True)
-        self.assertIn("Countries: unavailable (invalid file)", send.calls[0][0])
-
-    def test_cities_capped_with_other(self):
-        counter = {f"City{i:02d}": 12 - i for i in range(12)}
-        counter["unknown"] = 3
-        text = lp.render_cities(counter)
-        self.assertTrue(text.startswith("City00 12, City01 11"))
-        self.assertIn("City09 3, other 3, unknown 3", text)
-        self.assertNotIn("City10", text)
-
     def test_mmdb_reader_synthetic_lookup(self):
         for size in (24, 28, 32):
             path = os.path.join(self.tmp, f"synthetic{size}.mmdb")
@@ -623,8 +591,7 @@ class ReportTextTests(BaseCase):
             "Excluded bots and probes: 3",
             "No usable client IP (not counted): 1",
             "Unparsed log lines (ignored): 2",
-            "Countries: Israel 4, United States 3, Germany 1, unknown 1",
-            "Cities (approx.): New York 3, Tel Aviv 3, Berlin 1, unknown 2",
+            "Per show: UNAVAILABLE (timeline fetch failed: connection error)",
             'HISTORY STARTS 2026-11-02 (1 of 7 days): "new" is overstated until 2026-11-09.',
             "--",
             FOOTER_TEXT,
@@ -897,6 +864,7 @@ class RobustnessTests(BaseCase):
                 reader.close()
             _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=path), resend=True)
             self.assertIn("Sessions: 12", send.calls[0][0])
+            self.assertNotIn("Countries", send.calls[0][0])
 
     def hostile(self, data_prefix, fill):
         blob = bytearray(build_mmdb(GEO_ENTRIES))
@@ -993,10 +961,217 @@ class FakeClockDt:
         self.__dict__.update(ns)
 
 
+# ---------------------------------------------------------------- per-show listeners
+
+def sample(local_text, show):
+    return (dt.datetime.strptime(local_text, "%Y-%m-%dT%H:%M").replace(tzinfo=TZ), show)
+
+
+def make_fetch(by_date, calls=None):
+    """Fake fetch(url): by_date maps YYYY-MM-DD to a payload (or an Exception to raise)."""
+    def fetch(url):
+        if calls is not None:
+            calls.append(url)
+        value = by_date[url.rsplit("date=", 1)[1]]
+        if isinstance(value, Exception):
+            raise value
+        return value
+    return fetch
+
+
+def full_day_records(day, show="Rocky", only=None):
+    out = []
+    for i in range(96):
+        hh, mm = divmod(i * 15, 60)
+        out.append({"ts": f"{day}T{hh:02d}:{mm:02d}", "show": show, "local": 1, "title": "t"})
+    return [r for r in out if only is None or only(r)]
+
+
+def window_payloads(overrides=None, drop=0):
+    """Complete records for the 2026-11-02 21:00 -> 2026-11-03 21:00 window, optional show overrides."""
+    d1 = [r for r in full_day_records("2026-11-02") if r["ts"] >= "2026-11-02T21:00"]
+    d2 = [r for r in full_day_records("2026-11-03") if r["ts"] < "2026-11-03T21:00"]
+    allr = d1 + d2
+    for ts, show in (overrides or {}).items():
+        for r in allr:
+            if r["ts"] == ts:
+                r["show"] = show
+    if drop:
+        allr = allr[:-drop]
+    return {"2026-11-02": {"records": [r for r in allr if r["ts"].startswith("2026-11-02")]},
+            "2026-11-03": {"records": [r for r in allr if r["ts"].startswith("2026-11-03")]}}
+
+
+def T(minutes_from_start):
+    return START1.timestamp() + minutes_from_start * 60
+
+
+class ShowOverlapTests(unittest.TestCase):
+    SAMPLES = [sample("2026-11-02T22:00", "Show A"), sample("2026-11-02T22:15", "Show B")]
+
+    def counts(self, sessions, samples=None):
+        return dict(lp.show_listeners(sessions, samples or self.SAMPLES))
+
+    def test_show_overlap_straddles_two_shows(self):
+        # 22:10 -> 22:20 touches both samples
+        sess = [(T(80), "d1", T(70))]
+        self.assertEqual(self.counts(sess), {"Show A": 1, "Show B": 1})
+
+    def test_session_at_boundary_not_counted(self):
+        # ends exactly at 22:15 (T of Show B) and starts exactly where Show A ends
+        sess = [(T(75), "d1", T(65))]
+        self.assertEqual(self.counts(sess), {"Show A": 1})
+        # starts exactly at the end of the last sample (22:30)
+        self.assertEqual(self.counts([(T(100), "d2", T(90))]), {})
+
+    def test_zero_length_session_point(self):
+        self.assertEqual(self.counts([(T(60), "d1", T(60))]), {"Show A": 1})  # at T: counts
+        self.assertEqual(self.counts([(T(75), "d1", T(75))]), {"Show B": 1})  # belongs to the later sample
+        self.assertEqual(self.counts([(T(90), "d1", T(90))]), {})  # at the end of the last sample
+
+    def test_rocky_rotation_line(self):
+        samples = [sample("2026-11-02T22:00", "Rocky"), sample("2026-11-02T22:15", "")]
+        self.assertEqual(self.counts([(T(70), "d1", T(70)), (T(80), "d2", T(80))], samples),
+                         {"Rocky rotation (no show)": 2})
+        text = lp.render_per_show({"shows": [("Rocky rotation (no show)", 2)], "error": None,
+                                   "missing": 0, "expected": 96})
+        self.assertEqual(text, ["Listeners per show:", "  Rocky rotation (no show): 2"])
+
+    def test_shows_sorted_desc(self):
+        samples = [sample("2026-11-02T22:00", "B"), sample("2026-11-02T22:15", "A"),
+                   sample("2026-11-02T22:30", "C")]
+        sess = [(T(a), f"d{i}", T(a)) for i, a in enumerate((61, 62, 76, 77, 91))]
+        sess += [(T(63), "d9", T(63))]
+        self.assertEqual(lp.show_listeners(sess, samples), [("B", 3), ("A", 2), ("C", 1)])
+        ties = lp.show_listeners([(T(61), "d1", T(61)), (T(76), "d2", T(76))], samples)
+        self.assertEqual(ties, [("A", 1), ("B", 1)])
+
+    def test_host_segment_collapsed(self):
+        self.assertEqual(lp.normalize_show("A \u2014 B \u2014 B"), "A \u2014 B")
+        self.assertEqual(lp.normalize_show("A \u2014 B"), "A \u2014 B")
+        self.assertEqual(lp.normalize_show("Al Haroker"), "Al Haroker")
+
+    def test_same_device_counted_once_per_show(self):
+        sess = [(T(61), "d1", T(61)), (T(70), "d1", T(65)), (T(62), "d2", T(62))]
+        self.assertEqual(self.counts(sess), {"Show A": 2})
+
+    def test_hebrew_show_names_pass_through(self):
+        samples = [sample("2026-11-02T22:00", "\u05e1\u05df \u2014 \u05d3\u05e0\u05d4 \u2014 \u05d3\u05e0\u05d4")]
+        self.assertEqual(lp.show_listeners([(T(61), "d", T(61))], samples),
+                         [("\u05e1\u05df \u2014 \u05d3\u05e0\u05d4", 1)])
+
+
+class TimelineTests(BaseCase):
+    START = dt.datetime(2026, 11, 2, 21, 0, tzinfo=TZ)
+    END = dt.datetime(2026, 11, 3, 21, 0, tzinfo=TZ)
+
+    def test_timeline_fetch_failure_unavailable(self):
+        fetch = make_fetch({"2026-11-02": OSError("x"), "2026-11-03": TimeoutError()})
+        samples, err = lp.fetch_show_timeline(self.START, self.END, TZ, fetch)
+        self.assertEqual((samples, err), ([], "timeline fetch failed: connection error"))
+        _, send, _ = self.run_day(1, timeline_fetch=make_fetch(
+            {"2026-11-02": TimeoutError(), "2026-11-03": TimeoutError()}))
+        self.assertIn("Per show: UNAVAILABLE (timeline fetch failed: timed out)", send.calls[0][0])
+        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertEqual(len(self.window_rows()), 1)
+        _, err = lp.fetch_show_timeline(self.START, self.END, TZ, make_fetch(
+            {"2026-11-02": {"nope": 1}, "2026-11-03": "text"}))
+        self.assertEqual(err, "unreadable timeline")
+
+    def test_fetch_retries_once(self):
+        calls = []
+        outcomes = [OSError("x"), window_payloads()["2026-11-02"], window_payloads()["2026-11-03"]]
+
+        def fetch(url):
+            calls.append(url)
+            out = outcomes.pop(0)
+            if isinstance(out, Exception):
+                raise out
+            return out
+        samples, err = lp.fetch_show_timeline(self.START, self.END, TZ, fetch)
+        self.assertEqual((len(calls), err, len(samples)), (3, None, 96))
+
+    def test_timeline_no_samples_unavailable(self):
+        fetch = make_fetch({"2026-11-02": {"records": []}, "2026-11-03": {"records": []}})
+        _, send, _ = self.run_day(1, timeline_fetch=fetch)
+        self.assertIn("Per show: UNAVAILABLE (no samples in window)", send.calls[0][0])
+
+    def test_timeline_incomplete_line(self):
+        payloads = window_payloads({"2026-11-02T22:00": "Show A"}, drop=3)
+        _, send, _ = self.run_day(1, timeline_fetch=make_fetch(payloads))
+        lines = send.calls[0][0].splitlines()
+        self.assertIn("Per-show timeline incomplete: 3 of 96 samples missing", lines)
+        i = lines.index("Per-show timeline incomplete: 3 of 96 samples missing")
+        self.assertTrue(lines[i - 1].startswith("  ") or lines[i - 1] == "Listeners per show: none")
+        self.assertNotIn("UNAVAILABLE", send.calls[0][0])
+
+    def test_complete_timeline_lists_shows(self):
+        # fixture day 1 sessions have no duration: points. Put a show on the whole window.
+        payloads = window_payloads({f"2026-11-02T21:{m:02d}": "Show A" for m in (0, 15, 30, 45)})
+        _, send, _ = self.run_day(1, timeline_fetch=make_fetch(payloads))
+        text = send.calls[0][0]
+        self.assertNotIn("incomplete", text)
+        self.assertIn("Listeners per show:\n  Rocky rotation (no show):", text)
+
+    def test_two_dates_fetched_and_filtered(self):
+        calls = []
+        payloads = window_payloads()
+        payloads["2026-11-02"]["records"].append({"ts": "2026-11-02T20:45", "show": "Out"})
+        payloads["2026-11-03"]["records"].append({"ts": "2026-11-03T21:00", "show": "Out"})
+        payloads["2026-11-03"]["records"] = [r for r in payloads["2026-11-03"]["records"]
+                                             if r["ts"] != "2026-11-03T10:00"]
+        payloads["2026-11-03"]["records"] += [{"ts": "garbage", "show": "x"}, {"ts": 5, "show": "x"},
+                                              "junk", {"ts": "2026-11-03T10:00", "show": 7}]
+        samples, err = lp.fetch_show_timeline(self.START, self.END, TZ, make_fetch(payloads, calls))
+        self.assertIsNone(err)
+        self.assertEqual([u.rsplit("date=", 1)[1] for u in calls], ["2026-11-02", "2026-11-03"])
+        self.assertTrue(all(u.startswith("http://192.168.1.166:5000/api/listener-stats/history?date=")
+                            for u in calls))
+        self.assertEqual(len(samples), 95)  # the show=7 sample is malformed and missing
+        self.assertTrue(all(self.START <= t < self.END for t, _ in samples))
+        self.assertNotIn("Out", [show for _, show in samples])
+
+    def test_one_date_failing_gives_missing_samples_not_unavailable(self):
+        payloads = window_payloads()
+        payloads["2026-11-02"] = OSError("x")
+        samples, err = lp.fetch_show_timeline(self.START, self.END, TZ, make_fetch(payloads))
+        self.assertIsNone(err)
+        self.assertEqual(len(samples), 84)
+
+    def test_session_duration_gives_start(self):
+        entries = [dict(log_entry(self.at(80), "203.0.113.7"), duration=600.0),
+                   dict(log_entry(self.at(80), "203.0.113.8"), duration=-5),
+                   dict(log_entry(self.at(80), "203.0.113.9"), duration=True),
+                   dict(log_entry(self.at(80), "203.0.113.10"), duration="x")]
+        scan = lp.scan_logs(lp.normalize_config(self.custom_log(entries)), START1.timestamp(),
+                            START1.timestamp() + 86400, b"s" * 32)
+        starts = sorted(round(ts - start) for ts, _d, start in scan["sessions"])
+        self.assertEqual(starts, [0, 0, 0, 600])
+
+    def test_no_geo_lines_or_footer(self):
+        _, send, _ = self.run_day(1)
+        text = send.calls[0][0]
+        for word in ("Countries", "Cities", "DB-IP", "Locations approximate", "Geolocation"):
+            self.assertNotIn(word, text)
+
+    def test_mmdb_path_accepted_ignored(self):
+        cfg = self.config("caddy_day1.jsonl", mmdb_path=os.path.join(self.tmp, "does-not-exist.mmdb"))
+        with mock.patch.object(MmdbReader, "__init__", side_effect=AssertionError("must not open")):
+            _, send, _ = self.run_day(1, cfg=cfg)
+        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertEqual(self.window_rows()[0]["geo_status"], "off")
+
+    def test_footer_per_show_note(self):
+        _, send, _ = self.run_day(1)
+        self.assertIn("Per-show numbers do not add up to the total (a listener present during two "
+                      "shows counts in both); show boundaries are approximate to 15 minutes.",
+                      send.calls[0][0])
+
+
 class RealPathTests(BaseCase):
     def write_cfg(self, **overrides):
         cfg = {"caddy_log_globs": [os.path.join(self.logs, "caddy_day1.jsonl")],
-               "site_host": "rocky.kupernet.com", "state_dir": self.state, "mmdb_path": "",
+               "site_host": "rocky.kupernet.com", "state_dir": self.state,
                "own_public_ips": [], "stale_after_minutes": 30, "timezone": "Asia/Jerusalem",
                "report_hour": 21, "delivery_argv": ["deliver", "wa"]}
         cfg.update(overrides)
