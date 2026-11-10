@@ -384,7 +384,7 @@ SHOW_SCHEDULE = [
     # ── Prepared but not yet announced (board_hidden) — upload links are live,
     # but these are excluded from the public WP weekly board until confirmed go-live ──
     {'key': 'forte_tal',            'name': 'זה רוק פורטה',        'broadcaster': 'טל אופיר',     'day': 0,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
-    {'key': 'forte_roy',            'name': 'זה רוק פורטה',        'broadcaster': 'רועי קופרמן',  'day': 6,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45', 'board_hidden': True},
+    {'key': 'forte_roy',            'name': 'זה רוק פורטה',        'broadcaster': 'רועי קופרמן',  'day': 6,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45', 'board_hidden_until': '2026-11-14T23:00:00'},   # unhidden from the Saturday 2026-11-14 midnight board refresh (owner request 2026-11-10)
     {'key': 'forte_eran',           'name': 'זה רוק פורטה',        'broadcaster': 'ערן הר-פז',    'day': 2,    'time': '08:00', 'upload_time': '09:00', 'rerun_days_offset': 0,    'rerun_time': '16:00','wp_show_id': '45'},
     {'key': 'rakevet_laila',        'name': 'רכבת לילה',           'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '21:00', 'upload_time': '22:30', 'rerun_days_offset': 3,    'rerun_time': '21:00','wp_show_id': ''},   # shown on the board 2026-10-24
     {'key': 'od_yom',               'name': 'עוד יום',             'broadcaster': 'יובל יוספסון', 'day': 6,    'time': '09:00', 'upload_time': '10:00', 'rerun_days_offset': 3,    'rerun_time': '18:00','wp_show_id': '41', 'board_hidden_until': '2026-10-03T23:00:00'},
