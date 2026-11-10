@@ -53,6 +53,9 @@ DEFAULTS = {
     "delivery_argv": [],
     "mmdb_path": "",  # accepted and ignored: geography was removed from the report
     "show_timeline_url": "http://192.168.1.166:5000/api/listener-stats/history",
+    "stream_bytes_per_second": 16000,  # 128 kbps MP3
+    "stream_burst_bytes": 65535,  # Icecast initial burst, not listening time
+    "listener_min_seconds": 300,
 }
 REQUIRED = ("caddy_log_globs", "state_dir")
 
@@ -66,7 +69,11 @@ FOOTER = (
     "a new IP counts as new. Session = one finished connection to rocky.kupernet.com/stream; "
     "connections still open at 21:00 count in the next report. Not counted: icecast.live relay "
     "listeners, metadata-only players. Per-show numbers do not add up to the total (a listener "
-    "present during two shows counts in both); show boundaries are approximate to 15 minutes."
+    "present during two shows counts in both); show boundaries are approximate to 15 minutes. "
+    "A listener is a device with at least 5 minutes of listening that day, estimated from bytes "
+    "sent (approximate, a few seconds per connection); shorter connections are shown separately. "
+    "A connection counts in the day it ends. Counts cover the /stream route only, so they differ "
+    "from Icecast's own average."
 )
 
 OWN_NETWORK_LINE = ("Own network not excluded: own_public_ips is empty, so listeners behind the "
@@ -90,6 +97,9 @@ CREATE INDEX IF NOT EXISTS sessions_device ON sessions(device);
 CREATE INDEX IF NOT EXISTS sessions_window ON sessions(window_start_utc);
 CREATE TABLE IF NOT EXISTS notices(
     window_start_utc TEXT PRIMARY KEY, reason TEXT, sent_at_utc TEXT);
+CREATE TABLE IF NOT EXISTS listening(
+    window_start_utc TEXT, device TEXT, seconds REAL, PRIMARY KEY(window_start_utc, device));
+CREATE TABLE IF NOT EXISTS listening_done(window_start_utc TEXT PRIMARY KEY);
 """
 
 
@@ -126,7 +136,34 @@ def normalize_config(raw):
             raise ValueError("invalid entry in own_public_ips")
         own.append(ip)
     cfg["own_public_ips"] = own
+    for key, ok in (("stream_bytes_per_second", lambda v: v > 0),
+                    ("stream_burst_bytes", lambda v: v >= 0),
+                    ("listener_min_seconds", lambda v: v > 0)):
+        value = cfg[key]
+        if (isinstance(value, bool) or not isinstance(value, (int, float))
+                or not math.isfinite(value) or not ok(value)):
+            raise ValueError("invalid config value: " + key)
     return cfg
+
+
+def session_seconds(size, cfg):
+    """Estimated listening seconds of one connection from the bytes sent (duration is ignored)."""
+    if isinstance(size, bool) or not isinstance(size, (int, float)) or not math.isfinite(size):
+        return 0.0
+    return max(0.0, size - cfg["stream_burst_bytes"]) / cfg["stream_bytes_per_second"]
+
+
+def classify(sessions, cfg):
+    """Split sessions (ts, device, start) into listeners (>= listener_min_seconds in total) and brief."""
+    totals = {}
+    for ts, device, start in sessions:
+        totals[device] = totals.get(device, 0.0) + (ts - start)
+    listeners = {d: t for d, t in totals.items() if t >= cfg["listener_min_seconds"]}
+    listener_sessions = [s for s in sessions if s[1] in listeners]
+    brief = [s for s in sessions if s[1] not in listeners]
+    return {"listeners": listeners, "listener_sessions": listener_sessions,
+            "brief_sessions": len(brief), "brief_devices": len({s[1] for s in brief}),
+            "totals": totals}
 
 
 def load_config(path):
@@ -270,11 +307,8 @@ def _scan_line(line, cfg, start_ts, end_ts, salt, scan):
     if is_bot(user_agent):
         scan["bot"] += 1
         return
-    duration = entry.get("duration")
-    if (isinstance(duration, bool) or not isinstance(duration, (int, float))
-            or not math.isfinite(duration) or duration < 0):
-        duration = 0
-    scan["sessions"].append((ts, device_hash(salt, ip, user_agent), ts - duration))
+    length = session_seconds(entry.get("size"), cfg)
+    scan["sessions"].append((ts, device_hash(salt, ip, user_agent), ts - length))
 
 
 def coverage_problem(scan, start_ts, reference_ts, stale_seconds):
@@ -566,7 +600,19 @@ def render_problem(header, reason):
             "No counts shown; nothing stored for this window.")
 
 
-def history_line(stored_starts, start_iso, tz):
+def lacking_days(conn):
+    """Stored windows without listening data; 0 when unknown (no conn, missing tables)."""
+    if conn is None:
+        return 0
+    try:
+        return conn.execute(
+            "SELECT COUNT(*) FROM windows WHERE window_start_utc NOT IN "
+            "(SELECT window_start_utc FROM listening_done)").fetchone()[0]
+    except sqlite3.Error:
+        return 0
+
+
+def history_line(stored_starts, start_iso, tz, lacking=0):
     starts = set(stored_starts) | {start_iso}
 
     def local_day(iso):
@@ -588,6 +634,9 @@ def history_line(stored_starts, start_iso, tz):
         day += dt.timedelta(days=1)
     if missing:
         lines.append(f'MISSING DAYS: {", ".join(missing)} (no stored report): "new" may be overstated.')
+    if lacking > 0:
+        lines.append(f"LISTENING DATA MISSING for {lacking} of {len(set(stored_starts))} stored days "
+                     '(run --rebuild-history): "returning" is understated.')
     return "\n".join(lines) or None
 
 
@@ -619,11 +668,20 @@ def render_per_show(per_show, unique=None):
     return lines
 
 
-def render_report(header, res, history, own_excluded=True):
+def _minutes_text(seconds):
+    minutes = seconds / 60
+    return str(int(minutes)) if minutes == int(minutes) else f"{minutes:g}"
+
+
+def render_report(header, res, history, own_excluded=True, min_seconds=300):
     lines = [
         header,
-        f"Sessions: {res['sessions']}",
-        f"Unique listeners: {res['unique']} (new {res['new']}, returning {res['returning']})",
+        f"Listeners ({_minutes_text(min_seconds)}+ min of listening): {res['unique']} "
+        f"(new {res['new']}, returning {res['returning']})",
+        f"Sessions of these listeners: {res['sessions']}",
+        f"Brief connections (under {_minutes_text(min_seconds)} min of listening in total, "
+        f"not counted as listeners): {res['brief_sessions']} connections from "
+        f"{res['brief_devices']} devices",
         f"Excluded internal (own systems, own network): {res['internal']}",
         f"Excluded bots and probes: {res['bot']}",
         f"No usable client IP (not counted): {res['no_ip']}",
@@ -715,23 +773,20 @@ def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend, timeline_
             return _handle_problem(cfg, conn, header, problem, start_iso, now_utc, send,
                                    dry_run, resend)
 
-        res = _summarize(scan, conn, start_iso)
-        res["per_show"] = per_show_result(scan["sessions"], start_local, end_local, tz,
+        res = _summarize(scan, conn, start_iso, cfg)
+        res["per_show"] = per_show_result(res["listener_sessions"], start_local, end_local, tz,
                                           timeline_fetch, cfg["show_timeline_url"])
         stored = [r[0] for r in conn.execute("SELECT window_start_utc FROM windows")] if conn else []
-        text = render_report(header, res, history_line(stored, start_iso, tz),
-                           own_excluded=bool(cfg["own_public_ips"]))
+        text = render_report(header, res, history_line(stored, start_iso, tz, lacking_days(conn)),
+                             own_excluded=bool(cfg["own_public_ips"]),
+                             min_seconds=cfg["listener_min_seconds"])
         if dry_run:
             print(text)
             return 0
 
         built = utc_iso(now_utc)
         with conn:
-            conn.execute("DELETE FROM sessions WHERE window_start_utc=?", (start_iso,))
-            conn.executemany(
-                "INSERT INTO sessions(window_start_utc, ts_utc, device, country, city) VALUES(?,?,?,?,?)",
-                [(start_iso, epoch_iso(ts), dev, "unknown", "unknown")
-                 for ts, dev, _start in sorted(scan["sessions"])])
+            _store_window_rows(conn, start_iso, scan["sessions"], res["totals"])
             conn.execute(
                 "INSERT OR REPLACE INTO windows VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL)",
                 (start_iso, end_iso, f"{end_local:%Y-%m-%dT%H:%M}", res["sessions"], res["internal"],
@@ -753,16 +808,87 @@ def _run_window(cfg, window_end_local, now_utc, send, dry_run, resend, timeline_
             conn.close()
 
 
-def _summarize(scan, conn, start_iso):
-    devices = {dev for _ts, dev, _start in scan["sessions"]}
+def _store_window_rows(conn, start_iso, sessions, totals):
+    """Replace the sessions and listening rows of one window; the caller holds `with conn:`."""
+    conn.execute("DELETE FROM sessions WHERE window_start_utc=?", (start_iso,))
+    conn.execute("DELETE FROM listening WHERE window_start_utc=?", (start_iso,))
+    conn.executemany(
+        "INSERT INTO sessions(window_start_utc, ts_utc, device, country, city) VALUES(?,?,?,?,?)",
+        [(start_iso, epoch_iso(ts), dev, "unknown", "unknown") for ts, dev, _start in sorted(sessions)])
+    conn.executemany("INSERT INTO listening(window_start_utc, device, seconds) VALUES(?,?,?)",
+                     [(start_iso, dev, sec) for dev, sec in sorted(totals.items())])
+    conn.execute("INSERT OR REPLACE INTO listening_done VALUES(?)", (start_iso,))
+
+
+def _summarize(scan, conn, start_iso, cfg):
+    cls = classify(scan["sessions"], cfg)
+    devices = set(cls["listeners"])
     earlier = set()
     if conn is not None and devices:
-        earlier = {r[0] for r in conn.execute(
-            "SELECT DISTINCT device FROM sessions WHERE window_start_utc < ?", (start_iso,))}
+        try:
+            earlier = {r[0] for r in conn.execute(
+                "SELECT DISTINCT device FROM listening WHERE window_start_utc < ? AND seconds >= ?",
+                (start_iso, cfg["listener_min_seconds"]))}
+        except sqlite3.Error:
+            earlier = set()
     new = len(devices - earlier)
-    return {"sessions": len(scan["sessions"]), "unique": len(devices), "new": new,
-            "returning": len(devices) - new, "internal": scan["internal"], "bot": scan["bot"],
-            "no_ip": scan["no_ip"], "unparsed": scan["unparsed"]}
+    return {"sessions": len(cls["listener_sessions"]), "unique": len(devices), "new": new,
+            "returning": len(devices) - new, "brief_sessions": cls["brief_sessions"],
+            "brief_devices": cls["brief_devices"], "internal": scan["internal"],
+            "bot": scan["bot"], "no_ip": scan["no_ip"], "unparsed": scan["unparsed"],
+            "listener_sessions": cls["listener_sessions"], "totals": cls["totals"]}
+
+
+def rebuild_history(cfg):
+    """Recompute every stored window from the logs. Never sends. Idempotent."""
+    state_dir = cfg["state_dir"]
+    with run_lock(state_dir) as held:
+        if not held:
+            print("another run is in progress; nothing done")
+            return 0
+        conn = open_state(state_dir)
+        try:
+            starts = [r[0] for r in conn.execute(
+                "SELECT window_start_utc FROM windows ORDER BY window_start_utc")]
+            if not starts:
+                print("rebuild done: 0 rebuilt, 0 dropped")
+                return 0
+            try:
+                salt = load_salt(state_dir, create=False, has_history=True)
+            except SaltProblem as exc:
+                print(f"rebuild refused: {exc}", file=sys.stderr)
+                return 1
+            rebuilt = dropped = 0
+            for start_iso in starts:
+                start_ts = dt.datetime.strptime(start_iso, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=dt.timezone.utc).timestamp()
+                end_iso = conn.execute("SELECT window_end_utc FROM windows WHERE window_start_utc=?",
+                                       (start_iso,)).fetchone()[0]
+                end_ts = dt.datetime.strptime(end_iso, "%Y-%m-%dT%H:%M:%SZ").replace(
+                    tzinfo=dt.timezone.utc).timestamp()
+                scan = scan_logs(cfg, start_ts, end_ts, salt)
+                problem = coverage_problem(scan, start_ts, end_ts, cfg["stale_after_minutes"] * 60)
+                if problem:
+                    with conn:
+                        for table in ("windows", "sessions", "listening", "listening_done"):
+                            conn.execute(f"DELETE FROM {table} WHERE window_start_utc=?", (start_iso,))
+                    print(f"dropped {start_iso}: {problem}")
+                    dropped += 1
+                    continue
+                res = _summarize(scan, conn, start_iso, cfg)
+                with conn:
+                    _store_window_rows(conn, start_iso, scan["sessions"], res["totals"])
+                    conn.execute(
+                        "UPDATE windows SET sessions=?, unique_n=?, new_n=?, returning_n=? "
+                        "WHERE window_start_utc=?",
+                        (res["sessions"], res["unique"], res["new"], res["returning"], start_iso))
+                print(f"rebuilt {start_iso}: listeners {res['unique']}, "
+                      f"brief {res['brief_devices']} devices")
+                rebuilt += 1
+            print(f"rebuild done: {rebuilt} rebuilt, {dropped} dropped")
+            return 0
+        finally:
+            conn.close()
 
 
 def _handle_problem(cfg, conn, header, reason, start_iso, now_utc, send, dry_run, resend):
@@ -793,9 +919,15 @@ def main(argv=None):
     parser.add_argument("--force", action="store_true", help="skip the report-hour gate")
     parser.add_argument("--dry-run", action="store_true", help="print the report; write and send nothing")
     parser.add_argument("--resend", action="store_true", help="rebuild and send even if already sent")
+    parser.add_argument("--rebuild-history", action="store_true",
+                        help="recompute every stored window from the logs; never sends")
     args = parser.parse_args(argv)
+    if args.rebuild_history and (args.resend or args.dry_run or args.window_end):
+        raise SystemExit("--rebuild-history cannot be combined with --resend, --dry-run or --window-end")
 
     cfg = load_config(args.config)
+    if args.rebuild_history:
+        return rebuild_history(cfg)
     tz = ZoneInfo(cfg["timezone"])
     now = dt.datetime.now(dt.timezone.utc)
     if args.window_end:

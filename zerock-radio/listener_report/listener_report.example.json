@@ -7,5 +7,8 @@
   "stale_after_minutes": 30,
   "timezone": "Asia/Jerusalem",
   "report_hour": 21,
+  "stream_bytes_per_second": 16000,
+  "stream_burst_bytes": 65535,
+  "listener_min_seconds": 300,
   "delivery_argv": ["PATH_TO_DELIVERY_WRAPPER", "wa"]
 }

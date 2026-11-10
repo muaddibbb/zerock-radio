@@ -1,8 +1,8 @@
 # Daily listeners report
 
 Every evening at 21:00 Asia/Jerusalem one WhatsApp message covers the previous 24 hours of
-listening on https://rocky.kupernet.com/stream: sessions, unique listeners, new versus
-returning, and unique listeners per show. Every listener number comes from the Caddy access
+listening on https://rocky.kupernet.com/stream: listeners (5+ minutes of listening), new versus
+returning, their sessions, brief connections, and listeners per show. Every listener number comes from the Caddy access
 log; show names and times come from rocky's recorded show timeline. If the log is missing, empty, stale or does not cover the window,
 the message says `DATA SOURCE PROBLEM: <reason>` and shows no counts.
 
@@ -32,13 +32,26 @@ repo; this repo is public, so never put paths to private files, recipients or ke
   the IPv6 /64) plus the User-Agent with digits replaced by `#`. So a browser or OS update
   does not make a new listener. Only the hash and the time are stored;
   never the IP or the User-Agent.
-- New versus returning: a device is new in a window if it has no stored session in any earlier
-  window. Returning = unique - new.
+- Session length: estimated from the bytes Caddy logged in `size`:
+  seconds = max(0, size - `stream_burst_bytes`) / `stream_bytes_per_second`. Defaults 65535
+  (Icecast's initial burst) and 16000 (128 kbps MP3). Caddy's `duration` is always 0 for
+  streams and is ignored. A missing or non-numeric `size` counts as 0 s. The estimate is
+  off by a few seconds per connection.
+- Listener: a device whose sessions ending in the window add up to at least
+  `listener_min_seconds` (default 300, 5 minutes). A connection counts in the day it ends.
+  Report lines: `Listeners (5+ min of listening): N (new X, returning Y)`, `Sessions of these
+  listeners: S`, `Brief connections (under 5 min of listening in total, not counted as
+  listeners): C connections from D devices`. Sessions + brief connections = all non-excluded
+  sessions. Per-show numbers and "Heard at least one show" use listeners only.
+- New versus returning: a device is new in a window if it was not a listener (stored listening
+  seconds >= the cut-off) in any earlier window. Returning = N - new. Stored windows without
+  listening data are ignored for "returning" and the history line says how many.
 - Geography: removed. The report has no Countries or Cities line and never opens a geo
   database. `mmdb_path` in an existing config is accepted and ignored. The state tables keep
   their country/city columns, filled with `unknown` (and `geo_status` `off`).
-- Listeners per show: each session has an interval [end - Caddy `duration`, end]; without a
-  usable `duration` it is a point at its end time. The show timeline is fetched from
+- Listeners per show: each session of a listener has an interval [end - estimated seconds,
+  end], so a long session counts in every show it spanned; with 0 estimated seconds it is a
+  point at its end time. Brief devices count in no show. The show timeline is fetched from
   `show_timeline_url` (default `http://192.168.1.166:5000/api/listener-stats/history`, LAN, no
   credentials) with `?date=YYYY-MM-DD` for both local dates the window touches (5 s timeout,
   one retry). Samples are every 15 minutes, `ts` in Asia/Jerusalem local time, field `show`; a
@@ -50,7 +63,7 @@ repo; this repo is public, so never put paths to private files, recipients or ke
   show)`; a repeated host segment ("A — B — B") prints once. Only shows with at least one
   listener are listed, highest first, then by name. Resolution is 15 minutes.
   With a complete timeline one more line follows: `Heard at least one show: M of N
-  (rotation only: R)`, N = Unique listeners, M = distinct devices with a session overlapping
+  (rotation only: R)`, N = listeners, M = distinct devices with a session overlapping
   any non-rotation show sample, R = N - M. It is omitted when the timeline is UNAVAILABLE or
   incomplete.
 - Per-show failure lines (the rest of the report is still sent and stored):
@@ -86,6 +99,13 @@ python3 listener_report.py --config /PATH/TO/config.json --window-end 2026-11-03
 - Run it as `python3 /path/listener_report.py`.
 - `--dry-run` prints the report and writes and sends nothing (it reads existing history).
 - `--force` skips the hour-21 gate. `--window-end` is Jerusalem local time.
+- `--rebuild-history` recomputes the listening data of every stored window from the logs and
+  never sends. Needed once after upgrading from the version without listening seconds.
+  Procedure: back up `<state_dir>/state.db`, run `python3 listener_report.py --config
+  /PATH/TO/config.json --rebuild-history` once, then run a `--dry-run`. A window the logs no
+  longer cover is dropped (its notices stay) and printed as `dropped <start>: <reason>`.
+  Running it again gives identical rows. It cannot be combined with `--resend`, `--dry-run`
+  or `--window-end`.
 - `--resend` rebuilds that window from the log and sends it again. Re-running a window never
   double counts: its stored rows are replaced in one transaction.
 - The delivery command is `delivery_argv` plus the base64 of the UTF-8 report as the last

@@ -32,7 +32,11 @@ FOOTER_TEXT = (
     "a new IP counts as new. Session = one finished connection to rocky.kupernet.com/stream; "
     "connections still open at 21:00 count in the next report. Not counted: icecast.live relay "
     "listeners, metadata-only players. Per-show numbers do not add up to the total (a listener "
-    "present during two shows counts in both); show boundaries are approximate to 15 minutes."
+    "present during two shows counts in both); show boundaries are approximate to 15 minutes. "
+    "A listener is a device with at least 5 minutes of listening that day, estimated from bytes "
+    "sent (approximate, a few seconds per connection); shorter connections are shown separately. "
+    "A connection counts in the day it ends. Counts cover the /stream route only, so they differ "
+    "from Icecast's own average."
 )
 
 OWN_LINE = ("Own network not excluded: own_public_ips is empty, so listeners behind the "
@@ -207,10 +211,14 @@ def parse_counts(line):
     return result
 
 
-def log_entry(when, ip, ua="Mozilla/5.0 Test", method="GET", uri="/stream", status=200):
+LISTEN_SIZE = 16065535  # burst + 1000 s at 16000 bytes/s: one session is already a listener
+
+
+def log_entry(when, ip, ua="Mozilla/5.0 Test", method="GET", uri="/stream", status=200,
+              size=LISTEN_SIZE):
     req = {"method": method, "host": "rocky.kupernet.com", "uri": uri,
            "headers": {"User-Agent": [ua]}, "remote_ip": ip}
-    return {"ts": when.timestamp(), "request": req, "status": status}
+    return {"ts": when.timestamp(), "request": req, "status": status, "size": size}
 
 
 class BaseCase(unittest.TestCase):
@@ -313,7 +321,7 @@ class WindowTests(BaseCase):
         # window ended at 21:00 (a window that has not ended is refused), newest line 20:59:59
         self.assertEqual(rc, 0)
         self.assertEqual(len(send.calls), 1)
-        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertIn("Sessions of these listeners: 12", send.calls[0][0])
 
     def test_dst_window_lengths(self):
         for end, hours in ((dt.datetime(2026, 3, 27, 21, 0), 23), (dt.datetime(2026, 10, 25, 21, 0), 25),
@@ -347,7 +355,7 @@ class FixtureTests(BaseCase):
     def test_new_vs_returning_day2(self):
         self.run_day(1)
         _, send, _ = self.run_day(2)
-        self.assertIn("Unique listeners: 7 (new 3, returning 4)", send.calls[0][0])
+        self.assertIn("Listeners (5+ min of listening): 7 (new 3, returning 4)", send.calls[0][0])
 
     def test_internal_and_bot_excluded_counted_separately(self):
         _, send, _ = self.run_day(1)
@@ -491,7 +499,7 @@ class ProblemTests(BaseCase):
         text = send.calls[0][0]
         self.assertIn(f"DATA SOURCE PROBLEM: {reason}. No counts shown; nothing stored for this window.", text)
         self.assertNotIn("Sessions:", text)
-        self.assertNotIn("Unique listeners", text)
+        self.assertNotIn("Listeners (5+", text)
         self.assertEqual((self.count("windows"), self.count("sessions")), (0, 0))
         return send
 
@@ -553,7 +561,7 @@ class ProblemTests(BaseCase):
     def test_dry_run_writes_nothing_and_sends_nothing(self):
         rc, send, out = self.run_day(1, dry_run=True)
         self.assertEqual((rc, send.calls), (0, []))
-        self.assertIn("Sessions: 12", out)
+        self.assertIn("Sessions of these listeners: 12", out)
         self.assertFalse(os.path.exists(self.state))
 
 
@@ -578,15 +586,17 @@ class ReportTextTests(BaseCase):
             fh.write(b"s" * 32)
         _, send, _ = self.run_day(1)
         self.assertNotIn("HISTORY", send.calls[0][0])
-        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertIn("Sessions of these listeners: 12", send.calls[0][0])
 
     def test_report_text_golden(self):
         _, send, _ = self.run_day(1)
         expected = "\n".join([
             "ZeRock Radio - Daily Listeners Report",
             "Window: 2026-11-02 21:00 -> 2026-11-03 21:00 (Asia/Jerusalem, 24 h)",
-            "Sessions: 12",
-            "Unique listeners: 9 (new 9, returning 0)",
+            "Listeners (5+ min of listening): 9 (new 9, returning 0)",
+            "Sessions of these listeners: 12",
+            "Brief connections (under 5 min of listening in total, not counted as listeners): "
+            "0 connections from 0 devices",
             "Excluded internal (own systems, own network): 4",
             "Excluded bots and probes: 3",
             "No usable client IP (not counted): 1",
@@ -764,6 +774,8 @@ class RobustnessTests(BaseCase):
             for day in days:
                 conn.execute("INSERT INTO windows(window_start_utc) VALUES(?)",
                              (day.strftime("%Y-%m-%dT19:00:00Z"),))
+                conn.execute("INSERT INTO listening_done VALUES(?)",
+                             (day.strftime("%Y-%m-%dT19:00:00Z"),))
         conn.close()
         if salt:
             with open(os.path.join(self.state, "salt"), "wb") as fh:
@@ -842,7 +854,7 @@ class RobustnessTests(BaseCase):
                 shutil.rmtree(self.state, ignore_errors=True)
                 text = self.window_text(end)
                 self.assertIn(f", {hours} h)", text)
-                self.assertIn("Sessions: 3\n", text)  # start (inclusive), mid, last second; not end
+                self.assertIn("Sessions of these listeners: 3\n", text)  # start (inclusive), mid, last second; not end
 
     def test_truncated_mmdb_never_crashes(self):
         blob = build_mmdb(GEO_ENTRIES)
@@ -863,7 +875,7 @@ class RobustnessTests(BaseCase):
             finally:
                 reader.close()
             _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=path), resend=True)
-            self.assertIn("Sessions: 12", send.calls[0][0])
+            self.assertIn("Sessions of these listeners: 12", send.calls[0][0])
             self.assertNotIn("Countries", send.calls[0][0])
 
     def hostile(self, data_prefix, fill):
@@ -892,8 +904,8 @@ class RobustnessTests(BaseCase):
         finally:
             reader.close()
         _, send, _ = self.run_day(1, cfg=self.config("caddy_day1.jsonl", mmdb_path=path))
-        self.assertIn("Sessions: 12", send.calls[0][0])
-        self.assertIn("Unique listeners: 9", send.calls[0][0])
+        self.assertIn("Sessions of these listeners: 12", send.calls[0][0])
+        self.assertIn("Listeners (5+ min of listening): 9", send.calls[0][0])
 
     def test_hostile_mmdb_pointer_loop(self):
         self.check_hostile(self.hostile(b"", b"\x20\x00"))
@@ -1072,7 +1084,7 @@ class TimelineTests(BaseCase):
         _, send, _ = self.run_day(1, timeline_fetch=make_fetch(
             {"2026-11-02": TimeoutError(), "2026-11-03": TimeoutError()}))
         self.assertIn("Per show: UNAVAILABLE (timeline fetch failed: timed out)", send.calls[0][0])
-        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertIn("Sessions of these listeners: 12", send.calls[0][0])
         self.assertEqual(len(self.window_rows()), 1)
         _, err = lp.fetch_show_timeline(self.START, self.END, TZ, make_fetch(
             {"2026-11-02": {"nope": 1}, "2026-11-03": "text"}))
@@ -1138,11 +1150,11 @@ class TimelineTests(BaseCase):
         self.assertIsNone(err)
         self.assertEqual(len(samples), 84)
 
-    def test_session_duration_gives_start(self):
-        entries = [dict(log_entry(self.at(80), "203.0.113.7"), duration=600.0),
-                   dict(log_entry(self.at(80), "203.0.113.8"), duration=-5),
-                   dict(log_entry(self.at(80), "203.0.113.9"), duration=True),
-                   dict(log_entry(self.at(80), "203.0.113.10"), duration="x")]
+    def test_session_size_gives_start(self):
+        entries = [log_entry(self.at(80), "203.0.113.7", size=65535 + 16000 * 600),
+                   log_entry(self.at(80), "203.0.113.8", size=0),
+                   dict(log_entry(self.at(80), "203.0.113.9", size=True)),
+                   dict(log_entry(self.at(80), "203.0.113.10", size="x"))]
         scan = lp.scan_logs(lp.normalize_config(self.custom_log(entries)), START1.timestamp(),
                             START1.timestamp() + 86400, b"s" * 32)
         starts = sorted(round(ts - start) for ts, _d, start in scan["sessions"])
@@ -1158,7 +1170,7 @@ class TimelineTests(BaseCase):
         cfg = self.config("caddy_day1.jsonl", mmdb_path=os.path.join(self.tmp, "does-not-exist.mmdb"))
         with mock.patch.object(MmdbReader, "__init__", side_effect=AssertionError("must not open")):
             _, send, _ = self.run_day(1, cfg=cfg)
-        self.assertIn("Sessions: 12", send.calls[0][0])
+        self.assertIn("Sessions of these listeners: 12", send.calls[0][0])
         self.assertEqual(self.window_rows()[0]["geo_status"], "off")
 
     def test_footer_per_show_note(self):
@@ -1324,7 +1336,7 @@ class Cycle2Tests(BaseCase):
                                        timeline_fetch=make_fetch(window_payloads()))
                 text = out.getvalue()
                 self.assertEqual(rc, 0)
-                self.assertIn("Unique listeners:", text)
+                self.assertIn("Listeners (5+ min of listening):", text)
                 self.assertNotRegex(text.lower(), r"countr|geo|city|error|traceback")
 
     def _serve_redirect(self, location):
@@ -1369,7 +1381,7 @@ class Cycle2Tests(BaseCase):
         # a show on the first half of the window only; the rest is rotation
         shows = {f"2026-11-02T{h:02d}:{m:02d}": "Show A" for h in (21, 22, 23) for m in (0, 15, 30, 45)}
         text = self.report_text(window_payloads(shows))
-        n = int(re.search(r"Unique listeners: (\d+)", text).group(1))
+        n = int(re.search(r"Listeners \(5\+ min of listening\): (\d+)", text).group(1))
         m_ = re.search(r"Heard at least one show: (\d+) of (\d+) \(rotation only: (\d+)\)", text)
         self.assertIsNotNone(m_, text)
         heard, total, rot = map(int, m_.groups())
@@ -1379,7 +1391,7 @@ class Cycle2Tests(BaseCase):
 
     def test_heard_line_rotation_only_all(self):
         text = self.report_text(window_payloads())
-        n = int(re.search(r"Unique listeners: (\d+)", text).group(1))
+        n = int(re.search(r"Listeners \(5\+ min of listening\): (\d+)", text).group(1))
         self.assertIn(f"Heard at least one show: 0 of {n} (rotation only: {n})", text)
 
     def test_heard_line_absent_unavailable_and_incomplete(self):
@@ -1453,3 +1465,239 @@ class RealPathTests(BaseCase):
         self.assertEqual(rc, 0)
         self.assertIn("Window: 2026-11-02 21:00 -> 2026-11-03 21:00", text)
         self.assertEqual(send.calls, [])
+
+
+# ---------------------------------------------------------------- 5-minute listener rule
+
+CFG5 = lp.normalize_config({"caddy_log_globs": ["x"], "state_dir": "y"})
+
+
+def sess(device, seconds, end_minutes=60):
+    return (T(end_minutes), device, T(end_minutes) - seconds)
+
+
+class SecondsTests(unittest.TestCase):
+    def test_seconds_formula_cases(self):
+        f = lambda size: lp.session_seconds(size, CFG5)  # noqa: E731
+        self.assertEqual(f(0), 0)
+        self.assertEqual(f(65535), 0)
+        self.assertEqual(f(1000), 0)
+        self.assertAlmostEqual(f(383600), 19.9, places=1)
+        self.assertEqual(f(65535 + 16000 * 300), 300)
+        self.assertEqual(f(10 ** 12), (10 ** 12 - 65535) / 16000)
+
+    def test_seconds_bad_size_is_zero(self):
+        for bad in (None, "383600", True, float("nan"), float("inf"), -5, -1.5, [1], {}):
+            self.assertEqual(lp.session_seconds(bad, CFG5), 0, bad)
+
+    def test_config_new_keys_defaults_and_validation(self):
+        self.assertEqual((CFG5["stream_bytes_per_second"], CFG5["stream_burst_bytes"],
+                          CFG5["listener_min_seconds"]), (16000, 65535, 300))
+        base = {"caddy_log_globs": ["x"], "state_dir": "y"}
+        bad = [("stream_bytes_per_second", 0), ("stream_bytes_per_second", -1),
+               ("stream_bytes_per_second", "16000"), ("stream_bytes_per_second", True),
+               ("stream_burst_bytes", -1), ("stream_burst_bytes", None),
+               ("listener_min_seconds", 0), ("listener_min_seconds", float("nan")),
+               ("listener_min_seconds", False)]
+        for key, value in bad:
+            with self.assertRaises(ValueError) as ctx:
+                lp.normalize_config(dict(base, **{key: value}))
+            self.assertIn(key, str(ctx.exception))
+        ok = lp.normalize_config(dict(base, stream_burst_bytes=0, listener_min_seconds=60))
+        self.assertEqual((ok["stream_burst_bytes"], ok["listener_min_seconds"]), (0, 60))
+
+    def test_boundary_299_brief_300_listener(self):
+        cls = lp.classify([sess("a", 299), sess("b", 300)], CFG5)
+        self.assertEqual(set(cls["listeners"]), {"b"})
+        self.assertEqual((cls["brief_sessions"], cls["brief_devices"]), (1, 1))
+
+    def test_many_short_sessions_add_up_to_listener(self):
+        sessions = [sess("a", 60, 10 + 10 * n) for n in range(5)] + [sess("b", 60), sess("b", 60)]
+        cls = lp.classify(sessions, CFG5)
+        self.assertEqual(set(cls["listeners"]), {"a"})
+        self.assertEqual(len(cls["listener_sessions"]), 5)
+        self.assertEqual((cls["brief_sessions"], cls["brief_devices"]), (2, 1))
+
+    def test_burst_only_connections_are_brief(self):
+        sessions = [(T(10 + n), "p", T(10 + n) - lp.session_seconds(65535, CFG5)) for n in range(500)]
+        cls = lp.classify(sessions, CFG5)
+        self.assertEqual((cls["listeners"], cls["brief_sessions"], cls["brief_devices"]), ({}, 500, 1))
+
+    def test_sessions_plus_brief_reconcile(self):
+        sessions = [sess("a", 400), sess("a", 5), sess("b", 10), sess("c", 0), sess("c", 120)]
+        cls = lp.classify(sessions, CFG5)
+        self.assertEqual(len(cls["listener_sessions"]) + cls["brief_sessions"], len(sessions))
+
+    def test_per_show_span_three_shows(self):
+        samples = [sample("2026-11-02T22:00", "A"), sample("2026-11-02T22:15", "B"),
+                   sample("2026-11-02T22:30", "C")]
+        sessions = [(T(100), "long", T(65))]  # 22:05 -> 22:40 spans all three
+        self.assertEqual(dict(lp.show_listeners(sessions, samples)), {"A": 1, "B": 1, "C": 1})
+
+    def test_per_show_brief_device_in_none(self):
+        samples = [sample("2026-11-02T22:00", "A"), sample("2026-11-02T22:15", "B")]
+        cls = lp.classify([sess("brief", 20, 70), sess("real", 600, 80)], CFG5)
+        self.assertEqual(dict(lp.show_listeners(cls["listener_sessions"], samples)),
+                         {"A": 1, "B": 1})
+        self.assertEqual(lp.show_heard_devices(cls["listener_sessions"], samples), {"real"})
+
+    def test_per_show_point_when_zero_length(self):
+        samples = [sample("2026-11-02T22:00", "A"), sample("2026-11-02T22:15", "B")]
+        self.assertEqual(dict(lp.show_listeners([(T(70), "d", T(70))], samples)), {"A": 1})
+
+    def test_history_line_lacking_days(self):
+        stored = [f"2026-11-0{n}T19:00:00Z" for n in range(1, 6)]
+        line = lp.history_line(stored, "2026-11-06T19:00:00Z", TZ, lacking=3)
+        self.assertIn('LISTENING DATA MISSING for 3 of 5 stored days (run --rebuild-history): '
+                      '"returning" is understated.', line)
+        self.assertNotIn("LISTENING DATA", lp.history_line(stored, "2026-11-06T19:00:00Z", TZ) or "")
+
+    def test_footer_mentions_rule(self):
+        self.assertIn("at least 5 minutes of listening", lp.FOOTER)
+        self.assertIn("estimated from bytes", lp.FOOTER)
+        self.assertIn("counts in the day it ends", lp.FOOTER)
+
+
+class ListenerReportTests(BaseCase):
+    def sized_log(self):
+        rows = []
+        # listener: two 150 s sessions (total 300); brief: one 299 s session; poller: 3 tiny
+        for n, (ip, seconds) in enumerate([("203.0.113.7", 150), ("203.0.113.7", 150),
+                                           ("203.0.113.8", 299), ("203.0.113.9", 0),
+                                           ("203.0.113.9", 0), ("203.0.113.9", 0)]):
+            rows.append(log_entry(START1 + dt.timedelta(hours=1 + n), ip,
+                                  size=65535 + int(seconds * 16000)))
+        return self.custom_log(rows)
+
+    def test_report_lines_literal(self):
+        _, send, _ = self.run_day(1, cfg=self.sized_log())
+        text = send.calls[0][0]
+        self.assertIn("Listeners (5+ min of listening): 1 (new 1, returning 0)\n"
+                      "Sessions of these listeners: 2\n"
+                      "Brief connections (under 5 min of listening in total, not counted as "
+                      "listeners): 4 connections from 2 devices\n", text)
+        row = self.window_rows()[0]
+        self.assertEqual((row["sessions"], row["unique_n"]), (2, 1))
+        self.assertEqual(self.count("sessions"), 6)  # all non-excluded sessions stay stored
+        self.assertEqual(self.count("listening"), 3)
+        self.assertEqual(self.count("listening_done"), 1)
+
+    def test_old_schema_state_opens_unchanged(self):
+        os.makedirs(self.state)
+        db = os.path.join(self.state, "state.db")
+        old_schema = lp.SCHEMA.split("CREATE TABLE IF NOT EXISTS listening(")[0]
+        conn = sqlite3.connect(db)
+        conn.executescript(old_schema)
+        conn.execute("INSERT INTO windows(window_start_utc, sessions, unique_n) VALUES('w1', 7, 5)")
+        conn.execute("INSERT INTO sessions VALUES('w1','t','dev','unknown','unknown')")
+        conn.commit()
+        conn.close()
+        conn = lp.open_state(self.state)
+        self.assertEqual(conn.execute("SELECT sessions, unique_n FROM windows").fetchall(), [(7, 5)])
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM sessions").fetchone()[0], 1)
+        self.assertEqual(lp.lacking_days(conn), 1)
+        conn.close()
+        ro = sqlite3.connect(db)
+        ro.execute("DROP TABLE listening_done")
+        ro.commit()
+        self.assertEqual(lp.lacking_days(ro), 0)  # missing table tolerated
+        ro.close()
+        self.assertEqual(lp.lacking_days(None), 0)
+
+    def test_returning_ignores_rows_without_seconds(self):
+        # day 1 stored under the old schema (sessions only), day 2 must not count them as returning
+        self.run_day(1)
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("DELETE FROM listening")
+        conn.execute("DELETE FROM listening_done")
+        conn.commit()
+        conn.close()
+        _, send, _ = self.run_day(2)
+        text = send.calls[-1][0]
+        self.assertIn("Listeners (5+ min of listening): 7 (new 7, returning 0)", text)
+        self.assertIn("LISTENING DATA MISSING for 1 of 1 stored days", text)
+
+    def test_returning_needs_listener_seconds_earlier(self):
+        self.run_day(1)
+        _, send, _ = self.run_day(2)
+        self.assertIn("(new 3, returning 4)", send.calls[-1][0])
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("UPDATE listening SET seconds=10")  # earlier day was only brief
+        conn.commit()
+        conn.close()
+        _, send, _ = self.run_day(2, resend=True)
+        self.assertIn("(new 7, returning 0)", send.calls[-1][0])
+
+    # ---- rebuild
+
+    def two_days_then_old_schema(self):
+        cfg = self.config("caddy_day*.jsonl")
+        self.run_day(1, cfg=cfg)
+        self.run_day(2, cfg=cfg)
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("DROP TABLE listening")
+        conn.execute("DROP TABLE listening_done")
+        conn.execute("UPDATE windows SET unique_n=999, new_n=999, returning_n=999, sessions=999")
+        conn.commit()
+        conn.close()
+        return cfg
+
+    def snapshot(self):
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        try:
+            return {t: sorted(conn.execute(f"SELECT * FROM {t}").fetchall(), key=repr)
+                    for t in ("windows", "sessions", "listening", "listening_done", "notices")}
+        finally:
+            conn.close()
+
+    def rebuild(self, cfg):
+        with mock.patch("sys.stdout", new_callable=__import__("io").StringIO) as out, \
+                mock.patch.object(lp, "send_via_command", side_effect=AssertionError("no send")):
+            rc = lp.rebuild_history(lp.normalize_config(cfg))
+        return rc, out.getvalue()
+
+    def test_rebuild_fills_and_is_idempotent(self):
+        cfg = self.two_days_then_old_schema()
+        before_sent = [r["sent_at_utc"] for r in self.window_rows()]
+        rc, out = self.rebuild(cfg)
+        self.assertEqual(rc, 0)
+        self.assertIn("rebuilt 2026-11-02T19:00:00Z: listeners 9, brief 0 devices", out)
+        self.assertIn("rebuild done: 2 rebuilt, 0 dropped", out)
+        rows = self.window_rows()
+        self.assertEqual([(r["sessions"], r["unique_n"], r["new_n"], r["returning_n"])
+                          for r in rows], [(12, 9, 9, 0), (9, 8, 4, 4)])  # day 2 also sees the day-1 file boundary line
+        self.assertEqual([r["sent_at_utc"] for r in rows], before_sent)
+        self.assertEqual(self.count("listening_done"), 2)
+        first = self.snapshot()
+        rc, out2 = self.rebuild(cfg)
+        self.assertEqual(self.snapshot(), first)
+        self.assertEqual(out, out2)
+
+    def test_rebuild_drops_uncovered_window(self):
+        cfg = self.two_days_then_old_schema()
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("INSERT INTO windows(window_start_utc, window_end_utc) "
+                     "VALUES('2026-10-01T18:00:00Z','2026-10-02T18:00:00Z')")
+        conn.execute("INSERT INTO sessions VALUES('2026-10-01T18:00:00Z','t','d','u','u')")
+        conn.execute("INSERT INTO notices VALUES('2026-10-01T18:00:00Z','why',NULL)")
+        conn.commit()
+        conn.close()
+        rc, out = self.rebuild(cfg)
+        self.assertIn("dropped 2026-10-01T18:00:00Z:", out)
+        self.assertIn("rebuild done: 2 rebuilt, 1 dropped", out)
+        snap = self.snapshot()
+        self.assertEqual(len(snap["windows"]), 2)
+        self.assertNotIn("2026-10-01T18:00:00Z", [r[0] for r in snap["sessions"]])
+        self.assertEqual(len(snap["notices"]), 1)
+
+    def test_rebuild_never_sends(self):
+        cfg = self.two_days_then_old_schema()
+        self.rebuild(cfg)  # send_via_command patched to raise; subprocess.run too
+
+    def test_rebuild_flag_rejects_combinations(self):
+        path = os.path.join(self.tmp, "cfg.json")
+        with open(path, "w") as fh:
+            json.dump(self.config("caddy_day*.jsonl"), fh)
+        for extra in (["--resend"], ["--dry-run"], ["--window-end", "2026-11-03T21:00"]):
+            with self.assertRaises(SystemExit):
+                lp.main(["--config", path, "--rebuild-history"] + extra)
