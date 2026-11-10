@@ -1486,6 +1486,10 @@ class SecondsTests(unittest.TestCase):
         self.assertEqual(f(65535 + 16000 * 300), 300)
         self.assertEqual(f(10 ** 12), (10 ** 12 - 65535) / 16000)
 
+    def test_seconds_huge_int_is_zero_not_overflow(self):
+        self.assertEqual(lp.session_seconds(10 ** 400, CFG5), 0)
+        self.assertEqual(lp.session_seconds(-(10 ** 400), CFG5), 0)
+
     def test_seconds_bad_size_is_zero(self):
         for bad in (None, "383600", True, float("nan"), float("inf"), -5, -1.5, [1], {}):
             self.assertEqual(lp.session_seconds(bad, CFG5), 0, bad)
@@ -1600,7 +1604,9 @@ class ListenerReportTests(BaseCase):
         ro = sqlite3.connect(db)
         ro.execute("DROP TABLE listening_done")
         ro.commit()
-        self.assertEqual(lp.lacking_days(ro), 0)  # missing table tolerated
+        self.assertEqual(lp.lacking_days(ro), 1)  # missing table: every stored window lacks data
+        ro.execute("DROP TABLE windows")
+        self.assertEqual(lp.lacking_days(ro), 0)  # nothing known at all
         ro.close()
         self.assertEqual(lp.lacking_days(None), 0)
 
@@ -1616,6 +1622,20 @@ class ListenerReportTests(BaseCase):
         text = send.calls[-1][0]
         self.assertIn("Listeners (5+ min of listening): 7 (new 7, returning 0)", text)
         self.assertIn("LISTENING DATA MISSING for 1 of 1 stored days", text)
+
+    def test_dry_run_readonly_old_schema_warns_and_returns_zero(self):
+        self.run_day(1)
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("DROP TABLE listening")
+        conn.execute("DROP TABLE listening_done")
+        conn.commit()
+        conn.close()
+        rc, send, out = self.run_day(2, dry_run=True)
+        self.assertEqual(rc, 0)
+        self.assertIn("LISTENING DATA MISSING for 1 of 1 stored days", out)
+        self.assertIn("returning 0)", out)
+        self.assertNotIn("returning 4", out)
+        self.assertEqual(send.calls, [])
 
     def test_returning_needs_listener_seconds_earlier(self):
         self.run_day(1)
@@ -1690,6 +1710,70 @@ class ListenerReportTests(BaseCase):
         self.assertNotIn("2026-10-01T18:00:00Z", [r[0] for r in snap["sessions"]])
         self.assertEqual(len(snap["notices"]), 1)
 
+    def two_days(self):
+        cfg = self.config("caddy_day*.jsonl")
+        self.run_day(1, cfg=cfg)
+        self.run_day(2, cfg=cfg)
+        return cfg
+
+    def rebuild_err(self, cfg):
+        with mock.patch("sys.stderr", new_callable=__import__("io").StringIO) as err:
+            rc, out = self.rebuild(cfg)
+        return rc, out, err.getvalue()
+
+    def test_rebuild_aborts_without_change_on_missing_logs(self):
+        self.two_days()
+        before = self.snapshot()
+        rc, out, err = self.rebuild_err(self.config("nothing-here-*.jsonl"))
+        self.assertEqual(rc, 1)
+        self.assertIn("rebuild aborted", err)
+        self.assertIn("missing", err)
+        self.assertNotIn("dropped", out)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_rebuild_aborts_without_change_on_unreadable_log(self):
+        cfg = self.two_days()
+        before = self.snapshot()
+        real_open = open
+
+        def fake_open(path, *a, **k):
+            if str(path).endswith(".jsonl"):
+                raise PermissionError("denied")
+            return real_open(path, *a, **k)
+        with mock.patch("builtins.open", side_effect=fake_open), \
+                mock.patch.object(lp.gzip, "open", side_effect=PermissionError("denied"), create=True):
+            rc, out, err = self.rebuild_err(cfg)
+        self.assertEqual(rc, 1)
+        self.assertIn("rebuild aborted", err)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_rebuild_abort_on_one_bad_window_changes_no_window(self):
+        cfg = self.two_days()
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("INSERT INTO windows(window_start_utc, window_end_utc) "
+                     "VALUES('2026-11-30T18:00:00Z','2026-12-01T18:00:00Z')")  # logs stale for it
+        conn.commit()
+        conn.close()
+        before = self.snapshot()
+        rc, out, err = self.rebuild_err(cfg)
+        self.assertEqual(rc, 1)
+        self.assertEqual(self.snapshot(), before)
+
+    def test_rebuild_dropped_window_keeps_covered_sent_record(self):
+        cfg = self.two_days_then_old_schema()
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.execute("INSERT INTO windows(window_start_utc, window_end_utc) "
+                     "VALUES('2026-10-01T18:00:00Z','2026-10-02T18:00:00Z')")
+        conn.commit()
+        conn.close()
+        sent = [r["sent_at_utc"] for r in self.window_rows() if r["window_start_utc"] >= "2026-11"]
+        self.assertTrue(all(sent))
+        rc, out, err = self.rebuild_err(cfg)
+        self.assertEqual(rc, 0)
+        self.assertIn("dropped 2026-10-01T18:00:00Z: not covering window start", out)
+        rows = self.window_rows()
+        self.assertEqual([r["sent_at_utc"] for r in rows], sent)
+
     def test_rebuild_never_sends(self):
         cfg = self.two_days_then_old_schema()
         self.rebuild(cfg)  # send_via_command patched to raise; subprocess.run too
@@ -1701,3 +1785,77 @@ class ListenerReportTests(BaseCase):
         for extra in (["--resend"], ["--dry-run"], ["--window-end", "2026-11-03T21:00"]):
             with self.assertRaises(SystemExit):
                 lp.main(["--config", path, "--rebuild-history"] + extra)
+
+
+class GurneyBreakTests(BaseCase):
+    def sized(self, ip, seconds, hour):
+        return log_entry(START1 + dt.timedelta(minutes=hour), ip,
+                         size=65535 + int(seconds * 16000))
+
+    def test_many_short_sessions_just_under_and_over(self):
+        under = [sess("u", 29.9, 10 + n) for n in range(10)]   # 299 s
+        over = [sess("o", 30, 10 + n) for n in range(10)]      # 300 s
+        cls = lp.classify(under + over, CFG5)
+        self.assertEqual(set(cls["listeners"]), {"o"})
+        self.assertEqual(cls["brief_sessions"], 10)
+
+    def test_mixed_missing_and_present_size(self):
+        rows = [log_entry(START1 + dt.timedelta(minutes=5 * n), "203.0.113.5", size=None)
+                for n in range(1, 4)]
+        rows.append(self.sized("203.0.113.5", 300, 60))
+        for r in rows[:3]:
+            r.pop("size")
+        _, send, _ = self.run_day(1, cfg=self.custom_log(rows))
+        self.assertIn("Listeners (5+ min of listening): 1", send.calls[0][0])
+
+    def test_device_split_across_windows_not_summed(self):
+        rows1 = [self.sized("203.0.113.5", 200, 60)]
+        _, send, _ = self.run_day(1, cfg=self.custom_log(rows1))
+        self.assertIn("Listeners (5+ min of listening): 0", send.calls[0][0])
+        self.assertEqual(self.count("listening"), 1)
+
+    def test_one_listener_plus_700_pollers_reconcile(self):
+        rows = [self.sized("203.0.113.5", 600, 60)]
+        rows += [log_entry(START1 + dt.timedelta(seconds=30 * n), "203.0.113.9", size=65535)
+                 for n in range(1, 701)]
+        _, send, _ = self.run_day(1, cfg=self.custom_log(rows))
+        text = send.calls[0][0]
+        self.assertIn("Sessions of these listeners: 1\n", text)
+        self.assertIn(": 700 connections from 1 device", text)
+        self.assertEqual(self.count("sessions"), 701)
+
+    def test_zero_listener_day(self):
+        _, send, _ = self.run_day(1, cfg=self.custom_log([log_entry(START1 + dt.timedelta(hours=1),
+                                                                    "203.0.113.9", size=65535)]))
+        text = send.calls[0][0]
+        self.assertIn("Listeners (5+ min of listening): 0", text)
+        self.assertEqual(len(send.calls), 1)
+
+    def test_three_hour_session_three_shows(self):
+        samples = [sample(f"2026-11-{d}T{h:02d}:{m:02d}", n) for n, d, hs in
+                   (("A", "02", (22, 23)), ("B", "03", (0, 1)), ("C", "03", (2, 3)))
+                   for h in hs for m in (0, 15, 30, 45)]
+        cls = lp.classify([(T(330), "d", T(90))], CFG5)
+        self.assertEqual(dict(lp.show_listeners(cls["listener_sessions"], samples)),
+                         {"A": 1, "B": 1, "C": 1})
+
+    def test_two_cron_runs_idempotent_on_migrated_state(self):
+        os.makedirs(self.state)
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        conn.executescript(lp.SCHEMA.split("CREATE TABLE IF NOT EXISTS listening(")[0])
+        conn.commit()
+        conn.close()
+        cfg = self.config("caddy_day1.jsonl")
+        self.run_day(1, cfg=cfg)
+        snap = self.snap2()
+        _, send, _ = self.run_day(1, cfg=cfg)
+        self.assertEqual(send.calls, [])
+        self.assertEqual(self.snap2(), snap)
+
+    def snap2(self):
+        conn = sqlite3.connect(os.path.join(self.state, "state.db"))
+        try:
+            return {t: sorted(conn.execute(f"SELECT * FROM {t}").fetchall(), key=repr)
+                    for t in ("windows", "sessions", "listening", "listening_done")}
+        finally:
+            conn.close()

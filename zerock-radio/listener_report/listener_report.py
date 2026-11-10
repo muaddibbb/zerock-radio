@@ -148,9 +148,14 @@ def normalize_config(raw):
 
 def session_seconds(size, cfg):
     """Estimated listening seconds of one connection from the bytes sent (duration is ignored)."""
-    if isinstance(size, bool) or not isinstance(size, (int, float)) or not math.isfinite(size):
+    if isinstance(size, bool) or not isinstance(size, (int, float)):
         return 0.0
-    return max(0.0, size - cfg["stream_burst_bytes"]) / cfg["stream_bytes_per_second"]
+    try:
+        if not math.isfinite(size):
+            return 0.0
+        return max(0.0, size - cfg["stream_burst_bytes"]) / cfg["stream_bytes_per_second"]
+    except OverflowError:
+        return 0.0
 
 
 def classify(sessions, cfg):
@@ -601,13 +606,19 @@ def render_problem(header, reason):
 
 
 def lacking_days(conn):
-    """Stored windows without listening data; 0 when unknown (no conn, missing tables)."""
+    """Stored windows without listening data; 0 when unknown (no conn, no windows table).
+
+    Without the listening_done table (old schema, read-only dry-run) every stored window lacks data."""
     if conn is None:
         return 0
     try:
         return conn.execute(
             "SELECT COUNT(*) FROM windows WHERE window_start_utc NOT IN "
             "(SELECT window_start_utc FROM listening_done)").fetchone()[0]
+    except sqlite3.Error:
+        pass
+    try:
+        return conn.execute("SELECT COUNT(*) FROM windows").fetchone()[0]
     except sqlite3.Error:
         return 0
 
@@ -858,7 +869,7 @@ def rebuild_history(cfg):
             except SaltProblem as exc:
                 print(f"rebuild refused: {exc}", file=sys.stderr)
                 return 1
-            rebuilt = dropped = 0
+            plan = []
             for start_iso in starts:
                 start_ts = dt.datetime.strptime(start_iso, "%Y-%m-%dT%H:%M:%SZ").replace(
                     tzinfo=dt.timezone.utc).timestamp()
@@ -868,6 +879,13 @@ def rebuild_history(cfg):
                     tzinfo=dt.timezone.utc).timestamp()
                 scan = scan_logs(cfg, start_ts, end_ts, salt)
                 problem = coverage_problem(scan, start_ts, end_ts, cfg["stale_after_minutes"] * 60)
+                if problem and problem != "not covering window start":
+                    print(f"rebuild aborted, nothing changed: {start_iso}: {problem}",
+                          file=sys.stderr)
+                    return 1
+                plan.append((start_iso, scan, problem))
+            rebuilt = dropped = 0
+            for start_iso, scan, problem in plan:
                 if problem:
                     with conn:
                         for table in ("windows", "sessions", "listening", "listening_done"):
