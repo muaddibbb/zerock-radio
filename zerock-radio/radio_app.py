@@ -8190,7 +8190,7 @@ def _bounce_checker():
             continue
         try:
             import imaplib
-            imap = imaplib.IMAP4_SSL('imap.gmail.com', 993)
+            imap = imaplib.IMAP4_SSL('imap.gmail.com', 993, timeout=60)
             imap.login(SMTP_USER, SMTP_PASS)
             for folder in ('INBOX', '[Gmail]/Spam', '[Gmail]/All Mail',
                            '[Google Mail]/Spam'):
@@ -11777,7 +11777,9 @@ def _nr_poll_once_locked():
     if not _IMAP_USER or not _IMAP_PASS:
         return 0, 'IMAP creds (ZEROCK_SMTP_USER/PASS) not set'
     try:
-        M = imaplib.IMAP4_SSL(_IMAP_HOST)
+        # timeout: without it a silently dropped Gmail connection blocks the poll thread (and _nr_poll_lock) forever
+        # (2026-11-02..13: /new-heb-releases stopped updating for 11 days)
+        M = imaplib.IMAP4_SSL(_IMAP_HOST, timeout=60)
         M.login(_IMAP_USER, _IMAP_PASS)
         M.select('INBOX', readonly=False)
     except Exception as e:
